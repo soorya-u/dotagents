@@ -2,12 +2,11 @@
 name = "dotagents"
 version = "0.1.0"
 authors = ["Soorya U <sooryau7@gmail.com>"]
-description = ""
+description = "An agent configuration manager and templater written in rust"
 repository = "https://github.com/soorya-u/dotagents"
 readme = "README.md"
 keywords = ["dotagents", "configuration", "dotfiles", "agent"]
 categories = ["command-line-utilities"]
-license = "Unlicense"
 edition = "2024"
 
 [dependencies]
@@ -16,4 +15,21 @@ clap = { version = "4.5.48", features = ["derive"] }
 clap_complete = "4.5.58"
 crossterm = "0.29.0"
 handlebars = "6.3.2"
+log = "0.4.28"
 toml = "0.9.7"
+
+[dev-dependencies]
+mockall = "0.13.1"
+
+[target.'cfg(windows)'.dependencies]
+dunce = "1.0.5"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2.176"
+
+[profile.release]
+strip = true
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
