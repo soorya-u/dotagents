@@ -1,11 +1,11 @@
 [package]
-name = "dotagent"
+name = "dotagents"
 version = "0.1.0"
 authors = ["Soorya U <sooryau7@gmail.com>"]
 description = ""
-repository = "https://github.com/soorya-u/dotagent"
+repository = "https://github.com/soorya-u/dotagents"
 readme = "README.md"
-keywords = ["dotagent", "configuration", "dotfiles", "agent"]
+keywords = ["dotagents", "configuration", "dotfiles", "agent"]
 categories = ["command-line-utilities"]
 license = "Unlicense"
 edition = "2024"
