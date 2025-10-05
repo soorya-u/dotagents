@@ -1,0 +1,19 @@
+[package]
+name = "dotagents"
+version = "0.1.0"
+authors = ["Soorya U <sooryau7@gmail.com>"]
+description = ""
+repository = "https://github.com/soorya-u/dotagents"
+readme = "README.md"
+keywords = ["dotagents", "configuration", "dotfiles", "agent"]
+categories = ["command-line-utilities"]
+license = "Unlicense"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.100"
+clap = { version = "4.5.48", features = ["derive"] }
+clap_complete = "4.5.58"
+crossterm = "0.29.0"
+handlebars = "6.3.2"
+toml = "0.9.7"
