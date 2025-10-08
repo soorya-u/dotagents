@@ -33,14 +33,11 @@ fn set_dummy_data(filename: &str, content: &str, dir_name: Option<&str>) -> Resu
 }
 
 pub(crate) fn set_dummy_command() -> Result<()> {
+
+    let content = "# Hello Command\n\nGreet the User with his name if present, else greet user as stranger.\n\nContext: $USER_INPUT\n";
+
     let commands = CommandBuilder::new("hello", "A Hello Command to greet the User.")
-        .add_content(
-            r#"# Hello Command
-
-Greet the User with his name if present, else greet user as stranger.
-
-Context: $USER_INPUT"#,
-        )
+        .add_content(content)
         .build();
 
     let content = commands.to_markdown()?;
