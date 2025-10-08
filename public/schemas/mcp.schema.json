@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dotagents.soorya-u.dev/schemas/mcp.schema.json",
+  "title": "DotAgents MCP Configuration",
+  "description": "Schema for DotAgents MCP server configuration file.",
+  "type": "object",
+  "properties": {
+    "servers": {
+      "type": "object",
+      "description": "Map of server names to their configuration.",
+      "patternProperties": {
+        "^[a-zA-Z0-9._-]+$": {
+          "type": "object",
+          "description": "Configuration for a single MCP server.",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["http", "stdio"],
+              "description": "Type of the server connection."
+            },
+            "url": {
+              "type": "string",
+              "description": "URL of the HTTP server (required if type = 'http').",
+              "format": "uri"
+            },
+            "headers": {
+              "type": "object",
+              "description": "HTTP headers to send with the request (only for type = 'http').",
+              "additionalProperties": { "type": "string" }
+            },
+            "args": {
+              "type": "array",
+              "description": "Arguments for stdio command (only for type = 'stdio').",
+              "items": { "type": "string" }
+            },
+            "command": {
+              "type": "string",
+              "description": "Command to run (only for type = 'stdio')."
+            },
+            "cwd": {
+              "type": "string",
+              "description": "Working directory for the stdio process."
+            },
+            "env": {
+              "type": "object",
+              "description": "Environment variables for the stdio process.",
+              "additionalProperties": { "type": "string" }
+            },
+            "envFile": {
+              "type": "string",
+              "description": "Path to environment file (only for type = 'stdio')."
+            }
+          },
+          "required": ["type"],
+          "allOf": [
+            {
+              "if": {
+                "properties": { "type": { "const": "http" } }
+              },
+              "then": {
+                "required": ["url"],
+                "properties": {
+                  "args": false,
+                  "command": false,
+                  "cwd": false,
+                  "env": false,
+                  "envFile": false
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": { "type": { "const": "stdio" } }
+              },
+              "then": {
+                "required": ["command"],
+                "properties": {
+                  "url": false,
+                  "headers": false
+                }
+              }
+            }
+          ],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["servers"],
+  "additionalProperties": false
+}

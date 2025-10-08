@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dotagents.soorya-u.dev/schemas/config.schema.json",
+  "title": "DotAgents Application Configuration",
+  "description": "Schema for DotAgents Application configuration file.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Schema for DotAgents Application configuration file.",
+      "default": "https://dotagents.soorya-u.dev/schemas/config.schema.json"
+    },
+    "features": {
+      "type": "object",
+      "description": "Features that are enabled within the repositories",
+      "properties": {
+        "command": {
+          "type": "boolean",
+          "description": "Enable custom commands to be replicated to targets",
+          "default": true
+        },
+        "instructions": {
+          "type": "boolean",
+          "description": "Enable instructions to be replicated to targets",
+          "default": true
+        },
+        "mcp": {
+          "type": "boolean",
+          "description": "Enable MCP to be replicated to targets",
+          "default": true
+        }
+      },
+      "required": ["command", "instructions", "mcp"],
+      "additionalProperties": false
+    },
+    "targets": {
+      "type": "object",
+      "description": "Specifies the targets for which the features should be replicated.",
+      "properties": {
+        "cli": {
+          "type": "object",
+          "description": "Targets which are CLI Coding Agents",
+          "allOf": [{ "$ref": "#/$defs/target-category" }]
+        },
+        "ide": {
+          "type": "object",
+          "description": "Targets which are Integrated Development Environment",
+          "allOf": [{ "$ref": "#/$defs/target-category" }]
+        },
+        "custom": {
+          "type": "object",
+          "description": "User defined Custom targets",
+          "allOf": [{ "$ref": "#/$defs/target-category" }]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["features"],
+  "additionalProperties": false,
+
+  "$defs": {
+    "target-category": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9-_]+$": { "$ref": "#/$defs/target-properties" }
+      },
+      "additionalProperties": false
+    },
+    "target-properties": {
+      "type": "object",
+      "description": "Target properties which adds extra context for a target",
+      "properties": {
+        "overrides": {
+          "type": "object",
+          "description": "Feature overrides for this target",
+          "properties": {
+            "command": { "type": "boolean" },
+            "instructions": { "type": "boolean" },
+            "mcp": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  }
+}

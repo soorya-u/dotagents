@@ -1,3 +1,1 @@
-mod command;
-mod instruction;
-mod mcp;
+pub(crate) mod resources;
