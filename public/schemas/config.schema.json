@@ -34,21 +34,21 @@
       "additionalProperties": false
     },
     "targets": {
-      "type": "object",
+      "type": ["object", "null"],
       "description": "Specifies the targets for which the features should be replicated.",
       "properties": {
         "cli": {
-          "type": "object",
+          "type": ["object", "null"],
           "description": "Targets which are CLI Coding Agents",
           "allOf": [{ "$ref": "#/$defs/target-category" }]
         },
         "ide": {
-          "type": "object",
+          "type": ["object", "null"],
           "description": "Targets which are Integrated Development Environment",
           "allOf": [{ "$ref": "#/$defs/target-category" }]
         },
         "custom": {
-          "type": "object",
+          "type": ["object", "null"],
           "description": "User defined Custom targets",
           "allOf": [{ "$ref": "#/$defs/target-category" }]
         }

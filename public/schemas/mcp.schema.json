@@ -5,6 +5,11 @@
   "description": "Schema for DotAgents MCP server configuration file.",
   "type": "object",
   "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Schema for DotAgents Application configuration file.",
+      "default": "https://dotagents.soorya-u.dev/schemas/mcp.schema.json"
+    },
     "servers": {
       "type": "object",
       "description": "Map of server names to their configuration.",
@@ -47,7 +52,7 @@
               "additionalProperties": { "type": "string" }
             },
             "envFile": {
-              "type": "string",
+              "type": ["string", "null"],
               "description": "Path to environment file (only for type = 'stdio')."
             }
           },
