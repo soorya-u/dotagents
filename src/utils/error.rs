@@ -1,5 +1,5 @@
 use anyhow::Error;
-use log::error;
+use log;
 use std::fmt::Write;
 
 pub(crate) fn display_error(error: Error) {
@@ -12,5 +12,5 @@ pub(crate) fn display_error(error: Error) {
 
     error_message.pop();
 
-    error!("{}", error_message);
+    log::error!("{}", error_message);
 }
