@@ -3,6 +3,7 @@ mod config;
 mod constants;
 mod core;
 mod schema;
+mod templates;
 mod utils;
 
 fn main() {
