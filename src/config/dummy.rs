@@ -7,7 +7,7 @@ use crate::cli::InitOptions;
 use crate::constants::resources;
 use crate::schema::{
     command::CommandBuilder,
-    config::{ConfigBuilder, Overrides, TargetOption, Targets},
+    config::{CommonOverride, ConfigBuilder, CustomOverride},
     mcp::McpConfigBuilder,
 };
 
@@ -79,29 +79,36 @@ pub(crate) fn set_dummy_mcp() -> Result<()> {
 }
 
 pub(crate) fn set_dummy_config(opts: InitOptions) -> Result<()> {
-    let targets = Targets {
-        cli: Some(HashMap::from([(
-            "gemini".to_string(),
-            Some(TargetOption {
-                overrides: Some(Overrides {
-                    command: None,
-                    instructions: Some(true),
-                    mcp: None,
-                }),
-            }),
-        )])),
-        ide: None,
-        custom: None,
-    };
-
-    let config_builder = ConfigBuilder::new(!opts.no_mcp, !opts.no_command, !opts.no_instruction);
+    let config_builder = ConfigBuilder::new()
+        .add_features(!opts.no_mcp, !opts.no_command, !opts.no_instruction)
+        .add_targets(
+            vec!["gemini".to_string()],
+            vec!["vscode".to_string(), "windsurf".to_string()],
+            vec![],
+        );
 
     let global_config = config_builder.clone().build();
 
-    let local_config = config_builder.add_target(targets).build();
+    let local_config = config_builder
+        .add_custom_target(vec!["opencode".into()])
+        .add_custom_override(
+            "opencode",
+            CustomOverride {
+                common: CommonOverride {
+                    commands_dir: None,
+                    instruction_file: Some("INSTRUCTIONS.md".into()),
+                    mcp_file: Some("mcp.jsonc".into()),
+                    commands: None,
+                    instruction: None,
+                    mcp: None,
+                },
+                path: Some("templates/opencode-special".into()),
+            },
+        )
+        .build();
 
-    let local_content = local_config.to_yaml()?;
-    let global_content = global_config.to_yaml()?;
+    let local_content = local_config.to_toml()?;
+    let global_content = global_config.to_toml()?;
 
     set_dummy_data(resources::GLOBAL_CONFIG_FILE, &global_content, None)?;
 

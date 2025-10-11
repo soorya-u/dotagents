@@ -1,87 +1,90 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://dotagents.soorya-u.dev/schemas/config.schema.json",
-  "title": "DotAgents Application Configuration",
-  "description": "Schema for DotAgents Application configuration file.",
+  "title": "Dotagents Configuration",
+  "description": "Schema for Dotagents configuration file in TOML format.",
   "type": "object",
   "properties": {
-    "$schema": {
+    "schema": {
       "type": "string",
-      "description": "Schema for DotAgents Application configuration file.",
+      "description": "URL reference to the schema definition.",
       "default": "https://dotagents.soorya-u.dev/schemas/config.schema.json"
     },
     "features": {
-      "type": "object",
-      "description": "Features that are enabled within the repositories",
-      "properties": {
-        "command": {
-          "type": "boolean",
-          "description": "Enable custom commands to be replicated to targets",
-          "default": true
-        },
-        "instructions": {
-          "type": "boolean",
-          "description": "Enable instructions to be replicated to targets",
-          "default": true
-        },
-        "mcp": {
-          "type": "boolean",
-          "description": "Enable MCP to be replicated to targets",
-          "default": true
-        }
+      "type": "array",
+      "description": "List of enabled features.",
+      "items": {
+        "type": "string",
+        "enum": ["commands", "instruction", "mcp"]
       },
-      "required": ["command", "instructions", "mcp"],
-      "additionalProperties": false
+      "uniqueItems": true
     },
     "targets": {
       "type": "object",
-      "description": "Specifies the targets for which the features should be replicated.",
+      "description": "Defines which CLI, IDE, and custom targets are enabled.",
       "properties": {
         "cli": {
-          "type": "object",
-          "description": "Targets which are CLI Coding Agents",
-          "allOf": [{ "$ref": "#/$defs/target-category" }]
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
         },
         "ide": {
-          "type": "object",
-          "description": "Targets which are Integrated Development Environment",
-          "allOf": [{ "$ref": "#/$defs/target-category" }]
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
         },
         "custom": {
-          "type": "object",
-          "description": "User defined Custom targets",
-          "allOf": [{ "$ref": "#/$defs/target-category" }]
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
         }
       },
-      "additionalProperties": false
+      "required": ["cli", "ide", "custom"]
     }
   },
-  "required": ["features"],
+  "patternProperties": {
+    "^(ide|cli|custom)\\.[A-Za-z0-9_-]+$": {
+      "$ref": "#/$defs/targetOverride"
+    }
+  },
+  "required": ["schema", "features", "targets"],
   "additionalProperties": false,
-
   "$defs": {
-    "target-category": {
+    "targetOverride": {
       "type": "object",
-      "patternProperties": {
-        "^[a-zA-Z0-9-_]+$": { "$ref": "#/$defs/target-properties" }
+      "description": "Overrides for individual targets.",
+      "properties": {
+        "commands-dir": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of directories containing commands."
+        },
+        "instruction-file": {
+          "type": "string",
+          "description": "Path to the instruction file."
+        },
+        "mcp-file": {
+          "type": "string",
+          "description": "Path to the MCP configuration file."
+        },
+        "commands": {
+          "type": "boolean",
+          "description": "Whether to enable or disable commands for this target."
+        },
+        "instruction": {
+          "type": "boolean",
+          "description": "Whether to enable or disable instructions for this target."
+        },
+        "mcp": {
+          "type": "boolean",
+          "description": "Whether to enable or disable MCP for this target."
+        },
+        "path": {
+          "type": "string",
+          "description": "Optional override path for custom targets."
+        }
       },
       "additionalProperties": false
-    },
-    "target-properties": {
-      "type": "object",
-      "description": "Target properties which adds extra context for a target",
-      "properties": {
-        "overrides": {
-          "type": "object",
-          "description": "Feature overrides for this target",
-          "properties": {
-            "command": { "type": "boolean" },
-            "instructions": { "type": "boolean" },
-            "mcp": { "type": "boolean" }
-          },
-          "additionalProperties": false
-        }
-      }
     }
   }
 }
