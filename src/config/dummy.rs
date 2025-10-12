@@ -5,8 +5,13 @@ use std::path::{Path, PathBuf};
 
 use crate::cli::InitOptions;
 use crate::constants::resources;
-use crate::schema::config::{ConfigAgentSettings, ConfigBuilder, ProviderSettings, Target};
-use crate::schema::{command::CommandBuilder, mcp::McpConfigBuilder};
+use crate::schema::builder::{
+    command::CommandBuilder, config::ApplicationConfigBuilder, mcp::McpConfigBuilder,
+};
+use crate::schema::{
+    common::Target,
+    config::{ConfigAgentAbilitySettings, ConfigAgentSettings},
+};
 
 fn get_root_relative_path<P: AsRef<Path>>(relative_path: P) -> PathBuf {
     let main_dir = Path::new(resources::ROOT_DIR);
@@ -14,8 +19,6 @@ fn get_root_relative_path<P: AsRef<Path>>(relative_path: P) -> PathBuf {
 }
 
 fn set_dummy_data(filename: &str, content: &str, dir_name: Option<&str>) -> Result<()> {
-    if dir_name.is_some() && Path::new(dir_name.unwrap()).exists() {}
-
     let path = if dir_name.is_some() {
         let absolute_dir = get_root_relative_path(dir_name.unwrap());
         fs::create_dir_all(&absolute_dir).context("unable to create commands directory")?;
@@ -83,7 +86,7 @@ pub(crate) fn set_dummy_mcp() -> Result<()> {
 }
 
 pub(crate) fn set_dummy_config(opts: InitOptions) -> Result<()> {
-    let config_builder = ConfigBuilder::new()
+    let config_builder = ApplicationConfigBuilder::new()
         .add_features(!opts.no_command, !opts.no_instruction, !opts.no_mcp)
         .add_targets(
             vec!["gemini".to_string()],
@@ -98,7 +101,7 @@ pub(crate) fn set_dummy_config(opts: InitOptions) -> Result<()> {
         .add_provider(
             Target::Custom,
             "opencode",
-            ProviderSettings {
+            ConfigAgentAbilitySettings {
                 mcp: ConfigAgentSettings {
                     template: Some("templates/opencode".into()),
                     target: Some("{{ workspace_dir }}/.opencode/mcp.json".into()),
