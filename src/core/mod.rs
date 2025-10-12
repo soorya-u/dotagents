@@ -1,2 +1,1 @@
-mod symlink;
 mod template;

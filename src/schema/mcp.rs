@@ -11,9 +11,11 @@ pub(crate) struct McpConfig {
     pub servers: HashMap<String, ServerConfig>,
 }
 
-pub(crate) struct McpConfigBuilder {
-    schema: String,
-    servers: HashMap<String, ServerConfig>,
+#[derive(Serialize, Deserialize)]
+pub struct CommonConfig {
+    pub disabled: Option<bool>,
+    #[serde(rename = "disabledTools")]
+    pub disabled_tools: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -21,18 +23,27 @@ pub(crate) struct McpConfigBuilder {
 pub enum ServerConfig {
     #[serde(rename = "http")]
     Http {
+        #[serde(flatten)]
+        common: Option<CommonConfig>,
         url: String,
         headers: Option<HashMap<String, String>>,
     },
 
     #[serde(rename = "stdio")]
     Stdio {
+        #[serde(flatten)]
+        common: Option<CommonConfig>,
         command: String,
         args: Vec<String>,
         cwd: Option<String>,
         env: Option<HashMap<String, String>>,
         env_file: Option<String>,
     },
+}
+
+pub(crate) struct McpConfigBuilder {
+    schema: String,
+    servers: HashMap<String, ServerConfig>,
 }
 
 impl McpConfig {
@@ -64,12 +75,14 @@ impl McpConfigBuilder {
         name: &str,
         url: &str,
         headers: Option<HashMap<String, String>>,
+        common: Option<CommonConfig>,
     ) -> Self {
         self.servers.insert(
             name.to_string(),
             ServerConfig::Http {
                 url: url.into(),
                 headers,
+                common,
             },
         );
         self
@@ -81,6 +94,7 @@ impl McpConfigBuilder {
         command: &str,
         args: Vec<String>,
         cwd: Option<&str>,
+        common: Option<CommonConfig>,
     ) -> Self {
         self.servers.insert(
             name.to_string(),
@@ -90,6 +104,7 @@ impl McpConfigBuilder {
                 cwd: cwd.map(|s| s.into()),
                 env: Some(HashMap::new()),
                 env_file: None,
+                common,
             },
         );
         self
