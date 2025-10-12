@@ -25,14 +25,19 @@ pub(super) fn initialize_agents_dir(opts: InitOptions) -> Result<()> {
         .try_exists()
         .context("failed to check if .dotagents directory exists")?
     {
-        // TODO: Add --force config to overwrite existing config
-        anyhow::bail!(format!(
-            "Configuration already exists: {}",
-            main_dir.display()
-        ));
-    } else {
-        fs::create_dir(main_dir).context("failed to create .dotagents directory")?;
+        if !opts.force {
+            anyhow::bail!(format!(
+                "Configuration already exists: {}",
+                main_dir.display()
+            ));
+        } else {
+            log::warn!("Overwriting existing configuration");
+            fs::remove_dir_all(main_dir).context("failed to remove .dotagents directory")?;
+        }
     }
+    
+    fs::create_dir(main_dir).context("failed to create .dotagents directory")?;
+    
 
     seed_dummy(
         opts.no_command,
