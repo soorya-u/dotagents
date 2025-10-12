@@ -15,7 +15,7 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["http", "stdio"],
+              "enum": ["http", "stdio", "sse"],
               "description": "Type of the server connection."
             },
             "url": {

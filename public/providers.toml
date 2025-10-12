@@ -1,0 +1,38 @@
+#################################
+# Copilot Configuration
+#################################
+
+# Copilot MCP
+[providers.cli.copilot.mcp]
+template = "https://dotagents.soorya-u.dev/templates/copilot/mcp.hbs"
+target = "{{ home_dir }}/.copilot/mcp-config.json"
+
+# Copilot Instructions
+[providers.cli.copilot.instructions]
+template = "https://dotagents.soorya-u.dev/templates/copilot/instructions.hbs"
+target = "{{ workspace_dir }}/.github/copilot-instructions.md"
+
+# Copilot Commands
+[providers.cli.copilot.commands]
+template = "https://dotagents.soorya-u.dev/templates/copilot/command.hbs"
+target = "{{ workspace_dir }}/.github/prompts/{{ command.name }}.prompt.md"
+
+
+#################################
+# Windsurf Configuration
+#################################
+
+# Windsurf MCP
+[providers.ide.windsurf.mcp]
+template = "https://dotagents.soorya-u.dev/templates/windsurf/mcp.hbs"
+target = "{{ home_dir }}/.codeium/windsurf/mcp_config.json"
+
+# Windsurf Instructions
+[providers.ide.windsurf.instructions]
+template = "https://dotagents.soorya-u.dev/templates/windsurf/instruction.hbs"
+target = "{{ workspace_dir }}/.windsurf/rules/specify-rules.md"
+
+# Windsurf Commands
+[providers.ide.windsurf.commands]
+template = "https://dotagents.soorya-u.dev/templates/windsurf/command.hbs"
+target = "{{ workspace_dir }}/.windsurf/workflows/{{ command.name }}.md"

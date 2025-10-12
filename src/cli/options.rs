@@ -36,13 +36,9 @@ pub(crate) enum Action {
     },
 }
 
-const fn default_force() -> bool {
-    cfg!(debug_assertions)
-}
-
 #[derive(Args)]
 pub(crate) struct InitOptions {
-    /// Disables the MCP Templating for all the Targets. 
+    /// Disables the MCP Templating for all the Targets.
     /// You can override this later in config.toml file.
     #[clap(long)]
     pub no_mcp: bool,
@@ -58,7 +54,7 @@ pub(crate) struct InitOptions {
     pub no_instruction: bool,
 
     /// Force overwriting existing configuration.
-    #[clap(long, short, default_value_t = default_force())]
+    #[clap(long, short, default_value_t = cfg!(debug_assertions))]
     pub force: bool,
 }
 

@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    {{#each mcp.servers}}
+    {{@key}}: {
+      "type": {{#ifEq this.type "stdio"}}"local"{{else}}"{{this.type}}"{{/ifEq}},
+      {{#ifEq this.type "http"}}
+        "url": "{{this.url}}",
+        "headers": {{json this.headers}},
+      {{else}}
+        "command": "{{this.command}}",
+        "args": {{json this.args}},
+        "env": {{json this.env}},
+      {{/if}}
+      "tools": {{json this.enabledTools}}
+    }{{#unless @last}},{{/unless}}
+    {{/each}}
+  }
+}
