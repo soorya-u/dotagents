@@ -2,6 +2,11 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+use crate::{
+    constants::resources,
+    utils::{fs, path},
+};
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ApplicationConfig {
     pub schema: String,
@@ -54,6 +59,99 @@ pub(crate) struct ConfigAgentSettings {
     pub include: Option<Vec<String>>,
 }
 
+impl ConfigAgentSettings {
+    pub fn merge(&mut self, other: &ConfigAgentSettings) -> Self {
+        Self {
+            template: self.template.clone().or_else(|| other.template.clone()),
+            target: self.target.clone().or_else(|| other.target.clone()),
+            disabled: self.disabled.or(other.disabled),
+            include: match (&self.include, &other.include) {
+                (Some(self_vec), Some(other_vec)) => {
+                    let mut merged = self_vec.clone();
+                    merged.extend(other_vec.clone());
+                    Some(merged)
+                }
+                (Some(local_vec), None) => Some(local_vec.clone()),
+                (None, Some(global_vec)) => Some(global_vec.clone()),
+                (None, None) => None,
+            },
+        }
+    }
+}
+
+impl ConfigAgentAbilitySettings {
+    fn merge(&mut self, other: &ConfigAgentAbilitySettings) {
+        self.mcp = self.mcp.merge(&other.mcp);
+        self.instructions = self.instructions.merge(&other.instructions);
+        self.commands = self.commands.merge(&other.commands);
+    }
+}
+
+impl Provider {
+    fn merge(&mut self, other: Provider) {
+        if let Some(ide) = other.ide {
+            let map = self.ide.get_or_insert_with(HashMap::new);
+            for (key, local_settings) in ide {
+                match map.get_mut(&key) {
+                    Some(global_settings) => {
+                        global_settings.merge(&local_settings);
+                    }
+                    None => {
+                        map.insert(key, local_settings);
+                    }
+                }
+            }
+        }
+
+        if let Some(cli) = other.cli {
+            let map = self.cli.get_or_insert_with(HashMap::new);
+            for (key, local_settings) in cli {
+                match map.get_mut(&key) {
+                    Some(global_settings) => {
+                        global_settings.merge(&local_settings);
+                    }
+                    None => {
+                        map.insert(key, local_settings);
+                    }
+                }
+            }
+        }
+
+        if let Some(custom) = other.custom {
+            let map = self.custom.get_or_insert_with(HashMap::new);
+            for (key, local_settings) in custom {
+                match map.get_mut(&key) {
+                    Some(global_settings) => {
+                        global_settings.merge(&local_settings);
+                    }
+                    None => {
+                        map.insert(key, local_settings);
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn merge_provider_map(
+    global_map: &mut Option<HashMap<String, ConfigAgentAbilitySettings>>,
+    local_map: Option<HashMap<String, ConfigAgentAbilitySettings>>,
+) {
+    if let Some(local) = local_map {
+        let map = global_map.get_or_insert_with(HashMap::new);
+        for (key, local_settings) in local {
+            match map.get_mut(&key) {
+                Some(global_settings) => {
+                    global_settings.merge(&local_settings);
+                }
+                None => {
+                    map.insert(key, local_settings);
+                }
+            }
+        }
+    }
+}
+
 impl ApplicationConfig {
     pub fn to_toml(&self) -> Result<String> {
         toml::to_string(self).context("Failed to serialize config to TOML")
@@ -63,5 +161,59 @@ impl ApplicationConfig {
         toml::from_str(content).context("Failed to deserialize config from TOML")
     }
 
-    // fn load_global_config() -> Result<Self> {}
+    fn load_global_config() -> Result<Self> {
+        let app_dir = path::get_application_dir()?;
+        let conf = app_dir.join(resources::GLOBAL_CONFIG_FILE);
+
+        let global_config = fs::read_file(conf)?;
+        Self::from_toml(&global_config)
+    }
+
+    fn load_local_config() -> Result<Self> {
+        let app_dir = path::get_application_dir()?;
+        let conf = app_dir.join(resources::LOCAL_CONFIG_FILE);
+
+        let local_config = fs::read_file(conf)?;
+        Self::from_toml(&local_config)
+    }
+
+    fn merge_config(global: Self, local: Self) -> Self {
+        Self {
+            schema: global.schema,
+            features: if !local.features.is_empty() {
+                local.features
+            } else {
+                global.features
+            },
+            targets: Targets {
+                ide: if !local.targets.ide.is_empty() {
+                    local.targets.ide
+                } else {
+                    global.targets.ide
+                },
+                cli: if !local.targets.cli.is_empty() {
+                    local.targets.cli
+                } else {
+                    global.targets.cli
+                },
+                custom: if !local.targets.custom.is_empty() {
+                    local.targets.custom
+                } else {
+                    global.targets.custom
+                },
+            },
+            providers: match (global.providers, local.providers) {
+                (Some(mut g), Some(l)) => {
+                    // Merge each category (ide, cli, custom)
+                    merge_provider_map(&mut g.ide, l.ide);
+                    merge_provider_map(&mut g.cli, l.cli);
+                    merge_provider_map(&mut g.custom, l.custom);
+                    Some(g)
+                }
+                (None, Some(l)) => Some(l),
+                (Some(g), None) => Some(g),
+                (None, None) => None,
+            },
+        }
+    }
 }
