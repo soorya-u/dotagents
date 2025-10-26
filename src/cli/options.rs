@@ -34,6 +34,8 @@ pub(crate) enum Action {
         #[clap(long)]
         to: Option<PathBuf>,
     },
+
+    Deploy,
 }
 
 #[derive(Args)]
