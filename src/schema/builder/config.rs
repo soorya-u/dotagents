@@ -38,15 +38,24 @@ impl ApplicationConfigBuilder {
     }
 
     pub fn add_targets(mut self, ide: Vec<String>, cli: Vec<String>, custom: Vec<String>) -> Self {
-        self.targets = Some(Targets { ide, cli, custom });
+        self.targets = Some(Targets {
+            ide: Some(ide),
+            cli: Some(cli),
+            custom: Some(custom),
+        });
         self
     }
 
-    pub fn add_target(mut self, target_name: Target, targets: Vec<String>) -> Self {
+    pub fn add_target(mut self, target_name: Target, new_targets: Vec<String>) -> Self {
+        let targets = self.targets.get_or_insert_with(Targets::default);
+
         match target_name {
-            Target::CLI => self.targets.as_mut().unwrap().cli.extend(targets),
-            Target::IDE => self.targets.as_mut().unwrap().ide.extend(targets),
-            Target::Custom => self.targets.as_mut().unwrap().custom.extend(targets),
+            Target::CLI => targets.cli.get_or_insert_with(Vec::new).extend(new_targets),
+            Target::IDE => targets.ide.get_or_insert_with(Vec::new).extend(new_targets),
+            Target::Custom => targets
+                .custom
+                .get_or_insert_with(Vec::new)
+                .extend(new_targets),
         };
         self
     }

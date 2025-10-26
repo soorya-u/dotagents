@@ -2,10 +2,7 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::{
-    constants::resources,
-    utils::{fs, path},
-};
+use crate::{constants::resources, templates::helpers::get_templater};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ApplicationConfig {
@@ -17,9 +14,9 @@ pub struct ApplicationConfig {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Targets {
-    pub ide: Vec<String>,
-    pub cli: Vec<String>,
-    pub custom: Vec<String>,
+    pub ide: Option<Vec<String>>,
+    pub cli: Option<Vec<String>>,
+    pub custom: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -87,52 +84,6 @@ impl ConfigAgentAbilitySettings {
     }
 }
 
-impl Provider {
-    fn merge(&mut self, other: Provider) {
-        if let Some(ide) = other.ide {
-            let map = self.ide.get_or_insert_with(HashMap::new);
-            for (key, local_settings) in ide {
-                match map.get_mut(&key) {
-                    Some(global_settings) => {
-                        global_settings.merge(&local_settings);
-                    }
-                    None => {
-                        map.insert(key, local_settings);
-                    }
-                }
-            }
-        }
-
-        if let Some(cli) = other.cli {
-            let map = self.cli.get_or_insert_with(HashMap::new);
-            for (key, local_settings) in cli {
-                match map.get_mut(&key) {
-                    Some(global_settings) => {
-                        global_settings.merge(&local_settings);
-                    }
-                    None => {
-                        map.insert(key, local_settings);
-                    }
-                }
-            }
-        }
-
-        if let Some(custom) = other.custom {
-            let map = self.custom.get_or_insert_with(HashMap::new);
-            for (key, local_settings) in custom {
-                match map.get_mut(&key) {
-                    Some(global_settings) => {
-                        global_settings.merge(&local_settings);
-                    }
-                    None => {
-                        map.insert(key, local_settings);
-                    }
-                }
-            }
-        }
-    }
-}
-
 fn merge_provider_map(
     global_map: &mut Option<HashMap<String, ConfigAgentAbilitySettings>>,
     local_map: Option<HashMap<String, ConfigAgentAbilitySettings>>,
@@ -162,18 +113,16 @@ impl ApplicationConfig {
     }
 
     fn load_global_config() -> Result<Self> {
-        let app_dir = path::get_application_dir()?;
-        let conf = app_dir.join(resources::GLOBAL_CONFIG_FILE);
+        let templater = get_templater();
+        let global_config = templater.render_template(resources::GLOBAL_CONFIG_FILE, None)?;
 
-        let global_config = fs::read_file(conf)?;
         Self::from_toml(&global_config)
     }
 
     fn load_local_config() -> Result<Self> {
-        let app_dir = path::get_application_dir()?;
-        let conf = app_dir.join(resources::LOCAL_CONFIG_FILE);
+        let templater = get_templater();
+        let local_config = templater.render_template(resources::LOCAL_CONFIG_FILE, None)?;
 
-        let local_config = fs::read_file(conf)?;
         Self::from_toml(&local_config)
     }
 
@@ -186,17 +135,17 @@ impl ApplicationConfig {
                 global.features
             },
             targets: Targets {
-                ide: if !local.targets.ide.is_empty() {
+                ide: if local.targets.ide.is_some() {
                     local.targets.ide
                 } else {
                     global.targets.ide
                 },
-                cli: if !local.targets.cli.is_empty() {
+                cli: if local.targets.cli.is_some() {
                     local.targets.cli
                 } else {
                     global.targets.cli
                 },
-                custom: if !local.targets.custom.is_empty() {
+                custom: if local.targets.custom.is_some() {
                     local.targets.custom
                 } else {
                     global.targets.custom
@@ -215,5 +164,11 @@ impl ApplicationConfig {
                 (None, None) => None,
             },
         }
+    }
+
+    pub fn new() -> Result<Self> {
+        let global_config = Self::load_global_config()?;
+        let local_config = Self::load_local_config()?;
+        Ok(Self::merge_config(global_config, local_config))
     }
 }

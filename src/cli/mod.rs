@@ -1,4 +1,5 @@
 mod completions;
+mod deploy;
 mod init;
 mod options;
 mod runner;
