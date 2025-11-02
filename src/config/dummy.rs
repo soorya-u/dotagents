@@ -10,7 +10,7 @@ use crate::schema::builder::{
 };
 use crate::schema::{
     common::Target,
-    config::{ConfigAgentAbilitySettings, ConfigAgentSettings},
+    config::{ConfigAgentAbilitySettings, ConfigAgentSettings, TomlConfig},
 };
 
 fn get_root_relative_path<P: AsRef<Path>>(relative_path: P) -> PathBuf {
@@ -102,30 +102,29 @@ pub(crate) fn set_dummy_config(opts: InitOptions) -> Result<()> {
             Target::Custom,
             "opencode",
             ConfigAgentAbilitySettings {
-                mcp: ConfigAgentSettings {
+                mcp: Some(ConfigAgentSettings {
                     template: Some("templates/opencode".into()),
                     target: Some("{{ workspace_dir }}/.opencode/mcp.json".into()),
                     ..Default::default()
-                },
-                instructions: ConfigAgentSettings {
+                }),
+                instructions: Some(ConfigAgentSettings {
                     template: Some("templates/INSTRUCTION.md".into()),
                     target: Some("{{ workspace_dir }}/.opencode/instructions.md".into()),
                     ..Default::default()
-                },
-                commands: ConfigAgentSettings {
+                }),
+                commands: Some(ConfigAgentSettings {
                     template: Some("templates/commands-template".into()),
                     target: Some("{{ workspace_dir }}/.opencode/commands".into()),
                     ..Default::default()
-                },
+                }),
             },
         )
-        .build();
+        .build_local();
 
     let local_content = local_config.to_toml()?;
     let global_content = global_config.to_toml()?;
 
     set_dummy_data(resources::GLOBAL_CONFIG_FILE, &global_content, None)?;
-
     set_dummy_data(resources::LOCAL_CONFIG_FILE, &local_content, None)?;
 
     Ok(())
