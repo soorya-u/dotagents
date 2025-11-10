@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use super::common::{Providers, Targets};
 use super::traits::TomlConfig;
 use crate::constants::schema::CONFIG_SCHEMA;
@@ -14,6 +16,8 @@ pub struct LocalConfig {
     pub targets: Option<Targets>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub providers: Option<Providers>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub variables: Option<HashMap<String, String>>,
 }
 
 impl LocalConfig {
@@ -23,6 +27,7 @@ impl LocalConfig {
             features: None,
             targets: None,
             providers: None,
+            variables: None,
         }
     }
 
@@ -32,6 +37,7 @@ impl LocalConfig {
             features: Some(features),
             targets: None,
             providers: None,
+            variables: None,
         }
     }
 
@@ -41,6 +47,7 @@ impl LocalConfig {
             features: None,
             targets: None,
             providers: Some(providers),
+            variables: None,
         }
     }
 

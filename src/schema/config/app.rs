@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use super::cache::CacheConfig;
 use super::common::{Providers, Targets};
 use super::global::GlobalConfig;
@@ -14,6 +16,7 @@ pub struct AppConfig {
     pub targets: Targets,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub providers: Option<Providers>,
+    pub variables: Option<HashMap<String, String>>,
 }
 
 impl AppConfig {
@@ -23,6 +26,7 @@ impl AppConfig {
             features: Vec::new(),
             targets: Targets::new(),
             providers: None,
+            variables: None,
         }
     }
 
@@ -52,11 +56,23 @@ impl AppConfig {
             (Some(g), Some(l)) => Some(g.merge(l)),
         };
 
+        let variables = match (&global.variables, &local.variables) {
+            (None, None) => None,
+            (Some(g), None) => Some(g.clone()),
+            (None, Some(l)) => Some(l.clone()),
+            (Some(g), Some(l)) => {
+                let mut var = g.clone();
+                var.extend(l.clone());
+                Some(var)
+            }
+        };
+
         Self {
             schema,
             features,
             targets,
             providers,
+            variables,
         }
     }
 
@@ -66,6 +82,7 @@ impl AppConfig {
             features: Vec::new(),
             targets: Targets::new(),
             providers: cache.providers.clone(),
+            variables: None,
         }
     }
 
