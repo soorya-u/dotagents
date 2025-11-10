@@ -1,6 +1,6 @@
 use super::common::{Providers, Targets};
 use super::traits::TomlConfig;
-use crate::constants::resources::CONFIG_SCHEMA;
+use crate::constants::schema::CONFIG_SCHEMA;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -8,13 +8,10 @@ use serde::{Deserialize, Serialize};
 pub struct GlobalConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub schema: Option<String>,
-
     #[serde(default)]
     pub features: Vec<String>,
-
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub targets: Option<Targets>,
-
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub providers: Option<Providers>,
 }

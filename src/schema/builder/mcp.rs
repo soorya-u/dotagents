@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    constants::resources,
+    constants::schema::MCP_SCHEMA,
     schema::mcp::{CommonConfig, McpConfig, ServerConfig},
 };
 
@@ -13,7 +13,7 @@ pub(crate) struct McpConfigBuilder {
 impl McpConfigBuilder {
     pub fn new() -> Self {
         Self {
-            schema: resources::MCP_SCHEMA.into(),
+            schema: MCP_SCHEMA.into(),
             servers: HashMap::new(),
         }
     }

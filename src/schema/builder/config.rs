@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    constants::resources::CONFIG_SCHEMA,
+    constants::schema::CONFIG_SCHEMA,
     schema::{
         common::Target,
         config::{

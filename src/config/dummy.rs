@@ -1,10 +1,15 @@
 use anyhow::{Context, Result};
 use std::collections::HashMap;
+use std::fmt::format;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::cli::InitOptions;
-use crate::constants::resources;
+use crate::constants::dir::CACHE_DIR;
+use crate::constants::{
+    dir::{COMMANDS_DIR, ROOT_DIR},
+    file::{GLOBAL_CONFIG_FILE, INSTRUCTIONS_FILE, LOCAL_CONFIG_FILE, MCP_FILE},
+};
 use crate::schema::builder::{
     command::CommandBuilder, config::ApplicationConfigBuilder, mcp::McpConfigBuilder,
 };
@@ -14,7 +19,7 @@ use crate::schema::{
 };
 
 fn get_root_relative_path<P: AsRef<Path>>(relative_path: P) -> PathBuf {
-    let main_dir = Path::new(resources::ROOT_DIR);
+    let main_dir = Path::new(ROOT_DIR);
     main_dir.join(relative_path)
 }
 
@@ -45,7 +50,7 @@ Context: $USER_INPUT"#,
 
     let content = commands.to_markdown()?;
 
-    set_dummy_data("dummy.md", &content, Some(resources::COMMANDS_DIR))?;
+    set_dummy_data("dummy.md", &content, Some(COMMANDS_DIR))?;
 
     Ok(())
 }
@@ -53,7 +58,7 @@ Context: $USER_INPUT"#,
 pub(crate) fn set_dummy_instructions() -> Result<()> {
     let content = "# Instructions for {{ agent_name }}\n\nThis is a custom instructions for {{ agent_name }} for a given repository.\n";
 
-    set_dummy_data(resources::INSTRUCTIONS_FILE, content, None)?;
+    set_dummy_data(INSTRUCTIONS_FILE, content, None)?;
 
     Ok(())
 }
@@ -80,7 +85,7 @@ pub(crate) fn set_dummy_mcp() -> Result<()> {
 
     let content = config.to_json()?;
 
-    set_dummy_data(resources::MCP_FILE, &content, None)?;
+    set_dummy_data(MCP_FILE, &content, None)?;
 
     Ok(())
 }
@@ -124,16 +129,16 @@ pub(crate) fn set_dummy_config(opts: InitOptions) -> Result<()> {
     let local_content = local_config.to_toml()?;
     let global_content = global_config.to_toml()?;
 
-    set_dummy_data(resources::GLOBAL_CONFIG_FILE, &global_content, None)?;
-    set_dummy_data(resources::LOCAL_CONFIG_FILE, &local_content, None)?;
+    set_dummy_data(GLOBAL_CONFIG_FILE, &global_content, None)?;
+    set_dummy_data(LOCAL_CONFIG_FILE, &local_content, None)?;
 
     Ok(())
 }
 
 pub(crate) fn set_gitignore() -> Result<()> {
-    let content = "cache/\nlocal.config.yml";
+    let content = format!("{}/\n{}", CACHE_DIR, LOCAL_CONFIG_FILE);
 
-    set_dummy_data(".gitignore", content, None)?;
+    set_dummy_data(".gitignore", &content, None)?;
 
     Ok(())
 }
