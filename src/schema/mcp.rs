@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
+use serde_json::{Value, to_value};
 use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize)]
@@ -10,6 +11,7 @@ pub(crate) struct McpConfig {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CommonConfig {
     pub disabled: Option<bool>,
     #[serde(rename = "disabledTools")]
@@ -17,6 +19,7 @@ pub struct CommonConfig {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[serde(tag = "type")]
 pub enum ServerConfig {
     #[serde(rename = "http")]
@@ -51,6 +54,11 @@ impl McpConfig {
         let result =
             serde_json::to_string_pretty(self).context("failed to serialize MCP config to JSON")?;
 
+        Ok(result)
+    }
+
+    pub fn to_json_value(&self) -> Result<Value> {
+        let result = to_value(&self).context("failed to convert to json value")?;
         Ok(result)
     }
 }

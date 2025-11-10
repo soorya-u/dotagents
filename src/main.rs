@@ -1,7 +1,10 @@
+#![allow(unused)] // TODO: Remove Later
+
 mod cli;
 mod config;
 mod constants;
 mod core;
+mod prelude;
 mod schema;
 mod templates;
 mod utils;

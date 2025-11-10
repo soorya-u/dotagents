@@ -1,6 +1,9 @@
 use super::options::InitOptions;
 use crate::config::dummy;
-use crate::constants::resources::{COMMANDS_DIR, INSTRUCTIONS_FILE, MCP_FILE, ROOT_DIR};
+use crate::constants::{
+    dir::{COMMANDS_DIR, ROOT_DIR},
+    file::{INSTRUCTIONS_FILE, MCP_FILE},
+};
 use anyhow::{Context, Result};
 use log;
 use std::{fs, path::Path};
@@ -35,9 +38,8 @@ pub(super) fn initialize_agents_dir(opts: InitOptions) -> Result<()> {
             fs::remove_dir_all(main_dir).context("failed to remove .dotagents directory")?;
         }
     }
-    
+
     fs::create_dir(main_dir).context("failed to create .dotagents directory")?;
-    
 
     seed_dummy(
         opts.no_command,
@@ -63,4 +65,3 @@ pub(super) fn initialize_agents_dir(opts: InitOptions) -> Result<()> {
 
     Ok(())
 }
-

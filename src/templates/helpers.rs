@@ -3,11 +3,14 @@ use handlebars::Handlebars;
 use serde_json::{Value, json};
 use std::sync::OnceLock;
 
-use crate::constants::{
-    resources::{GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE},
-    variables::{APPLICATION_DIR, CONFIG_DIR, WORKSPACE_DIR},
-};
 use crate::utils::path::{get_application_dir, get_config_dir, get_workspace_dir};
+use crate::{
+    constants::{
+        file::{GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE},
+        variables::{APPLICATION_DIR, CONFIG_DIR, WORKSPACE_DIR},
+    },
+    utils::merge_json,
+};
 
 static TEMPLATER: OnceLock<Templater> = OnceLock::new();
 
@@ -75,7 +78,7 @@ impl Templater {
 
     pub fn render_template(&self, name: &str, data: Option<&Value>) -> Result<String> {
         let data = match data {
-            Some(data) => data,
+            Some(data) => &merge_json(data, &self.globals),
             None => &self.globals,
         };
 

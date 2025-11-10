@@ -3,7 +3,7 @@ use std::env;
 use std::io::{Error, ErrorKind};
 use std::path::PathBuf;
 
-use crate::constants::resources::ROOT_DIR;
+use crate::constants::dir::ROOT_DIR;
 
 fn get_dir_or_die(path: PathBuf) -> Result<PathBuf> {
     if path.is_dir() {

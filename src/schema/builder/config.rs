@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    constants::resources::CONFIG_SCHEMA,
+    constants::schema::CONFIG_SCHEMA,
     schema::{
         common::Target,
         config::{
@@ -17,6 +17,7 @@ pub(crate) struct ApplicationConfigBuilder {
     features: Option<Vec<String>>,
     targets: Option<Targets>,
     providers: Option<Providers>,
+    variables: Option<HashMap<String, String>>,
 }
 
 impl ApplicationConfigBuilder {
@@ -26,6 +27,7 @@ impl ApplicationConfigBuilder {
             features: None,
             targets: None,
             providers: None,
+            variables: None,
         }
     }
 
@@ -123,6 +125,7 @@ impl ApplicationConfigBuilder {
             features: self.features.unwrap_or_default(),
             targets: self.targets,
             providers: self.providers,
+            variables: self.variables,
         }
     }
 
@@ -132,6 +135,7 @@ impl ApplicationConfigBuilder {
             features: self.features,
             targets: self.targets,
             providers: self.providers,
+            variables: self.variables,
         }
     }
 }

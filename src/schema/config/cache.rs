@@ -1,6 +1,6 @@
 use super::common::Providers;
 use super::traits::TomlConfig;
-use crate::constants::resources::CONFIG_SCHEMA;
+use crate::constants::schema::CONFIG_SCHEMA;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
