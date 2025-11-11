@@ -23,6 +23,11 @@ pub enum TemplateSource {
     Text(String),
 }
 
+pub enum RenderType {
+    Name(String),
+    Content(String),
+}
+
 pub struct Templater {
     handlebar: Handlebars<'static>,
     globals: Value,
@@ -76,14 +81,16 @@ impl Templater {
         .context("failed to register template. check for syntax errors")
     }
 
-    pub fn render_template(&self, name: &str, data: Option<&Value>) -> Result<String> {
+    pub fn render_template(&self, name: RenderType, data: Option<&Value>) -> Result<String> {
         let data = match data {
             Some(data) => &merge_json(data, &self.globals),
             None => &self.globals,
         };
 
-        self.handlebar
-            .render(name, data)
-            .context("failed to render template")
+        match name {
+            RenderType::Name(path) => self.handlebar.render(&path, data),
+            RenderType::Content(str) => self.handlebar.render_template(&str, data),
+        }
+        .context("failed to render template")
     }
 }

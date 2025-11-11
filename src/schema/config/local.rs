@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use super::common::{Providers, Targets};
 use super::traits::TomlConfig;
@@ -11,7 +11,7 @@ pub struct LocalConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub schema: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub features: Option<Vec<String>>,
+    pub features: Option<HashSet<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub targets: Option<Targets>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -31,7 +31,7 @@ impl LocalConfig {
         }
     }
 
-    pub fn with_features(features: Vec<String>) -> Self {
+    pub fn with_features(features: HashSet<String>) -> Self {
         Self {
             schema: Some(CONFIG_SCHEMA.to_string()),
             features: Some(features),

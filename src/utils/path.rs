@@ -51,3 +51,8 @@ pub fn get_application_dir() -> Result<PathBuf> {
     let app_dir = get_workspace_dir()?.join(ROOT_DIR);
     get_dir_or_die(app_dir)
 }
+
+pub fn get_commands_dir() -> Result<PathBuf> {
+    let commands_dir = get_application_dir()?.join("commands");
+    get_dir_or_die(commands_dir)
+}

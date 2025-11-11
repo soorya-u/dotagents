@@ -1,7 +1,11 @@
+use std::fs;
+
 use anyhow::{Context, Result};
 use gray_matter::Matter;
 use gray_matter::engine::YAML;
 use serde::{Deserialize, Serialize};
+
+use crate::utils::path::get_commands_dir;
 
 #[derive(Serialize, Deserialize)]
 pub(crate) struct CommandMetadata {
@@ -33,5 +37,23 @@ impl Command {
             metadata,
             content: parsed.content,
         })
+    }
+
+    pub fn from_application() -> Result<Vec<Self>> {
+        let dir = get_commands_dir()?;
+        let mut commands = Vec::<Self>::new();
+
+        for entry in fs::read_dir(&dir)? {
+            let entry = entry?;
+            let path = entry.path();
+
+            if path.is_file() {
+                let content = fs::read_to_string(&path).context("failed to read file")?;
+                let command = Self::from_markdown(&content)?;
+                commands.push(command);
+            }
+        }
+
+        Ok(commands)
     }
 }
