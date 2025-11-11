@@ -1,21 +1,34 @@
 use anyhow::{Context, Result};
+use serde_yaml::to_value;
 
-use crate::constants::file::{GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE};
-use crate::schema::config::{AppConfig, GlobalConfig, LocalConfig, TomlConfig};
+use crate::constants::features::{COMMANDS_FEATURE, INSTRUCTION_FEATURE, MCP_FEATURE};
+use crate::schema::command::Command;
+use crate::schema::config::{AppConfig, TomlConfig};
+use crate::schema::instruction::Instruction;
+use crate::schema::mcp::McpConfig;
 use crate::templates::helpers::get_templater;
 
 pub(super) fn deploy() -> Result<()> {
     let templater = get_templater();
+    let app_config =
+        AppConfig::from_application(templater).context("Failed to load application config")?;
+    let variables =
+        to_value(app_config.variables.clone()).context("Failed to extract variables")?;
 
-    let global_config_content = templater.render_template(GLOBAL_CONFIG_FILE, None)?;
-    let local_config_content = templater.render_template(LOCAL_CONFIG_FILE, None)?;
+    if app_config.has_feature(COMMANDS_FEATURE) {
+        let commands = Command::from_application().context("Failed to load commands")?;
+        let providers_with_config = app_config.get_feature_providers(COMMANDS_FEATURE);
+    }
 
-    let local_config = LocalConfig::from_toml(&local_config_content)?;
-    local_config.validate().context("invalid local config")?;
-    let global_config = GlobalConfig::from_toml(&global_config_content)?;
-    global_config.validate().context("invalid local config")?;
+    if app_config.has_feature(MCP_FEATURE) {
+        let mcp = McpConfig::from_application().context("Failed to load mcp config")?;
+        let providers_with_config = app_config.get_feature_providers(MCP_FEATURE);
+    }
 
-    let app_config = AppConfig::from_configs(&global_config, &local_config);
+    if app_config.has_feature(INSTRUCTION_FEATURE) {
+        let instruction = Instruction::from_application().context("Failed to load instruction")?;
+        let providers_with_config = app_config.get_feature_providers(INSTRUCTION_FEATURE);
+    }
 
     println!("# Application Config: \n\n{}\n\n", app_config.to_toml()?);
     println!(

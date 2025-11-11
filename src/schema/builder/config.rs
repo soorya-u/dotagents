@@ -1,7 +1,10 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::{
-    constants::schema::CONFIG_SCHEMA,
+    constants::{
+        features::{COMMANDS_FEATURE, INSTRUCTION_FEATURE, MCP_FEATURE},
+        schema::CONFIG_SCHEMA,
+    },
     schema::{
         common::Target,
         config::{
@@ -14,7 +17,7 @@ use crate::{
 #[derive(Clone)]
 pub(crate) struct ApplicationConfigBuilder {
     schema: Option<String>,
-    features: Option<Vec<String>>,
+    features: Option<HashSet<String>>,
     targets: Option<Targets>,
     providers: Option<Providers>,
     variables: Option<HashMap<String, String>>,
@@ -32,21 +35,25 @@ impl ApplicationConfigBuilder {
     }
 
     pub fn add_features(mut self, commands: bool, instructions: bool, mcp: bool) -> Self {
-        let mut features = Vec::new();
-        if commands {
-            features.push("commands".to_string());
-        }
-        if instructions {
-            features.push("instructions".to_string());
-        }
-        if mcp {
-            features.push("mcp".to_string());
-        }
+        let features = [
+            (commands, COMMANDS_FEATURE),
+            (instructions, INSTRUCTION_FEATURE),
+            (mcp, MCP_FEATURE),
+        ]
+        .into_iter()
+        .filter_map(|(enabled, feature)| enabled.then(|| feature.to_string()))
+        .collect();
+
         self.features = Some(features);
         self
     }
 
-    pub fn add_targets(mut self, cli: Vec<String>, ide: Vec<String>, custom: Vec<String>) -> Self {
+    pub fn add_targets(
+        mut self,
+        cli: HashSet<String>,
+        ide: HashSet<String>,
+        custom: HashSet<String>,
+    ) -> Self {
         self.targets = Some(Targets {
             ide: if ide.is_empty() { None } else { Some(ide) },
             cli: if cli.is_empty() { None } else { Some(cli) },
@@ -59,23 +66,13 @@ impl ApplicationConfigBuilder {
         self
     }
 
-    pub fn add_target(mut self, target_type: Target, names: Vec<String>) -> Self {
-        if self.targets.is_none() {
-            self.targets = Some(Targets::new());
-        }
+    pub fn add_target(mut self, target_type: Target, names: HashSet<String>) -> Self {
+        let targets = self.targets.get_or_insert_with(Targets::new);
 
-        if let Some(ref mut targets) = self.targets {
-            match target_type {
-                Target::IDE => {
-                    targets.ide = Some(names);
-                }
-                Target::CLI => {
-                    targets.cli = Some(names);
-                }
-                Target::Custom => {
-                    targets.custom = Some(names);
-                }
-            }
+        match target_type {
+            Target::IDE => targets.ide = Some(names),
+            Target::CLI => targets.cli = Some(names),
+            Target::Custom => targets.custom = Some(names),
         }
 
         self

@@ -1,17 +1,19 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+
+use crate::constants::features::{COMMANDS_FEATURE, INSTRUCTION_FEATURE, MCP_FEATURE};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(rename_all = "kebab-case")]
 pub struct Targets {
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub ide: Option<Vec<String>>,
+    pub ide: Option<HashSet<String>>,
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub cli: Option<Vec<String>>,
+    pub cli: Option<HashSet<String>>,
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub custom: Option<Vec<String>>,
+    pub custom: Option<HashSet<String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
@@ -121,6 +123,15 @@ impl ConfigAgentAbilitySettings {
                 other.instructions.as_ref(),
             ),
             commands: Self::merge_settings(self.commands.as_ref(), other.commands.as_ref()),
+        }
+    }
+
+    pub fn get_config(&self, feature: &str) -> Option<ConfigAgentSettings> {
+        match feature {
+            MCP_FEATURE => self.mcp.clone(),
+            INSTRUCTION_FEATURE => self.instructions.clone(),
+            COMMANDS_FEATURE => self.commands.clone(),
+            _ => None,
         }
     }
 

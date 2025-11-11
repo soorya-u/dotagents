@@ -1,7 +1,9 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, to_value};
-use std::collections::HashMap;
+use std::{collections::HashMap, fs};
+
+use crate::{constants::file::MCP_FILE, utils::path::get_application_dir};
 
 #[derive(Serialize, Deserialize)]
 pub(crate) struct McpConfig {
@@ -60,5 +62,14 @@ impl McpConfig {
     pub fn to_json_value(&self) -> Result<Value> {
         let result = to_value(&self).context("failed to convert to json value")?;
         Ok(result)
+    }
+
+    pub fn from_application() -> Result<Self> {
+        let dir = get_application_dir()?;
+
+        let config_path = dir.join(MCP_FILE);
+        let config = fs::read_to_string(config_path).context("failed to read MCP config file")?;
+
+        Self::from_json(&config)
     }
 }

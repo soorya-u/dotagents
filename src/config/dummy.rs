@@ -94,15 +94,15 @@ pub(crate) fn set_dummy_config(opts: InitOptions) -> Result<()> {
     let config_builder = ApplicationConfigBuilder::new()
         .add_features(!opts.no_command, !opts.no_instruction, !opts.no_mcp)
         .add_targets(
-            vec!["gemini".to_string()],
-            vec!["vscode".to_string(), "windsurf".to_string()],
-            vec![],
+            ["gemini".into()].into_iter().collect(),
+            ["vscode".into(), "windsurf".into()].into_iter().collect(),
+            [].into_iter().collect(),
         );
 
     let global_config = config_builder.clone().build();
 
     let local_config = config_builder
-        .add_target(Target::Custom, vec!["opencode".into()])
+        .add_target(Target::Custom, ["opencode".into()].into_iter().collect())
         .add_provider(
             Target::Custom,
             "opencode",

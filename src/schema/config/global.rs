@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use super::common::{Providers, Targets};
 use super::traits::TomlConfig;
@@ -11,7 +11,7 @@ pub struct GlobalConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub schema: Option<String>,
     #[serde(default)]
-    pub features: Vec<String>,
+    pub features: HashSet<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub targets: Option<Targets>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -24,14 +24,14 @@ impl GlobalConfig {
     pub fn new() -> Self {
         Self {
             schema: Some(CONFIG_SCHEMA.to_string()),
-            features: Vec::new(),
+            features: HashSet::new(),
             targets: Some(Targets::new()),
             providers: None,
             variables: None,
         }
     }
 
-    pub fn with_features(features: Vec<String>, targets: Targets) -> Self {
+    pub fn with_features(features: HashSet<String>, targets: Targets) -> Self {
         Self {
             schema: Some("https://dotagents.soorya-u.dev/schemas/config.schema.json".to_string()),
             features,
