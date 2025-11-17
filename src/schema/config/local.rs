@@ -23,7 +23,7 @@ pub struct LocalConfig {
 impl LocalConfig {
     pub fn new() -> Self {
         Self {
-            schema: Some(CONFIG_SCHEMA.to_string()),
+            schema: Some(CONFIG_SCHEMA.into()),
             features: None,
             targets: None,
             providers: None,
@@ -33,7 +33,7 @@ impl LocalConfig {
 
     pub fn with_features(features: HashSet<String>) -> Self {
         Self {
-            schema: Some(CONFIG_SCHEMA.to_string()),
+            schema: Some(CONFIG_SCHEMA.into()),
             features: Some(features),
             targets: None,
             providers: None,
@@ -43,7 +43,7 @@ impl LocalConfig {
 
     pub fn with_providers(providers: Providers) -> Self {
         Self {
-            schema: Some(CONFIG_SCHEMA.to_string()),
+            schema: Some(CONFIG_SCHEMA.into()),
             features: None,
             targets: None,
             providers: Some(providers),

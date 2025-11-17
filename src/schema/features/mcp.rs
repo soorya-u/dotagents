@@ -1,12 +1,15 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, to_value};
+use serde_json::{Value, json};
 use std::{collections::HashMap, fs};
 
-use crate::{constants::file::MCP_FILE, utils::path::get_application_dir};
+use crate::{
+    constants::file::MCP_FILE, schema::features::traits::FeatureTrait,
+    utils::path::get_application_dir,
+};
 
 #[derive(Serialize, Deserialize)]
-pub(crate) struct McpConfig {
+pub(crate) struct McpFeature {
     #[serde(rename = "$schema")]
     pub schema: String,
     pub servers: HashMap<String, ServerConfig>,
@@ -44,9 +47,9 @@ pub enum ServerConfig {
     },
 }
 
-impl McpConfig {
+impl McpFeature {
     pub fn from_json(json: &str) -> Result<Self> {
-        let result = serde_json::from_str::<McpConfig>(json)
+        let result = serde_json::from_str::<McpFeature>(json)
             .context("failed to parse MCP config from JSON")?;
 
         Ok(result)
@@ -59,11 +62,6 @@ impl McpConfig {
         Ok(result)
     }
 
-    pub fn to_json_value(&self) -> Result<Value> {
-        let result = to_value(&self).context("failed to convert to json value")?;
-        Ok(result)
-    }
-
     pub fn from_application() -> Result<Self> {
         let dir = get_application_dir()?;
 
@@ -71,5 +69,21 @@ impl McpConfig {
         let config = fs::read_to_string(config_path).context("failed to read MCP config file")?;
 
         Self::from_json(&config)
+    }
+}
+
+impl FeatureTrait for McpFeature {
+    fn from_string(value: &str) -> Result<Self> {
+        Self::from_json(value)
+    }
+
+    fn to_string(&self) -> Result<String> {
+        self.to_json()
+    }
+
+    fn to_value(&self) -> Value {
+        json!({
+            "mcp": self,
+        })
     }
 }

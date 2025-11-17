@@ -1,16 +1,17 @@
-use crate::schema::command::{Command, CommandMetadata};
+use crate::schema::features::command::{CommandFeature, CommandMetadata};
 
-pub(crate) struct CommandBuilder {
+pub(crate) struct CommandFeatureBuilder {
     metadata: CommandMetadata,
     content: Option<String>,
 }
 
-impl CommandBuilder {
-    pub fn new(name: &str, description: &str) -> Self {
+impl CommandFeatureBuilder {
+    pub fn new(name: &str, description: &str, extension: &str) -> Self {
         Self {
             metadata: CommandMetadata {
                 name: name.into(),
                 description: description.into(),
+                extension: extension.into(),
             },
             content: None,
         }
@@ -21,8 +22,8 @@ impl CommandBuilder {
         self
     }
 
-    pub fn build(self) -> Command {
-        Command {
+    pub fn build(self) -> CommandFeature {
+        CommandFeature {
             metadata: self.metadata,
             content: self.content.unwrap_or_default(),
         }

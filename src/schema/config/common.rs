@@ -1,7 +1,21 @@
+use anyhow::{Context, Result, anyhow};
+use log::warn;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use serde_json::{Value, to_value};
+use std::{
+    collections::{HashMap, HashSet},
+    path::{Path, PathBuf},
+};
 
-use crate::constants::features::{COMMANDS_FEATURE, INSTRUCTION_FEATURE, MCP_FEATURE};
+use crate::{
+    constants::features::{COMMANDS_FEATURE, INSTRUCTION_FEATURE, MCP_FEATURE},
+    schema::features::traits::FeatureTrait,
+    templates::{RenderType, Templater},
+    utils::{
+        fs::{read_file, write_file},
+        merge_json,
+    },
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(rename_all = "kebab-case")]
@@ -161,6 +175,61 @@ impl ConfigAgentSettings {
             variables: Self::merge_variables(self.variables.as_ref(), other.variables.as_ref()),
             hash: other.hash.clone().or_else(|| self.hash.clone()),
         }
+    }
+
+    pub fn render_template<T: FeatureTrait>(
+        &self,
+        templater: &Templater,
+        name: &str,
+        feature: &T,
+    ) -> Result<()> {
+        let template_path: PathBuf = self
+            .template
+            .clone()
+            .map(PathBuf::from)
+            .ok_or_else(|| anyhow!("Template config not found for provider {}", name))?;
+
+        let mut target_path: PathBuf = self
+            .target
+            .clone()
+            .map(PathBuf::from)
+            .ok_or_else(|| anyhow!("Target config not found for provider {}", name))?;
+
+        if let Some(filename) = feature.get_file_name() {
+            target_path = target_path.join(&filename);
+        }
+
+        if !template_path.exists() {
+            return Err(anyhow!(
+                "Template file not found for {} provider at {}",
+                name,
+                template_path.display()
+            ));
+        }
+
+        if target_path.exists() {
+            warn!("Replacing existing file at {}", target_path.display());
+        }
+
+        let user_vars = self.variables.as_ref().map(to_value).transpose()?;
+
+        let populate_config = feature.populate_with_values(templater, user_vars.as_ref())?;
+
+        let feature_as_variables = populate_config.to_value();
+
+        let template_file_content = read_file(&template_path).context(format!(
+            "failed to read file in {}",
+            template_path.display()
+        ))?;
+
+        let vars = merge_json(user_vars.as_ref(), Some(&feature_as_variables));
+        let content =
+            templater.render_template(RenderType::Content(template_file_content), Some(&vars))?;
+
+        write_file(&target_path, &content)
+            .context(format!("failed to write file in {}", target_path.display()))?;
+
+        Ok(())
     }
 
     fn merge_variables(

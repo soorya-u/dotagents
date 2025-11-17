@@ -26,7 +26,7 @@ pub(crate) struct ApplicationConfigBuilder {
 impl ApplicationConfigBuilder {
     pub fn new() -> Self {
         Self {
-            schema: Some(CONFIG_SCHEMA.to_string()),
+            schema: Some(CONFIG_SCHEMA.into()),
             features: None,
             targets: None,
             providers: None,
@@ -41,7 +41,7 @@ impl ApplicationConfigBuilder {
             (mcp, MCP_FEATURE),
         ]
         .into_iter()
-        .filter_map(|(enabled, feature)| enabled.then(|| feature.to_string()))
+        .filter_map(|(enabled, feature)| enabled.then(|| feature.into()))
         .collect();
 
         self.features = Some(features);
@@ -110,7 +110,7 @@ impl ApplicationConfigBuilder {
                 }
             };
 
-            provider_map.insert(name.to_string(), settings);
+            provider_map.insert(name.into(), settings);
         }
 
         self
@@ -208,12 +208,12 @@ impl ConfigAgentSettingsBuilder {
     }
 
     pub fn template(mut self, template: &str) -> Self {
-        self.template = Some(template.to_string());
+        self.template = Some(template.into());
         self
     }
 
     pub fn target(mut self, target: &str) -> Self {
-        self.target = Some(target.to_string());
+        self.target = Some(target.into());
         self
     }
 
@@ -228,7 +228,7 @@ impl ConfigAgentSettingsBuilder {
     }
 
     pub fn hash(mut self, hash: &str) -> Self {
-        self.hash = Some(hash.to_string());
+        self.hash = Some(hash.into());
         self
     }
 

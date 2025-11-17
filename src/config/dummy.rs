@@ -11,7 +11,7 @@ use crate::constants::{
     file::{GLOBAL_CONFIG_FILE, INSTRUCTIONS_FILE, LOCAL_CONFIG_FILE, MCP_FILE},
 };
 use crate::schema::builder::{
-    command::CommandBuilder, config::ApplicationConfigBuilder, mcp::McpConfigBuilder,
+    command::CommandFeatureBuilder, config::ApplicationConfigBuilder, mcp::McpFeatureBuilder,
 };
 use crate::schema::{
     common::Target,
@@ -38,7 +38,7 @@ fn set_dummy_data(filename: &str, content: &str, dir_name: Option<&str>) -> Resu
 }
 
 pub(crate) fn set_dummy_command() -> Result<()> {
-    let commands = CommandBuilder::new("hello", "A Hello Command to greet the User.")
+    let commands = CommandFeatureBuilder::new("hello", "A Hello Command to greet the User.", "md")
         .add_content(
             r#"# Hello Command
 
@@ -64,7 +64,7 @@ pub(crate) fn set_dummy_instructions() -> Result<()> {
 }
 
 pub(crate) fn set_dummy_mcp() -> Result<()> {
-    let config = McpConfigBuilder::new()
+    let config = McpFeatureBuilder::new()
         .add_http_server(
             "server-mcp",
             "http://localhost:9000",

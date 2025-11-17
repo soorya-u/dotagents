@@ -15,14 +15,14 @@ pub struct CacheConfig {
 impl CacheConfig {
     pub fn new() -> Self {
         Self {
-            schema: CONFIG_SCHEMA.to_string(),
+            schema: CONFIG_SCHEMA.into(),
             providers: None,
         }
     }
 
     pub fn with_providers(providers: Providers) -> Self {
         Self {
-            schema: CONFIG_SCHEMA.to_string(),
+            schema: CONFIG_SCHEMA.into(),
             providers: Some(providers),
         }
     }

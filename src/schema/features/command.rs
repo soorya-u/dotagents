@@ -4,22 +4,24 @@ use anyhow::{Context, Result};
 use gray_matter::Matter;
 use gray_matter::engine::YAML;
 use serde::{Deserialize, Serialize};
+use serde_json::{Value, json};
 
-use crate::utils::path::get_commands_dir;
+use crate::{schema::features::traits::FeatureTrait, utils::path::get_commands_dir};
 
 #[derive(Serialize, Deserialize)]
 pub(crate) struct CommandMetadata {
     pub name: String,
     pub description: String,
+    pub extension: String,
 }
 
 #[derive(Serialize, Deserialize)]
-pub(crate) struct Command {
+pub(crate) struct CommandFeature {
     pub metadata: CommandMetadata,
     pub content: String,
 }
 
-impl Command {
+impl CommandFeature {
     pub fn to_markdown(&self) -> Result<String> {
         let yaml = serde_yaml::to_string(&self.metadata)
             .context("failed to serialize metadata to YAML")?;
@@ -33,7 +35,7 @@ impl Command {
 
         let metadata: CommandMetadata = parsed.data.context("failed to parse markdown metadata")?;
 
-        Ok(Command {
+        Ok(CommandFeature {
             metadata,
             content: parsed.content,
         })
@@ -55,5 +57,33 @@ impl Command {
         }
 
         Ok(commands)
+    }
+}
+
+impl FeatureTrait for CommandFeature {
+    fn to_string(&self) -> Result<String> {
+        self.to_markdown()
+    }
+
+    fn from_string(value: &str) -> Result<Self> {
+        Self::from_markdown(value)
+    }
+
+    fn to_value(&self) -> Value {
+        json!({
+            "command": {
+                "name": self.metadata.name,
+                "description": self.metadata.description,
+                "content": self.content
+            }
+        })
+    }
+
+    fn get_file_name(&self) -> Option<String> {
+        Some(format!(
+            "{}.{}",
+            self.metadata.name.clone(),
+            self.metadata.extension.clone()
+        ))
     }
 }
