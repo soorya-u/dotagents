@@ -10,7 +10,7 @@ use crate::constants::features::{COMMANDS_FEATURE, INSTRUCTION_FEATURE, MCP_FEAT
 use crate::constants::file::{GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE};
 use crate::constants::schema::CONFIG_SCHEMA;
 use crate::schema::config::{ConfigAgentSettings, TomlConfig};
-use crate::templates::helpers::{RenderType, Templater, get_templater};
+use crate::templates::{RenderType, Templater, get_templater};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -27,7 +27,7 @@ pub struct AppConfig {
 impl AppConfig {
     pub fn new() -> Self {
         Self {
-            schema: CONFIG_SCHEMA.to_string(),
+            schema: CONFIG_SCHEMA.into(),
             features: HashSet::new(),
             targets: Targets::new(),
             providers: None,
@@ -72,7 +72,7 @@ impl AppConfig {
             .schema
             .clone()
             .or_else(|| global.schema.clone())
-            .unwrap_or_else(|| CONFIG_SCHEMA.to_string());
+            .unwrap_or_else(|| CONFIG_SCHEMA.into());
 
         let features = local
             .features
@@ -132,9 +132,9 @@ impl AppConfig {
 
     pub fn from_application(templater: &Templater) -> Result<Self> {
         let global_config_content =
-            templater.render_template(RenderType::Name(GLOBAL_CONFIG_FILE.to_string()), None)?;
+            templater.render_template(RenderType::Name(GLOBAL_CONFIG_FILE.into()), None)?;
         let local_config_content =
-            templater.render_template(RenderType::Name(LOCAL_CONFIG_FILE.to_string()), None)?;
+            templater.render_template(RenderType::Name(LOCAL_CONFIG_FILE.into()), None)?;
 
         let local_config = LocalConfig::from_toml(&local_config_content)?;
         local_config.validate().context("invalid local config")?;

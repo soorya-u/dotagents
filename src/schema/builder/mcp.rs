@@ -2,15 +2,15 @@ use std::collections::HashMap;
 
 use crate::{
     constants::schema::MCP_SCHEMA,
-    schema::mcp::{CommonConfig, McpConfig, ServerConfig},
+    schema::features::mcp::{CommonConfig, McpFeature, ServerConfig},
 };
 
-pub(crate) struct McpConfigBuilder {
+pub(crate) struct McpFeatureBuilder {
     schema: String,
     servers: HashMap<String, ServerConfig>,
 }
 
-impl McpConfigBuilder {
+impl McpFeatureBuilder {
     pub fn new() -> Self {
         Self {
             schema: MCP_SCHEMA.into(),
@@ -26,7 +26,7 @@ impl McpConfigBuilder {
         common: Option<CommonConfig>,
     ) -> Self {
         self.servers.insert(
-            name.to_string(),
+            name.into(),
             ServerConfig::Http {
                 url: url.into(),
                 headers,
@@ -45,7 +45,7 @@ impl McpConfigBuilder {
         common: Option<CommonConfig>,
     ) -> Self {
         self.servers.insert(
-            name.to_string(),
+            name.into(),
             ServerConfig::Stdio {
                 command: command.into(),
                 args,
@@ -58,8 +58,8 @@ impl McpConfigBuilder {
         self
     }
 
-    pub fn build(self) -> McpConfig {
-        McpConfig {
+    pub fn build(self) -> McpFeature {
+        McpFeature {
             schema: self.schema,
             servers: self.servers,
         }

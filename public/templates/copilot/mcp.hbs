@@ -10,7 +10,7 @@
         "command": "{{this.command}}",
         "args": {{json this.args}},
         "env": {{json this.env}},
-      {{/if}}
+      {{/ifEq}}
       "tools": {{json this.enabledTools}}
     }{{#unless @last}},{{/unless}}
     {{/each}}

@@ -9,7 +9,7 @@
       {{else}}
         "serverUrl": "{{this.url}}",
         "headers": {{json this.headers}},
-      {{/if}}
+      {{/ifEq}}
       "disabled": {{this.disabled}},
       "disabledTools": {{json this.disabledTools}}
     }{{#unless @last}},{{/unless}}

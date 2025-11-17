@@ -23,7 +23,7 @@ pub struct GlobalConfig {
 impl GlobalConfig {
     pub fn new() -> Self {
         Self {
-            schema: Some(CONFIG_SCHEMA.to_string()),
+            schema: Some(CONFIG_SCHEMA.into()),
             features: HashSet::new(),
             targets: Some(Targets::new()),
             providers: None,
@@ -33,7 +33,7 @@ impl GlobalConfig {
 
     pub fn with_features(features: HashSet<String>, targets: Targets) -> Self {
         Self {
-            schema: Some("https://dotagents.soorya-u.dev/schemas/config.schema.json".to_string()),
+            schema: Some(CONFIG_SCHEMA.into()),
             features,
             targets: Some(targets),
             providers: None,
