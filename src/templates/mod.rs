@@ -2,4 +2,5 @@ mod remote;
 mod templater;
 
 pub(crate) mod helpers;
+pub(crate) mod variables;
 pub(crate) use templater::{RenderType, TemplateSource, Templater, get_templater};

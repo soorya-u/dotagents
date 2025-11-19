@@ -3,13 +3,18 @@ use handlebars::Handlebars;
 use serde_json::{Value, json};
 use std::sync::OnceLock;
 
-use crate::templates::helpers::{IfEqHelper, JsonHelper};
 use crate::utils::path::{get_application_dir, get_config_dir, get_workspace_dir};
+use crate::{
+    constants::helpers::JSON_HELPER,
+    templates::{
+        helpers::{IfEqHelper, JsonHelper},
+        variables::{get_command_name_variable, get_dir_variables},
+    },
+};
 use crate::{
     constants::{
         file::{GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE},
         helpers::IF_EQ_HELPER,
-        variables::{APPLICATION_DIR, CONFIG_DIR, WORKSPACE_DIR},
     },
     utils::merge_json,
 };
@@ -37,15 +42,10 @@ pub struct Templater {
 
 impl Templater {
     fn load_default_variables() -> Result<Value> {
-        let config_dir = get_config_dir()?.to_string_lossy().to_string();
-        let workspace_dir = get_workspace_dir()?.to_string_lossy().to_string();
-        let application_dir = get_application_dir()?.to_string_lossy().to_string();
-
-        Ok(json!({
-            CONFIG_DIR: &config_dir,
-            WORKSPACE_DIR: &workspace_dir,
-            APPLICATION_DIR: &application_dir,
-        }))
+        let dir_variables = get_dir_variables()?;
+        // TODO: Add Environment Variables as well.
+        let command_variables = get_command_name_variable("{{ command.name }}")?;
+        Ok(merge_json(Some(&command_variables), Some(&dir_variables)))
     }
 
     fn register_default_templates(&mut self) -> Result<()> {
@@ -67,13 +67,10 @@ impl Templater {
 
     pub fn new() -> Result<Self> {
         let globals = Self::load_default_variables().expect("failed to load global variables");
-        let mut handlebars = Handlebars::new();
-        handlebars.register_helper(IF_EQ_HELPER, Box::new(IfEqHelper));
-        handlebars.register_helper("json", Box::new(JsonHelper));
-        let mut templater = Self {
-            handlebar: handlebars,
-            globals,
-        };
+        let mut handlebar = Handlebars::new();
+        handlebar.register_helper(IF_EQ_HELPER, Box::new(IfEqHelper));
+        handlebar.register_helper(JSON_HELPER, Box::new(JsonHelper));
+        let mut templater = Self { handlebar, globals };
         templater.register_default_templates()?;
         Ok(templater)
     }
@@ -87,7 +84,7 @@ impl Templater {
     }
 
     pub fn render_template(&self, name: RenderType, data: Option<&Value>) -> Result<String> {
-        let data = merge_json(data, Some(&self.globals));
+        let data = merge_json(Some(&self.globals), data);
 
         match name {
             RenderType::Name(path) => self.handlebar.render(&path, &data),

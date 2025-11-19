@@ -10,7 +10,7 @@ use std::{
 use crate::{
     constants::features::{COMMANDS_FEATURE, INSTRUCTION_FEATURE, MCP_FEATURE},
     schema::features::traits::FeatureTrait,
-    templates::{RenderType, Templater},
+    templates::{RenderType, Templater, variables::get_command_name_variable},
     utils::{
         fs::{read_file, write_file},
         merge_json,
@@ -196,7 +196,13 @@ impl ConfigAgentSettings {
             .ok_or_else(|| anyhow!("Target config not found for provider {}", name))?;
 
         if let Some(filename) = feature.get_file_name() {
-            target_path = target_path.join(&filename);
+            let command_var = get_command_name_variable(&filename)?;
+            target_path = templater
+                .render_template(
+                    RenderType::Content(target_path.to_string_lossy().to_string()),
+                    Some(&command_var),
+                )
+                .map(PathBuf::from)?;
         }
 
         if !template_path.exists() {

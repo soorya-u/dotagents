@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
+use serde_json5::from_str;
 use std::{collections::HashMap, fs};
 
 use crate::{
@@ -49,7 +50,7 @@ pub enum ServerConfig {
 
 impl McpFeature {
     pub fn from_json(json: &str) -> Result<Self> {
-        let result = serde_json::from_str::<McpFeature>(json)
+        let result = serde_json5::from_str::<McpFeature>(json)
             .context("failed to parse MCP config from JSON")?;
 
         Ok(result)

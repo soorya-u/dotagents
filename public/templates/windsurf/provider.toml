@@ -1,0 +1,14 @@
+# Windsurf MCP
+[providers.ide.windsurf.mcp]
+template = "https://dotagents.soorya-u.dev/templates/windsurf/mcp.hbs"
+target = "{{ dir.home }}/.codeium/windsurf/mcp_config.json"
+
+# Windsurf Instructions
+[providers.ide.windsurf.instructions]
+template = "https://dotagents.soorya-u.dev/templates/windsurf/instruction.hbs"
+target = "{{ dir.workspace }}/.windsurf/rules/specify-rules.md"
+
+# Windsurf Commands
+[providers.ide.windsurf.commands]
+template = "https://dotagents.soorya-u.dev/templates/windsurf/command.hbs"
+target = "{{ dir.workspace }}/.windsurf/workflows"

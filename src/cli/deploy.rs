@@ -32,7 +32,7 @@ pub(super) fn deploy() -> Result<()> {
     };
 
     if app_config.has_feature(MCP_FEATURE) {
-        let mcp = McpFeature::from_application().context("Failed to load mcp config")?;
+        let mcp = McpFeature::from_application().context("load mcp config")?;
         let providers_with_config = app_config.get_feature_providers(MCP_FEATURE);
 
         providers_with_config

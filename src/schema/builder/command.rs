@@ -11,7 +11,6 @@ impl CommandFeatureBuilder {
             metadata: CommandMetadata {
                 name: name.into(),
                 description: description.into(),
-                extension: extension.into(),
             },
             content: None,
         }
