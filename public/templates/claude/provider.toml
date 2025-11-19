@@ -1,0 +1,4 @@
+# Augment Commands
+[providers.cli.claude.commands]
+template = "https://dotagents.soorya-u.dev/templates/claude/command.hbs"
+target = "{{dir.workspace}}/.claude/commands/{{command.name}}.md"

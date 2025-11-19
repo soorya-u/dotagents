@@ -1,0 +1,4 @@
+# Augment Commands
+[providers.cli.codex.commands]
+template = "https://dotagents.soorya-u.dev/templates/codex/command.hbs"
+target = "{{dir.workspace}}/.codex/prompts/{{command.name}}.md"

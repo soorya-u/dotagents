@@ -1,14 +1,9 @@
-# Copilot MCP
-[providers.cli.copilot.mcp]
-template = "https://dotagents.soorya-u.dev/templates/copilot/mcp.hbs"
-target = "{{ dir.home }}/.copilot/mcp-config.json"
-
 # Copilot Instructions
 [providers.cli.copilot.instructions]
 template = "https://dotagents.soorya-u.dev/templates/copilot/instructions.hbs"
-target = "{{ dir.workspace }}/.github/copilot-instructions.md"
+target = "{{dir.workspace}}/.github/copilot-instructions.md"
 
 # Copilot Commands
 [providers.cli.copilot.commands]
 template = "https://dotagents.soorya-u.dev/templates/copilot/command.hbs"
-target = "{{ dir.workspace }}/.github/prompts"
+target = "{{dir.workspace}}/.github/prompts/{{command.name}}.prompt.md"
