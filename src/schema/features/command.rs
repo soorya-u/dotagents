@@ -12,7 +12,6 @@ use crate::{schema::features::traits::FeatureTrait, utils::path::get_commands_di
 pub(crate) struct CommandMetadata {
     pub name: String,
     pub description: String,
-    pub extension: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -80,10 +79,6 @@ impl FeatureTrait for CommandFeature {
     }
 
     fn get_file_name(&self) -> Option<String> {
-        Some(format!(
-            "{}.{}",
-            self.metadata.name.clone(),
-            self.metadata.extension.clone()
-        ))
+        Some(self.metadata.name.clone())
     }
 }

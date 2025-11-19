@@ -1,5 +1,13 @@
 use serde_json::{Value, json};
 
+pub fn merge_many_json(values: &[Value]) -> Value {
+    values
+        .iter()
+        .cloned()
+        .reduce(|acc, v| merge_json(Some(&acc), Some(&v)))
+        .unwrap_or_else(|| json!({}))
+}
+
 pub fn merge_json(a: Option<&Value>, b: Option<&Value>) -> Value {
     match (a, b) {
         (Some(Value::Object(a_map)), Some(Value::Object(b_map))) => {

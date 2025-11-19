@@ -109,17 +109,17 @@ pub(crate) fn set_dummy_config(opts: InitOptions) -> Result<()> {
             ConfigAgentAbilitySettings {
                 mcp: Some(ConfigAgentSettings {
                     template: Some("templates/opencode".into()),
-                    target: Some("{{ workspace_dir }}/.opencode/mcp.json".into()),
+                    target: Some("{{ dir.workspace }}/.opencode/mcp.json".into()),
                     ..Default::default()
                 }),
                 instructions: Some(ConfigAgentSettings {
                     template: Some("templates/INSTRUCTION.md".into()),
-                    target: Some("{{ workspace_dir }}/.opencode/instructions.md".into()),
+                    target: Some("{{ dir.workspace }}/.opencode/instructions.md".into()),
                     ..Default::default()
                 }),
                 commands: Some(ConfigAgentSettings {
                     template: Some("templates/commands-template".into()),
-                    target: Some("{{ workspace_dir }}/.opencode/commands".into()),
+                    target: Some("{{ dir.workspace }}/.opencode/commands".into()),
                     ..Default::default()
                 }),
             },
