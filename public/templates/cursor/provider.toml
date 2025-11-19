@@ -1,0 +1,4 @@
+# Augment Commands
+[providers.cli.cursor.commands]
+template = "https://dotagents.soorya-u.dev/templates/cursor/command.hbs"
+target = "{{dir.workspace}}/.cursor/commands/{{command.name}}.md"

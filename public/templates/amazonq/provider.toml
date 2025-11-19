@@ -1,0 +1,4 @@
+# Augment Commands
+[providers.cli.amazonq.commands]
+template = "https://dotagents.soorya-u.dev/templates/amazonq/command.hbs"
+target = "{{dir.workspace}}/.amazonq/prompts/{{command.name}}.md"

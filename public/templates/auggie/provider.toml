@@ -1,0 +1,4 @@
+# Augment Commands
+[providers.cli.auggie.commands]
+template = "https://dotagents.soorya-u.dev/templates/auggie/command.hbs"
+target = "{{dir.workspace}}/.augment/commands/{{command.name}}.md"

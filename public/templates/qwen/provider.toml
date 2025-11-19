@@ -1,0 +1,4 @@
+# Augment Commands
+[providers.cli.qwen.commands]
+template = "https://dotagents.soorya-u.dev/templates/qwen/command.hbs"
+target = "{{dir.workspace}}/.qwen/commands/{{command.name}}.toml"
