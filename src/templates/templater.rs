@@ -1,8 +1,10 @@
 use anyhow::{Context, Result};
 use handlebars::Handlebars;
 use serde_json::{Value, json};
+use std::env;
 use std::sync::OnceLock;
 
+use crate::templates::variables::get_env_variables;
 use crate::utils::path::{get_application_dir, get_config_dir, get_workspace_dir};
 use crate::{
     constants::helpers::JSON_HELPER,
@@ -16,7 +18,7 @@ use crate::{
         file::{GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE},
         helpers::IF_EQ_HELPER,
     },
-    utils::merge_json,
+    utils::{merge_json, merge_many_json},
 };
 
 static TEMPLATER: OnceLock<Templater> = OnceLock::new();
@@ -43,9 +45,13 @@ pub struct Templater {
 impl Templater {
     fn load_default_variables() -> Result<Value> {
         let dir_variables = get_dir_variables()?;
-        // TODO: Add Environment Variables as well.
+        let env_variables = get_env_variables()?;
         let command_variables = get_command_name_variable("{{ command.name }}")?;
-        Ok(merge_json(Some(&command_variables), Some(&dir_variables)))
+        Ok(merge_many_json(&[
+            dir_variables,
+            env_variables,
+            command_variables,
+        ]))
     }
 
     fn register_default_templates(&mut self) -> Result<()> {
