@@ -1,7 +1,10 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use serde_json::{Value, json};
 
-use crate::utils::path::{get_application_dir, get_config_dir, get_home_dir, get_workspace_dir};
+use crate::{
+    constants::file::ENV_FILE,
+    utils::path::{get_application_dir, get_config_dir, get_home_dir, get_workspace_dir},
+};
 
 pub(crate) fn get_dir_variables() -> Result<Value> {
     Ok(json!({
@@ -14,9 +17,19 @@ pub(crate) fn get_dir_variables() -> Result<Value> {
     }))
 }
 
-// TODO: Add Env Variables from `.env`
 pub(crate) fn get_env_variables() -> Result<Value> {
-    todo!()
+    let path = get_application_dir()?.join(ENV_FILE);
+
+    let mut env_vars = serde_json::Map::new();
+
+    if let Ok(iter) = dotenvy::from_path_iter(&path) {
+        for pair in iter {
+            let (key, value) = pair?;
+            env_vars.insert(key.to_lowercase(), value.into());
+        }
+    }
+
+    Ok(json!({ "env": env_vars }))
 }
 
 pub(crate) fn get_command_name_variable(val: &str) -> Result<Value> {

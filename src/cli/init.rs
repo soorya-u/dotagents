@@ -6,7 +6,10 @@ use std::{
 use super::options::InitOptions;
 use crate::constants::{
     dir::{COMMANDS_DIR, ROOT_DIR, TEMPLATE_DIR},
-    file::{GLOBAL_CONFIG_FILE, INSTRUCTIONS_FILE, LOCAL_CONFIG_FILE, MCP_FILE},
+    file::{
+        ENV_EXAMPLE_FILE, ENV_FILE, GITIGNORE_FILE, GLOBAL_CONFIG_FILE, INSTRUCTIONS_FILE,
+        LOCAL_CONFIG_FILE, MCP_FILE,
+    },
     mocks,
 };
 use crate::utils::fs::write_file;
@@ -34,11 +37,11 @@ pub(super) fn initialize_agents_dir(opts: InitOptions) -> Result<()> {
     fs::create_dir(main_dir).context("failed to create .dotagents directory")?;
 
     // Write .env.example
-    write_file(&main_dir.join(".env.example"), mocks::ENV_EXAMPLE)?;
-    write_file(&main_dir.join(".env"), mocks::ENV_EXAMPLE)?;
+    write_file(&main_dir.join(ENV_EXAMPLE_FILE), mocks::ENV_EXAMPLE)?;
+    write_file(&main_dir.join(ENV_FILE), mocks::ENV_EXAMPLE)?;
 
     // Write .gitignore
-    write_file(&main_dir.join(".gitignore"), mocks::GITIGNORE)?;
+    write_file(&main_dir.join(GITIGNORE_FILE), mocks::GITIGNORE)?;
 
     // Write config files
     write_file(&main_dir.join(GLOBAL_CONFIG_FILE), mocks::CONFIG)?;

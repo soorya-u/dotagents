@@ -14,6 +14,7 @@ anyhow = "1.0.100"
 clap = { version = "4.5.48", features = ["derive"] }
 clap_complete = "4.5.58"
 crossterm = "0.29.0"
+dotenvy = "0.15.7"
 gray_matter = "0.3.2"
 handlebars = "6.3.2"
 home = "0.5.11"
