@@ -1,0 +1,24 @@
+schema = "https://dotagents.soorya-u.dev/schemas/config.schema.json"
+features = [
+    "commands",
+    "instructions",
+    "mcp",
+]
+
+[targets]
+cli = []
+ide = []
+custom = ["opencode"]
+
+[providers.custom.opencode.mcp]
+template = "{{ dir.application }}/templates/opencode/mcp.hbs"
+target = "{{ dir.workspace }}/.opencode/mcp.json"
+
+[providers.custom.opencode.instructions]
+template = "{{ dir.application }}/templates/opencode/instructions.hbs"
+target = "{{ dir.workspace }}/.opencode/instructions.md"
+variables = {agent_name = "Mycode"}
+
+[providers.custom.opencode.commands]
+template = "{{ dir.application }}/templates/opencode/command.hbs"
+target = "{{ dir.workspace }}/.opencode/commands/{{ command.name }}.md"

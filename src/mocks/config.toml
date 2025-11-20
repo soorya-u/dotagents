@@ -1,0 +1,13 @@
+schema = "https://dotagents.soorya-u.dev/schemas/config.schema.json"
+features = [
+    "commands",
+    "instructions",
+    "mcp",
+]
+
+[targets]
+ide = [
+    "vscode",
+    "windsurf",
+]
+cli = ["gemini"]
