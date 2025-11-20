@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use anyhow::{Context, Result};
 use serde_json::{Value, json};
 
@@ -38,4 +40,8 @@ pub(crate) fn get_command_name_variable(val: &str) -> Result<Value> {
             "name": val,
         }
     }))
+}
+
+pub(crate) fn get_user_defined_variables(var: Option<Value>) -> Result<Value> {
+    Ok(json!({ "var": var }))
 }
