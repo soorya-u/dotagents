@@ -10,7 +10,10 @@ use std::{
 use crate::{
     constants::features::{COMMANDS_FEATURE, INSTRUCTION_FEATURE, MCP_FEATURE},
     schema::features::traits::FeatureTrait,
-    templates::{RenderType, Templater, variables::get_command_name_variable},
+    templates::{
+        RenderType, Templater,
+        variables::{get_command_name_variable, get_user_defined_variables},
+    },
     utils::{
         fs::{read_file, write_file},
         merge_json,
@@ -181,6 +184,7 @@ impl ConfigAgentSettings {
         &self,
         templater: &Templater,
         name: &str,
+        variables: Option<&Value>,
         feature: &T,
     ) -> Result<()> {
         let template_path: PathBuf = self
@@ -217,9 +221,12 @@ impl ConfigAgentSettings {
             warn!("Replacing existing file at {}", target_path.display());
         }
 
-        let user_vars = self.variables.as_ref().map(to_value).transpose()?;
+        let local_vars = self.variables.as_ref().map(to_value).transpose()?;
 
-        let populate_config = feature.populate_with_values(templater, user_vars.as_ref())?;
+        let user_vars =
+            get_user_defined_variables(Some(merge_json(variables, local_vars.as_ref())))?;
+
+        let populate_config = feature.populate_with_values(templater, Some(&user_vars))?;
 
         let feature_as_variables = populate_config.to_value();
 
@@ -228,7 +235,7 @@ impl ConfigAgentSettings {
             template_path.display()
         ))?;
 
-        let vars = merge_json(user_vars.as_ref(), Some(&feature_as_variables));
+        let vars = merge_json(Some(&user_vars), Some(&feature_as_variables));
         let content =
             templater.render_template(RenderType::Content(template_file_content), Some(&vars))?;
 

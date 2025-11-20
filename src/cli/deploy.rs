@@ -14,7 +14,7 @@ pub(super) fn deploy() -> Result<()> {
     let app_config =
         AppConfig::from_application(templater).context("Failed to load application config")?;
     let variables =
-        to_value(app_config.variables.clone()).context("Failed to extract variables")?;
+        Some(to_value(app_config.variables.clone()).context("Failed to extract variables")?);
 
     // TODO: Command has much complicated process since commands is iterative
     if app_config.has_feature(COMMANDS_FEATURE) {
@@ -25,7 +25,7 @@ pub(super) fn deploy() -> Result<()> {
             .into_iter()
             .try_for_each::<_, Result<()>>(|(provider_name, config)| {
                 commands.iter().try_for_each(|command| {
-                    config.render_template(templater, &provider_name, command)
+                    config.render_template(templater, &provider_name, variables.as_ref(), command)
                 })
             })
             .context("failed to deploy commands feature")?;
@@ -38,7 +38,7 @@ pub(super) fn deploy() -> Result<()> {
         providers_with_config
             .into_iter()
             .try_for_each::<_, Result<()>>(|(provider_name, config)| {
-                config.render_template(templater, &provider_name, &mcp)
+                config.render_template(templater, &provider_name, variables.as_ref(), &mcp)
             })
             .context("failed to deploy mcp feature")?;
     };
@@ -51,7 +51,7 @@ pub(super) fn deploy() -> Result<()> {
         providers_with_config
             .into_iter()
             .try_for_each::<_, Result<()>>(|(provider_name, config)| {
-                config.render_template(templater, &provider_name, &instruction)
+                config.render_template(templater, &provider_name, variables.as_ref(), &instruction)
             })
             .context("failed to deploy instruction feature")?;
     };
