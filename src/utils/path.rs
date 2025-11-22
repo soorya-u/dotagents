@@ -56,3 +56,97 @@ pub fn get_commands_dir() -> Result<PathBuf> {
     let commands_dir = get_application_dir()?.join("commands");
     get_dir_or_die(commands_dir)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use tempfile::TempDir;
+
+    #[test]
+    fn test_get_dir_or_die_valid_dir() {
+        let temp_dir = TempDir::new().unwrap();
+        let result = get_dir_or_die(temp_dir.path().to_path_buf());
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), temp_dir.path());
+    }
+
+    #[test]
+    fn test_get_dir_or_die_file_not_dir() {
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("file.txt");
+        fs::write(&file_path, "content").unwrap();
+
+        let result = get_dir_or_die(file_path);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_get_dir_or_die_nonexistent() {
+        let nonexistent = PathBuf::from("/nonexistent/directory");
+        let result = get_dir_or_die(nonexistent);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_get_workspace_dir_with_marker() {
+        let temp_dir = TempDir::new().unwrap();
+        let workspace = temp_dir.path();
+        let root_marker = workspace.join(ROOT_DIR);
+        fs::create_dir(&root_marker).unwrap();
+
+        // Change to a nested directory
+        let nested = workspace.join("nested").join("deep");
+        fs::create_dir_all(&nested).unwrap();
+
+        let original_dir = env::current_dir().unwrap();
+        env::set_current_dir(&nested).unwrap();
+
+        let result = get_workspace_dir();
+
+        // Restore original directory
+        env::set_current_dir(original_dir).unwrap();
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), workspace);
+    }
+
+    #[test]
+    fn test_get_workspace_dir_no_marker() {
+        let temp_dir = TempDir::new().unwrap();
+        let workspace = temp_dir.path().join("workspace");
+        fs::create_dir(&workspace).unwrap();
+
+        let original_dir = env::current_dir().unwrap();
+        env::set_current_dir(&workspace).unwrap();
+
+        let result = get_workspace_dir();
+
+        // Restore original directory
+        env::set_current_dir(original_dir).unwrap();
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_get_home_dir() {
+        let result = get_home_dir();
+        // Home directory should exist on all systems
+        assert!(result.is_ok());
+        let home = result.unwrap();
+        assert!(home.exists());
+        assert!(home.is_dir());
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_get_config_dir() {
+        let result = get_config_dir();
+        // Config dir should exist on Unix systems
+        if result.is_ok() {
+            let config = result.unwrap();
+            assert!(config.ends_with(".config"));
+            assert!(config.is_dir());
+        }
+    }
+}

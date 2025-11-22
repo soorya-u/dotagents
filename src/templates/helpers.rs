@@ -60,3 +60,130 @@ impl HelperDef for JsonHelper {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use handlebars::Handlebars;
+    use serde_json::json;
+
+    #[test]
+    fn test_if_eq_helper_equal_strings() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("ifEq", Box::new(IfEqHelper));
+
+        let template = "{{#ifEq name \"Alice\"}}Hello Alice{{else}}Hello stranger{{/ifEq}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"name": "Alice"});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, "Hello Alice");
+    }
+
+    #[test]
+    fn test_if_eq_helper_not_equal() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("ifEq", Box::new(IfEqHelper));
+
+        let template = "{{#ifEq name \"Alice\"}}Hello Alice{{else}}Hello stranger{{/ifEq}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"name": "Bob"});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, "Hello stranger");
+    }
+
+    #[test]
+    fn test_if_eq_helper_equal_numbers() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("ifEq", Box::new(IfEqHelper));
+
+        let template = "{{#ifEq age 30}}Age is 30{{else}}Age is not 30{{/ifEq}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"age": 30});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, "Age is 30");
+    }
+
+    #[test]
+    fn test_if_eq_helper_no_else_branch() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("ifEq", Box::new(IfEqHelper));
+
+        let template = "{{#ifEq name \"Alice\"}}Hello Alice{{/ifEq}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"name": "Bob"});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, "");
+    }
+
+    #[test]
+    fn test_json_helper_object() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("json", Box::new(JsonHelper));
+
+        let template = "{{json user}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"user": {"name": "Alice", "age": 30}});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, r#"{"age":30,"name":"Alice"}"#);
+    }
+
+    #[test]
+    fn test_json_helper_array() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("json", Box::new(JsonHelper));
+
+        let template = "{{json items}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"items": [1, 2, 3]});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, "[1,2,3]");
+    }
+
+    #[test]
+    fn test_json_helper_string() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("json", Box::new(JsonHelper));
+
+        let template = "{{json name}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"name": "Alice"});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, r#""Alice""#);
+    }
+
+    #[test]
+    fn test_json_helper_number() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("json", Box::new(JsonHelper));
+
+        let template = "{{json age}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"age": 42});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, "42");
+    }
+}

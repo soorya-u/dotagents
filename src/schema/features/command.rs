@@ -82,3 +82,125 @@ impl FeatureTrait for CommandFeature {
         Some(self.metadata.name.clone())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_to_markdown() {
+        let command = CommandFeature {
+            metadata: CommandMetadata {
+                name: "test-command".to_string(),
+                description: "A test command".to_string(),
+            },
+            content: "Command content here".to_string(),
+        };
+
+        let md = command.to_markdown().unwrap();
+        assert!(md.starts_with("---"));
+        assert!(md.contains("name: test-command"));
+        assert!(md.contains("description: A test command"));
+        assert!(md.contains("Command content here"));
+    }
+
+    #[test]
+    fn test_from_markdown() {
+        let md = r#"---
+name: test-command
+description: A test command
+---
+
+Command content here"#;
+
+        let command = CommandFeature::from_markdown(md).unwrap();
+        assert_eq!(command.metadata.name, "test-command");
+        assert_eq!(command.metadata.description, "A test command");
+        assert_eq!(command.content, "Command content here");
+    }
+
+    #[test]
+    fn test_roundtrip() {
+        let original = CommandFeature {
+            metadata: CommandMetadata {
+                name: "roundtrip-test".to_string(),
+                description: "Testing roundtrip conversion".to_string(),
+            },
+            content: "Content with\nmultiple lines".to_string(),
+        };
+
+        let md = original.to_markdown().unwrap();
+        let parsed = CommandFeature::from_markdown(&md).unwrap();
+
+        assert_eq!(parsed.metadata.name, original.metadata.name);
+        assert_eq!(parsed.metadata.description, original.metadata.description);
+        assert_eq!(parsed.content, original.content);
+    }
+
+    #[test]
+    fn test_to_value() {
+        let command = CommandFeature {
+            metadata: CommandMetadata {
+                name: "value-test".to_string(),
+                description: "Testing value conversion".to_string(),
+            },
+            content: "Value content".to_string(),
+        };
+
+        let value = command.to_value();
+        assert_eq!(
+            value,
+            json!({
+                "command": {
+                    "name": "value-test",
+                    "description": "Testing value conversion",
+                    "content": "Value content"
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn test_get_file_name() {
+        let command = CommandFeature {
+            metadata: CommandMetadata {
+                name: "file-name-test".to_string(),
+                description: "Test".to_string(),
+            },
+            content: "Content".to_string(),
+        };
+
+        assert_eq!(command.get_file_name(), Some("file-name-test".to_string()));
+    }
+
+    #[test]
+    fn test_from_string() {
+        let md = r#"---
+name: string-test
+description: From string test
+---
+
+String content"#;
+
+        let command = CommandFeature::from_string(md).unwrap();
+        assert_eq!(command.metadata.name, "string-test");
+        assert_eq!(command.metadata.description, "From string test");
+        assert_eq!(command.content, "String content");
+    }
+
+    #[test]
+    fn test_to_string() {
+        let command = CommandFeature {
+            metadata: CommandMetadata {
+                name: "to-string-test".to_string(),
+                description: "To string test".to_string(),
+            },
+            content: "Content".to_string(),
+        };
+
+        let result = command.to_string().unwrap();
+        assert!(result.contains("name: to-string-test"));
+        assert!(result.contains("description: To string test"));
+        assert!(result.contains("Content"));
+    }
+}

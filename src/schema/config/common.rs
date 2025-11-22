@@ -261,3 +261,102 @@ impl ConfigAgentSettings {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_targets_merge() {
+        let base = Targets {
+            ide: Some(HashSet::from(["vscode".to_string()])),
+            cli: None,
+            custom: None,
+        };
+
+        let override_targets = Targets {
+            ide: Some(HashSet::from(["cursor".to_string()])),
+            cli: Some(HashSet::from(["anthropic".to_string()])),
+            custom: None,
+        };
+
+        let merged = base.merge(&override_targets);
+        assert_eq!(merged.ide, Some(HashSet::from(["cursor".to_string()])));
+        assert_eq!(merged.cli, Some(HashSet::from(["anthropic".to_string()])));
+    }
+
+    #[test]
+    fn test_config_agent_settings_merge() {
+        let base = ConfigAgentSettings {
+            template: Some("base.tmpl".to_string()),
+            target: Some("base.target".to_string()),
+            disabled: Some(false),
+            variables: Some(HashMap::from([("key1".to_string(), "value1".to_string())])),
+            hash: None,
+        };
+
+        let override_settings = ConfigAgentSettings {
+            template: None,
+            target: Some("override.target".to_string()),
+            disabled: Some(true),
+            variables: Some(HashMap::from([("key2".to_string(), "value2".to_string())])),
+            hash: Some("hash123".to_string()),
+        };
+
+        let merged = base.merge(&override_settings);
+        assert_eq!(merged.template, Some("base.tmpl".to_string()));
+        assert_eq!(merged.target, Some("override.target".to_string()));
+        assert_eq!(merged.disabled, Some(true));
+        assert_eq!(merged.hash, Some("hash123".to_string()));
+
+        let vars = merged.variables.unwrap();
+        assert_eq!(vars.get("key1"), Some(&"value1".to_string()));
+        assert_eq!(vars.get("key2"), Some(&"value2".to_string()));
+    }
+
+    #[test]
+    fn test_config_agent_ability_settings_get_config() {
+        let settings = ConfigAgentAbilitySettings {
+            mcp: Some(ConfigAgentSettings {
+                template: Some("mcp.tmpl".to_string()),
+                ..Default::default()
+            }),
+            instructions: Some(ConfigAgentSettings {
+                template: Some("inst.tmpl".to_string()),
+                ..Default::default()
+            }),
+            commands: None,
+        };
+
+        let mcp_config = settings.get_config("mcp");
+        assert!(mcp_config.is_some());
+        assert_eq!(mcp_config.unwrap().template, Some("mcp.tmpl".to_string()));
+
+        let cmd_config = settings.get_config("commands");
+        assert!(cmd_config.is_none());
+
+        let unknown = settings.get_config("unknown");
+        assert!(unknown.is_none());
+    }
+
+    #[test]
+    fn test_merge_variables() {
+        let base = Some(HashMap::from([
+            ("key1".to_string(), "value1".to_string()),
+            ("key2".to_string(), "value2".to_string()),
+        ]));
+
+        let override_vars = Some(HashMap::from([
+            ("key2".to_string(), "override2".to_string()),
+            ("key3".to_string(), "value3".to_string()),
+        ]));
+
+        let merged = ConfigAgentSettings::merge_variables(base.as_ref(), override_vars.as_ref());
+        assert!(merged.is_some());
+
+        let vars = merged.unwrap();
+        assert_eq!(vars.get("key1"), Some(&"value1".to_string()));
+        assert_eq!(vars.get("key2"), Some(&"override2".to_string()));
+        assert_eq!(vars.get("key3"), Some(&"value3".to_string()));
+    }
+}

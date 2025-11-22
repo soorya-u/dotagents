@@ -4,7 +4,7 @@ pub(crate) enum Target {
     Custom,
 }
 
-pub(crate) enum AgentAbility {
+pub(crate) enum Feature {
     MCP,
     Instructions,
     Commands,

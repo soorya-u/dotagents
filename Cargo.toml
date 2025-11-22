@@ -28,6 +28,7 @@ toml = "0.9.8"
 
 [dev-dependencies]
 mockall = "0.13.1"
+tempfile = "3.23.0"
 
 [target.'cfg(windows)'.dependencies]
 dunce = "1.0.5"
