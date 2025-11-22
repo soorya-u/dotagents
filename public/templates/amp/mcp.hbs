@@ -1,0 +1,15 @@
+{
+  "amp.mcpServers": {
+    {{#each mcp.servers}}
+    "{{@key}}": {
+      {{#ifEq this.type "http"}}
+      "url": "{{this.url}}",
+      "headers": {{json this.headers}},
+      {{else}}
+      "command": "{{this.command}}",
+      "args": {{json this.args}},
+      {{/ifEq}}
+    }{{#unless @last}},{{/unless}}
+    {{/each}}
+  }
+}
