@@ -1,13 +1,42 @@
-use anyhow::{Context, Result, anyhow};
-use serde_json::to_value;
+use anyhow::{Context, Result};
+use rayon::prelude::*;
+use serde_json::{Value, to_value};
 
 use crate::constants::features::{COMMANDS_FEATURE, INSTRUCTION_FEATURE, MCP_FEATURE};
-use crate::schema::config::{AppConfig, TomlConfig};
+use crate::schema::config::AppConfig;
 use crate::schema::features::{
-    command::CommandFeature, instruction::InstructionFeature, mcp::McpFeature,
+    command::CommandFeature, instruction::InstructionFeature, mcp::McpFeature, traits::FeatureTrait,
 };
-use crate::templates::{RenderType, get_templater};
-use crate::utils::fs::read_file;
+use crate::templates::{Templater, get_templater};
+
+fn deploy_feature<T>(
+    app_config: &AppConfig,
+    templater: &Templater,
+    variables: Option<&Value>,
+    feature_name: &str,
+    loader: impl FnOnce() -> Result<Vec<T>>,
+) -> Result<()>
+where
+    T: FeatureTrait + Sync,
+{
+    if !app_config.has_feature(feature_name) {
+        return Ok(());
+    }
+
+    let features = loader().context(format!("Failed to load {} feature", feature_name))?;
+    let providers = app_config.get_feature_providers(feature_name);
+
+    providers
+        .par_iter()
+        .map(|(provider_name, config)| {
+            features.iter().try_for_each(|feature| {
+                config.render_template(templater, provider_name, variables, feature)
+            })
+        })
+        .collect::<Result<()>>()?;
+
+    Ok(())
+}
 
 pub(super) fn deploy() -> Result<()> {
     let templater = get_templater();
@@ -16,45 +45,29 @@ pub(super) fn deploy() -> Result<()> {
     let variables =
         Some(to_value(app_config.variables.clone()).context("Failed to extract variables")?);
 
-    // TODO: Command has much complicated process since commands is iterative
-    if app_config.has_feature(COMMANDS_FEATURE) {
-        let commands = CommandFeature::from_application().context("Failed to load commands")?;
-        let providers_with_config = app_config.get_feature_providers(COMMANDS_FEATURE);
+    deploy_feature::<CommandFeature>(
+        &app_config,
+        templater,
+        variables.as_ref(),
+        COMMANDS_FEATURE,
+        CommandFeature::from_application,
+    )?;
 
-        providers_with_config
-            .into_iter()
-            .try_for_each::<_, Result<()>>(|(provider_name, config)| {
-                commands.iter().try_for_each(|command| {
-                    config.render_template(templater, &provider_name, variables.as_ref(), command)
-                })
-            })
-            .context("failed to deploy commands feature")?;
-    };
+    deploy_feature::<McpFeature>(
+        &app_config,
+        templater,
+        variables.as_ref(),
+        MCP_FEATURE,
+        || McpFeature::from_application().map(|mcp| vec![mcp]),
+    )?;
 
-    if app_config.has_feature(MCP_FEATURE) {
-        let mcp = McpFeature::from_application().context("load mcp config")?;
-        let providers_with_config = app_config.get_feature_providers(MCP_FEATURE);
-
-        providers_with_config
-            .into_iter()
-            .try_for_each::<_, Result<()>>(|(provider_name, config)| {
-                config.render_template(templater, &provider_name, variables.as_ref(), &mcp)
-            })
-            .context("failed to deploy mcp feature")?;
-    };
-
-    if app_config.has_feature(INSTRUCTION_FEATURE) {
-        let instruction =
-            InstructionFeature::from_application().context("Failed to load instruction")?;
-        let providers_with_config = app_config.get_feature_providers(INSTRUCTION_FEATURE);
-
-        providers_with_config
-            .into_iter()
-            .try_for_each::<_, Result<()>>(|(provider_name, config)| {
-                config.render_template(templater, &provider_name, variables.as_ref(), &instruction)
-            })
-            .context("failed to deploy instruction feature")?;
-    };
+    deploy_feature::<InstructionFeature>(
+        &app_config,
+        templater,
+        variables.as_ref(),
+        INSTRUCTION_FEATURE,
+        || InstructionFeature::from_application().map(|inst| vec![inst]),
+    )?;
 
     Ok(())
 }

@@ -5,16 +5,42 @@ use std::{
 
 use super::options::InitOptions;
 use crate::constants::{
-    dir::{COMMANDS_DIR, ROOT_DIR, TEMPLATE_DIR},
+    dir::{COMMANDS_DIR, MOCK_CUSTOM_AGENT_DIR, ROOT_DIR, TEMPLATE_DIR},
     file::{
         ENV_EXAMPLE_FILE, ENV_FILE, GITIGNORE_FILE, GLOBAL_CONFIG_FILE, INSTRUCTIONS_FILE,
-        LOCAL_CONFIG_FILE, MCP_FILE,
+        LOCAL_CONFIG_FILE, MCP_FILE, MOCK_COMMAND_FILE, MOCK_COMMAND_TEMPLATE_FILE,
+        MOCK_INSTRUCTION_TEMPLATE_FILE, MOCK_MCP_TEMPLATE_FILE,
     },
     mocks,
 };
 use crate::utils::fs::write_file;
 use anyhow::{Context, Result};
 use log;
+
+struct InitFile {
+    path: PathBuf,
+    content: &'static str,
+    skip_condition: Option<fn(&InitOptions) -> bool>,
+}
+
+impl InitFile {
+    fn new(relative_path: impl AsRef<Path>, content: &'static str) -> Self {
+        Self {
+            path: relative_path.as_ref().to_path_buf(),
+            content,
+            skip_condition: None,
+        }
+    }
+
+    fn with_skip_if(mut self, condition: fn(&InitOptions) -> bool) -> Self {
+        self.skip_condition = Some(condition);
+        self
+    }
+
+    fn should_skip(&self, opts: &InitOptions) -> bool {
+        self.skip_condition.map(|f| f(opts)).unwrap_or(false)
+    }
+}
 
 pub(super) fn initialize_agents_dir(opts: InitOptions) -> Result<()> {
     let main_dir = Path::new(ROOT_DIR);
@@ -36,52 +62,47 @@ pub(super) fn initialize_agents_dir(opts: InitOptions) -> Result<()> {
 
     fs::create_dir(main_dir).context("failed to create .dotagents directory")?;
 
-    // Write .env.example
-    write_file(&main_dir.join(ENV_EXAMPLE_FILE), mocks::ENV_EXAMPLE)?;
-    write_file(&main_dir.join(ENV_FILE), mocks::ENV_EXAMPLE)?;
-
-    // Write .gitignore
-    write_file(&main_dir.join(GITIGNORE_FILE), mocks::GITIGNORE)?;
-
-    // Write config files
-    write_file(&main_dir.join(GLOBAL_CONFIG_FILE), mocks::CONFIG)?;
-    write_file(&main_dir.join(LOCAL_CONFIG_FILE), mocks::LOCAL_CONFIG)?;
-
-    // Write INSTRUCTIONS.md if not skipped
-    if !opts.no_instruction {
-        write_file(&main_dir.join(INSTRUCTIONS_FILE), mocks::INSTRUCTIONS)?;
-    } else {
-        log::info!("Skipping {}", INSTRUCTIONS_FILE);
-    }
-
-    // Write mcp.jsonc if not skipped
-    if !opts.no_mcp {
-        write_file(&main_dir.join(MCP_FILE), mocks::MCP)?;
-    } else {
-        log::info!("Skipping {}", MCP_FILE);
-    }
-
-    // Write commands/hello.md if not skipped
-    if !opts.no_command {
-        write_file(
-            &main_dir.join(COMMANDS_DIR).join("hello.md"),
+    let init_files = vec![
+        InitFile::new(ENV_EXAMPLE_FILE, mocks::ENV_EXAMPLE),
+        InitFile::new(ENV_FILE, mocks::ENV_EXAMPLE),
+        InitFile::new(GITIGNORE_FILE, mocks::GITIGNORE),
+        InitFile::new(GLOBAL_CONFIG_FILE, mocks::CONFIG),
+        InitFile::new(LOCAL_CONFIG_FILE, mocks::LOCAL_CONFIG),
+        InitFile::new(INSTRUCTIONS_FILE, mocks::INSTRUCTIONS)
+            .with_skip_if(|opts| opts.no_instruction),
+        InitFile::new(MCP_FILE, mocks::MCP).with_skip_if(|opts| opts.no_mcp),
+        InitFile::new(
+            Path::new(COMMANDS_DIR).join(MOCK_COMMAND_FILE),
             mocks::COMMAND_HELLO,
-        )?;
-    } else {
-        log::info!("Skipping {}", COMMANDS_DIR);
-    }
+        )
+        .with_skip_if(|opts| opts.no_command),
+        InitFile::new(
+            Path::new(TEMPLATE_DIR)
+                .join(MOCK_CUSTOM_AGENT_DIR)
+                .join(MOCK_COMMAND_TEMPLATE_FILE),
+            mocks::TEMPLATE_MYCODE_COMMAND,
+        ),
+        InitFile::new(
+            Path::new(TEMPLATE_DIR)
+                .join(MOCK_CUSTOM_AGENT_DIR)
+                .join(MOCK_INSTRUCTION_TEMPLATE_FILE),
+            mocks::TEMPLATE_MYCODE_INSTRUCTIONS,
+        ),
+        InitFile::new(
+            Path::new(TEMPLATE_DIR)
+                .join(MOCK_CUSTOM_AGENT_DIR)
+                .join(MOCK_MCP_TEMPLATE_FILE),
+            mocks::TEMPLATE_MYCODE_MCP,
+        ),
+    ];
 
-    // Write templates
-    let templates_base = main_dir.join(TEMPLATE_DIR).join("mycode");
-    write_file(
-        &templates_base.join("command.hbs"),
-        mocks::TEMPLATE_MYCODE_COMMAND,
-    )?;
-    write_file(
-        &templates_base.join("instructions.hbs"),
-        mocks::TEMPLATE_MYCODE_INSTRUCTIONS,
-    )?;
-    write_file(&templates_base.join("mcp.hbs"), mocks::TEMPLATE_MYCODE_MCP)?;
+    for file in init_files {
+        if file.should_skip(&opts) {
+            log::info!("Skipping {}", file.path.display());
+            continue;
+        }
+        write_file(&main_dir.join(&file.path), file.content)?;
+    }
 
     Ok(())
 }

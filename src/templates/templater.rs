@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use handlebars::Handlebars;
 use serde_json::{Value, json};
 use std::env;
-use std::sync::OnceLock;
+use std::sync::LazyLock;
 
 use crate::templates::variables::get_env_variables;
 use crate::utils::path::{get_application_dir, get_config_dir, get_workspace_dir};
@@ -21,10 +21,11 @@ use crate::{
     utils::{merge_json, merge_many_json},
 };
 
-static TEMPLATER: OnceLock<Templater> = OnceLock::new();
+static TEMPLATER: LazyLock<Templater> =
+    LazyLock::new(|| Templater::new().expect("failed to create templater"));
 
 pub fn get_templater() -> &'static Templater {
-    TEMPLATER.get_or_init(|| Templater::new().expect("failed to create templater"))
+    &TEMPLATER
 }
 
 pub enum TemplateSource {

@@ -16,6 +16,7 @@ use crate::{
     },
     utils::{
         fs::{read_file, write_file},
+        merge::merge_optional,
         merge_json,
     },
 };
@@ -114,7 +115,9 @@ impl Providers {
             (Some(b), None) => Some(b.clone()),
             (None, Some(o)) => Some(o.clone()),
             (Some(b), Some(o)) => {
-                let mut merged = b.clone();
+                let mut merged = HashMap::with_capacity(b.len() + o.len());
+                merged.extend(b.iter().map(|(k, v)| (k.clone(), v.clone())));
+
                 for (key, value) in o {
                     merged
                         .entry(key.clone())
@@ -175,7 +178,9 @@ impl ConfigAgentSettings {
             template: other.template.clone().or_else(|| self.template.clone()),
             target: other.target.clone().or_else(|| self.target.clone()),
             disabled: other.disabled.or(self.disabled),
-            variables: Self::merge_variables(self.variables.as_ref(), other.variables.as_ref()),
+            variables: merge_optional(self.variables.as_ref(), other.variables.as_ref(), |b, o| {
+                b.clone().into_iter().chain(o.clone()).collect()
+            }),
             hash: other.hash.clone().or_else(|| self.hash.clone()),
         }
     }
@@ -187,27 +192,27 @@ impl ConfigAgentSettings {
         variables: Option<&Value>,
         feature: &T,
     ) -> Result<()> {
-        let template_path: PathBuf = self
+        let template_str = self
             .template
-            .clone()
-            .map(PathBuf::from)
+            .as_deref()
             .ok_or_else(|| anyhow!("Template config not found for provider {}", name))?;
 
-        let mut target_path: PathBuf = self
+        let target_str = self
             .target
-            .clone()
-            .map(PathBuf::from)
+            .as_deref()
             .ok_or_else(|| anyhow!("Target config not found for provider {}", name))?;
 
-        if let Some(filename) = feature.get_file_name() {
+        // Only create PathBuf when needed for filesystem operations
+        let template_path = PathBuf::from(template_str);
+        let mut target_path = if let Some(filename) = feature.get_file_name() {
             let command_var = get_command_name_variable(&filename)?;
-            target_path = templater
-                .render_template(
-                    RenderType::Content(target_path.to_string_lossy().to_string()),
-                    Some(&command_var),
-                )
-                .map(PathBuf::from)?;
-        }
+            PathBuf::from(templater.render_template(
+                RenderType::Content(target_str.to_string()),
+                Some(&command_var),
+            )?)
+        } else {
+            PathBuf::from(target_str)
+        };
 
         if !template_path.exists() {
             return Err(anyhow!(
@@ -243,22 +248,6 @@ impl ConfigAgentSettings {
             .context(format!("failed to write file in {}", target_path.display()))?;
 
         Ok(())
-    }
-
-    fn merge_variables(
-        base: Option<&HashMap<String, String>>,
-        override_vars: Option<&HashMap<String, String>>,
-    ) -> Option<HashMap<String, String>> {
-        match (base, override_vars) {
-            (None, None) => None,
-            (Some(b), None) => Some(b.clone()),
-            (None, Some(o)) => Some(o.clone()),
-            (Some(b), Some(o)) => {
-                let mut merged = b.clone();
-                merged.extend(o.clone());
-                Some(merged)
-            }
-        }
     }
 }
 
@@ -337,26 +326,5 @@ mod tests {
 
         let unknown = settings.get_config("unknown");
         assert!(unknown.is_none());
-    }
-
-    #[test]
-    fn test_merge_variables() {
-        let base = Some(HashMap::from([
-            ("key1".to_string(), "value1".to_string()),
-            ("key2".to_string(), "value2".to_string()),
-        ]));
-
-        let override_vars = Some(HashMap::from([
-            ("key2".to_string(), "override2".to_string()),
-            ("key3".to_string(), "value3".to_string()),
-        ]));
-
-        let merged = ConfigAgentSettings::merge_variables(base.as_ref(), override_vars.as_ref());
-        assert!(merged.is_some());
-
-        let vars = merged.unwrap();
-        assert_eq!(vars.get("key1"), Some(&"value1".to_string()));
-        assert_eq!(vars.get("key2"), Some(&"override2".to_string()));
-        assert_eq!(vars.get("key3"), Some(&"value3".to_string()));
     }
 }

@@ -1,26 +1,45 @@
 use serde_json::{Value, json};
+use std::mem;
+
+/// Optimized merge that takes ownership to reduce clones
+fn merge_json_mut(mut a: Value, b: &Value) -> Value {
+    match (&mut a, b) {
+        (Value::Object(a_map), Value::Object(b_map)) => {
+            // Note: serde_json::Map doesn't have reserve(), but using entry API is still efficient
+            for (k, v) in b_map {
+                a_map
+                    .entry(k.clone())
+                    .and_modify(|old| {
+                        // Take ownership to avoid clone when recursing
+                        let old_val = mem::replace(old, Value::Null);
+                        *old = merge_json_mut(old_val, v);
+                    })
+                    .or_insert_with(|| v.clone());
+            }
+            a
+        }
+        (_, b_val) => b_val.clone(),
+    }
+}
 
 pub fn merge_many_json(values: &[Value]) -> Value {
-    values
-        .iter()
-        .cloned()
-        .reduce(|acc, v| merge_json(Some(&acc), Some(&v)))
-        .unwrap_or_else(|| json!({}))
+    if values.is_empty() {
+        return json!({});
+    }
+
+    // Clone first value once, then mutate in-place
+    let mut result = values[0].clone();
+
+    for value in &values[1..] {
+        result = merge_json_mut(result, value);
+    }
+
+    result
 }
 
 pub fn merge_json(a: Option<&Value>, b: Option<&Value>) -> Value {
     match (a, b) {
-        (Some(Value::Object(a_map)), Some(Value::Object(b_map))) => {
-            let mut merged = a_map.clone();
-            for (k, v) in b_map {
-                merged
-                    .entry(k.clone())
-                    .and_modify(|old| *old = merge_json(Some(old), Some(v)))
-                    .or_insert_with(|| v.clone());
-            }
-            Value::Object(merged)
-        }
-        (Some(_), Some(b_val)) => b_val.clone(),
+        (Some(a_val), Some(b_val)) => merge_json_mut(a_val.clone(), b_val),
         (Some(a_val), None) => a_val.clone(),
         (None, Some(b_val)) => b_val.clone(),
         (None, None) => json!({}),
