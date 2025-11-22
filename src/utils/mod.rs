@@ -2,6 +2,7 @@ mod error;
 pub(crate) mod fs;
 mod json;
 mod logs;
+pub(crate) mod merge;
 pub(crate) mod path;
 
 pub(crate) use error::display_error;

@@ -8,17 +8,17 @@ features = [
 [targets]
 cli = []
 ide = []
-custom = ["opencode"]
+custom = ["mycode"]
 
-[providers.custom.opencode.mcp]
-template = "{{ dir.application }}/templates/opencode/mcp.hbs"
-target = "{{ dir.workspace }}/.opencode/mcp.json"
+[providers.custom.mycode.mcp]
+template = "{{ dir.application }}/templates/mycode/mcp.hbs"
+target = "{{ dir.workspace }}/.mycode/mcp.json"
 
-[providers.custom.opencode.instructions]
-template = "{{ dir.application }}/templates/opencode/instructions.hbs"
-target = "{{ dir.workspace }}/.opencode/instructions.md"
+[providers.custom.mycode.instructions]
+template = "{{ dir.application }}/templates/mycode/instructions.hbs"
+target = "{{ dir.workspace }}/.mycode/instructions.md"
 variables = {agent_name = "Mycode"}
 
-[providers.custom.opencode.commands]
-template = "{{ dir.application }}/templates/opencode/command.hbs"
-target = "{{ dir.workspace }}/.opencode/commands/{{ command.name }}.md"
+[providers.custom.mycode.commands]
+template = "{{ dir.application }}/templates/mycode/command.hbs"
+target = "{{ dir.workspace }}/.mycode/commands/{{ command.name }}.md"

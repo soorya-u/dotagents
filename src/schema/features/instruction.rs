@@ -42,3 +42,55 @@ impl FeatureTrait for InstructionFeature {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_string() {
+        let content = "This is an instruction";
+        let instruction = InstructionFeature::from_string(content).unwrap();
+        assert_eq!(instruction.content, content);
+    }
+
+    #[test]
+    fn test_to_string() {
+        let instruction = InstructionFeature {
+            content: "Test instruction".to_string(),
+        };
+        let result = instruction.to_string().unwrap();
+        assert_eq!(result, "Test instruction");
+    }
+
+    #[test]
+    fn test_to_value() {
+        let instruction = InstructionFeature {
+            content: "Sample instruction".to_string(),
+        };
+        let value = instruction.to_value();
+        assert_eq!(
+            value,
+            json!({
+                "instruction": {
+                    "content": "Sample instruction"
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn test_roundtrip() {
+        let original = "Complex instruction\nwith multiple lines\nand content";
+        let instruction = InstructionFeature::from_string(original).unwrap();
+        let result = instruction.to_string().unwrap();
+        assert_eq!(result, original);
+    }
+
+    #[test]
+    fn test_empty_content() {
+        let instruction = InstructionFeature::from_string("").unwrap();
+        assert_eq!(instruction.content, "");
+        assert_eq!(instruction.to_string().unwrap(), "");
+    }
+}

@@ -16,6 +16,7 @@ use crate::{
     },
     utils::{
         fs::{read_file, write_file},
+        merge::merge_optional,
         merge_json,
     },
 };
@@ -114,7 +115,9 @@ impl Providers {
             (Some(b), None) => Some(b.clone()),
             (None, Some(o)) => Some(o.clone()),
             (Some(b), Some(o)) => {
-                let mut merged = b.clone();
+                let mut merged = HashMap::with_capacity(b.len() + o.len());
+                merged.extend(b.iter().map(|(k, v)| (k.clone(), v.clone())));
+
                 for (key, value) in o {
                     merged
                         .entry(key.clone())
@@ -175,7 +178,9 @@ impl ConfigAgentSettings {
             template: other.template.clone().or_else(|| self.template.clone()),
             target: other.target.clone().or_else(|| self.target.clone()),
             disabled: other.disabled.or(self.disabled),
-            variables: Self::merge_variables(self.variables.as_ref(), other.variables.as_ref()),
+            variables: merge_optional(self.variables.as_ref(), other.variables.as_ref(), |b, o| {
+                b.clone().into_iter().chain(o.clone()).collect()
+            }),
             hash: other.hash.clone().or_else(|| self.hash.clone()),
         }
     }
@@ -187,27 +192,27 @@ impl ConfigAgentSettings {
         variables: Option<&Value>,
         feature: &T,
     ) -> Result<()> {
-        let template_path: PathBuf = self
+        let template_str = self
             .template
-            .clone()
-            .map(PathBuf::from)
+            .as_deref()
             .ok_or_else(|| anyhow!("Template config not found for provider {}", name))?;
 
-        let mut target_path: PathBuf = self
+        let target_str = self
             .target
-            .clone()
-            .map(PathBuf::from)
+            .as_deref()
             .ok_or_else(|| anyhow!("Target config not found for provider {}", name))?;
 
-        if let Some(filename) = feature.get_file_name() {
+        // Only create PathBuf when needed for filesystem operations
+        let template_path = PathBuf::from(template_str);
+        let mut target_path = if let Some(filename) = feature.get_file_name() {
             let command_var = get_command_name_variable(&filename)?;
-            target_path = templater
-                .render_template(
-                    RenderType::Content(target_path.to_string_lossy().to_string()),
-                    Some(&command_var),
-                )
-                .map(PathBuf::from)?;
-        }
+            PathBuf::from(templater.render_template(
+                RenderType::Content(target_str.to_string()),
+                Some(&command_var),
+            )?)
+        } else {
+            PathBuf::from(target_str)
+        };
 
         if !template_path.exists() {
             return Err(anyhow!(
@@ -244,20 +249,82 @@ impl ConfigAgentSettings {
 
         Ok(())
     }
+}
 
-    fn merge_variables(
-        base: Option<&HashMap<String, String>>,
-        override_vars: Option<&HashMap<String, String>>,
-    ) -> Option<HashMap<String, String>> {
-        match (base, override_vars) {
-            (None, None) => None,
-            (Some(b), None) => Some(b.clone()),
-            (None, Some(o)) => Some(o.clone()),
-            (Some(b), Some(o)) => {
-                let mut merged = b.clone();
-                merged.extend(o.clone());
-                Some(merged)
-            }
-        }
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_targets_merge() {
+        let base = Targets {
+            ide: Some(HashSet::from(["vscode".to_string()])),
+            cli: None,
+            custom: None,
+        };
+
+        let override_targets = Targets {
+            ide: Some(HashSet::from(["cursor".to_string()])),
+            cli: Some(HashSet::from(["anthropic".to_string()])),
+            custom: None,
+        };
+
+        let merged = base.merge(&override_targets);
+        assert_eq!(merged.ide, Some(HashSet::from(["cursor".to_string()])));
+        assert_eq!(merged.cli, Some(HashSet::from(["anthropic".to_string()])));
+    }
+
+    #[test]
+    fn test_config_agent_settings_merge() {
+        let base = ConfigAgentSettings {
+            template: Some("base.tmpl".to_string()),
+            target: Some("base.target".to_string()),
+            disabled: Some(false),
+            variables: Some(HashMap::from([("key1".to_string(), "value1".to_string())])),
+            hash: None,
+        };
+
+        let override_settings = ConfigAgentSettings {
+            template: None,
+            target: Some("override.target".to_string()),
+            disabled: Some(true),
+            variables: Some(HashMap::from([("key2".to_string(), "value2".to_string())])),
+            hash: Some("hash123".to_string()),
+        };
+
+        let merged = base.merge(&override_settings);
+        assert_eq!(merged.template, Some("base.tmpl".to_string()));
+        assert_eq!(merged.target, Some("override.target".to_string()));
+        assert_eq!(merged.disabled, Some(true));
+        assert_eq!(merged.hash, Some("hash123".to_string()));
+
+        let vars = merged.variables.unwrap();
+        assert_eq!(vars.get("key1"), Some(&"value1".to_string()));
+        assert_eq!(vars.get("key2"), Some(&"value2".to_string()));
+    }
+
+    #[test]
+    fn test_config_agent_ability_settings_get_config() {
+        let settings = ConfigAgentAbilitySettings {
+            mcp: Some(ConfigAgentSettings {
+                template: Some("mcp.tmpl".to_string()),
+                ..Default::default()
+            }),
+            instructions: Some(ConfigAgentSettings {
+                template: Some("inst.tmpl".to_string()),
+                ..Default::default()
+            }),
+            commands: None,
+        };
+
+        let mcp_config = settings.get_config("mcp");
+        assert!(mcp_config.is_some());
+        assert_eq!(mcp_config.unwrap().template, Some("mcp.tmpl".to_string()));
+
+        let cmd_config = settings.get_config("commands");
+        assert!(cmd_config.is_none());
+
+        let unknown = settings.get_config("unknown");
+        assert!(unknown.is_none());
     }
 }

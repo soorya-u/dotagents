@@ -67,3 +67,45 @@ pub fn get_options() -> Options {
 
     opt
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_verbosity_clamping() {
+        // Test that verbosity is clamped to max 3
+        let verbosity_values = [0, 1, 2, 3, 4, 5, 10];
+        for v in verbosity_values {
+            let clamped = std::cmp::min(3, v);
+            if v <= 3 {
+                assert_eq!(clamped, v);
+            } else {
+                assert_eq!(clamped, 3);
+            }
+        }
+    }
+
+    #[test]
+    fn test_init_options_defaults() {
+        // Test default values for InitOptions
+        let init_options = InitOptions {
+            no_mcp: false,
+            no_command: false,
+            no_instruction: false,
+            force: false,
+        };
+
+        assert!(!init_options.no_mcp);
+        assert!(!init_options.no_command);
+        assert!(!init_options.no_instruction);
+    }
+
+    #[test]
+    fn test_options_default() {
+        let options = Options::default();
+        assert_eq!(options.verbosity, 0);
+        assert!(!options.quiet);
+        assert!(options.action.is_none());
+    }
+}

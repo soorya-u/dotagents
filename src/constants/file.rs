@@ -7,3 +7,8 @@ pub(crate) const CACHE_CONFIG_FILE: &str = "cache.toml";
 pub(crate) const GITIGNORE_FILE: &str = ".gitignore";
 pub(crate) const ENV_FILE: &str = ".env";
 pub(crate) const ENV_EXAMPLE_FILE: &str = ".env.example";
+
+pub(crate) const MOCK_COMMAND_FILE: &str = "hello.md";
+pub(crate) const MOCK_INSTRUCTION_TEMPLATE_FILE: &str = "instructions.hbs";
+pub(crate) const MOCK_COMMAND_TEMPLATE_FILE: &str = "command.hbs";
+pub(crate) const MOCK_MCP_TEMPLATE_FILE: &str = "mcp.hbs";
