@@ -7,7 +7,7 @@ use crate::schema::config::AppConfig;
 use crate::schema::features::{
     command::CommandFeature, instruction::InstructionFeature, mcp::McpFeature, traits::FeatureTrait,
 };
-use crate::templates::{Templater, get_templater};
+use crate::templates::{Templater, get_templater, render_feature_with_settings};
 
 fn deploy_feature<T>(
     app_config: &AppConfig,
@@ -24,13 +24,13 @@ where
     }
 
     let features = loader().context(format!("Failed to load {} feature", feature_name))?;
-    let providers = app_config.get_feature_providers(feature_name);
+    let providers = app_config.get_provider_feature_settings(feature_name);
 
     providers
         .par_iter()
-        .map(|(provider_name, config)| {
+        .map(|(provider_name, settings)| {
             features.iter().try_for_each(|feature| {
-                config.render_template(templater, provider_name, variables, feature)
+                render_feature_with_settings(provider_name, feature, settings, templater, variables)
             })
         })
         .collect::<Result<()>>()?;

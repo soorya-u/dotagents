@@ -9,7 +9,7 @@ use super::local::LocalConfig;
 use crate::constants::features::{COMMANDS_FEATURE, INSTRUCTION_FEATURE, MCP_FEATURE};
 use crate::constants::file::{GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE};
 use crate::constants::schema::CONFIG_SCHEMA;
-use crate::schema::config::{ConfigAgentSettings, TomlConfig};
+use crate::schema::config::{FeatureSettings, TomlConfig};
 use crate::templates::{RenderType, Templater, get_templater};
 use crate::utils::merge::{merge_optional, merge_optional_or_default};
 use serde::{Deserialize, Serialize};
@@ -40,7 +40,7 @@ impl AppConfig {
         self.features.contains(feature)
     }
 
-    pub fn get_feature_providers(&self, feature: &str) -> HashMap<String, ConfigAgentSettings> {
+    pub fn get_provider_feature_settings(&self, feature: &str) -> HashMap<String, FeatureSettings> {
         let Some(providers) = &self.providers else {
             return HashMap::new();
         };
@@ -56,9 +56,9 @@ impl AppConfig {
             .chain(custom_iter)
             .filter_map(|(name, settings)| {
                 let config = settings.get_config(feature)?;
-                let is_enabled = config.disabled.unwrap_or(false);
+                let is_disabled = config.disabled.unwrap_or(false);
 
-                if has_feature || is_enabled {
+                if has_feature && !is_disabled {
                     Some((name.clone(), config.clone()))
                 } else {
                     None
