@@ -38,31 +38,31 @@ pub struct Targets {
 #[serde(rename_all = "kebab-case")]
 pub struct Providers {
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub ide: Option<HashMap<String, ConfigAgentAbilitySettings>>,
+    pub ide: Option<HashMap<String, Features>>,
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub cli: Option<HashMap<String, ConfigAgentAbilitySettings>>,
+    pub cli: Option<HashMap<String, Features>>,
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub custom: Option<HashMap<String, ConfigAgentAbilitySettings>>,
+    pub custom: Option<HashMap<String, Features>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(rename_all = "kebab-case")]
-pub struct ConfigAgentAbilitySettings {
+pub struct Features {
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub mcp: Option<ConfigAgentSettings>,
+    pub mcp: Option<FeatureSettings>,
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub instructions: Option<ConfigAgentSettings>,
+    pub instructions: Option<FeatureSettings>,
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub commands: Option<ConfigAgentSettings>,
+    pub commands: Option<FeatureSettings>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(rename_all = "kebab-case")]
-pub struct ConfigAgentSettings {
+pub struct FeatureSettings {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub template: Option<String>,
 
@@ -107,9 +107,9 @@ impl Providers {
     }
 
     fn merge_provider_maps(
-        base: Option<&HashMap<String, ConfigAgentAbilitySettings>>,
-        override_map: Option<&HashMap<String, ConfigAgentAbilitySettings>>,
-    ) -> Option<HashMap<String, ConfigAgentAbilitySettings>> {
+        base: Option<&HashMap<String, Features>>,
+        override_map: Option<&HashMap<String, Features>>,
+    ) -> Option<HashMap<String, Features>> {
         match (base, override_map) {
             (None, None) => None,
             (Some(b), None) => Some(b.clone()),
@@ -130,13 +130,13 @@ impl Providers {
     }
 }
 
-impl ConfigAgentAbilitySettings {
+impl Features {
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn merge(&self, other: &ConfigAgentAbilitySettings) -> ConfigAgentAbilitySettings {
-        ConfigAgentAbilitySettings {
+    pub fn merge(&self, other: &Features) -> Features {
+        Features {
             mcp: Self::merge_settings(self.mcp.as_ref(), other.mcp.as_ref()),
             instructions: Self::merge_settings(
                 self.instructions.as_ref(),
@@ -146,7 +146,7 @@ impl ConfigAgentAbilitySettings {
         }
     }
 
-    pub fn get_config(&self, feature: &str) -> Option<ConfigAgentSettings> {
+    pub fn get_config(&self, feature: &str) -> Option<FeatureSettings> {
         match feature {
             MCP_FEATURE => self.mcp.clone(),
             INSTRUCTION_FEATURE => self.instructions.clone(),
@@ -156,9 +156,9 @@ impl ConfigAgentAbilitySettings {
     }
 
     fn merge_settings(
-        base: Option<&ConfigAgentSettings>,
-        override_settings: Option<&ConfigAgentSettings>,
-    ) -> Option<ConfigAgentSettings> {
+        base: Option<&FeatureSettings>,
+        override_settings: Option<&FeatureSettings>,
+    ) -> Option<FeatureSettings> {
         match (base, override_settings) {
             (None, None) => None,
             (Some(b), None) => Some(b.clone()),
@@ -168,13 +168,13 @@ impl ConfigAgentAbilitySettings {
     }
 }
 
-impl ConfigAgentSettings {
+impl FeatureSettings {
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn merge(&self, other: &ConfigAgentSettings) -> ConfigAgentSettings {
-        ConfigAgentSettings {
+    pub fn merge(&self, other: &FeatureSettings) -> FeatureSettings {
+        FeatureSettings {
             template: other.template.clone().or_else(|| self.template.clone()),
             target: other.target.clone().or_else(|| self.target.clone()),
             disabled: other.disabled.or(self.disabled),
@@ -183,71 +183,6 @@ impl ConfigAgentSettings {
             }),
             hash: other.hash.clone().or_else(|| self.hash.clone()),
         }
-    }
-
-    pub fn render_template<T: FeatureTrait>(
-        &self,
-        templater: &Templater,
-        name: &str,
-        variables: Option<&Value>,
-        feature: &T,
-    ) -> Result<()> {
-        let template_str = self
-            .template
-            .as_deref()
-            .ok_or_else(|| anyhow!("Template config not found for provider {}", name))?;
-
-        let target_str = self
-            .target
-            .as_deref()
-            .ok_or_else(|| anyhow!("Target config not found for provider {}", name))?;
-
-        // Only create PathBuf when needed for filesystem operations
-        let template_path = PathBuf::from(template_str);
-        let mut target_path = if let Some(filename) = feature.get_file_name() {
-            let command_var = get_command_name_variable(&filename)?;
-            PathBuf::from(templater.render_template(
-                RenderType::Content(target_str.to_string()),
-                Some(&command_var),
-            )?)
-        } else {
-            PathBuf::from(target_str)
-        };
-
-        if !template_path.exists() {
-            return Err(anyhow!(
-                "Template file not found for {} provider at {}",
-                name,
-                template_path.display()
-            ));
-        }
-
-        if target_path.exists() {
-            warn!("Replacing existing file at {}", target_path.display());
-        }
-
-        let local_vars = self.variables.as_ref().map(to_value).transpose()?;
-
-        let user_vars =
-            get_user_defined_variables(Some(merge_json(variables, local_vars.as_ref())))?;
-
-        let populate_config = feature.populate_with_values(templater, Some(&user_vars))?;
-
-        let feature_as_variables = populate_config.to_value();
-
-        let template_file_content = read_file(&template_path).context(format!(
-            "failed to read file in {}",
-            template_path.display()
-        ))?;
-
-        let vars = merge_json(Some(&user_vars), Some(&feature_as_variables));
-        let content =
-            templater.render_template(RenderType::Content(template_file_content), Some(&vars))?;
-
-        write_file(&target_path, &content)
-            .context(format!("failed to write file in {}", target_path.display()))?;
-
-        Ok(())
     }
 }
 
@@ -276,7 +211,7 @@ mod tests {
 
     #[test]
     fn test_config_agent_settings_merge() {
-        let base = ConfigAgentSettings {
+        let base = FeatureSettings {
             template: Some("base.tmpl".to_string()),
             target: Some("base.target".to_string()),
             disabled: Some(false),
@@ -284,7 +219,7 @@ mod tests {
             hash: None,
         };
 
-        let override_settings = ConfigAgentSettings {
+        let override_settings = FeatureSettings {
             template: None,
             target: Some("override.target".to_string()),
             disabled: Some(true),
@@ -305,12 +240,12 @@ mod tests {
 
     #[test]
     fn test_config_agent_ability_settings_get_config() {
-        let settings = ConfigAgentAbilitySettings {
-            mcp: Some(ConfigAgentSettings {
+        let settings = Features {
+            mcp: Some(FeatureSettings {
                 template: Some("mcp.tmpl".to_string()),
                 ..Default::default()
             }),
-            instructions: Some(ConfigAgentSettings {
+            instructions: Some(FeatureSettings {
                 template: Some("inst.tmpl".to_string()),
                 ..Default::default()
             }),

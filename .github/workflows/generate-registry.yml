@@ -1,0 +1,43 @@
+name: Generate Provider Registry
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "public/v1/templates/**"
+
+jobs:
+  generate-registry:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        uses: sudo apt-get install -y jq
+
+      - name: Detect Changes
+        id: changes
+        uses: ./scripts/ci/detect_template_changes.sh
+
+      - name: Stop if no template changes
+        if: steps.changes.outputs.changes_detected == 'false'
+        run: echo "No changes under templates/ — skipping."
+
+      - name: Generate registry.json
+        if: steps.changes.outputs.changes_detected == 'true'
+        id: registry
+        run: ./scripts/ci/generate_registry.sh
+
+      - name: Create Pull Request
+        if: steps.registry.outputs.updated == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore: update registry.json"
+          title: "Update registry.json"
+          body: "Automated update of template registry."
+          branch: "bot/update-registry"
+          author: "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+          labels: "automation"

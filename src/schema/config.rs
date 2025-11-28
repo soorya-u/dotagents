@@ -7,7 +7,7 @@ pub(crate) mod traits;
 
 pub(crate) use app::AppConfig;
 pub(crate) use cache::CacheConfig;
-pub(crate) use common::{ConfigAgentAbilitySettings, ConfigAgentSettings, Providers, Targets};
+pub(crate) use common::{FeatureSettings, Features, Providers, Targets};
 pub(crate) use global::GlobalConfig;
 pub(crate) use local::LocalConfig;
 pub(crate) use traits::TomlConfig;
