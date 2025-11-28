@@ -14,13 +14,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Install jq
-        uses: sudo apt-get install -y jq
+        run: sudo apt-get install -y jq
 
       - name: Detect Changes
         id: changes
-        uses: ./scripts/ci/detect_template_changes.sh
+        run: ./scripts/ci/detect_template_changes.sh
 
       - name: Stop if no template changes
         if: steps.changes.outputs.changes_detected == 'false'

@@ -56,9 +56,9 @@ impl AppConfig {
             .chain(custom_iter)
             .filter_map(|(name, settings)| {
                 let config = settings.get_config(feature)?;
-                let is_enabled = config.disabled.unwrap_or(false);
+                let is_disabled = config.disabled.unwrap_or(false);
 
-                if has_feature || is_enabled {
+                if has_feature && !is_disabled {
                     Some((name.clone(), config.clone()))
                 } else {
                     None
