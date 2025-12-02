@@ -27,7 +27,13 @@ jobs:
 
       - name: Detect Changes
         id: changes
-        run: ./scripts/ci/detect_template_changes.sh
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual run — forcing changes_detected=true"
+            echo "changes_detected=true" >> $GITHUB_OUTPUT
+          else
+            ./scripts/ci/detect_template_changes.sh
+          fi
 
       - name: Stop if no template changes
         if: steps.changes.outputs.changes_detected == 'false'
