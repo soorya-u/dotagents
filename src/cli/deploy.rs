@@ -2,10 +2,13 @@ use anyhow::{Context, Result};
 use rayon::prelude::*;
 use serde_json::{Value, to_value};
 
-use crate::constants::features::{COMMANDS_FEATURE, INSTRUCTION_FEATURE, MCP_FEATURE};
+use crate::constants::features::{
+    COMMANDS_FEATURE, INSTRUCTION_FEATURE, MCP_FEATURE, SKILLS_FEATURE,
+};
 use crate::schema::config::AppConfig;
 use crate::schema::features::{
-    command::CommandFeature, instruction::InstructionFeature, mcp::McpFeature, traits::FeatureTrait,
+    command::CommandFeature, instruction::InstructionFeature, mcp::McpFeature,
+    skill::SkillFeature, traits::FeatureTrait,
 };
 use crate::templates::{Templater, get_templater, render_feature_with_settings};
 
@@ -51,6 +54,14 @@ pub(super) fn deploy() -> Result<()> {
         variables.as_ref(),
         COMMANDS_FEATURE,
         CommandFeature::from_application,
+    )?;
+
+    deploy_feature::<SkillFeature>(
+        &app_config,
+        templater,
+        variables.as_ref(),
+        SKILLS_FEATURE,
+        SkillFeature::from_application,
     )?;
 
     deploy_feature::<McpFeature>(

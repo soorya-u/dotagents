@@ -67,6 +67,11 @@ pub fn get_commands_dir() -> Result<PathBuf> {
     get_dir_or_die(commands_dir)
 }
 
+pub fn get_skills_dir() -> Result<PathBuf> {
+    let skills_dir = get_application_dir()?.join("skills");
+    get_dir_or_die(skills_dir)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
