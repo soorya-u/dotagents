@@ -1,0 +1,44 @@
+[tools]
+rust = "1.92.0"
+
+# ── Tasks ────────────────────────────────────────────────────────────────────
+
+[tasks.build]
+description = "Compile a debug build"
+run = "cargo build"
+
+[tasks.build-release]
+description = "Compile an optimised release build"
+run = "cargo build --release"
+
+[tasks.run]
+description = "Build (debug) and run the CLI – pass extra args with: mise run run -- <subcommand> [args]"
+run = "cargo run --"
+
+[tasks.fmt]
+description = "Format source code with rustfmt"
+run = "cargo fmt"
+
+[tasks.lint]
+description = "Run Clippy lints"
+run = "cargo clippy"
+
+[tasks.check]
+description = "Format then lint (run before committing)"
+depends = ["fmt", "lint"]
+
+[tasks.test]
+description = "Run all unit tests (colocated #[cfg(test)] blocks inside src/)"
+run = "cargo test --bin dotagents"
+
+[tasks.test-integration]
+description = "Run the integration smoke-test suite (tests/integration/)"
+run = "cargo test --test integration"
+
+[tasks.test-e2e]
+description = "Run the full end-to-end test suite (tests/e2e/)"
+run = "cargo test --test e2e"
+
+[tasks.test-all]
+description = "Run every test: unit + integration + e2e"
+run = "cargo test"

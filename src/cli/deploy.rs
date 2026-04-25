@@ -7,8 +7,8 @@ use crate::constants::features::{
 };
 use crate::schema::config::AppConfig;
 use crate::schema::features::{
-    command::CommandFeature, instruction::InstructionFeature, mcp::McpFeature,
-    skill::SkillFeature, traits::FeatureTrait,
+    command::CommandFeature, instruction::InstructionFeature, mcp::McpFeature, skill::SkillFeature,
+    traits::FeatureTrait,
 };
 use crate::templates::{Templater, get_templater, render_feature_with_settings};
 

@@ -2,18 +2,37 @@
 
 **Dotagents** is a Rust CLI that manages and templates configuration files for AI agents (Claude Code, Codex, Cursor, Copilot, Gemini, Windsurf, etc.), inspired by [Dotter](https://github.com/SuperCuber/dotter). Users keep one source-of-truth in `.dotagents/` (commands, instructions, MCP servers, env, variables) and `dotagents deploy` renders provider-specific files (e.g. `.claude/commands/<name>.md`, `.cursor/...`) using Handlebars templates.
 
+## Verification (always run before finishing)
+
+After every change — no exceptions — run both of these and fix anything that fails:
+
+```bash
+mise check      # cargo fmt + cargo clippy (format & lint)
+mise test-all   # cargo test  (unit + integration + e2e)
+```
+
+Both commands must exit 0 before a task is considered done.
+
 ## Common Commands
 
 ```bash
-cargo build                                       # debug build
-cargo build --release                             # optimized binary (LTO + opt-level "s" + strip)
-cargo test                                        # all unit tests (most modules use #[cfg(test)] mod tests)
+# Build
+mise run build                                    # debug build
+mise run build-release                            # optimised release build (LTO + strip)
+
+# Run the CLI
+mise run run -- init [--no-mcp|--no-command|--no-instruction] [--force]
+mise run run -- deploy
+mise run run -- gen-completions --shell bash --to ./completions
+
+# Tests (individual suites)
+mise run test              # unit tests only (src/ colocated #[cfg(test)] blocks)
+mise run test-integration  # tests/integration/ smoke tests
+mise run test-e2e          # tests/e2e/ full end-to-end suite
+
+# Raw cargo (useful for filtering by test name)
 cargo test <name>                                 # single test by name (substring match)
 cargo test <module>::tests -- --nocapture        # show stdout from a module's tests
-cargo run -- init [--no-mcp|--no-command|--no-instruction] [--force]
-cargo run -- deploy
-cargo run -- gen-completions --shell bash --to ./completions
-cargo fmt && cargo clippy                         # before sending changes
 ```
 
 Notes that bite:

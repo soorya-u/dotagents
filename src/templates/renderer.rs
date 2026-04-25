@@ -6,10 +6,7 @@ use serde_json::{Value, to_value};
 
 use crate::{
     schema::{config::FeatureSettings, features::traits::FeatureTrait},
-    templates::{
-        RenderType, Templater,
-        variables::get_user_defined_variables,
-    },
+    templates::{RenderType, Templater, variables::get_user_defined_variables},
     utils::{
         fs::{read_file, write_file},
         merge_json,
@@ -36,10 +33,10 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
     let template_path = PathBuf::from(template_str);
     let target_path = if let Some(filename) = feature.get_file_name() {
         let name_var = feature.get_name_variable(&filename)?;
-        PathBuf::from(templater.render_template(
-            RenderType::Content(target_str.to_string()),
-            Some(&name_var),
-        )?)
+        PathBuf::from(
+            templater
+                .render_template(RenderType::Content(target_str.to_string()), Some(&name_var))?,
+        )
     } else {
         PathBuf::from(target_str)
     };
