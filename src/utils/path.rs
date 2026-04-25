@@ -19,28 +19,49 @@ fn get_dir_or_die(path: PathBuf) -> Result<PathBuf> {
     }
 }
 
+/// Walk up from `start` until a directory containing `ROOT_DIR` is found.
+///
+/// `boundary` is an optional upper limit for the walk — the search will not
+/// ascend past that directory.  Pass `None` for an unbounded walk (production
+/// use); pass `Some(start_path)` in tests to confine the walk to a controlled
+/// temp directory and avoid flakiness from any real `ROOT_DIR` that might
+/// exist in an ancestor of the temp dir.
+///
+/// Separated from the `OnceLock` wrapper so it can be unit-tested with
+/// arbitrary starting paths without touching global state.
+fn find_workspace_dir(
+    start: PathBuf,
+    boundary: Option<&std::path::Path>,
+) -> Result<PathBuf, String> {
+    let mut current = start;
+    loop {
+        let marker = current.join(ROOT_DIR);
+        if marker.is_dir() {
+            return Ok(current);
+        }
+        if let Some(b) = boundary {
+            if current == b {
+                break;
+            }
+        }
+        if !current.pop() {
+            break;
+        }
+    }
+    Err(format!(
+        "No `{}` directory found in any parent directory",
+        ROOT_DIR
+    ))
+}
+
 pub fn get_workspace_dir() -> Result<PathBuf> {
     WORKSPACE_DIR
         .get_or_init(|| {
-            let mut current = match env::current_dir() {
+            let current = match env::current_dir() {
                 Ok(dir) => dir,
                 Err(e) => return Err(format!("failed to get current directory: {}", e)),
             };
-
-            loop {
-                let marker = current.join(ROOT_DIR);
-
-                if marker.is_dir() {
-                    return Ok(current);
-                }
-
-                if !current.pop() {
-                    return Err(format!(
-                        "No `{}` directory found in any parent directory",
-                        ROOT_DIR
-                    ));
-                }
-            }
+            find_workspace_dir(current, None)
         })
         .clone()
         .map_err(|e| anyhow!(e.clone()))
@@ -104,34 +125,37 @@ mod tests {
     }
 
     #[test]
-    fn test_get_workspace_dir_with_marker() {
-        // Note: Due to caching with OnceLock, this test will return the cached workspace
-        // directory if already initialized (e.g., the actual project workspace).
-        // This is expected behavior for the caching optimization.
-        let result = get_workspace_dir();
-        assert!(result.is_ok());
-        let workspace = result.unwrap();
-        assert!(workspace.is_dir());
+    fn test_find_workspace_dir_finds_marker_at_start() {
+        let temp = TempDir::new().unwrap();
+        fs::create_dir(temp.path().join(ROOT_DIR)).unwrap();
 
-        // Verify the marker exists in the returned workspace
-        let marker = workspace.join(ROOT_DIR);
-        assert!(marker.exists() && marker.is_dir());
+        let result = find_workspace_dir(temp.path().to_path_buf(), None);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), temp.path());
     }
 
     #[test]
-    fn test_get_workspace_dir_no_marker() {
-        // Note: Due to caching with OnceLock, if get_workspace_dir() was already called
-        // in another test, it will return the cached result.
-        // This test verifies the cached result is valid if present.
-        let result = get_workspace_dir();
+    fn test_find_workspace_dir_finds_marker_in_parent() {
+        let temp = TempDir::new().unwrap();
+        fs::create_dir(temp.path().join(ROOT_DIR)).unwrap();
+        let child = temp.path().join("a").join("b");
+        fs::create_dir_all(&child).unwrap();
 
-        // If successful (cached from project), verify it has the marker
-        if result.is_ok() {
-            let workspace = result.unwrap();
-            let marker = workspace.join(ROOT_DIR);
-            assert!(marker.exists() && marker.is_dir());
-        }
-        // If error, the cache contains an error (no workspace found initially)
+        // No boundary — the walk must ascend past `child` to find the marker.
+        let result = find_workspace_dir(child, None);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), temp.path());
+    }
+
+    #[test]
+    fn test_find_workspace_dir_returns_err_when_no_marker() {
+        let temp = TempDir::new().unwrap();
+        // Bound the walk to the temp dir itself so the test never escapes into
+        // real filesystem ancestors, which could contain a ROOT_DIR and cause
+        // a flaky false-positive.
+        let result = find_workspace_dir(temp.path().to_path_buf(), Some(temp.path()));
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains(ROOT_DIR));
     }
 
     #[test]

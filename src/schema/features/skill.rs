@@ -9,8 +9,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
 use crate::{
-    schema::features::traits::FeatureTrait,
-    templates::variables::get_skill_name_variable,
+    schema::features::traits::FeatureTrait, templates::variables::get_skill_name_variable,
     utils::path::get_skills_dir,
 };
 
@@ -323,10 +322,7 @@ allowed-tools: Read Grep
 Body"#;
 
         let skill = SkillFeature::from_markdown(md).unwrap();
-        assert_eq!(
-            skill.metadata.allowed_tools,
-            Some("Read Grep".to_string())
-        );
+        assert_eq!(skill.metadata.allowed_tools, Some("Read Grep".to_string()));
 
         let serialized = skill.to_markdown().unwrap();
         assert!(serialized.contains("allowed-tools: Read Grep"));
