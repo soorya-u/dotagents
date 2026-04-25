@@ -117,6 +117,18 @@ This repo uses [OpenSpec](https://github.com/Fission-Codes/openspec) for change 
 - `WORKSPACE_DIR` is cached in a `OnceLock`, so tests that depend on workspace discovery can interfere with each other; the existing tests document this caveat.
 - `serde` rename: configs use `#[serde(rename_all = "kebab-case")]`; MCP uses `camelCase`. Mind the inconsistency when adding fields.
 
+### Adding dependencies
+
+Always add crates via `cargo add`, never by hand-editing `Cargo.toml`. This resolves the latest compatible version automatically and keeps `Cargo.lock` in sync:
+
+```bash
+cargo add <crate>                          # runtime dependency
+cargo add <crate> --dev                    # dev-only dependency
+cargo add <crate> --features feat1,feat2   # with specific features
+```
+
+`cargo add` writes the resolved version into `Cargo.toml`, so the entry you commit is already the actual latest rather than a stale guess.
+
 ### Comments and docstrings
 
 - Functions, structs, traits, and impls get **one-liner `///` comments only** — just what the item does. No `@param`, `@returns`, `@raises`, or multi-line doc blocks.
