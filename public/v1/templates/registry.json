@@ -40,6 +40,9 @@
     "goose": {
       "path": "/templates/goose/provider.toml"
     },
+    "junie": {
+      "path": "/templates/junie/provider.toml"
+    },
     "kilocode": {
       "path": "/templates/kilocode/provider.toml"
     },
