@@ -22,6 +22,9 @@
     "deepagents": {
       "path": "/templates/deepagents/provider.toml"
     },
+    "factory-droid": {
+      "path": "/templates/factory-droid/provider.toml"
+    },
     "codex": {
       "path": "/templates/codex/provider.toml"
     },
