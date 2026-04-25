@@ -19,7 +19,7 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
     feature_settings: &FeatureSettings,
     templater: &Templater,
     variables: Option<&Value>,
-) -> Result<()> {
+) -> Result<PathBuf> {
     let template_str = feature_settings
         .template
         .as_deref()
@@ -77,5 +77,5 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
     write_file(&target_path, &content)
         .context(format!("failed to write file in {}", target_path.display()))?;
 
-    Ok(())
+    Ok(target_path)
 }

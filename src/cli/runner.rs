@@ -14,7 +14,7 @@ pub(crate) fn run(opts: Options) -> Result<bool> {
     match opts.action.unwrap_or_else(default_action) {
         Action::Init(opts) => initialize_agents_dir(opts),
         Action::GenCompletions { shell, to } => generate_cli_completions(shell, to),
-        Action::Deploy => deploy(),
+        Action::Deploy(opts) => deploy(opts),
     }?;
 
     Ok(true)
