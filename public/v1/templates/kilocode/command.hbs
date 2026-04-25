@@ -1,12 +1,5 @@
 ---
 description: {{command.description}}
-{{#each command.handoffs}}
-  - label: {{this.label}}
-    agent: {{this.agent}}
-    prompt: {{this.prompt}}
-    {{#if this.send}}
-    send: {{this.send}}
-    {{/if}}
-{{/each}}
 ---
-{{command.content}}
+
+{{{command.content}}}

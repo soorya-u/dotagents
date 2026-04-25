@@ -1,0 +1,20 @@
+{
+  "mcp": {
+    "servers": {
+      {{#each mcp.servers}}
+      "{{@key}}": {
+        {{#ifEq this.type "http"}}
+        "type": "remote",
+        "url": "{{this.url}}",
+        "enabled": true
+        {{else}}
+        "type": "local",
+        "command": ["{{this.command}}"{{#each this.args}}, {{json this}}{{/each}}],
+        "enabled": true{{#if this.env}},
+        "environment": {{json this.env}}{{/if}}
+        {{/ifEq}}
+      }{{#unless @last}},{{/unless}}
+      {{/each}}
+    }
+  }
+}
