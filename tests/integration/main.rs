@@ -79,21 +79,21 @@ impl TestWorkspace {
         }
     }
 
-    pub fn file_exists(&self, path: &Path) -> bool {
+    pub fn file_exists(&self, path: impl AsRef<Path>) -> bool {
         self.root().join(path).is_file()
     }
 
-    pub fn dir_exists(&self, path: &Path) -> bool {
+    pub fn dir_exists(&self, path: impl AsRef<Path>) -> bool {
         self.root().join(path).is_dir()
     }
 
-    pub fn read_file(&self, path: &Path) -> String {
-        let full = self.root().join(path);
+    pub fn read_file(&self, path: impl AsRef<Path>) -> String {
+        let full = self.root().join(&path);
         fs::read_to_string(&full)
             .unwrap_or_else(|_| panic!("failed to read file: {}", full.display()))
     }
 
-    pub fn list_files(&self, dir: &Path) -> Vec<String> {
+    pub fn list_files(&self, dir: impl AsRef<Path>) -> Vec<String> {
         let full = self.root().join(dir);
         fs::read_dir(&full)
             .map(|entries| {

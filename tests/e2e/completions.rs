@@ -27,68 +27,49 @@ fn generate_completions_dir(ws: &TestWorkspace, shell: &str) -> std::path::PathB
     dir
 }
 
+/// Generate completions for `shell`, then assert that `filename` was created
+/// and contains non-empty content.
+fn assert_completion_file(shell: &str, filename: &str) {
+    let ws = TestWorkspace::new();
+    let dir = generate_completions_dir(&ws, shell);
+    let path = dir.join(filename);
+    assert!(
+        path.exists(),
+        "{filename} should be created for shell '{shell}'"
+    );
+    assert!(
+        !fs::read_to_string(&path).unwrap().is_empty(),
+        "{filename} should not be empty"
+    );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Per-shell tests
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
 fn gen_completions_bash_creates_non_empty_file() {
-    let ws = TestWorkspace::new();
-    let dir = generate_completions_dir(&ws, "bash");
-    let path = dir.join("dotagents.bash");
-    assert!(path.exists(), "dotagents.bash should be created");
-    assert!(
-        !fs::read_to_string(&path).unwrap().is_empty(),
-        "dotagents.bash should not be empty"
-    );
+    assert_completion_file("bash", "dotagents.bash");
 }
 
 #[test]
 fn gen_completions_zsh_creates_non_empty_file() {
-    let ws = TestWorkspace::new();
-    let dir = generate_completions_dir(&ws, "zsh");
-    let path = dir.join("_dotagents");
-    assert!(path.exists(), "_dotagents should be created");
-    assert!(
-        !fs::read_to_string(&path).unwrap().is_empty(),
-        "_dotagents should not be empty"
-    );
+    assert_completion_file("zsh", "_dotagents");
 }
 
 #[test]
 fn gen_completions_fish_creates_non_empty_file() {
-    let ws = TestWorkspace::new();
-    let dir = generate_completions_dir(&ws, "fish");
-    let path = dir.join("dotagents.fish");
-    assert!(path.exists(), "dotagents.fish should be created");
-    assert!(
-        !fs::read_to_string(&path).unwrap().is_empty(),
-        "dotagents.fish should not be empty"
-    );
+    assert_completion_file("fish", "dotagents.fish");
 }
 
 #[test]
 fn gen_completions_powershell_creates_non_empty_file() {
-    let ws = TestWorkspace::new();
-    let dir = generate_completions_dir(&ws, "powershell");
-    let path = dir.join("_dotagents.ps1");
-    assert!(path.exists(), "_dotagents.ps1 should be created");
-    assert!(
-        !fs::read_to_string(&path).unwrap().is_empty(),
-        "_dotagents.ps1 should not be empty"
-    );
+    assert_completion_file("powershell", "_dotagents.ps1");
 }
 
 #[test]
 fn gen_completions_elvish_creates_non_empty_file() {
-    let ws = TestWorkspace::new();
-    let dir = generate_completions_dir(&ws, "elvish");
-    let path = dir.join("dotagents.elv");
-    assert!(path.exists(), "dotagents.elv should be created");
-    assert!(
-        !fs::read_to_string(&path).unwrap().is_empty(),
-        "dotagents.elv should not be empty"
-    );
+    assert_completion_file("elvish", "dotagents.elv");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

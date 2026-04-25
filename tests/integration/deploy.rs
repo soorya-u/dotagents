@@ -36,13 +36,15 @@ fn deploy_creates_command_output_files() {
     ws.run_command(&["deploy"]).assert_success();
 
     let commands_dir = ws.root().join(".mycode/commands");
-    if commands_dir.exists() {
-        let files = std::fs::read_dir(&commands_dir)
-            .expect("failed to read .mycode/commands/")
-            .filter_map(|e| e.ok().map(|d| d.file_name().to_string_lossy().to_string()))
-            .collect::<Vec<_>>();
-        assert!(!files.is_empty(), "at least one command should be deployed");
-    }
+    assert!(
+        commands_dir.is_dir(),
+        ".mycode/commands/ should be created during deploy"
+    );
+    let files = std::fs::read_dir(&commands_dir)
+        .expect("failed to read .mycode/commands/")
+        .filter_map(|e| e.ok().map(|d| d.file_name().to_string_lossy().to_string()))
+        .collect::<Vec<_>>();
+    assert!(!files.is_empty(), "at least one command should be deployed");
 }
 
 #[test]

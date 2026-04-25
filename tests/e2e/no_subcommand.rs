@@ -16,10 +16,10 @@ fn no_subcommand_prints_help_text() {
     let ws = TestWorkspace::new();
     let result = ws.run(&[]);
     // clap's `print_help()` writes to stdout; some versions write to stderr.
-    let combined = format!("{}{}", result.stdout, result.stderr);
+    let combined = format!("{}{}", result.stdout, result.stderr).to_lowercase();
     assert!(
-        combined.to_lowercase().contains("usage") || combined.contains("dotagents"),
-        "help text should include 'usage' or 'dotagents'; got:\nstdout: {}\nstderr: {}",
+        combined.contains("usage") && (combined.contains("init") || combined.contains("deploy")),
+        "help text should include 'usage' and a known subcommand; got:\nstdout: {}\nstderr: {}",
         result.stdout,
         result.stderr
     );

@@ -132,7 +132,7 @@ fn init_fails_when_directory_already_exists_without_force() {
     ws.run_command(&["init"]).assert_failure();
 
     #[cfg(debug_assertions)]
-    assert!(ws.active_root_dir().exists());
+    ws.run_command(&["init"]).assert_success();
 }
 
 #[test]

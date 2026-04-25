@@ -300,12 +300,12 @@ fn init_fails_without_force_when_root_dir_already_exists() {
     ws.run(&["init"]).assert_success();
 
     // Release builds default --force to false → second init must fail.
-    // Debug builds default --force to true  → second init succeeds.
+    // Debug builds default --force to true  → second init should succeed.
     #[cfg(not(debug_assertions))]
     ws.run(&["init"]).assert_failure();
 
     #[cfg(debug_assertions)]
-    assert!(ws.root_dir().is_dir()); // just verify still intact
+    ws.run(&["init"]).assert_success();
 }
 
 #[test]

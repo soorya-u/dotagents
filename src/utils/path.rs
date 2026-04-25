@@ -20,22 +20,38 @@ fn get_dir_or_die(path: PathBuf) -> Result<PathBuf> {
 }
 
 /// Walk up from `start` until a directory containing `ROOT_DIR` is found.
+///
+/// `boundary` is an optional upper limit for the walk — the search will not
+/// ascend past that directory.  Pass `None` for an unbounded walk (production
+/// use); pass `Some(start_path)` in tests to confine the walk to a controlled
+/// temp directory and avoid flakiness from any real `ROOT_DIR` that might
+/// exist in an ancestor of the temp dir.
+///
 /// Separated from the `OnceLock` wrapper so it can be unit-tested with
 /// arbitrary starting paths without touching global state.
-fn find_workspace_dir(start: PathBuf) -> Result<PathBuf, String> {
+fn find_workspace_dir(
+    start: PathBuf,
+    boundary: Option<&std::path::Path>,
+) -> Result<PathBuf, String> {
     let mut current = start;
     loop {
         let marker = current.join(ROOT_DIR);
         if marker.is_dir() {
             return Ok(current);
         }
+        if let Some(b) = boundary {
+            if current == b {
+                break;
+            }
+        }
         if !current.pop() {
-            return Err(format!(
-                "No `{}` directory found in any parent directory",
-                ROOT_DIR
-            ));
+            break;
         }
     }
+    Err(format!(
+        "No `{}` directory found in any parent directory",
+        ROOT_DIR
+    ))
 }
 
 pub fn get_workspace_dir() -> Result<PathBuf> {
@@ -45,7 +61,7 @@ pub fn get_workspace_dir() -> Result<PathBuf> {
                 Ok(dir) => dir,
                 Err(e) => return Err(format!("failed to get current directory: {}", e)),
             };
-            find_workspace_dir(current)
+            find_workspace_dir(current, None)
         })
         .clone()
         .map_err(|e| anyhow!(e.clone()))
@@ -113,7 +129,7 @@ mod tests {
         let temp = TempDir::new().unwrap();
         fs::create_dir(temp.path().join(ROOT_DIR)).unwrap();
 
-        let result = find_workspace_dir(temp.path().to_path_buf());
+        let result = find_workspace_dir(temp.path().to_path_buf(), None);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), temp.path());
     }
@@ -125,7 +141,8 @@ mod tests {
         let child = temp.path().join("a").join("b");
         fs::create_dir_all(&child).unwrap();
 
-        let result = find_workspace_dir(child);
+        // No boundary — the walk must ascend past `child` to find the marker.
+        let result = find_workspace_dir(child, None);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), temp.path());
     }
@@ -133,8 +150,10 @@ mod tests {
     #[test]
     fn test_find_workspace_dir_returns_err_when_no_marker() {
         let temp = TempDir::new().unwrap();
-        // No ROOT_DIR created — walk should exhaust all parents and return Err.
-        let result = find_workspace_dir(temp.path().to_path_buf());
+        // Bound the walk to the temp dir itself so the test never escapes into
+        // real filesystem ancestors, which could contain a ROOT_DIR and cause
+        // a flaky false-positive.
+        let result = find_workspace_dir(temp.path().to_path_buf(), Some(temp.path()));
         assert!(result.is_err());
         assert!(result.unwrap_err().contains(ROOT_DIR));
     }

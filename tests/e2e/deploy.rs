@@ -177,8 +177,13 @@ fn deploy_mcp_stdio_server_type_is_converted_to_local() {
     let ws = TestWorkspace::new();
     ws.init_and_deploy();
     // mcp.hbs: `{{#ifEq this.type "stdio"}}"local"{{else}}"{{this.type}}"{{/ifEq}}`
-    assert!(
-        ws.read(".mycode/mcp.json").contains("\"local\""),
+    // Parse the JSON and navigate directly to the field to avoid a brittle
+    // substring match that could hit unrelated content (e.g. URLs).
+    let mcp: serde_json::Value =
+        serde_json::from_str(&ws.read(".mycode/mcp.json")).expect("mcp.json must be valid JSON");
+    assert_eq!(
+        mcp["mcpServers"]["server-stdio"]["type"],
+        serde_json::json!("local"),
         "the stdio server type should be rendered as 'local'"
     );
 }
@@ -267,8 +272,9 @@ target = "{{ dir.workspace }}/.mycode/commands/{{ command.name }}.md"
     );
     let result = ws.run(&["deploy"]);
     result.assert_failure();
+    let stderr_lc = result.stderr.to_lowercase();
     assert!(
-        result.stderr.contains("skills") || result.stderr.contains("Invalid"),
+        stderr_lc.contains("skills") || stderr_lc.contains("invalid"),
         "error should mention the invalid feature name; stderr: {}",
         result.stderr
     );
