@@ -19,6 +19,9 @@
     "codebuddy": {
       "path": "/templates/codebuddy/provider.toml"
     },
+    "deepagents": {
+      "path": "/templates/deepagents/provider.toml"
+    },
     "codex": {
       "path": "/templates/codex/provider.toml"
     },
