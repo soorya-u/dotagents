@@ -9,7 +9,7 @@ use crate::{
         config::{CacheEntry, CacheUpdate, FeatureSettings},
         features::traits::FeatureTrait,
     },
-    templates::{RenderType, Templater, variables::get_user_defined_variables},
+    templates::{RenderType, Templater, fetch_template, variables::get_user_defined_variables},
     utils::{
         fs::{hash_content, hash_file, read_file, write_file},
         merge_json,
@@ -36,7 +36,6 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
         .as_deref()
         .ok_or_else(|| anyhow!("Target config not found for provider {}", provider_name))?;
 
-    let template_path = PathBuf::from(template_str);
     let target_path = if let Some(filename) = feature.get_file_name() {
         let name_var = feature.get_name_variable(&filename)?;
         PathBuf::from(
@@ -46,14 +45,6 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
     } else {
         PathBuf::from(target_str)
     };
-
-    if !template_path.exists() {
-        return Err(anyhow!(
-            "Template file not found for {} provider at {}",
-            provider_name,
-            template_path.display()
-        ));
-    }
 
     let local_vars = feature_settings
         .variables
@@ -67,10 +58,23 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
 
     let feature_as_variables = populate_config.to_value();
 
-    let template_file_content = read_file(&template_path).context(format!(
-        "failed to read file in {}",
-        template_path.display()
-    ))?;
+    let template_file_content =
+        if template_str.starts_with("https://") || template_str.starts_with("http://") {
+            fetch_template(template_str)?
+        } else {
+            let template_path = PathBuf::from(template_str);
+            if !template_path.exists() {
+                return Err(anyhow!(
+                    "Template file not found for {} provider at {}",
+                    provider_name,
+                    template_path.display()
+                ));
+            }
+            read_file(&template_path).context(format!(
+                "failed to read file in {}",
+                template_path.display()
+            ))?
+        };
 
     let vars = merge_json(Some(&user_vars), Some(&feature_as_variables));
     let content =

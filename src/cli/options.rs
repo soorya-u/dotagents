@@ -35,10 +35,11 @@ pub(crate) enum Action {
         to: Option<PathBuf>,
     },
 
+    /// Deploy templates
     Deploy(DeployOptions),
 }
 
-#[derive(Args)]
+#[derive(Args, Default)]
 pub(crate) struct DeployOptions {
     /// Force overwrite all target files regardless of cache state.
     #[clap(long, short)]
@@ -47,6 +48,14 @@ pub(crate) struct DeployOptions {
     /// Bypass cache entirely; do not read or update cache.toml.
     #[clap(long)]
     pub no_cache: bool,
+
+    /// Always update .gitignore without prompting.
+    #[clap(long)]
+    pub gitignore: bool,
+
+    /// Never update .gitignore.
+    #[clap(long)]
+    pub no_gitignore: bool,
 }
 
 #[derive(Args)]
