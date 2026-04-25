@@ -1,4 +1,19 @@
-# Augment Commands
+# CodeBuddy Instructions
+[providers.codebuddy.instructions]
+template = "https://dotagents.soorya-u.dev/templates/codebuddy/instruction.hbs"
+target = "{{dir.workspace}}/CODEBUDDY.md"
+
+# CodeBuddy Skills
+[providers.codebuddy.skills]
+template = "https://dotagents.soorya-u.dev/templates/codebuddy/skill.hbs"
+target = "{{dir.workspace}}/.codebuddy/skills/{{skill.name}}/SKILL.md"
+
+# CodeBuddy Commands
 [providers.codebuddy.commands]
 template = "https://dotagents.soorya-u.dev/templates/codebuddy/command.hbs"
 target = "{{dir.workspace}}/.codebuddy/commands/{{command.name}}.md"
+
+# CodeBuddy MCP
+[providers.codebuddy.mcp]
+template = "https://dotagents.soorya-u.dev/templates/codebuddy/mcp.hbs"
+target = "{{dir.workspace}}/.codebuddy/mcp.json"
