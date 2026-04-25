@@ -55,6 +55,9 @@
     "opencode": {
       "path": "/templates/opencode/provider.toml"
     },
+    "qoder-cli": {
+      "path": "/templates/qoder-cli/provider.toml"
+    },
     "qwen": {
       "path": "/templates/qwen/provider.toml"
     },
