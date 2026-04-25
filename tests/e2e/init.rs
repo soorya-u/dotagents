@@ -48,7 +48,7 @@ fn init_creates_feature_source_files() {
     assert!(ws.file_exists(format!("{d}/INSTRUCTIONS.md")));
     assert!(ws.file_exists(format!("{d}/mcp.jsonc")));
     assert!(ws.file_exists(format!("{d}/commands/hello.md")));
-    assert!(ws.file_exists(format!("{d}/skills/hello-skill.md")));
+    assert!(ws.file_exists(format!("{d}/skills/hello-skill/SKILL.md")));
 }
 
 #[test]
@@ -73,6 +73,7 @@ fn init_creates_subdirectory_structure() {
     let d = ws.root_dir_name();
     assert!(ws.dir_exists(format!("{d}/commands")));
     assert!(ws.dir_exists(format!("{d}/skills")));
+    assert!(ws.dir_exists(format!("{d}/skills/hello-skill")));
     assert!(ws.dir_exists(format!("{d}/templates")));
     assert!(ws.dir_exists(format!("{d}/templates/mycode")));
 }
@@ -170,7 +171,10 @@ fn init_command_file_has_yaml_frontmatter_with_name_and_description() {
 fn init_skill_file_has_yaml_frontmatter_with_name_and_description() {
     let ws = TestWorkspace::new();
     ws.run(&["init"]).assert_success();
-    let content = ws.read(format!("{}/skills/hello-skill.md", ws.root_dir_name()));
+    let content = ws.read(format!(
+        "{}/skills/hello-skill/SKILL.md",
+        ws.root_dir_name()
+    ));
     assert!(
         content.starts_with("---"),
         "skill file should start with YAML frontmatter"

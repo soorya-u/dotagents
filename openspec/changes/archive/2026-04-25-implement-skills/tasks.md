@@ -2,11 +2,11 @@
 
 - [x] 1.1 Add `SKILLS_FEATURE` constant (`"skills"`) to `src/constants/features.rs`
 - [x] 1.2 Add `SKILLS_DIR` constant (`"skills"`) to `src/constants/dir.rs`
-- [x] 1.3 Add `MOCK_SKILL_FILE` (`"hello-skill.md"`) and `MOCK_SKILL_TEMPLATE_FILE` (`"skill.hbs"`) constants to `src/constants/file.rs`
+- [x] 1.3 Add `SKILL_FILE` (`"SKILL.md"`), `MOCK_SKILL_DIR` (`"hello-skill"`), and `MOCK_SKILL_TEMPLATE_FILE` (`"skill.hbs"`) constants to `src/constants/file.rs`
 
 ## 2. Mock Files
 
-- [x] 2.1 Create `src/mocks/skills/hello-skill.md` — a sample skill with all common frontmatter fields (name, description, license, compatibility, metadata) and a short Markdown body following the Agent Skills spec
+- [x] 2.1 Create `src/mocks/skills/hello-skill/SKILL.md` — a sample skill with all common frontmatter fields (name, description, license, compatibility, metadata) and a short Markdown body following the Agent Skills spec
 - [x] 2.2 Create `src/mocks/templates/mycode/skill.hbs` — passthrough template (e.g., `{{{ skill.content }}}` or full file passthrough)
 - [x] 2.3 Add `SKILL_HELLO` and `TEMPLATE_MYCODE_SKILL` entries to `src/constants/mocks.rs` using `include_str!`
 
@@ -21,7 +21,7 @@
 - [x] 4.2 Add `SkillFeature` struct with `metadata: SkillMetadata` and `content: String`
 - [x] 4.3 Implement `from_markdown(md: &str) -> Result<Self>` using `gray_matter` YAML parsing (same pattern as `CommandFeature::from_markdown`)
 - [x] 4.4 Implement `to_markdown(&self) -> Result<String>` serializing frontmatter back to YAML + content (use `serde_yaml` with `#[serde(skip_serializing_if = "Option::is_none")]` on optional fields)
-- [x] 4.5 Implement `from_application() -> Result<Vec<Self>>` — scan `.md` files in `get_skills_dir()`, parse each, and warn (via `log::warn!`) when `metadata.name` doesn't match the file stem
+- [x] 4.5 Implement `from_application() -> Result<Vec<Self>>` — scan subdirectories in `get_skills_dir()`, read `SKILL.md` from each, and warn (via `log::warn!`) when: a subdirectory has no `SKILL.md`, or `metadata.name` doesn't match the directory name
 - [x] 4.6 Implement `FeatureTrait` for `SkillFeature`: `to_string` → `to_markdown`, `from_string` → `from_markdown`, `to_value` exposing `skill.name`, `skill.description`, `skill.content`, `get_file_name` returning `Some(metadata.name.clone())`
 - [x] 4.7 Export `SkillFeature` from `src/schema/features/mod.rs`
 
@@ -35,7 +35,7 @@
 ## 6. Init Scaffolding
 
 - [x] 6.1 Add `no_skill: bool` field with `#[clap(long)]` to `InitOptions` in `src/cli/options.rs`
-- [x] 6.2 Add skill `InitFile` entry to `src/cli/init.rs`: `Path::new(SKILLS_DIR).join(MOCK_SKILL_FILE)` with content `mocks::SKILL_HELLO`, skipped if `opts.no_skill`
+- [x] 6.2 Add skill `InitFile` entry to `src/cli/init.rs`: `Path::new(SKILLS_DIR).join(MOCK_SKILL_DIR).join(SKILL_FILE)` with content `mocks::SKILL_HELLO`, skipped if `opts.no_skill`
 - [x] 6.3 Add skill template `InitFile` entry: `Path::new(TEMPLATE_DIR).join(MOCK_CUSTOM_AGENT_DIR).join(MOCK_SKILL_TEMPLATE_FILE)` with content `mocks::TEMPLATE_MYCODE_SKILL`
 
 ## 7. Deploy Pipeline

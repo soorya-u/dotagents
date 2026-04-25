@@ -10,7 +10,7 @@ use crate::{
     constants::helpers::JSON_HELPER,
     templates::{
         helpers::{IfEqHelper, JsonHelper},
-        variables::{get_command_name_variable, get_dir_variables},
+        variables::{get_command_name_variable, get_dir_variables, get_skill_name_variable},
     },
 };
 use crate::{
@@ -48,10 +48,12 @@ impl Templater {
         let dir_variables = get_dir_variables()?;
         let env_variables = get_env_variables()?;
         let command_variables = get_command_name_variable("{{ command.name }}")?;
+        let skill_variables = get_skill_name_variable("{{ skill.name }}")?;
         Ok(merge_many_json(&[
             dir_variables,
             env_variables,
             command_variables,
+            skill_variables,
         ]))
     }
 

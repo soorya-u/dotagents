@@ -6,22 +6,23 @@ The [Agent Skills specification](https://agentskills.io/specification) defines a
 
 **Frontmatter schema (from spec):**
 
-| Field           | Required | Constraints |
-|----------------|----------|-------------|
+| Field           | Required | Constraints                                                                                          |
+| --------------- | -------- | ---------------------------------------------------------------------------------------------------- |
 | `name`          | Yes      | Max 64 chars; `[a-z0-9-]`; no leading/trailing/consecutive hyphens; must match parent directory name |
-| `description`   | Yes      | Max 1024 chars; non-empty |
-| `license`       | No       | License name or reference |
-| `compatibility` | No       | Max 500 chars; environment requirements |
-| `metadata`      | No       | Arbitrary key-value map |
-| `allowed-tools` | No       | Space-delimited list of pre-approved tools (experimental) |
+| `description`   | Yes      | Max 1024 chars; non-empty                                                                            |
+| `license`       | No       | License name or reference                                                                            |
+| `compatibility` | No       | Max 500 chars; environment requirements                                                              |
+| `metadata`      | No       | Arbitrary key-value map                                                                              |
+| `allowed-tools` | No       | Space-delimited list of pre-approved tools (experimental)                                            |
 
 **Progressive disclosure model:** agents load only `name`+`description` at startup (~50-100 tokens/skill); full `SKILL.md` is loaded on activation; bundled resources loaded on demand.
 
-**Source storage in dotagents:** individual `.md` files in `.dotagents/skills/` (flat, one file per skill). This mirrors the `CommandFeature` pattern and keeps implementation simple. The deploy step writes each skill to `<provider>/skills/<skill-name>/SKILL.md`, creating the per-skill subdirectory required by the spec.
+**Source storage in dotagents:** skill directories in `.dotagents/skills/`, each named after the skill and containing a `SKILL.md` file (e.g. `.dotagents/skills/hello-skill/SKILL.md`). This mirrors the Agent Skills spec's directory structure end-to-end. The deploy step writes each skill to `<provider>/skills/<skill-name>/SKILL.md`, creating the per-skill subdirectory required by the spec.
 
 ## Goals / Non-Goals
 
 **Goals:**
+
 - `SkillFeature` struct with full Agent Skills spec frontmatter
 - Load skills from `.dotagents/skills/` flat directory
 - Deploy to `<provider>/skills/<skill-name>/SKILL.md` (subdirectory per skill)
@@ -30,6 +31,7 @@ The [Agent Skills specification](https://agentskills.io/specification) defines a
 - Provider templates for Claude Code and Codex
 
 **Non-Goals:**
+
 - Installing skills from external repos (skills.sh / `npx skills add` handles that)
 - Bundling `scripts/`, `references/`, `assets/` in the source (users can manage these manually outside dotagents)
 - Skills catalog generation (XML `<available_skills>` format) — agents handle this themselves
@@ -37,14 +39,18 @@ The [Agent Skills specification](https://agentskills.io/specification) defines a
 
 ## Decisions
 
-### 1. Flat source files, directory targets
+### 1. Directory source files, directory targets
 
-Source: `.dotagents/skills/pdf-processing.md` (flat, like commands).
-Target: `.claude/skills/pdf-processing/SKILL.md` (directory + file, per spec).
+Source: `.dotagents/skills/pdf-processing/SKILL.md` (directory per skill, matching the spec).
+Target: `.claude/skills/pdf-processing/SKILL.md` (same structure, per spec).
 
 The `render_feature_with_settings` pipeline already creates parent directories via `write_file`. Target paths like `{{ dir.workspace }}/.claude/skills/{{ skill.name }}/SKILL.md` will create the skill subdirectory automatically.
 
-**Alternative**: Source as directories (`.dotagents/skills/pdf-processing/SKILL.md`). Rejected for MVP — requires directory scanning instead of file scanning, and bundled assets aren't managed by dotagents anyway.
+`from_application()` scans subdirectories of `.dotagents/skills/`, reads `SKILL.md` from each, and warns (but continues) if a directory has no `SKILL.md` or if the directory name does not match the `name` frontmatter field.
+
+The `FeatureTrait` methods (`from_string`, `to_string`, `to_value`) operate purely on `SKILL.md` content — the directory discovery logic lives only in `from_application()`, keeping the trait clean.
+
+**Rejected alternative**: Flat `.md` files (`.dotagents/skills/pdf-processing.md`). Initially considered for MVP simplicity, but rejected because it diverges from the spec's directory model and provides no practical advantage — dotagents users would need to maintain a different mental model for source vs. deployed skill structure.
 
 ### 2. Full frontmatter schema in `SkillMetadata`
 
@@ -64,11 +70,12 @@ Update `renderer.rs` to call `feature.get_name_variable(filename)` instead of th
 
 ### 4. Lenient name validation
 
-Warn (via `log::warn!`) if the skill `name` frontmatter doesn't match the source filename stem (e.g., file is `pdf.md` but name is `pdf-processing`). Don't error — this matches the lenient approach recommended by the spec for cross-client compatibility.
+Warn (via `log::warn!`) if the skill directory name doesn't match the `name` frontmatter in `SKILL.md` (e.g., directory is `pdf/` but name is `pdf-processing`). Also warn if a subdirectory has no `SKILL.md`. Don't error in either case — lenient loading keeps the tool usable even with partially correct setups.
 
 ### 5. Providers: Claude Code and Codex only
 
 Both have documented skills paths in the skills.sh `agents.ts`:
+
 - Claude Code: `.claude/skills/<name>/SKILL.md`
 - Codex: `.codex/skills/<name>/SKILL.md`
 
@@ -78,7 +85,7 @@ Other providers (cursor, windsurf, etc.) don't have established conventions — 
 
 - **`allowed-tools` field name**: Hyphenated key requires `#[serde(rename)]`; easy to miss. → Explicit rename in struct definition.
 - **Directory creation at deploy**: `write_file` must create nested directories (e.g., `.claude/skills/pdf-processing/SKILL.md`). → Verify `write_file` calls `create_dir_all` on the parent; add if not already present.
-- **Flat source vs directory target mismatch**: Users may expect skill directories in source. → Document clearly: source is a flat `.md` file, output follows the spec directory structure.
+- **Directory-based source**: `from_application()` must handle gracefully: subdirs with no `SKILL.md`, non-directory entries (warn + skip both), and name mismatches. → Explicit warn + continue in all cases.
 
 ## Migration Plan
 

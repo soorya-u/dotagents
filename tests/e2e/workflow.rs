@@ -15,7 +15,7 @@ fn full_workflow_init_deploy_produces_complete_output_tree() {
     assert!(ws.file_exists(format!("{d}/config.toml")));
     assert!(ws.file_exists(format!("{d}/local.config.toml")));
     assert!(ws.file_exists(format!("{d}/commands/hello.md")));
-    assert!(ws.file_exists(format!("{d}/skills/hello-skill.md")));
+    assert!(ws.file_exists(format!("{d}/skills/hello-skill/SKILL.md")));
     assert!(ws.file_exists(format!("{d}/INSTRUCTIONS.md")));
     assert!(ws.file_exists(format!("{d}/mcp.jsonc")));
 
@@ -24,6 +24,7 @@ fn full_workflow_init_deploy_produces_complete_output_tree() {
     assert!(ws.file_exists(".mycode/commands/hello.md"));
     assert!(ws.file_exists(".mycode/instructions.md"));
     assert!(ws.file_exists(".mycode/mcp.json"));
+    assert!(ws.file_exists(".mycode/skills/hello-skill/SKILLS.md"));
 
     // ── Step 3: spot-check rendered content ──────────────────────────────
     let cmd = ws.read(".mycode/commands/hello.md");

@@ -78,9 +78,29 @@ fn deploy_creates_all_expected_output_files_in_one_pass() {
         ".mycode/commands/hello.md",
         ".mycode/instructions.md",
         ".mycode/mcp.json",
+        ".mycode/skills/hello-skill/SKILLS.md",
     ] {
         assert!(ws.file_exists(rel), "expected deployed file: {rel}");
     }
+}
+
+#[test]
+fn deploy_creates_skills_output_subdirectory() {
+    let ws = TestWorkspace::new();
+    ws.init_and_deploy();
+    assert!(
+        ws.dir_exists(".mycode/skills"),
+        ".mycode/skills/ should be created by deploy when skills feature is active"
+    );
+}
+
+#[test]
+fn deploy_creates_hello_skill_output_file() {
+    let ws = TestWorkspace::new();
+    ws.init_and_deploy();
+    // The skill frontmatter declares `name: hello-skill`; the target path template
+    // uses `{{ skill.name }}`, so the output must be hello-skill/SKILLS.md.
+    assert!(ws.file_exists(".mycode/skills/hello-skill/SKILLS.md"));
 }
 
 #[test]
@@ -189,6 +209,62 @@ fn deploy_mcp_stdio_server_type_is_converted_to_local() {
 }
 
 #[test]
+fn deploy_skill_filename_matches_frontmatter_name_field() {
+    let ws = TestWorkspace::new();
+    ws.init_and_deploy();
+    // Target: `{{ dir.workspace }}/.mycode/skills/{{ skill.name }}/SKILLS.md`
+    // Frontmatter: `name: hello-skill`  →  output dir: hello-skill/
+    // This is the regression test for the {{ skill.name }} sentinel bug: without
+    // the fix, skill.name rendered to empty string during config loading and the
+    // output path became `.mycode/skills//SKILLS.md` or similar.
+    assert!(
+        ws.file_exists(".mycode/skills/hello-skill/SKILLS.md"),
+        "output path must be derived from the 'name' field in the skill frontmatter, not empty"
+    );
+}
+
+#[test]
+fn deploy_skill_output_has_yaml_frontmatter_with_name() {
+    let ws = TestWorkspace::new();
+    ws.init_and_deploy();
+    let content = ws.read(".mycode/skills/hello-skill/SKILLS.md");
+    assert!(
+        content.trim_start().starts_with("---"),
+        "deployed skill must start with YAML frontmatter"
+    );
+    assert!(
+        content.contains("name: hello-skill"),
+        "deployed skill frontmatter must contain the skill name"
+    );
+    assert!(
+        content.contains("description:"),
+        "deployed skill frontmatter must contain a description"
+    );
+}
+
+#[test]
+fn deploy_skill_output_contains_source_body_text() {
+    let ws = TestWorkspace::new();
+    ws.init_and_deploy();
+    let content = ws.read(".mycode/skills/hello-skill/SKILLS.md");
+    assert!(
+        content.contains("Hello"),
+        "deployed skill should contain the heading from the source body"
+    );
+}
+
+#[test]
+fn deploy_skill_output_has_no_unrendered_handlebars() {
+    let ws = TestWorkspace::new();
+    ws.init_and_deploy();
+    let content = ws.read(".mycode/skills/hello-skill/SKILLS.md");
+    assert!(
+        !content.contains("{{"),
+        "all Handlebars expressions should be rendered in deployed skill"
+    );
+}
+
+#[test]
 fn deploy_instructions_output_has_no_unrendered_handlebars() {
     let ws = TestWorkspace::new();
     ws.init_and_deploy();
@@ -253,8 +329,35 @@ fn deploy_custom_instructions_source_variable_is_rendered() {
 // ═════════════════════════════════════════════════════════════════════════════
 
 #[test]
-fn deploy_fails_when_skills_listed_as_feature_in_config() {
-    // "skills" is not a valid feature name; the validator must reject it.
+fn deploy_fails_when_unknown_feature_listed_in_config() {
+    // An unrecognised feature name must be rejected by the validator.
+    let ws = TestWorkspace::new();
+    ws.run(&["init"]).assert_success();
+    ws.write_in_root_dir(
+        "local.config.toml",
+        r#"schema = "https://dotagents.soorya-u.dev/schemas/config.schema.json"
+features = ["commands", "instructions", "mcp", "notafeature"]
+
+targets = ["mycode"]
+
+[providers.mycode.commands]
+template = "{{ dir.application }}/templates/mycode/command.hbs"
+target = "{{ dir.workspace }}/.mycode/commands/{{ command.name }}.md"
+"#,
+    );
+    let result = ws.run(&["deploy"]);
+    result.assert_failure();
+    let stderr_lc = result.stderr.to_lowercase();
+    assert!(
+        stderr_lc.contains("notafeature") || stderr_lc.contains("invalid"),
+        "error should mention the invalid feature name; stderr: {}",
+        result.stderr
+    );
+}
+
+#[test]
+fn deploy_succeeds_when_skills_listed_as_feature_in_config() {
+    // "skills" is a valid feature; the validator must accept it and deploy must succeed.
     let ws = TestWorkspace::new();
     ws.run(&["init"]).assert_success();
     ws.write_in_root_dir(
@@ -269,14 +372,7 @@ template = "{{ dir.application }}/templates/mycode/command.hbs"
 target = "{{ dir.workspace }}/.mycode/commands/{{ command.name }}.md"
 "#,
     );
-    let result = ws.run(&["deploy"]);
-    result.assert_failure();
-    let stderr_lc = result.stderr.to_lowercase();
-    assert!(
-        stderr_lc.contains("skills") || stderr_lc.contains("invalid"),
-        "error should mention the invalid feature name; stderr: {}",
-        result.stderr
-    );
+    ws.run(&["deploy"]).assert_success();
 }
 
 #[test]

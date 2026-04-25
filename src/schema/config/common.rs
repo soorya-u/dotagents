@@ -8,12 +8,8 @@ use std::{
 };
 
 use crate::{
-    constants::features::{COMMANDS_FEATURE, INSTRUCTION_FEATURE, MCP_FEATURE},
-    schema::features::traits::FeatureTrait,
-    templates::{
-        RenderType, Templater,
-        variables::{get_command_name_variable, get_user_defined_variables},
-    },
+    schema::features::{Feature, traits::FeatureTrait},
+    templates::{RenderType, Templater, variables::get_user_defined_variables},
     utils::{
         fs::{read_file, write_file},
         merge::merge_optional,
@@ -42,6 +38,9 @@ pub struct Features {
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub commands: Option<FeatureSettings>,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub skills: Option<FeatureSettings>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
@@ -121,15 +120,16 @@ impl Features {
                 other.instructions.as_ref(),
             ),
             commands: Self::merge_settings(self.commands.as_ref(), other.commands.as_ref()),
+            skills: Self::merge_settings(self.skills.as_ref(), other.skills.as_ref()),
         }
     }
 
-    pub fn get_config(&self, feature: &str) -> Option<FeatureSettings> {
+    pub fn get_config(&self, feature: &Feature) -> Option<FeatureSettings> {
         match feature {
-            MCP_FEATURE => self.mcp.clone(),
-            INSTRUCTION_FEATURE => self.instructions.clone(),
-            COMMANDS_FEATURE => self.commands.clone(),
-            _ => None,
+            Feature::Mcp => self.mcp.clone(),
+            Feature::Instruction => self.instructions.clone(),
+            Feature::Command => self.commands.clone(),
+            Feature::Skill => self.skills.clone(),
         }
     }
 
@@ -219,6 +219,8 @@ mod tests {
 
     #[test]
     fn test_config_agent_ability_settings_get_config() {
+        use crate::schema::features::Feature;
+
         let settings = Features {
             mcp: Some(FeatureSettings {
                 template: Some("mcp.tmpl".to_string()),
@@ -229,16 +231,17 @@ mod tests {
                 ..Default::default()
             }),
             commands: None,
+            skills: None,
         };
 
-        let mcp_config = settings.get_config("mcp");
+        let mcp_config = settings.get_config(&Feature::Mcp);
         assert!(mcp_config.is_some());
         assert_eq!(mcp_config.unwrap().template, Some("mcp.tmpl".to_string()));
 
-        let cmd_config = settings.get_config("commands");
+        let cmd_config = settings.get_config(&Feature::Command);
         assert!(cmd_config.is_none());
 
-        let unknown = settings.get_config("unknown");
-        assert!(unknown.is_none());
+        let skill_config = settings.get_config(&Feature::Skill);
+        assert!(skill_config.is_none());
     }
 }

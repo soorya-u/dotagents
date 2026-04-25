@@ -8,6 +8,7 @@ use super::local::LocalConfig;
 use crate::constants::file::{GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE};
 use crate::constants::schema::CONFIG_SCHEMA;
 use crate::schema::config::{FeatureSettings, TomlConfig};
+use crate::schema::features::Feature;
 use crate::templates::{RenderType, Templater, get_templater};
 use crate::utils::merge::merge_optional;
 use serde::{Deserialize, Serialize};
@@ -34,11 +35,14 @@ impl AppConfig {
         }
     }
 
-    pub fn has_feature(&self, feature: &str) -> bool {
-        self.features.contains(feature)
+    pub fn has_feature(&self, feature: &Feature) -> bool {
+        self.features.contains(feature.as_str())
     }
 
-    pub fn get_provider_feature_settings(&self, feature: &str) -> HashMap<String, FeatureSettings> {
+    pub fn get_provider_feature_settings(
+        &self,
+        feature: &Feature,
+    ) -> HashMap<String, FeatureSettings> {
         let Some(providers) = &self.providers else {
             return HashMap::new();
         };

@@ -3,6 +3,7 @@ features = [
     "commands",
     "instructions",
     "mcp",
+    "skills",
 ]
 
 targets = ["mycode"]
@@ -19,3 +20,7 @@ variables = {agent_name = "Mycode"}
 [providers.mycode.commands]
 template = "{{ dir.application }}/templates/mycode/command.hbs"
 target = "{{ dir.workspace }}/.mycode/commands/{{ command.name }}.md"
+
+[providers.mycode.skills]
+template = "{{ dir.application }}/templates/mycode/skill.hbs"
+target = "{{ dir.workspace }}/.mycode/skills/{{ skill.name }}/SKILLS.md"

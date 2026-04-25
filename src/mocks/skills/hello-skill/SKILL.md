@@ -1,6 +1,6 @@
 ---
 name: hello-skill
-description: A sample skill that greets the user with a friendly hello message.
+description: Greets the user and demonstrates skill capabilities. Use when asked to say hello or to show how skills work.
 license: MIT
 compatibility: Any agent supporting the Agent Skills specification
 metadata:
@@ -12,10 +12,6 @@ metadata:
 
 This is a sample skill demonstrating the Agent Skills specification format.
 
-## Purpose
-
-Greet the user warmly and explain how skills extend agent capabilities.
-
 ## Instructions
 
 When activated, respond with a friendly greeting and briefly explain that
@@ -24,5 +20,5 @@ scripts, and resources for specific tasks.
 
 ## Example
 
-> Hello! I'm using a skill to assist you. Skills let agents load focused,
+> Hello! I'm using the hello-skill. Skills let agents load focused,
 > task-specific knowledge on demand.

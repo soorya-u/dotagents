@@ -3,6 +3,7 @@ features = [
     "commands",
     "instructions",
     "mcp",
+    "skills",
 ]
 
 targets = [

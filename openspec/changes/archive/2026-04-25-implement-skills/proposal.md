@@ -5,7 +5,7 @@ Dotagents manages MCP servers, commands, and instructions for AI agents, but lac
 ## What Changes
 
 - New `skills` feature type alongside `mcp`, `commands`, and `instructions`
-- Skills are sourced from individual `.md` files in a `skills/` directory inside `.dotagents/`
+- Skills are sourced from subdirectories in `.dotagents/skills/`, each named after the skill and containing a `SKILL.md` file (e.g. `.dotagents/skills/my-skill/SKILL.md`)
 - Each skill file uses YAML frontmatter matching the Agent Skills spec (`name`, `description`, optional `license`, `compatibility`, `metadata`, `allowed-tools`) plus free-form Markdown body
 - The `deploy` command renders and writes each skill to the provider-specific skill path (e.g., `.claude/skills/<skill-name>/SKILL.md`), creating the required per-skill subdirectory
 - `init` scaffolds a sample skill file; a `--no-skill` flag opts out
@@ -14,9 +14,11 @@ Dotagents manages MCP servers, commands, and instructions for AI agents, but lac
 ## Capabilities
 
 ### New Capabilities
+
 - `skill-feature`: Defines the `SkillFeature` data model — reads skill files with YAML frontmatter matching the Agent Skills specification, serializes them, supports Handlebars templating, and exposes `{{ skill.name }}` for target path interpolation. Mirrors the `CommandFeature` pattern (per-file, named from frontmatter), but with richer metadata and a target path that includes a subdirectory per skill.
 
 ### Modified Capabilities
+
 - None
 
 ## Impact
