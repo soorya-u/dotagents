@@ -49,6 +49,9 @@
     "kimi": {
       "path": "/templates/kimi/provider.toml"
     },
+    "mistral-vibe": {
+      "path": "/templates/mistral-vibe/provider.toml"
+    },
     "opencode": {
       "path": "/templates/opencode/provider.toml"
     },

@@ -1,0 +1,12 @@
+{{#each mcp.servers}}
+[[mcp_servers]]
+name = "{{@key}}"
+{{#ifEq this.type "http"}}
+transport = "http"
+url = "{{this.url}}"
+{{else}}
+transport = "stdio"
+command = "{{this.command}}"
+args = {{json this.args}}
+{{/ifEq}}
+{{/each}}
