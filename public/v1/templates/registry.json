@@ -13,6 +13,9 @@
     "claude": {
       "path": "/templates/claude/provider.toml"
     },
+    "cline": {
+      "path": "/templates/cline/provider.toml"
+    },
     "codebuddy": {
       "path": "/templates/codebuddy/provider.toml"
     },
