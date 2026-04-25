@@ -1,7 +1,7 @@
 use anyhow::{Context, Result, anyhow};
 use std::env;
 use std::io::{Error, ErrorKind};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
 use crate::constants::dir::ROOT_DIR;
@@ -93,6 +93,13 @@ pub fn get_skills_dir() -> Result<PathBuf> {
     get_dir_or_die(skills_dir)
 }
 
+/// Strip the workspace prefix from an absolute path, returning a workspace-relative string.
+pub(crate) fn make_workspace_relative(path: &Path, workspace: &Path) -> Option<String> {
+    path.strip_prefix(workspace)
+        .ok()
+        .and_then(|rel| rel.to_str().map(|s| s.to_string()))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -156,6 +163,36 @@ mod tests {
         let result = find_workspace_dir(temp.path().to_path_buf(), Some(temp.path()));
         assert!(result.is_err());
         assert!(result.unwrap_err().contains(ROOT_DIR));
+    }
+
+    #[test]
+    fn test_make_workspace_relative_subdirectory() {
+        // returns relative path for a file inside the workspace
+        let workspace = PathBuf::from("/home/user/project");
+        let path = PathBuf::from("/home/user/project/.claude/commands/hello.md");
+        assert_eq!(
+            make_workspace_relative(&path, &workspace),
+            Some(".claude/commands/hello.md".to_string())
+        );
+    }
+
+    #[test]
+    fn test_make_workspace_relative_root_file() {
+        // returns bare filename for a file at the workspace root
+        let workspace = PathBuf::from("/home/user/project");
+        let path = PathBuf::from("/home/user/project/CLAUDE.md");
+        assert_eq!(
+            make_workspace_relative(&path, &workspace),
+            Some("CLAUDE.md".to_string())
+        );
+    }
+
+    #[test]
+    fn test_make_workspace_relative_outside_workspace() {
+        // returns None when the path does not share the workspace prefix
+        let workspace = PathBuf::from("/home/user/project");
+        let path = PathBuf::from("/home/other/file.md");
+        assert!(make_workspace_relative(&path, &workspace).is_none());
     }
 
     #[test]

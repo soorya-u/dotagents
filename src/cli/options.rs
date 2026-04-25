@@ -35,7 +35,19 @@ pub(crate) enum Action {
         to: Option<PathBuf>,
     },
 
-    Deploy,
+    /// Deploy templates
+    Deploy(DeployOptions),
+}
+
+#[derive(Args, Default)]
+pub(crate) struct DeployOptions {
+    /// Always update .gitignore without prompting
+    #[clap(long)]
+    pub gitignore: bool,
+
+    /// Never update .gitignore
+    #[clap(long)]
+    pub no_gitignore: bool,
 }
 
 #[derive(Args)]
