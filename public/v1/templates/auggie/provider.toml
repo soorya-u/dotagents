@@ -2,3 +2,15 @@
 [providers.auggie.commands]
 template = "https://dotagents.soorya-u.dev/templates/auggie/command.hbs"
 target = "{{dir.workspace}}/.augment/commands/{{command.name}}.md"
+
+[providers.auggie.skills]
+template = "https://dotagents.soorya-u.dev/templates/auggie/skill.hbs"
+target = "{{dir.workspace}}/.augment/skills/{{skill.name}}/SKILL.md"
+
+[providers.auggie.instructions]
+template = "https://dotagents.soorya-u.dev/templates/auggie/instruction.hbs"
+target = "{{ dir.workspace }}/AGENTS.md"
+
+[providers.auggie.mcp]
+template = "https://dotagents.soorya-u.dev/templates/auggie/mcp.hbs"
+target = "{{ dir.workspace }}/.augment/settings.json"

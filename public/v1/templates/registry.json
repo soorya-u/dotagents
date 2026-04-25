@@ -7,6 +7,9 @@
     "auggie": {
       "path": "/templates/auggie/provider.toml"
     },
+    "autohand": {
+      "path": "/templates/autohand/provider.toml"
+    },
     "claude": {
       "path": "/templates/claude/provider.toml"
     },
