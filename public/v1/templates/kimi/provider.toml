@@ -1,0 +1,14 @@
+# Kimi Instructions
+[providers.kimi.instructions]
+template = "https://dotagents.soorya-u.dev/templates/kimi/instruction.hbs"
+target = "{{dir.workspace}}/AGENTS.md"
+
+# Kimi Skills
+[providers.kimi.skills]
+template = "https://dotagents.soorya-u.dev/templates/kimi/skill.hbs"
+target = "{{dir.workspace}}/.kimi/skills/{{skill.name}}/SKILL.md"
+
+# Kimi MCP
+[providers.kimi.mcp]
+template = "https://dotagents.soorya-u.dev/templates/kimi/mcp.hbs"
+target = "{{dir.home}}/.kimi/mcp.json"

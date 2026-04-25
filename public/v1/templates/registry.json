@@ -46,6 +46,9 @@
     "kilocode": {
       "path": "/templates/kilocode/provider.toml"
     },
+    "kimi": {
+      "path": "/templates/kimi/provider.toml"
+    },
     "opencode": {
       "path": "/templates/opencode/provider.toml"
     },
