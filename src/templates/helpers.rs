@@ -2,8 +2,6 @@ use handlebars::{
     Context, Handlebars, Helper, HelperDef, HelperResult, JsonRender, Output, RenderContext,
     RenderError, RenderErrorReason, Renderable,
 };
-use serde_json;
-
 #[derive(Clone, Copy)]
 pub struct IfEqHelper;
 
@@ -16,14 +14,8 @@ impl HelperDef for IfEqHelper {
         rc: &mut RenderContext<'reg, 'rc>,
         out: &mut dyn Output,
     ) -> HelperResult {
-        let param0 = h
-            .param(0)
-            .and_then(|v| Some(v.value().render()))
-            .unwrap_or_default();
-        let param1 = h
-            .param(1)
-            .and_then(|v| Some(v.value().render()))
-            .unwrap_or_default();
+        let param0 = h.param(0).map(|v| v.value().render()).unwrap_or_default();
+        let param1 = h.param(1).map(|v| v.value().render()).unwrap_or_default();
 
         if param0 == param1 {
             if let Some(template) = h.template() {

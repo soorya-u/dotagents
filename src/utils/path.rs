@@ -39,10 +39,10 @@ fn find_workspace_dir(
         if marker.is_dir() {
             return Ok(current);
         }
-        if let Some(b) = boundary {
-            if current == b {
-                break;
-            }
+        if let Some(b) = boundary
+            && current == b
+        {
+            break;
         }
         if !current.pop() {
             break;

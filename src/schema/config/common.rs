@@ -22,30 +22,14 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-#[serde(rename_all = "kebab-case")]
+#[serde(transparent)]
 pub struct Targets {
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub ide: Option<HashSet<String>>,
-
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub cli: Option<HashSet<String>>,
-
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub custom: Option<HashSet<String>>,
+    pub providers: Option<HashSet<String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-#[serde(rename_all = "kebab-case")]
-pub struct Providers {
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub ide: Option<HashMap<String, Features>>,
-
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub cli: Option<HashMap<String, Features>>,
-
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub custom: Option<HashMap<String, Features>>,
-}
+#[serde(transparent)]
+pub struct Providers(pub Option<HashMap<String, Features>>);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(rename_all = "kebab-case")]
@@ -86,24 +70,18 @@ impl Targets {
 
     pub fn merge(&self, other: &Targets) -> Targets {
         Targets {
-            ide: other.ide.clone().or_else(|| self.ide.clone()),
-            cli: other.cli.clone().or_else(|| self.cli.clone()),
-            custom: other.custom.clone().or_else(|| self.custom.clone()),
+            providers: other.providers.clone().or_else(|| self.providers.clone()),
         }
     }
 }
 
 impl Providers {
     pub fn new() -> Self {
-        Self::default()
+        Self(None)
     }
 
     pub fn merge(&self, other: &Providers) -> Providers {
-        Providers {
-            ide: Self::merge_provider_maps(self.ide.as_ref(), other.ide.as_ref()),
-            cli: Self::merge_provider_maps(self.cli.as_ref(), other.cli.as_ref()),
-            custom: Self::merge_provider_maps(self.custom.as_ref(), other.custom.as_ref()),
-        }
+        Providers(Self::merge_provider_maps(self.0.as_ref(), other.0.as_ref()))
     }
 
     fn merge_provider_maps(
@@ -193,20 +171,21 @@ mod tests {
     #[test]
     fn test_targets_merge() {
         let base = Targets {
-            ide: Some(HashSet::from(["vscode".to_string()])),
-            cli: None,
-            custom: None,
+            providers: Some(HashSet::from([
+                "vscode".to_string(),
+                "windsurf".to_string(),
+            ])),
         };
 
         let override_targets = Targets {
-            ide: Some(HashSet::from(["cursor".to_string()])),
-            cli: Some(HashSet::from(["anthropic".to_string()])),
-            custom: None,
+            providers: Some(HashSet::from(["cursor".to_string(), "claude".to_string()])),
         };
 
         let merged = base.merge(&override_targets);
-        assert_eq!(merged.ide, Some(HashSet::from(["cursor".to_string()])));
-        assert_eq!(merged.cli, Some(HashSet::from(["anthropic".to_string()])));
+        assert_eq!(
+            merged.providers,
+            Some(HashSet::from(["cursor".to_string(), "claude".to_string()]))
+        );
     }
 
     #[test]

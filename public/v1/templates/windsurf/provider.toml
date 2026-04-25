@@ -1,9 +1,9 @@
 # Windsurf Instructions
-[providers.ide.windsurf.instructions]
+[providers.windsurf.instructions]
 template = "https://dotagents.soorya-u.dev/templates/windsurf/instruction.hbs"
 target = "{{ dir.workspace }}/.windsurf/rules/specify-rules.md"
 
 # Windsurf Commands
-[providers.ide.windsurf.commands]
+[providers.windsurf.commands]
 template = "https://dotagents.soorya-u.dev/templates/windsurf/command.hbs"
 target = "{{ dir.workspace }}/.windsurf/workflows/{{ command.name }}.md"

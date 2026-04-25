@@ -5,9 +5,7 @@ features = [
     "mcp",
 ]
 
-[targets]
-ide = [
-    "vscode",
+targets = [
     "windsurf",
+    "gemini",
 ]
-cli = ["gemini"]

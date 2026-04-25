@@ -1,0 +1,47 @@
+{
+  "$schema": "https://dotagents.soorya-u.dev/v1/schemas/registry.schema.json",
+  "providers": {
+    "amp": {
+      "path": "/templates/amp/provider.toml"
+    },
+    "auggie": {
+      "path": "/templates/auggie/provider.toml"
+    },
+    "claude": {
+      "path": "/templates/claude/provider.toml"
+    },
+    "codebuddy": {
+      "path": "/templates/codebuddy/provider.toml"
+    },
+    "codex": {
+      "path": "/templates/codex/provider.toml"
+    },
+    "copilot": {
+      "path": "/templates/copilot/provider.toml"
+    },
+    "cursor": {
+      "path": "/templates/cursor/provider.toml"
+    },
+    "gemini": {
+      "path": "/templates/gemini/provider.toml"
+    },
+    "kilocode": {
+      "path": "/templates/kilocode/provider.toml"
+    },
+    "opencode": {
+      "path": "/templates/opencode/provider.toml"
+    },
+    "qwen": {
+      "path": "/templates/qwen/provider.toml"
+    },
+    "roo": {
+      "path": "/templates/roo/provider.toml"
+    },
+    "shai": {
+      "path": "/templates/shai/provider.toml"
+    },
+    "windsurf": {
+      "path": "/templates/windsurf/provider.toml"
+    }
+  }
+}

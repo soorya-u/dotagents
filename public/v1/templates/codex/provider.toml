@@ -1,9 +1,9 @@
 # Codex Commands
-[providers.cli.codex.commands]
+[providers.codex.commands]
 template = "https://dotagents.soorya-u.dev/templates/codex/command.hbs"
 target = "{{dir.workspace}}/.codex/prompts/{{command.name}}.md"
 
 # Codex Skills
-[providers.cli.codex.skills]
+[providers.codex.skills]
 template = "https://dotagents.soorya-u.dev/templates/codex/skill.hbs"
 target = "{{dir.workspace}}/.codex/skills/{{skill.name}}/SKILL.md"

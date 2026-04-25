@@ -3,15 +3,14 @@ use std::collections::{HashMap, HashSet};
 use anyhow::{Context, Result};
 
 use super::cache::CacheConfig;
-use super::common::{Providers, Targets};
+use super::common::Providers;
 use super::global::GlobalConfig;
 use super::local::LocalConfig;
-use crate::constants::features::{COMMANDS_FEATURE, INSTRUCTION_FEATURE, MCP_FEATURE};
 use crate::constants::file::{GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE};
 use crate::constants::schema::CONFIG_SCHEMA;
 use crate::schema::config::{FeatureSettings, TomlConfig};
 use crate::templates::{RenderType, Templater, get_templater};
-use crate::utils::merge::{merge_optional, merge_optional_or_default};
+use crate::utils::merge::merge_optional;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -19,7 +18,7 @@ use serde::{Deserialize, Serialize};
 pub struct AppConfig {
     pub schema: String,
     pub features: HashSet<String>,
-    pub targets: Targets,
+    pub targets: HashSet<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub providers: Option<Providers>,
     pub variables: Option<HashMap<String, String>>,
@@ -30,7 +29,7 @@ impl AppConfig {
         Self {
             schema: CONFIG_SCHEMA.into(),
             features: HashSet::new(),
-            targets: Targets::new(),
+            targets: HashSet::new(),
             providers: None,
             variables: None,
         }
@@ -45,15 +44,14 @@ impl AppConfig {
             return HashMap::new();
         };
 
+        let Some(provider_map) = &providers.0 else {
+            return HashMap::new();
+        };
+
         let has_feature = self.has_feature(feature);
 
-        let ide_iter = providers.ide.iter().flat_map(|m| m.iter());
-        let cli_iter = providers.cli.iter().flat_map(|m| m.iter());
-        let custom_iter = providers.custom.iter().flat_map(|m| m.iter());
-
-        ide_iter
-            .chain(cli_iter)
-            .chain(custom_iter)
+        provider_map
+            .iter()
             .filter_map(|(name, settings)| {
                 let config = settings.get_config(feature)?;
                 let is_disabled = config.disabled.unwrap_or(false);
@@ -104,10 +102,12 @@ impl From<(&GlobalConfig, &LocalConfig)> for AppConfig {
             .clone()
             .unwrap_or_else(|| global.features.clone());
 
-        let targets =
-            merge_optional_or_default(global.targets.as_ref(), local.targets.as_ref(), |g, l| {
-                g.merge(l)
-            });
+        let targets = local
+            .targets
+            .as_ref()
+            .and_then(|t| t.providers.clone())
+            .or_else(|| global.targets.as_ref().and_then(|t| t.providers.clone()))
+            .unwrap_or_default();
 
         let providers = merge_optional(
             global.providers.as_ref(),
@@ -140,7 +140,7 @@ impl From<&CacheConfig> for AppConfig {
         Self {
             schema: cache.schema.clone(),
             features: HashSet::new(),
-            targets: Targets::new(),
+            targets: HashSet::new(),
             providers: cache.providers.clone(),
             variables: None,
         }

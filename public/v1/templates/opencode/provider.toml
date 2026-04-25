@@ -1,4 +1,4 @@
 # Augment Commands
-[providers.cli.opencode.commands]
+[providers.opencode.commands]
 template = "https://dotagents.soorya-u.dev/templates/opencode/command.hbs"
 target = "{{dir.workspace}}/.opencode/command/{{command.name}}.md"

@@ -2,7 +2,6 @@
 
 mod cli;
 mod constants;
-mod prelude;
 mod schema;
 mod templates;
 mod utils;
