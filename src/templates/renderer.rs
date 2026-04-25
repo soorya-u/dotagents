@@ -8,7 +8,7 @@ use crate::{
     schema::{config::FeatureSettings, features::traits::FeatureTrait},
     templates::{
         RenderType, Templater,
-        variables::{get_command_name_variable, get_user_defined_variables},
+        variables::get_user_defined_variables,
     },
     utils::{
         fs::{read_file, write_file},
@@ -34,11 +34,11 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
         .ok_or_else(|| anyhow!("Target config not found for provider {}", provider_name))?;
 
     let template_path = PathBuf::from(template_str);
-    let mut target_path = if let Some(filename) = feature.get_file_name() {
-        let command_var = get_command_name_variable(&filename)?;
+    let target_path = if let Some(filename) = feature.get_file_name() {
+        let name_var = feature.get_name_variable(&filename)?;
         PathBuf::from(templater.render_template(
             RenderType::Content(target_str.to_string()),
-            Some(&command_var),
+            Some(&name_var),
         )?)
     } else {
         PathBuf::from(target_str)

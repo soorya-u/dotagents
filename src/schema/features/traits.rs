@@ -1,7 +1,7 @@
 use anyhow::Result;
 use serde_json::Value;
 
-use crate::templates::{RenderType, Templater};
+use crate::templates::{RenderType, Templater, variables::get_command_name_variable};
 
 pub trait FeatureTrait: Sized {
     fn from_string(value: &str) -> Result<Self>;
@@ -17,5 +17,9 @@ pub trait FeatureTrait: Sized {
 
     fn get_file_name(&self) -> Option<String> {
         None
+    }
+
+    fn get_name_variable(&self, filename: &str) -> Result<Value> {
+        get_command_name_variable(filename)
     }
 }

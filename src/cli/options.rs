@@ -55,6 +55,11 @@ pub(crate) struct InitOptions {
     #[clap(long)]
     pub no_instruction: bool,
 
+    /// Disables the Skill Templating for all the Targets.
+    /// You can override this later in config.toml file.
+    #[clap(long)]
+    pub no_skill: bool,
+
     /// Force overwriting existing configuration.
     #[clap(long, short, default_value_t = cfg!(debug_assertions))]
     pub force: bool,
@@ -93,12 +98,14 @@ mod tests {
             no_mcp: false,
             no_command: false,
             no_instruction: false,
+            no_skill: false,
             force: false,
         };
 
         assert!(!init_options.no_mcp);
         assert!(!init_options.no_command);
         assert!(!init_options.no_instruction);
+        assert!(!init_options.no_skill);
     }
 
     #[test]

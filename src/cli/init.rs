@@ -5,11 +5,12 @@ use std::{
 
 use super::options::InitOptions;
 use crate::constants::{
-    dir::{COMMANDS_DIR, MOCK_CUSTOM_AGENT_DIR, ROOT_DIR, TEMPLATE_DIR},
+    dir::{COMMANDS_DIR, MOCK_CUSTOM_AGENT_DIR, ROOT_DIR, SKILLS_DIR, TEMPLATE_DIR},
     file::{
         ENV_EXAMPLE_FILE, ENV_FILE, GITIGNORE_FILE, GLOBAL_CONFIG_FILE, INSTRUCTIONS_FILE,
         LOCAL_CONFIG_FILE, MCP_FILE, MOCK_COMMAND_FILE, MOCK_COMMAND_TEMPLATE_FILE,
-        MOCK_INSTRUCTION_TEMPLATE_FILE, MOCK_MCP_TEMPLATE_FILE,
+        MOCK_INSTRUCTION_TEMPLATE_FILE, MOCK_MCP_TEMPLATE_FILE, MOCK_SKILL_FILE,
+        MOCK_SKILL_TEMPLATE_FILE,
     },
     mocks,
 };
@@ -77,10 +78,21 @@ pub(super) fn initialize_agents_dir(opts: InitOptions) -> Result<()> {
         )
         .with_skip_if(|opts| opts.no_command),
         InitFile::new(
+            Path::new(SKILLS_DIR).join(MOCK_SKILL_FILE),
+            mocks::SKILL_HELLO,
+        )
+        .with_skip_if(|opts| opts.no_skill),
+        InitFile::new(
             Path::new(TEMPLATE_DIR)
                 .join(MOCK_CUSTOM_AGENT_DIR)
                 .join(MOCK_COMMAND_TEMPLATE_FILE),
             mocks::TEMPLATE_MYCODE_COMMAND,
+        ),
+        InitFile::new(
+            Path::new(TEMPLATE_DIR)
+                .join(MOCK_CUSTOM_AGENT_DIR)
+                .join(MOCK_SKILL_TEMPLATE_FILE),
+            mocks::TEMPLATE_MYCODE_SKILL,
         ),
         InitFile::new(
             Path::new(TEMPLATE_DIR)

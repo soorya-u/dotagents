@@ -42,6 +42,14 @@ pub(crate) fn get_command_name_variable(val: &str) -> Result<Value> {
     }))
 }
 
+pub(crate) fn get_skill_name_variable(val: &str) -> Result<Value> {
+    Ok(json!({
+        "skill": {
+            "name": val,
+        }
+    }))
+}
+
 pub(crate) fn get_user_defined_variables(var: Option<Value>) -> Result<Value> {
     Ok(json!({ "var": var }))
 }
@@ -61,6 +69,18 @@ mod tests {
     fn test_get_command_name_variable_empty() {
         let result = get_command_name_variable("").unwrap();
         assert_eq!(result, json!({"command": {"name": ""}}));
+    }
+
+    #[test]
+    fn test_get_skill_name_variable() {
+        let result = get_skill_name_variable("my-skill").unwrap();
+        assert_eq!(result, json!({"skill": {"name": "my-skill"}}));
+    }
+
+    #[test]
+    fn test_get_skill_name_variable_empty() {
+        let result = get_skill_name_variable("").unwrap();
+        assert_eq!(result, json!({"skill": {"name": ""}}));
     }
 
     #[test]

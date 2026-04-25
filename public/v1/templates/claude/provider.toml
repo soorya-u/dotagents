@@ -1,4 +1,9 @@
-# Augment Commands
+# Claude Commands
 [providers.cli.claude.commands]
 template = "https://dotagents.soorya-u.dev/templates/claude/command.hbs"
 target = "{{dir.workspace}}/.claude/commands/{{command.name}}.md"
+
+# Claude Skills
+[providers.ide.claude.skills]
+template = "https://dotagents.soorya-u.dev/templates/claude/skill.hbs"
+target = "{{dir.workspace}}/.claude/skills/{{skill.name}}/SKILL.md"
