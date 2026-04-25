@@ -116,3 +116,9 @@ This repo uses [OpenSpec](https://github.com/Fission-Codes/openspec) for change 
 - `#![allow(unused)]` is set in `main.rs` (marked TODO) — feel free to leave new dead code temporarily but prefer wiring things up.
 - `WORKSPACE_DIR` is cached in a `OnceLock`, so tests that depend on workspace discovery can interfere with each other; the existing tests document this caveat.
 - `serde` rename: configs use `#[serde(rename_all = "kebab-case")]`; MCP uses `camelCase`. Mind the inconsistency when adding fields.
+
+### Comments and docstrings
+
+- Functions, structs, traits, and impls get **one-liner `///` comments only** — just what the item does. No `@param`, `@returns`, `@raises`, or multi-line doc blocks.
+- **No top-level file comment** — do not add a module-level `//!` or `///` block at the top of any file.
+- Test functions get a **single-line comment** explaining what is being tested (e.g. `// returns error when path does not exist`). No verbose comment blocks or jargon.
