@@ -37,6 +37,9 @@
     "gemini": {
       "path": "/templates/gemini/provider.toml"
     },
+    "goose": {
+      "path": "/templates/goose/provider.toml"
+    },
     "kilocode": {
       "path": "/templates/kilocode/provider.toml"
     },
