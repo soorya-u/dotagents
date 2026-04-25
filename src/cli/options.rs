@@ -35,7 +35,18 @@ pub(crate) enum Action {
         to: Option<PathBuf>,
     },
 
-    Deploy,
+    Deploy(DeployOptions),
+}
+
+#[derive(Args)]
+pub(crate) struct DeployOptions {
+    /// Force overwrite all target files regardless of cache state.
+    #[clap(long, short)]
+    pub force: bool,
+
+    /// Bypass cache entirely; do not read or update cache.toml.
+    #[clap(long)]
+    pub no_cache: bool,
 }
 
 #[derive(Args)]

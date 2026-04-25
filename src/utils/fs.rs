@@ -1,6 +1,7 @@
 use std::{fs, path::PathBuf};
 
 use anyhow::{Context, Result};
+use sha2::{Digest, Sha256};
 
 pub fn read_file(file_path: &PathBuf) -> Result<String> {
     match fs::read_to_string(file_path) {
@@ -15,6 +16,26 @@ pub fn write_file(file_path: &PathBuf, content: &str) -> Result<()> {
     }
     match fs::write(file_path, content) {
         Ok(_) => Ok(()),
+        Err(e) => Err(e.into()),
+    }
+}
+
+/// Computes SHA-256 hash of the given string content and returns hex string.
+pub fn hash_content(content: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(content.as_bytes());
+    hex::encode(hasher.finalize())
+}
+
+/// Computes SHA-256 hash of a file's contents; returns None if file doesn't exist.
+pub fn hash_file(path: &PathBuf) -> Result<Option<String>> {
+    match fs::read(path) {
+        Ok(content) => {
+            let mut hasher = Sha256::new();
+            hasher.update(&content);
+            Ok(Some(hex::encode(hasher.finalize())))
+        }
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
         Err(e) => Err(e.into()),
     }
 }
@@ -93,5 +114,55 @@ mod tests {
         write_file(&file_path, content).unwrap();
         let read_content = read_file(&file_path).unwrap();
         assert_eq!(read_content, content);
+    }
+
+    #[test]
+    fn test_hash_content() {
+        let content1 = "Hello, World!";
+        let content2 = "Hello, World!";
+        let content3 = "Different";
+
+        let hash1 = hash_content(content1);
+        let hash2 = hash_content(content2);
+        let hash3 = hash_content(content3);
+
+        assert_eq!(hash1, hash2);
+        assert_ne!(hash1, hash3);
+        assert_eq!(hash1.len(), 64); // SHA-256 hex is 64 chars
+    }
+
+    #[test]
+    fn test_hash_file_exists() {
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("hash_test.txt");
+        let content = "Test content for hashing";
+
+        write_file(&file_path, content).unwrap();
+
+        let hash_result = hash_file(&file_path).unwrap();
+        assert!(hash_result.is_some());
+        let hash = hash_result.unwrap();
+        assert_eq!(hash.len(), 64);
+        assert_eq!(hash, hash_content(content));
+    }
+
+    #[test]
+    fn test_hash_file_not_found() {
+        let file_path = PathBuf::from("/nonexistent/path/file.txt");
+        let result = hash_file(&file_path).unwrap();
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_hash_file_empty() {
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("empty_hash.txt");
+
+        write_file(&file_path, "").unwrap();
+
+        let hash_result = hash_file(&file_path).unwrap();
+        assert!(hash_result.is_some());
+        let hash = hash_result.unwrap();
+        assert_eq!(hash, hash_content(""));
     }
 }
