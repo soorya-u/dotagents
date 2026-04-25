@@ -7,13 +7,10 @@ use serde_json::{Value, to_value};
 use std::sync::{Arc, Mutex};
 
 use crate::cli::options::DeployOptions;
-use crate::constants::features::{
-    COMMANDS_FEATURE, INSTRUCTION_FEATURE, MCP_FEATURE, SKILLS_FEATURE,
-};
 use crate::schema::config::{AppConfig, CACHE_SINGLETON_KEY, CacheConfig, CacheEntry, CacheUpdate};
 use crate::schema::features::{
-    command::CommandFeature, instruction::InstructionFeature, mcp::McpFeature, skill::SkillFeature,
-    traits::FeatureTrait,
+    Feature, command::CommandFeature, instruction::InstructionFeature, mcp::McpFeature,
+    skill::SkillFeature, traits::FeatureTrait,
 };
 use crate::templates::{Templater, get_templater, render_feature_with_settings};
 use crate::utils::gitignore::{
@@ -26,7 +23,7 @@ fn deploy_feature<T>(
     app_config: &AppConfig,
     templater: &Templater,
     variables: Option<&Value>,
-    feature_name: &str,
+    feature: &Feature,
     cache: &Option<Arc<Mutex<CacheConfig>>>,
     force: bool,
     loader: impl FnOnce() -> Result<Vec<T>>,
@@ -34,20 +31,21 @@ fn deploy_feature<T>(
 where
     T: FeatureTrait + Sync,
 {
-    if !app_config.has_feature(feature_name) {
+    if !app_config.has_feature(feature) {
         return Ok(Vec::new());
     }
 
-    let features = loader().context(format!("Failed to load {} feature", feature_name))?;
-    let providers = app_config.get_provider_feature_settings(feature_name);
+    let feature_name = feature.as_str();
+    let items = loader().context(format!("Failed to load {} feature", feature))?;
+    let providers = app_config.get_provider_feature_settings(feature);
 
     let paths: Vec<PathBuf> = providers
         .par_iter()
         .try_fold(
             Vec::new,
             |mut acc, (provider_name, settings)| -> Result<Vec<PathBuf>> {
-                for feature in features.iter() {
-                    let file_name = feature.get_file_name();
+                for item in items.iter() {
+                    let file_name = item.get_file_name();
                     let item_key = file_name.as_deref().unwrap_or(CACHE_SINGLETON_KEY);
 
                     // Read-only cache lookup: acquire lock, clone entry, drop lock.
@@ -60,7 +58,7 @@ where
 
                     let update = render_feature_with_settings(
                         provider_name,
-                        feature,
+                        item,
                         settings,
                         templater,
                         variables,
@@ -114,7 +112,7 @@ pub(super) fn deploy(opts: DeployOptions) -> Result<()> {
         &app_config,
         templater,
         variables.as_ref(),
-        COMMANDS_FEATURE,
+        &Feature::Command,
         &cache,
         opts.force,
         CommandFeature::from_application,
@@ -124,7 +122,7 @@ pub(super) fn deploy(opts: DeployOptions) -> Result<()> {
         &app_config,
         templater,
         variables.as_ref(),
-        SKILLS_FEATURE,
+        &Feature::Skill,
         &cache,
         opts.force,
         SkillFeature::from_application,
@@ -134,7 +132,7 @@ pub(super) fn deploy(opts: DeployOptions) -> Result<()> {
         &app_config,
         templater,
         variables.as_ref(),
-        MCP_FEATURE,
+        &Feature::Mcp,
         &cache,
         opts.force,
         || McpFeature::from_application().map(|mcp| vec![mcp]),
@@ -144,7 +142,7 @@ pub(super) fn deploy(opts: DeployOptions) -> Result<()> {
         &app_config,
         templater,
         variables.as_ref(),
-        INSTRUCTION_FEATURE,
+        &Feature::Instruction,
         &cache,
         opts.force,
         || InstructionFeature::from_application().map(|inst| vec![inst]),

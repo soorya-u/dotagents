@@ -38,10 +38,10 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
 
     let target_path = if let Some(filename) = feature.get_file_name() {
         let name_var = feature.get_name_variable(&filename)?;
-        PathBuf::from(
-            templater
-                .render_template(RenderType::Content(target_str.to_string()), Some(&name_var))?,
-        )
+        PathBuf::from(templater.render_template(
+            RenderType::Content(target_str.to_string()),
+            name_var.as_ref(),
+        )?)
     } else {
         PathBuf::from(target_str)
     };

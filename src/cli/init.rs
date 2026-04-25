@@ -9,8 +9,8 @@ use crate::constants::{
     file::{
         ENV_EXAMPLE_FILE, ENV_FILE, GITIGNORE_FILE, GLOBAL_CONFIG_FILE, INSTRUCTIONS_FILE,
         LOCAL_CONFIG_FILE, MCP_FILE, MOCK_COMMAND_FILE, MOCK_COMMAND_TEMPLATE_FILE,
-        MOCK_INSTRUCTION_TEMPLATE_FILE, MOCK_MCP_TEMPLATE_FILE, MOCK_SKILL_FILE,
-        MOCK_SKILL_TEMPLATE_FILE,
+        MOCK_INSTRUCTION_TEMPLATE_FILE, MOCK_MCP_TEMPLATE_FILE, MOCK_SKILL_DIR,
+        MOCK_SKILL_TEMPLATE_FILE, SKILL_FILE,
     },
     mocks,
 };
@@ -77,7 +77,7 @@ pub(super) fn initialize_agents_dir(opts: InitOptions) -> Result<()> {
         )
         .with_skip_if(|opts| opts.no_command),
         InitFile::new(
-            Path::new(SKILLS_DIR).join(MOCK_SKILL_FILE),
+            Path::new(SKILLS_DIR).join(MOCK_SKILL_DIR).join(SKILL_FILE),
             mocks::SKILL_HELLO,
         )
         .with_skip_if(|opts| opts.no_skill),

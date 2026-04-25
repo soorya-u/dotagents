@@ -9,8 +9,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
 use crate::{
-    schema::features::traits::FeatureTrait, templates::variables::get_skill_name_variable,
-    utils::path::get_skills_dir,
+    constants::file::SKILL_FILE, schema::features::traits::FeatureTrait,
+    templates::variables::get_skill_name_variable, utils::path::get_skills_dir,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -56,32 +56,39 @@ impl SkillFeature {
     }
 
     pub fn from_application() -> Result<Vec<Self>> {
-        let dir = get_skills_dir()?;
+        let skills_dir = get_skills_dir()?;
         let mut skills = Vec::<Self>::new();
 
-        for entry in fs::read_dir(&dir)? {
+        for entry in fs::read_dir(&skills_dir)? {
             let entry = entry?;
             let path = entry.path();
 
-            if !path.is_file() {
+            if !path.is_dir() {
                 continue;
             }
 
-            if path.extension().and_then(|e| e.to_str()) != Some("md") {
+            let skill_md = path.join(SKILL_FILE);
+
+            if !skill_md.is_file() {
+                warn!(
+                    "Skill directory '{}' has no {}, skipping",
+                    path.display(),
+                    SKILL_FILE
+                );
                 continue;
             }
 
-            let content = fs::read_to_string(&path).context("failed to read skill file")?;
+            let content = fs::read_to_string(&skill_md).context("failed to read skill SKILL.md")?;
             let skill = Self::from_markdown(&content)?;
 
-            if let Some(stem) = path.file_stem().and_then(|s| s.to_str())
-                && stem != skill.metadata.name
+            if let Some(dir_name) = path.file_name().and_then(|n| n.to_str())
+                && dir_name != skill.metadata.name
             {
                 warn!(
-                    "Skill name '{}' in frontmatter does not match filename stem '{}' (file: {})",
+                    "Skill directory name '{}' does not match name '{}' in SKILL.md (path: {})",
+                    dir_name,
                     skill.metadata.name,
-                    stem,
-                    path.display()
+                    skill_md.display()
                 );
             }
 
@@ -102,21 +109,19 @@ impl FeatureTrait for SkillFeature {
     }
 
     fn to_value(&self) -> Value {
-        json!({
-            "skill": {
-                "name": self.metadata.name,
-                "description": self.metadata.description,
-                "content": self.content
-            }
-        })
+        let mut skill = serde_json::to_value(&self.metadata).unwrap_or_default();
+        if let Value::Object(ref mut map) = skill {
+            map.insert("content".to_string(), json!(self.content));
+        }
+        json!({ "skill": skill })
     }
 
     fn get_file_name(&self) -> Option<String> {
         Some(self.metadata.name.clone())
     }
 
-    fn get_name_variable(&self, filename: &str) -> Result<Value> {
-        get_skill_name_variable(filename)
+    fn get_name_variable(&self, filename: &str) -> Result<Option<Value>> {
+        Ok(Some(get_skill_name_variable(filename)?))
     }
 }
 
@@ -233,15 +238,18 @@ Minimal body"#;
     }
 
     #[test]
-    fn test_to_value() {
+    fn test_to_value_includes_all_metadata_fields() {
+        let mut meta_map = HashMap::new();
+        meta_map.insert("author".to_string(), "tester".to_string());
+
         let skill = SkillFeature {
             metadata: SkillMetadata {
                 name: "value-skill".to_string(),
                 description: "Value test".to_string(),
                 license: Some("MIT".to_string()),
-                compatibility: None,
-                metadata: None,
-                allowed_tools: None,
+                compatibility: Some("Claude, Codex".to_string()),
+                metadata: Some(meta_map),
+                allowed_tools: Some("Read Write".to_string()),
             },
             content: "Skill body".to_string(),
         };
@@ -253,10 +261,38 @@ Minimal body"#;
                 "skill": {
                     "name": "value-skill",
                     "description": "Value test",
+                    "license": "MIT",
+                    "compatibility": "Claude, Codex",
+                    "metadata": { "author": "tester" },
+                    "allowed-tools": "Read Write",
                     "content": "Skill body"
                 }
             })
         );
+    }
+
+    #[test]
+    fn test_to_value_omits_absent_optional_fields() {
+        let skill = SkillFeature {
+            metadata: SkillMetadata {
+                name: "minimal-skill".to_string(),
+                description: "Minimal".to_string(),
+                license: None,
+                compatibility: None,
+                metadata: None,
+                allowed_tools: None,
+            },
+            content: "Body".to_string(),
+        };
+
+        let value = skill.to_value();
+        let skill_obj = value.get("skill").unwrap();
+        assert_eq!(skill_obj.get("name").unwrap(), "minimal-skill");
+        assert_eq!(skill_obj.get("content").unwrap(), "Body");
+        assert!(skill_obj.get("license").is_none());
+        assert!(skill_obj.get("compatibility").is_none());
+        assert!(skill_obj.get("metadata").is_none());
+        assert!(skill_obj.get("allowed-tools").is_none());
     }
 
     #[test]
@@ -344,6 +380,6 @@ Body"#;
         };
 
         let value = skill.get_name_variable("my-skill").unwrap();
-        assert_eq!(value, json!({"skill": {"name": "my-skill"}}));
+        assert_eq!(value, Some(json!({"skill": {"name": "my-skill"}})));
     }
 }

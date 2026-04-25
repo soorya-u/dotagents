@@ -211,9 +211,7 @@ impl CmdOutput {
 /// A `local.config.toml` with a skills *provider* section for `mycode` but
 /// without "skills" in the `features` array.
 ///
-/// The config validator only allows `commands`, `instructions`, and `mcp` as
-/// feature names; listing "skills" would fail validation.  This fixture is
-/// used to verify that an inert provider section does not break deployment
+/// Used to verify that an inert provider section does not break deployment
 /// and that no skill output files are written.
 pub const LOCAL_CONFIG_WITH_SKILL_PROVIDER_ONLY: &str = r#"schema = "https://dotagents.soorya-u.dev/schemas/config.schema.json"
 features = [

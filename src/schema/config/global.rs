@@ -3,6 +3,7 @@ use std::collections::{HashMap, HashSet};
 use super::common::{Providers, Targets};
 use super::traits::TomlConfig;
 use crate::constants::schema::CONFIG_SCHEMA;
+use crate::schema::features::Feature;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -43,10 +44,11 @@ impl GlobalConfig {
 
     pub fn validate(&self) -> anyhow::Result<()> {
         for feature in &self.features {
-            if !["commands", "instructions", "mcp"].contains(&feature.as_str()) {
+            if Feature::from_str(feature).is_none() {
                 anyhow::bail!(
-                    "Invalid feature: {}. Valid features are: commands, instructions, mcp",
-                    feature
+                    "Invalid feature: {}. Valid features are: {}",
+                    feature,
+                    Feature::all_names().join(", ")
                 );
             }
         }

@@ -6,7 +6,10 @@ use gray_matter::engine::YAML;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
-use crate::{schema::features::traits::FeatureTrait, utils::path::get_commands_dir};
+use crate::{
+    schema::features::traits::FeatureTrait, templates::variables::get_command_name_variable,
+    utils::path::get_commands_dir,
+};
 
 #[derive(Serialize, Deserialize)]
 pub(crate) struct CommandMetadata {
@@ -80,6 +83,10 @@ impl FeatureTrait for CommandFeature {
 
     fn get_file_name(&self) -> Option<String> {
         Some(self.metadata.name.clone())
+    }
+
+    fn get_name_variable(&self, filename: &str) -> Result<Option<Value>> {
+        Ok(Some(get_command_name_variable(filename)?))
     }
 }
 
