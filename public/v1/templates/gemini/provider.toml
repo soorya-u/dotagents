@@ -1,4 +1,4 @@
 # Augment Commands
-[providers.cli.gemini.commands]
+[providers.gemini.commands]
 template = "https://dotagents.soorya-u.dev/templates/gemini/command.hbs"
 target = "{{dir.workspace}}/.gemini/commands/{{command.name}}.toml"

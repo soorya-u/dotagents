@@ -1,9 +1,9 @@
 # Copilot Instructions
-[providers.cli.copilot.instructions]
+[providers.copilot.instructions]
 template = "https://dotagents.soorya-u.dev/templates/copilot/instructions.hbs"
 target = "{{dir.workspace}}/.github/copilot-instructions.md"
 
 # Copilot Commands
-[providers.cli.copilot.commands]
+[providers.copilot.commands]
 template = "https://dotagents.soorya-u.dev/templates/copilot/command.hbs"
 target = "{{dir.workspace}}/.github/prompts/{{command.name}}.prompt.md"

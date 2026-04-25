@@ -1,4 +1,4 @@
 # Augment Commands
-[providers.cli.codebuddy.commands]
+[providers.codebuddy.commands]
 template = "https://dotagents.soorya-u.dev/templates/codebuddy/command.hbs"
 target = "{{dir.workspace}}/.codebuddy/commands/{{command.name}}.md"

@@ -1,11 +1,11 @@
-[providers.cli.amp.commands]
+[providers.amp.commands]
 template = "https://dotagents.soorya-u.dev/templates/amp/command.hbs"
 target = "{{dir.workspace}}/.agents/commands/{{command.name}}.md"
 
-[providers.cli.amp.instructions]
+[providers.amp.instructions]
 template = "https://dotagents.soorya-u.dev/templates/amp/instruction.hbs"
 target = "{{ dir.workspace }}/AGENTS.md"
 
-[providers.cli.amp.mcp]
+[providers.amp.mcp]
 template = "https://dotagents.soorya-u.dev/templates/amp/mcp.hbs"
 target = "{{ dir.workspace }}/.amp/settings.json"

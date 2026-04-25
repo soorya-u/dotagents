@@ -91,8 +91,8 @@ fn init_config_toml_has_features_and_targets_sections() {
         "config.toml should declare features"
     );
     assert!(
-        content.contains("[targets]"),
-        "config.toml should have a [targets] section"
+        content.contains("targets"),
+        "config.toml should declare targets"
     );
 }
 
@@ -321,7 +321,7 @@ fn init_force_recreates_root_dir_and_restores_config() {
         ws.run(&["init", "--force"]).assert_success();
         let restored = ws.read(format!("{}/config.toml", ws.root_dir_name()));
         assert!(
-            restored.contains("[targets]"),
+            restored.contains("targets"),
             "config.toml should be fully restored after --force init"
         );
     }
@@ -332,7 +332,7 @@ fn init_force_recreates_root_dir_and_restores_config() {
         ws.run(&["init"]).assert_success();
         let restored = ws.read(format!("{}/config.toml", ws.root_dir_name()));
         assert!(
-            restored.contains("[targets]"),
+            restored.contains("targets"),
             "config.toml should be fully restored by force init"
         );
     }

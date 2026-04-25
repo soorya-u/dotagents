@@ -1,4 +1,4 @@
 # Augment Commands
-[providers.cli.kilocode.commands]
+[providers.kilocode.commands]
 template = "https://dotagents.soorya-u.dev/templates/kilocode/command.hbs"
 target = "{{dir.workspace}}/.kilocode/workflows/{{command.name}}.md"

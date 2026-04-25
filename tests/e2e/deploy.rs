@@ -262,10 +262,9 @@ fn deploy_fails_when_skills_listed_as_feature_in_config() {
         r#"schema = "https://dotagents.soorya-u.dev/schemas/config.schema.json"
 features = ["commands", "instructions", "mcp", "skills"]
 
-[targets]
-custom = ["mycode"]
+targets = ["mycode"]
 
-[providers.custom.mycode.commands]
+[providers.mycode.commands]
 template = "{{ dir.application }}/templates/mycode/command.hbs"
 target = "{{ dir.workspace }}/.mycode/commands/{{ command.name }}.md"
 "#,

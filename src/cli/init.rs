@@ -16,7 +16,6 @@ use crate::constants::{
 };
 use crate::utils::fs::write_file;
 use anyhow::{Context, Result};
-use log;
 
 struct InitFile {
     path: PathBuf,

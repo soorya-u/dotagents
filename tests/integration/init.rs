@@ -159,10 +159,7 @@ fn init_config_toml_has_expected_sections() {
     let content = ws.read_file(Path::new(&format!("{d}/config.toml")));
     // config.toml uses `features = [...]` (inline array), not a `[features]` section.
     assert!(content.contains("features"), "should declare features");
-    assert!(
-        content.contains("[targets]"),
-        "should have [targets] section"
-    );
+    assert!(content.contains("targets"), "should declare targets");
 }
 
 #[test]

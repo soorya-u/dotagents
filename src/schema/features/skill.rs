@@ -74,15 +74,15 @@ impl SkillFeature {
             let content = fs::read_to_string(&path).context("failed to read skill file")?;
             let skill = Self::from_markdown(&content)?;
 
-            if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
-                if stem != skill.metadata.name {
-                    warn!(
-                        "Skill name '{}' in frontmatter does not match filename stem '{}' (file: {})",
-                        skill.metadata.name,
-                        stem,
-                        path.display()
-                    );
-                }
+            if let Some(stem) = path.file_stem().and_then(|s| s.to_str())
+                && stem != skill.metadata.name
+            {
+                warn!(
+                    "Skill name '{}' in frontmatter does not match filename stem '{}' (file: {})",
+                    skill.metadata.name,
+                    stem,
+                    path.display()
+                );
             }
 
             skills.push(skill);

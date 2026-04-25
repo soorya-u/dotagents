@@ -1,4 +1,4 @@
 # Augment Commands
-[providers.cli.roo.commands]
+[providers.shai.commands]
 template = "https://dotagents.soorya-u.dev/templates/roo/command.hbs"
 target = "{{dir.workspace}}/.shai/commands/{{command.name}}.md"

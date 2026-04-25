@@ -64,21 +64,6 @@ impl LocalConfig {
             }
         }
 
-        if let (Some(targets), Some(providers)) = (&self.targets, &self.providers) {
-            if let Some(custom_targets) = &targets.custom {
-                if let Some(custom_providers) = &providers.custom {
-                    for target in custom_targets {
-                        if !custom_providers.contains_key(target) {
-                            anyhow::bail!(
-                                "Custom target '{}' is defined in targets but has no provider configuration",
-                                target
-                            );
-                        }
-                    }
-                }
-            }
-        }
-
         Ok(())
     }
 

@@ -221,25 +221,22 @@ features = [
     "mcp",
 ]
 
-[targets]
-cli = []
-ide = []
-custom = ["mycode"]
+targets = ["mycode"]
 
-[providers.custom.mycode.mcp]
+[providers.mycode.mcp]
 template = "{{ dir.application }}/templates/mycode/mcp.hbs"
 target = "{{ dir.workspace }}/.mycode/mcp.json"
 
-[providers.custom.mycode.instructions]
+[providers.mycode.instructions]
 template = "{{ dir.application }}/templates/mycode/instructions.hbs"
 target = "{{ dir.workspace }}/.mycode/instructions.md"
 variables = {agent_name = "Mycode"}
 
-[providers.custom.mycode.commands]
+[providers.mycode.commands]
 template = "{{ dir.application }}/templates/mycode/command.hbs"
 target = "{{ dir.workspace }}/.mycode/commands/{{ command.name }}.md"
 
-[providers.custom.mycode.skills]
+[providers.mycode.skills]
 template = "{{ dir.application }}/templates/mycode/skill.hbs"
 target = "{{ dir.workspace }}/.mycode/skills/{{ skill.name }}.md"
 "#;
@@ -253,21 +250,18 @@ features = [
     "mcp",
 ]
 
-[targets]
-cli = []
-ide = []
-custom = ["mycode"]
+targets = ["mycode"]
 
-[providers.custom.mycode.mcp]
+[providers.mycode.mcp]
 template = "{{ dir.application }}/templates/mycode/mcp.hbs"
 target = "{{ dir.workspace }}/.mycode/mcp.json"
 
-[providers.custom.mycode.instructions]
+[providers.mycode.instructions]
 template = "{{ dir.application }}/templates/mycode/instructions.hbs"
 target = "{{ dir.workspace }}/.mycode/instructions.md"
 variables = {agent_name = "Mycode"}
 
-[providers.custom.mycode.commands]
+[providers.mycode.commands]
 template = "{{ dir.application }}/templates/mycode/command.hbs"
 target = "{{ dir.workspace }}/.mycode/commands/{{ command.name }}.md"
 disabled = true

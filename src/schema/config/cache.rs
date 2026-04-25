@@ -27,30 +27,22 @@ impl CacheConfig {
         }
     }
 
-    pub fn has_valid_hash(&self, target_type: &str, target_name: &str, feature: &str) -> bool {
-        if let Some(providers) = &self.providers {
-            let provider_map = match target_type {
-                "ide" => providers.ide.as_ref(),
-                "cli" => providers.cli.as_ref(),
-                "custom" => providers.custom.as_ref(),
+    pub fn has_valid_hash(&self, target_name: &str, feature: &str) -> bool {
+        if let Some(providers) = &self.providers
+            && let Some(map) = &providers.0
+            && let Some(settings) = map.get(target_name)
+        {
+            let feature_settings = match feature {
+                "mcp" => settings.mcp.as_ref(),
+                "instructions" => settings.instructions.as_ref(),
+                "commands" => settings.commands.as_ref(),
                 _ => return false,
             };
 
-            if let Some(map) = provider_map {
-                if let Some(settings) = map.get(target_name) {
-                    let feature_settings = match feature {
-                        "mcp" => settings.mcp.as_ref(),
-                        "instructions" => settings.instructions.as_ref(),
-                        "commands" => settings.commands.as_ref(),
-                        _ => return false,
-                    };
-
-                    return feature_settings
-                        .and_then(|s| s.hash.as_ref())
-                        .map(|h| !h.is_empty())
-                        .unwrap_or(false);
-                }
-            }
+            return feature_settings
+                .and_then(|s| s.hash.as_ref())
+                .map(|h| !h.is_empty())
+                .unwrap_or(false);
         }
         false
     }

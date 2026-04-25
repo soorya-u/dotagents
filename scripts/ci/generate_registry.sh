@@ -9,38 +9,21 @@ SCHEME_URL="https://dotagents.soorya-u.dev/v1/schemas/registry.schema.json"
 
 jq -n \
   --arg scheme "$SCHEME_URL" \
-  --arg root "$ROOT" \
   '
   {
     "$schema": $scheme,
-    "providers": {
-      "cli": {},
-      "ide": {}
-    }
+    "providers": {}
   }
   ' > "$TMP_FILE"
 
-# Fill CLI providers
-for d in "$ROOT/cli"/*; do
+# Fill providers from flat layout
+for d in "$ROOT"/*; do
   if [ -d "$d" ] && [ -f "$d/provider.toml" ]; then
     name=$(basename "$d")
     jq \
       --arg name "$name" \
-      --arg path "/templates/cli/$name/provider.toml" \
-      '.providers.cli[$name] = { "path": $path }' \
-      "$TMP_FILE" > "${TMP_FILE}.new"
-    mv "${TMP_FILE}.new" "$TMP_FILE"
-  fi
-done
-
-# Fill IDE providers
-for d in "$ROOT/ide"/*; do
-  if [ -d "$d" ] && [ -f "$d/provider.toml" ]; then
-    name=$(basename "$d")
-    jq \
-      --arg name "$name" \
-      --arg path "/templates/ide/$name/provider.toml" \
-      '.providers.ide[$name] = { "path": $path }' \
+      --arg path "/templates/$name/provider.toml" \
+      '.providers[$name] = { "path": $path }' \
       "$TMP_FILE" > "${TMP_FILE}.new"
     mv "${TMP_FILE}.new" "$TMP_FILE"
   fi

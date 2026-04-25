@@ -1,11 +1,11 @@
 pub(crate) enum Target {
-    IDE,
-    CLI,
+    Ide,
+    Cli,
     Custom,
 }
 
 pub(crate) enum Feature {
-    MCP,
+    Mcp,
     Instructions,
     Commands,
 }
