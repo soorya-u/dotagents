@@ -2,7 +2,6 @@ use std::collections::{HashMap, HashSet};
 
 use anyhow::{Context, Result};
 
-use super::cache::CacheConfig;
 use super::common::Providers;
 use super::global::GlobalConfig;
 use super::local::LocalConfig;
@@ -65,13 +64,6 @@ impl AppConfig {
             .collect()
     }
 
-    pub fn to_cache(&self) -> CacheConfig {
-        CacheConfig {
-            schema: self.schema.clone(),
-            providers: self.providers.clone(),
-        }
-    }
-
     pub fn from_application(templater: &Templater) -> Result<Self> {
         let global_config_content =
             templater.render_template(RenderType::Name(GLOBAL_CONFIG_FILE.into()), None)?;
@@ -131,18 +123,6 @@ impl From<(&GlobalConfig, &LocalConfig)> for AppConfig {
             targets,
             providers,
             variables,
-        }
-    }
-}
-
-impl From<&CacheConfig> for AppConfig {
-    fn from(cache: &CacheConfig) -> Self {
-        Self {
-            schema: cache.schema.clone(),
-            features: HashSet::new(),
-            targets: HashSet::new(),
-            providers: cache.providers.clone(),
-            variables: None,
         }
     }
 }

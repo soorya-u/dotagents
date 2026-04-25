@@ -5,21 +5,27 @@ use log::warn;
 use serde_json::{Value, to_value};
 
 use crate::{
-    schema::{config::FeatureSettings, features::traits::FeatureTrait},
+    schema::{
+        config::{CacheEntry, CacheUpdate, FeatureSettings},
+        features::traits::FeatureTrait,
+    },
     templates::{RenderType, Templater, fetch_template, variables::get_user_defined_variables},
     utils::{
-        fs::{read_file, write_file},
+        fs::{hash_content, hash_file, read_file, write_file},
         merge_json,
     },
 };
 
+/// Renders a feature for a provider, applying cache skip/detect logic.
 pub fn render_feature_with_settings<T: FeatureTrait>(
     provider_name: &str,
     feature: &T,
     feature_settings: &FeatureSettings,
     templater: &Templater,
     variables: Option<&Value>,
-) -> Result<PathBuf> {
+    cache: Option<&CacheEntry>,
+    force: bool,
+) -> Result<CacheUpdate> {
     let template_str = feature_settings
         .template
         .as_deref()
@@ -39,10 +45,6 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
     } else {
         PathBuf::from(target_str)
     };
-
-    if target_path.exists() {
-        warn!("Replacing existing file at {}", target_path.display());
-    }
 
     let local_vars = feature_settings
         .variables
@@ -78,8 +80,41 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
     let content =
         templater.render_template(RenderType::Content(template_file_content), Some(&vars))?;
 
+    let rendered_hash = hash_content(&content);
+
+    // Cache-aware skip / user-edit detection (bypassed when --force)
+    if !force
+        && let Some(entry) = cache
+        && rendered_hash == entry.hash
+    {
+        // Rendered content is identical to what was last written.
+        // Check the on-disk file to detect user edits.
+        match hash_file(&target_path)? {
+            None => {
+                // File is missing despite a valid cache entry → re-write it.
+            }
+            Some(disk_hash) if disk_hash == entry.hash => {
+                // On-disk file still matches the cache → nothing to do.
+                return Ok(CacheUpdate::Skipped);
+            }
+            Some(_) => {
+                // On-disk file differs from cache → user manually edited it.
+                warn!(
+                    "Target file {} was manually edited; skipping",
+                    target_path.display()
+                );
+                return Ok(CacheUpdate::UserEditedSkipped { path: target_path });
+            }
+        }
+        // rendered_hash == entry.hash but file was missing → fall through to write.
+    }
+    // No cache entry, force=true, or inputs changed → fall through to write.
+
     write_file(&target_path, &content)
         .context(format!("failed to write file in {}", target_path.display()))?;
 
-    Ok(target_path)
+    Ok(CacheUpdate::Written {
+        hash: rendered_hash,
+        target: target_path.to_string_lossy().into_owned(),
+    })
 }
