@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    {{#each mcp.servers}}
+    "{{@key}}": {
+      {{#ifEq this.type "http"}}
+      "type": "http",
+      "url": "{{this.url}}"{{#if this.headers}},
+      "headers": {{json this.headers}}{{/if}},
+      "tools": ["*"]
+      {{else}}
+      "type": "local",
+      "command": "{{this.command}}",
+      "args": {{json this.args}}{{#if this.env}},
+      "env": {{json this.env}}{{/if}},
+      "tools": ["*"]
+      {{/ifEq}}
+    }{{#unless @last}},{{/unless}}
+    {{/each}}
+  }
+}

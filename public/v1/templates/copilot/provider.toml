@@ -7,3 +7,13 @@ target = "{{dir.workspace}}/.github/copilot-instructions.md"
 [providers.copilot.commands]
 template = "https://dotagents.soorya-u.dev/templates/copilot/command.hbs"
 target = "{{dir.workspace}}/.github/prompts/{{command.name}}.prompt.md"
+
+# Copilot Skills
+[providers.copilot.skills]
+template = "https://dotagents.soorya-u.dev/templates/copilot/skill.hbs"
+target = "{{dir.workspace}}/.github/skills/{{skill.name}}/SKILL.md"
+
+# Copilot MCP
+[providers.copilot.mcp]
+template = "https://dotagents.soorya-u.dev/templates/copilot/mcp.hbs"
+target = "{{dir.home}}/.copilot/mcp-config.json"
