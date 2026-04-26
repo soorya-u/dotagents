@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use super::common::{Providers, Targets};
+use super::common::{PackageRunner, Providers, Targets};
 use super::traits::TomlConfig;
 use crate::constants::schema::CONFIG_SCHEMA;
 use crate::schema::features::Feature;
@@ -19,6 +19,8 @@ pub struct GlobalConfig {
     pub providers: Option<Providers>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub variables: Option<HashMap<String, String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub package_runner: Option<PackageRunner>,
 }
 
 impl GlobalConfig {
@@ -29,6 +31,7 @@ impl GlobalConfig {
             targets: None,
             providers: None,
             variables: None,
+            package_runner: None,
         }
     }
 
@@ -39,6 +42,7 @@ impl GlobalConfig {
             targets: Some(targets),
             providers: None,
             variables: None,
+            package_runner: None,
         }
     }
 
@@ -64,3 +68,37 @@ impl Default for GlobalConfig {
 }
 
 impl TomlConfig for GlobalConfig {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn package_runner_field_deserialises_in_global_config() {
+        // all four runner values parse correctly from TOML
+        for (toml_val, expected) in [
+            ("npm", PackageRunner::Npm),
+            ("pnpm", PackageRunner::Pnpm),
+            ("yarn", PackageRunner::Yarn),
+            ("bun", PackageRunner::Bun),
+        ] {
+            let toml = format!("package-runner = \"{toml_val}\"\n");
+            let config: GlobalConfig = toml::from_str(&toml).unwrap();
+            assert_eq!(config.package_runner, Some(expected));
+        }
+    }
+
+    #[test]
+    fn package_runner_absent_yields_none_in_global_config() {
+        // omitting the field deserialises to None
+        let config: GlobalConfig = toml::from_str("features = []\n").unwrap();
+        assert_eq!(config.package_runner, None);
+    }
+
+    #[test]
+    fn invalid_package_runner_value_fails_deserialisation() {
+        // an unrecognised runner value should fail with a serde error
+        let result: Result<GlobalConfig, _> = toml::from_str("package-runner = \"cargo\"\n");
+        assert!(result.is_err());
+    }
+}

@@ -33,6 +33,7 @@ mod idempotency;
 mod init;
 mod no_subcommand;
 mod remote_template;
+mod skills;
 mod workflow;
 
 // ─────────────────────────────────────────────────────────────────────────────

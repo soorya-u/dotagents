@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use anyhow::{Context, Result};
 
-use super::common::Providers;
+use super::common::{PackageRunner, Providers};
 use super::global::GlobalConfig;
 use super::local::LocalConfig;
 use crate::constants::file::{GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE};
@@ -22,6 +22,8 @@ pub struct AppConfig {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub providers: Option<Providers>,
     pub variables: Option<HashMap<String, String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub package_runner: Option<PackageRunner>,
 }
 
 impl AppConfig {
@@ -32,6 +34,7 @@ impl AppConfig {
             targets: HashSet::new(),
             providers: None,
             variables: None,
+            package_runner: None,
         }
     }
 
@@ -121,12 +124,18 @@ impl From<(&GlobalConfig, &LocalConfig)> for AppConfig {
             },
         );
 
+        let package_runner = local
+            .package_runner
+            .clone()
+            .or_else(|| global.package_runner.clone());
+
         Self {
             schema,
             features,
             targets,
             providers,
             variables,
+            package_runner,
         }
     }
 }
@@ -139,3 +148,58 @@ impl Default for AppConfig {
 
 #[cfg(debug_assertions)]
 impl TomlConfig for AppConfig {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::schema::config::common::PackageRunner;
+
+    fn make_global(runner: Option<PackageRunner>) -> GlobalConfig {
+        GlobalConfig {
+            schema: None,
+            features: std::collections::HashSet::new(),
+            targets: None,
+            providers: None,
+            variables: None,
+            package_runner: runner,
+        }
+    }
+
+    fn make_local(runner: Option<PackageRunner>) -> LocalConfig {
+        LocalConfig {
+            schema: None,
+            features: None,
+            targets: None,
+            providers: None,
+            variables: None,
+            package_runner: runner,
+        }
+    }
+
+    #[test]
+    fn local_runner_wins_over_global() {
+        // local package-runner overrides global
+        let global = make_global(Some(PackageRunner::Npm));
+        let local = make_local(Some(PackageRunner::Pnpm));
+        let app = AppConfig::from((&global, &local));
+        assert_eq!(app.package_runner, Some(PackageRunner::Pnpm));
+    }
+
+    #[test]
+    fn global_runner_used_when_local_absent() {
+        // global package-runner is used when local doesn't specify one
+        let global = make_global(Some(PackageRunner::Yarn));
+        let local = make_local(None);
+        let app = AppConfig::from((&global, &local));
+        assert_eq!(app.package_runner, Some(PackageRunner::Yarn));
+    }
+
+    #[test]
+    fn both_absent_yields_none() {
+        // None in both configs → AppConfig.package_runner is None
+        let global = make_global(None);
+        let local = make_local(None);
+        let app = AppConfig::from((&global, &local));
+        assert_eq!(app.package_runner, None);
+    }
+}

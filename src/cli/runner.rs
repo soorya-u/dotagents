@@ -1,7 +1,8 @@
 use super::completions::generate_cli_completions;
 use super::deploy::deploy;
 use super::init::initialize_agents_dir;
-use super::options::{Action, Options};
+use super::options::{Action, Options, SkillsAction};
+use super::skills;
 use anyhow::Result;
 use clap::CommandFactory;
 
@@ -11,11 +12,23 @@ pub(crate) fn run(opts: Options) -> Result<bool> {
         std::process::exit(0);
     };
 
-    match opts.action.unwrap_or_else(default_action) {
-        Action::Init(opts) => initialize_agents_dir(opts),
-        Action::GenCompletions { shell, to } => generate_cli_completions(shell, to),
-        Action::Deploy(opts) => deploy(opts),
-    }?;
+    let success = match opts.action.unwrap_or_else(default_action) {
+        Action::Init(opts) => {
+            initialize_agents_dir(opts)?;
+            true
+        }
+        Action::GenCompletions { shell, to } => {
+            generate_cli_completions(shell, to)?;
+            true
+        }
+        Action::Deploy(opts) => {
+            deploy(opts)?;
+            true
+        }
+        Action::Skills { action } => match action {
+            SkillsAction::Add(opts) => skills::add(opts)?,
+        },
+    };
 
-    Ok(true)
+    Ok(success)
 }
