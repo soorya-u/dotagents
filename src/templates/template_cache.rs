@@ -8,11 +8,7 @@ use crate::utils::{
     path::get_global_template_cache_dir,
 };
 
-/// User-level on-disk cache for downloaded provider template files.
-///
-/// Files are stored at `<config_dir>/dotagents/cache/templates/<provider>/<filename>`.
-/// Cache validity is determined by comparing the stored content's SHA-256 against the
-/// checksum published in `registry.json`.
+/// User-level on-disk cache for downloaded provider template files at `<config_dir>/dotagents/cache/templates/<provider>/<filename>`, validated against `registry.json` SHA-256 checksums.
 pub(crate) struct TemplateCache {
     base_dir: PathBuf,
 }

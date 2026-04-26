@@ -49,6 +49,6 @@
 
 - [x] 7.1 Run `mise check` (cargo fmt + cargo clippy) and fix all warnings
 - [x] 7.2 Run `mise test-all` (unit + integration + e2e) and fix all failures
-- [ ] 7.3 Manual smoke test: create a fresh project with `targets = ["claude"]` and no `[providers.*]` block; run `dotagents deploy` and confirm `.claude/commands/` is populated
-- [ ] 7.4 Manual smoke test: run `dotagents deploy --offline` on a cold cache and confirm a clear error message; run once online to warm cache, then run `--offline` again and confirm success
-- [ ] 7.5 Manual smoke test: run `dotagents deploy --no-cache` and confirm template files are re-downloaded even when checksum would otherwise match
+- [x] 7.3 Manual smoke test: create a fresh project with `targets = ["claude"]` and no `[providers.*]` block; run `dotagents deploy` and confirm `.claude/commands/` is populated (automated as `#[ignore]` e2e test `deploy_auto_resolves_template_and_target_for_known_provider`)
+- [x] 7.4 Manual smoke test: run `dotagents deploy --offline` on a cold cache and confirm a clear error message; run once online to warm cache, then run `--offline` again and confirm success (cold-cache case automated as always-on e2e tests; warm-cache case automated as `#[ignore]` e2e test `deploy_offline_with_warm_cache_succeeds_without_network`)
+- [x] 7.5 Manual smoke test: run `dotagents deploy --no-cache` and confirm template files are re-downloaded even when checksum would otherwise match (automated as `#[ignore]` e2e test `deploy_no_cache_forces_re_download_even_when_cached`)

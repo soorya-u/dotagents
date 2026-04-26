@@ -36,11 +36,11 @@ There are two separate caches in this system and it is important they remain dis
 
 **Rationale**: Avoids N redundant HTTP round-trips for N providers with missing config. Registry is small (< 10 KB) and cheap to parse.
 
-### D3 — Template-source cache uses filename + `.sha256` sidecar files
+### D3 — Template-source cache validates content via in-memory SHA-256 comparison
 
-**Decision**: Store each cached file as `<provider>/<file>` with a sibling `<provider>/<file>.sha256` containing the hex digest.
+**Decision**: Store each cached file as `<provider>/<file>` only — no sidecar files. `TemplateCache::checksum_matches` reads the cached file content, hashes it on-the-fly with `hash_content`, and compares the result to the expected hex supplied by the caller (sourced from `registry.json`'s `checksums` map). If the file is absent or the hash differs the entry is treated as a cache miss.
 
-**Rationale**: Simple to implement, survives partial writes (if the `.sha256` file is missing the entry is treated as a cache miss), and requires no additional index file. The alternative of a single `cache-index.toml` was considered but adds a locking requirement when projects run concurrent deploys.
+**Rationale**: Eliminates the write-atomicity problem of sidecar files (no risk of a `.sha256` file existing without its companion), reduces file-system clutter, and keeps the cache directory layout simple. The expected checksum is always available from the registry; callers that have no checksum (e.g. offline fallback) skip the comparison entirely and use the cached file as-is.
 
 ### D4 — Network failure in online mode is a soft failure for registry lookup only
 
@@ -80,5 +80,5 @@ There are two separate caches in this system and it is important they remain dis
 
 ## Open Questions
 
-- **Should `--no-cache` also clear/bypass the template-source cache?** Current thinking: yes — `--no-cache` should mean "fetch everything fresh", bypassing both caches. This keeps the flag semantics consistent. To be confirmed before implementation of `resolve_provider_defaults()`.
+- **Should `--no-cache` also clear/bypass the template-source cache?** Resolved: yes. `resolve_provider_defaults` accepts a `no_cache: bool` parameter and threads it through to `fetch_or_cache_file`. When `no_cache` is `true`, `fetch_or_cache_file` skips all cache reads and unconditionally fetches from the network, then overwrites the cached copy with the freshly fetched content. This keeps `--no-cache` semantics consistent: both the rendered-output cache and the template-source cache are bypassed.
 - **Should `dotagents init` pre-warm the template cache for the providers in the scaffolded config?** Out of scope for now but worth a follow-up change.

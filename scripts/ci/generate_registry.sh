@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 ROOT="public/v1/templates"
 REGISTRY="$ROOT/registry.json"
@@ -21,13 +21,16 @@ for d in "$ROOT"/*; do
   if [ -d "$d" ] && [ -f "$d/provider.toml" ]; then
     name=$(basename "$d")
 
-    # Build checksums object for all known template files that exist
+    # Build checksums object: provider.toml + every .hbs file present in the dir.
     checksums="{}"
-    for f in provider.toml command.hbs instruction.hbs mcp.hbs skill.hbs; do
-      if [ -f "$d/$f" ]; then
-        checksum=$(sha256sum "$d/$f" | cut -d' ' -f1)
-        checksums=$(echo "$checksums" | jq --arg file "$f" --arg sum "$checksum" '.[$file] = $sum')
-      fi
+    files=("provider.toml")
+    while IFS= read -r -d '' hbs; do
+      files+=("$(basename "$hbs")")
+    done < <(find "$d" -maxdepth 1 -type f -name '*.hbs' -print0 | sort -z)
+    for f in "${files[@]}"; do
+      [ -f "$d/$f" ] || continue
+      checksum=$(sha256sum "$d/$f" | cut -d' ' -f1)
+      checksums=$(echo "$checksums" | jq --arg file "$f" --arg sum "$checksum" '.[$file] = $sum')
     done
 
     jq \

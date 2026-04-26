@@ -10,8 +10,9 @@ use crate::schema::config::{
 use crate::schema::features::Feature;
 use crate::schema::registry::Registry;
 use crate::templates::{TemplateCache, do_get};
+use crate::utils::fs::hash_content;
 
-pub(crate) use crate::constants::domain::REGISTRY_URL;
+pub(crate) use crate::constants::domain::registry_url;
 
 /// Maps a `Feature` to the `.hbs` filename used in a provider directory.
 fn feature_filename(feature: &Feature) -> &'static str {
@@ -23,9 +24,7 @@ fn feature_filename(feature: &Feature) -> &'static str {
     }
 }
 
-/// Fetches `url` or serves from cache, updating the cache when the remote copy is newer.
-///
-/// When `no_cache` is `true` the cache is bypassed entirely and the file is always fetched.
+/// Fetches `url` or serves from cache; bypasses cache entirely when `no_cache` is `true`.
 pub(crate) fn fetch_or_cache_file(
     provider: &str,
     filename: &str,
@@ -56,6 +55,18 @@ pub(crate) fn fetch_or_cache_file(
             e
         )
     })?;
+    if let Some(expected) = registry_checksum {
+        let actual = hash_content(&content);
+        if actual != expected {
+            return Err(anyhow!(
+                "Checksum mismatch for {} (provider '{}'): expected {}, got {}",
+                filename,
+                provider,
+                expected,
+                actual
+            ));
+        }
+    }
     cache.write(provider, filename, &content)?;
     Ok(Some(content))
 }
@@ -79,12 +90,7 @@ pub(crate) fn parse_provider_toml(
     Ok(feature_settings)
 }
 
-/// Fills in missing `template` and/or `target` fields in `app_config` for all providers
-/// that are listed in `targets` but lack fully-configured `FeatureSettings`.
-///
-/// - `registry`: the fetched registry; `None` when the fetch failed or `--offline` was specified.
-/// - `offline`: when `true`, only the local cache is consulted and a cold cache is a hard error.
-/// - `no_cache`: when `true`, cached files are ignored and everything is re-fetched.
+/// Fills in missing `template`/`target` fields in `app_config` from the registry/cache, honouring `offline` and `no_cache` flags.
 pub(crate) fn resolve_provider_defaults(
     app_config: &mut AppConfig,
     registry: Option<&Registry>,
@@ -100,6 +106,35 @@ pub(crate) fn resolve_provider_defaults(
     ];
 
     for provider_name in app_config.targets.clone() {
+        // If the registry is available and this provider is absent, emit a single warning
+        // for all features rather than one per feature.  When the registry is unavailable
+        // (None), fall through to the per-feature cache-fallback path.
+        if let Some(reg) = registry
+            && !reg.providers.contains_key(&provider_name)
+        {
+            // Only warn when at least one feature actually needs resolution; don't
+            // emit spurious warnings for fully-configured custom providers.
+            let needs_any = all_features.iter().any(|f| {
+                if !app_config.has_feature(f) {
+                    return false;
+                }
+                let s = app_config
+                    .providers
+                    .as_ref()
+                    .and_then(|p| p.0.as_ref())
+                    .and_then(|m| m.get(&provider_name))
+                    .and_then(|fs| fs.get_config(f));
+                s.is_none_or(|s| s.template.is_none() || s.target.is_none())
+            });
+            if needs_any {
+                warn!(
+                    "Provider '{}' not found in registry — skipping",
+                    &provider_name
+                );
+            }
+            continue;
+        }
+
         for feature in &all_features {
             if !app_config.has_feature(feature) {
                 continue;
@@ -126,16 +161,9 @@ pub(crate) fn resolve_provider_defaults(
                 Ok(None) => continue, // warning already emitted inside
                 Ok(Some(resolved)) => {
                     // Merge: user-config takes priority over resolved defaults.
-                    let merged = match existing {
-                        Some(user) => FeatureSettings {
-                            template: user.template.or(resolved.template),
-                            target: user.target.or(resolved.target),
-                            disabled: user.disabled.or(resolved.disabled),
-                            variables: user.variables.or(resolved.variables),
-                            hash: user.hash.or(resolved.hash),
-                        },
-                        None => resolved,
-                    };
+                    let merged = existing
+                        .map(|user| resolved.merge(&user))
+                        .unwrap_or(resolved);
                     set_feature_settings(app_config, &provider_name, feature, merged);
                 }
                 Err(e) if offline => return Err(e),
@@ -149,8 +177,7 @@ pub(crate) fn resolve_provider_defaults(
     Ok(())
 }
 
-/// Resolves a single (provider, feature) pair, returning the filled `FeatureSettings` or `None`
-/// if the provider/feature cannot be found or should be skipped.
+/// Resolves a single (provider, feature) pair from the registry/cache, returning `None` when the provider/feature should be skipped.
 fn resolve_for_provider(
     provider: &str,
     feature: &Feature,
@@ -218,10 +245,7 @@ fn resolve_for_provider(
     Ok(Some(feature_settings))
 }
 
-/// Fetches or serves from cache the `provider.toml` for a given provider.
-///
-/// Returns `None` (with a logged warning) when the provider should be skipped.
-/// Returns `Err` only when `offline` is `true` and the cache is cold.
+/// Fetches or reads from cache the `provider.toml` for a given provider; returns `None` when skipped and `Err` only in offline+cold-cache mode.
 fn get_provider_toml(
     provider: &str,
     registry: Option<&Registry>,
@@ -248,9 +272,9 @@ fn get_provider_toml(
             }
             Some(entry) => {
                 let url = format!(
-                    "{}{}",
+                    "{}/{}",
                     TRUSTED_DOMAIN.trim_end_matches('/'),
-                    entry.path
+                    entry.path.trim_start_matches('/'),
                 );
                 let checksum = entry
                     .checksums
@@ -295,9 +319,7 @@ fn set_feature_settings(
         .0
         .get_or_insert_with(HashMap::new);
 
-    let features = providers_map
-        .entry(provider.to_string())
-        .or_default();
+    let features = providers_map.entry(provider.to_string()).or_default();
 
     match feature {
         Feature::Command => features.commands = Some(settings),

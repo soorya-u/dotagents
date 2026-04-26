@@ -14,7 +14,7 @@ use crate::schema::features::{
 };
 use crate::schema::registry::Registry;
 use crate::templates::{
-    REGISTRY_URL, TemplateCache, Templater, get_templater, render_feature_with_settings,
+    TemplateCache, Templater, get_templater, registry_url, render_feature_with_settings,
     resolve_provider_defaults,
 };
 use crate::utils::gitignore::{
@@ -105,7 +105,7 @@ pub(super) fn deploy(opts: DeployOptions) -> Result<()> {
     let registry: Option<Registry> = if opts.offline {
         None // --offline: skip fetch entirely, resolve from cache only
     } else {
-        match Registry::fetch(REGISTRY_URL) {
+        match Registry::fetch(registry_url()) {
             Ok(r) => Some(r),
             Err(e) => {
                 warn!(
