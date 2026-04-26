@@ -4,7 +4,7 @@ use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
-use crate::constants::dir::ROOT_DIR;
+use crate::constants::dir::{ROOT_DIR, TEMPLATE_CACHE_SUBDIR};
 
 static WORKSPACE_DIR: OnceLock<Result<PathBuf, String>> = OnceLock::new();
 
@@ -86,6 +86,28 @@ pub fn get_application_dir() -> Result<PathBuf> {
 pub fn get_commands_dir() -> Result<PathBuf> {
     let commands_dir = get_application_dir()?.join("commands");
     get_dir_or_die(commands_dir)
+}
+
+/// Returns the user-level template source cache directory, creating it if necessary.
+///
+/// Platform paths: Linux `~/.config/dotagents/cache/templates`,
+/// macOS `~/Library/Application Support/dotagents/cache/templates`,
+/// Windows `%APPDATA%/dotagents/cache/templates`.
+pub fn get_global_template_cache_dir() -> Result<PathBuf> {
+    let base =
+        dirs::config_dir().ok_or_else(|| anyhow!("failed to locate user config directory"))?;
+    let dir = base
+        .join("dotagents")
+        .join("cache")
+        .join(TEMPLATE_CACHE_SUBDIR);
+    std::fs::create_dir_all(&dir).map_err(|e| {
+        anyhow!(
+            "failed to create template cache directory {}: {}",
+            dir.display(),
+            e
+        )
+    })?;
+    Ok(dir)
 }
 
 pub fn get_skills_dir() -> Result<PathBuf> {
@@ -215,5 +237,19 @@ mod tests {
             assert!(config.ends_with(".config"));
             assert!(config.is_dir());
         }
+    }
+
+    #[test]
+    // returns a path ending in dotagents/cache/templates and creates the directory
+    fn test_get_global_template_cache_dir_ends_with_expected_suffix() {
+        let result = get_global_template_cache_dir();
+        assert!(result.is_ok(), "expected Ok, got {:?}", result);
+        let path = result.unwrap();
+        assert!(
+            path.ends_with("dotagents/cache/templates"),
+            "path should end with dotagents/cache/templates, got {}",
+            path.display()
+        );
+        assert!(path.is_dir(), "directory should have been created");
     }
 }

@@ -144,6 +144,76 @@ fn deploy_local_template_path_still_works_after_remote_branch() {
 // ═════════════════════════════════════════════════════════════════════════════
 // Group 3 – live network (run with `cargo test -- --ignored`)
 // ═════════════════════════════════════════════════════════════════════════════
+//
+// Group 4 – --offline flag (no network required)
+// ═════════════════════════════════════════════════════════════════════════════
+
+// --offline succeeds when every provider is fully configured (cache never consulted)
+#[test]
+fn deploy_offline_succeeds_when_all_providers_fully_configured() {
+    // The default `init` config wires up `mycode` with explicit template+target for
+    // all features.  Because the resolver skips fully-configured providers, --offline
+    // does not consult the template cache at all and deploy must succeed.
+    let ws = TestWorkspace::new();
+    ws.run(&["init"]).assert_success();
+    ws.run(&["deploy", "--offline"]).assert_success();
+    assert!(
+        ws.file_exists(".mycode/commands/hello.md"),
+        "fully-configured provider should still deploy normally under --offline"
+    );
+}
+
+// --offline on a cold cache produces a hard error for any provider needing auto-resolution
+#[test]
+fn deploy_offline_cold_cache_fails_with_clear_error() {
+    // Override config to target a provider that has no [providers.*] block so the
+    // resolver must consult the cache.  With --offline and a cold cache the deploy
+    // must fail rather than silently skip the provider.
+    let ws = TestWorkspace::new();
+    ws.run(&["init"]).assert_success();
+    ws.write_in_root_dir(
+        "local.config.toml",
+        r#"schema = "https://dotagents.soorya-u.dev/schemas/config.schema.json"
+features = ["commands"]
+targets = ["unknown-provider-that-will-never-be-cached"]
+"#,
+    );
+    let result = ws.run(&["deploy", "--offline"]);
+    result.assert_failure();
+    assert!(
+        result.stderr.contains("--offline") || result.stderr.to_lowercase().contains("offline"),
+        "error must mention --offline so the user knows how to fix it; stderr:\n{}",
+        result.stderr
+    );
+}
+
+// --offline cold-cache error message instructs the user to warm the cache first
+#[test]
+fn deploy_offline_cold_cache_error_directs_user_to_warm_cache() {
+    let ws = TestWorkspace::new();
+    ws.run(&["init"]).assert_success();
+    ws.write_in_root_dir(
+        "local.config.toml",
+        r#"schema = "https://dotagents.soorya-u.dev/schemas/config.schema.json"
+features = ["commands"]
+targets = ["unknown-provider-that-will-never-be-cached"]
+"#,
+    );
+    let result = ws.run(&["deploy", "--offline"]);
+    result.assert_failure();
+    // The resolver emits: "Run without --offline first to populate the cache."
+    let stderr_lc = result.stderr.to_lowercase();
+    assert!(
+        stderr_lc.contains("cache") || stderr_lc.contains("populate"),
+        "error should tell the user to populate the cache; stderr:\n{}",
+        result.stderr
+    );
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Group 5 – registry auto-resolution and --no-cache
+//           (live network — run with `cargo test -- --ignored`)
+// ═════════════════════════════════════════════════════════════════════════════
 
 #[test]
 #[ignore = "requires live network connection to dotagents.soorya-u.dev"]
@@ -199,5 +269,74 @@ target = "{{ dir.workspace }}/.mycode/commands/{{ command.name }}.md"
         result.stderr.contains("404"),
         "error should contain the HTTP status code; stderr:\n{}",
         result.stderr
+    );
+}
+
+// provider in targets with no [providers.*] block → template/target auto-resolved from registry
+#[test]
+#[ignore = "requires live network connection to dotagents.soorya-u.dev"]
+fn deploy_auto_resolves_template_and_target_for_known_provider() {
+    // A provider listed in `targets` with no [providers.*] config should have its
+    // template URL and target path fetched from registry.json → provider.toml and
+    // the feature should be rendered into the expected output directory.
+    let ws = TestWorkspace::new();
+    ws.run(&["init"]).assert_success();
+    ws.write_in_root_dir(
+        "local.config.toml",
+        r#"schema = "https://dotagents.soorya-u.dev/schemas/config.schema.json"
+features = ["commands"]
+targets = ["claude"]
+"#,
+    );
+    ws.run(&["deploy"]).assert_success();
+    assert!(
+        ws.dir_exists(".claude/commands"),
+        "auto-resolved claude provider should deploy commands to .claude/commands/"
+    );
+}
+
+// first deploy (online) warms the cache; second deploy (--offline) uses cached files
+#[test]
+#[ignore = "requires live network connection to dotagents.soorya-u.dev"]
+fn deploy_offline_with_warm_cache_succeeds_without_network() {
+    let ws = TestWorkspace::new();
+    ws.run(&["init"]).assert_success();
+    ws.write_in_root_dir(
+        "local.config.toml",
+        r#"schema = "https://dotagents.soorya-u.dev/schemas/config.schema.json"
+features = ["commands"]
+targets = ["claude"]
+"#,
+    );
+    // First online deploy seeds the template-source cache.
+    ws.run(&["deploy"]).assert_success();
+    // --offline resolves from the now-warm cache; no network request is made.
+    ws.run(&["deploy", "--offline"]).assert_success();
+    assert!(
+        ws.dir_exists(".claude/commands"),
+        "warm-cache offline deploy should still produce output"
+    );
+}
+
+// --no-cache bypasses checksum check and re-downloads all template files
+#[test]
+#[ignore = "requires live network connection to dotagents.soorya-u.dev"]
+fn deploy_no_cache_forces_re_download_even_when_cached() {
+    let ws = TestWorkspace::new();
+    ws.run(&["init"]).assert_success();
+    ws.write_in_root_dir(
+        "local.config.toml",
+        r#"schema = "https://dotagents.soorya-u.dev/schemas/config.schema.json"
+features = ["commands"]
+targets = ["claude"]
+"#,
+    );
+    // Seed the cache with a first online deploy.
+    ws.run(&["deploy"]).assert_success();
+    // --no-cache must re-download everything and still succeed.
+    ws.run(&["deploy", "--no-cache"]).assert_success();
+    assert!(
+        ws.dir_exists(".claude/commands"),
+        "--no-cache deploy should still produce output after re-downloading templates"
     );
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 ROOT="public/v1/templates"
 REGISTRY="$ROOT/registry.json"
@@ -20,10 +20,24 @@ jq -n \
 for d in "$ROOT"/*; do
   if [ -d "$d" ] && [ -f "$d/provider.toml" ]; then
     name=$(basename "$d")
+
+    # Build checksums object: provider.toml + every .hbs file present in the dir.
+    checksums="{}"
+    files=("provider.toml")
+    while IFS= read -r -d '' hbs; do
+      files+=("$(basename "$hbs")")
+    done < <(find "$d" -maxdepth 1 -type f -name '*.hbs' -print0 | sort -z)
+    for f in "${files[@]}"; do
+      [ -f "$d/$f" ] || continue
+      checksum=$(sha256sum "$d/$f" | cut -d' ' -f1)
+      checksums=$(echo "$checksums" | jq --arg file "$f" --arg sum "$checksum" '.[$file] = $sum')
+    done
+
     jq \
       --arg name "$name" \
       --arg path "/templates/$name/provider.toml" \
-      '.providers[$name] = { "path": $path }' \
+      --argjson checksums "$checksums" \
+      '.providers[$name] = { "path": $path, "checksums": $checksums }' \
       "$TMP_FILE" > "${TMP_FILE}.new"
     mv "${TMP_FILE}.new" "$TMP_FILE"
   fi
@@ -32,8 +46,8 @@ done
 # Replace registry.json only if changed
 if [ ! -f "$REGISTRY" ] || ! cmp -s "$TMP_FILE" "$REGISTRY"; then
   mv "$TMP_FILE" "$REGISTRY"
-  echo "updated=true" >> "$GITHUB_OUTPUT"
+  if [ -n "${GITHUB_OUTPUT:-}" ]; then echo "updated=true" >> "$GITHUB_OUTPUT"; fi
 else
   rm "$TMP_FILE"
-  echo "updated=false" >> "$GITHUB_OUTPUT"
+  if [ -n "${GITHUB_OUTPUT:-}" ]; then echo "updated=false" >> "$GITHUB_OUTPUT"; fi
 fi

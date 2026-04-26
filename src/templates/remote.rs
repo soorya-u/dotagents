@@ -1,15 +1,6 @@
 use anyhow::{Result, anyhow};
 
-/// Trusted remote template domain, baked in at compile time.
-///
-/// Override by setting `DOTAGENTS_TRUSTED_TEMPLATE_DOMAIN` in the build environment:
-///   `DOTAGENTS_TRUSTED_TEMPLATE_DOMAIN=https://my-host.example.com/ cargo build`
-const TRUSTED_DOMAIN: &str = if let Some(domain) = option_env!("DOTAGENTS_TRUSTED_TEMPLATE_DOMAIN")
-{
-    domain
-} else {
-    "https://dotagents.soorya-u.dev/"
-};
+use crate::constants::domain::TRUSTED_DOMAIN;
 
 /// Fetch a template from a remote URL, validating domain and HTTPS first.
 pub(crate) fn fetch_template(url: &str) -> Result<String> {
