@@ -125,8 +125,8 @@ fn deploy_local_template_path_still_works_after_remote_branch() {
     // URL-detection branch inside renderer.rs.
     let ws = TestWorkspace::new();
     ws.init_and_deploy();
-    // The default init scaffolds a `mycode` provider that uses local .hbs
-    // templates; all three output files must still be present.
+    // init_and_deploy uses --template with-custom-provider which scaffolds a
+    // mycode provider that uses local .hbs templates; all three output files must still be present.
     assert!(
         ws.file_exists(".mycode/commands/hello.md"),
         "local command template should still deploy"

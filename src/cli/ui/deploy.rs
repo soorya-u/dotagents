@@ -2,9 +2,9 @@ use std::io::IsTerminal;
 
 use cliclack::select;
 
-/// Returns true when stdin is an interactive terminal.
+/// Returns true when both stdin and stdout are interactive terminals.
 fn is_tty() -> bool {
-    std::io::stdin().is_terminal()
+    std::io::stdin().is_terminal() && std::io::stdout().is_terminal()
 }
 
 /// Prompts whether to run deploy in offline mode using a cliclack select.
@@ -30,7 +30,10 @@ pub(crate) fn prompt_gitignore_update(new_path_count: usize) -> bool {
         return false;
     }
     let msg = format!("Add {} deployed path(s) to .gitignore?", new_path_count);
-    let mut sel = select(msg).item(false, "No", "").item(true, "Yes", "");
+    let mut sel = select(msg)
+        .item(false, "No", "")
+        .item(true, "Yes", "")
+        .initial_value(false);
     sel.interact().unwrap_or(false)
 }
 

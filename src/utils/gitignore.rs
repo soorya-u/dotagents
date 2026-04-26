@@ -129,9 +129,9 @@ pub(crate) fn write_gitignore(workspace_root: &Path, new_paths: &[PathBuf]) -> R
     Ok(())
 }
 
-/// Detects whether stdin is an interactive terminal.
+/// Detects whether both stdin and stdout are interactive terminals.
 pub(crate) fn is_tty() -> bool {
-    std::io::stdin().is_terminal()
+    std::io::stdin().is_terminal() && std::io::stdout().is_terminal()
 }
 
 #[cfg(test)]

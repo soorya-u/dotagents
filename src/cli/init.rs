@@ -60,17 +60,18 @@ fn update_config_targets(config_path: &Path, targets: &[String]) -> Result<()> {
     let content =
         fs::read_to_string(config_path).context("Failed to read config.toml for target update")?;
     let mut value: toml::Value = toml::from_str(&content).context("Failed to parse config.toml")?;
-    if let toml::Value::Table(ref mut table) = value {
-        table.insert(
-            "targets".to_owned(),
-            toml::Value::Array(
-                targets
-                    .iter()
-                    .map(|s| toml::Value::String(s.clone()))
-                    .collect(),
-            ),
-        );
-    }
+    let toml::Value::Table(ref mut table) = value else {
+        anyhow::bail!("config.toml root is not a TOML table");
+    };
+    table.insert(
+        "targets".to_owned(),
+        toml::Value::Array(
+            targets
+                .iter()
+                .map(|s| toml::Value::String(s.clone()))
+                .collect(),
+        ),
+    );
     let new_content =
         toml::to_string_pretty(&value).context("Failed to serialise updated config.toml")?;
     fs::write(config_path, new_content).context("Failed to write updated config.toml")?;
