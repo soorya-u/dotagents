@@ -1,8 +1,8 @@
 ---
-name: {{skill.name}}
-description: {{skill.description}}
-{{#if skill.license}}license: {{skill.license}}
-{{/if}}{{#if skill.compatibility}}compatibility: {{skill.compatibility}}
+name: {{json skill.name}}
+description: {{json skill.description}}
+{{#if skill.license}}license: {{json skill.license}}
+{{/if}}{{#if skill.compatibility}}compatibility: {{json skill.compatibility}}
 {{/if}}---
 
 {{{skill.content}}}

@@ -11,7 +11,9 @@ url = "{{this.url}}"
 [mcp_servers.{{@key}}]
 command = "{{this.command}}"
 args = {{json this.args}}
-{{#if this.env}}
+{{#if this.cwd}}cwd = "{{this.cwd}}"
+{{/if}}{{#if this.env_file}}env_file = "{{this.env_file}}"
+{{/if}}{{#if this.env}}
 [mcp_servers.{{@key}}.env]
 {{#each this.env}}{{@key}} = "{{this}}"
 {{/each}}

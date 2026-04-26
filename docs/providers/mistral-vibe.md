@@ -17,9 +17,9 @@ Mistral Vibe stores MCP servers as a TOML array-of-tables under `[[mcp_servers]]
 
 ---
 
-## 2. MCP template outputs TOML, not JSON — `env` and `headers` are silently dropped
+## 2. MCP template outputs TOML — `env` rendered as TOML inline table; `headers` dropped
 
-Mistral Vibe's config format is TOML, not JSON. TOML inline tables use `{key = "value"}` syntax, which is incompatible with the `{{json}}` helper (which outputs `{"key":"value"}` JSON notation). As a result, the `mcp.hbs` template renders only the fields where TOML and JSON are compatible: `name`, `transport`, `url` (HTTP), `command` and `args` (stdio). The `args` field is a TOML array that accepts JSON array literal syntax, so `{{json this.args}}` is valid here. The optional `env` (stdio) and `headers` (HTTP) map fields are silently dropped. Users who need these fields must add them manually as TOML inline tables, e.g. `env = { "KEY" = "value" }` or `headers = { "Authorization" = "Bearer token" }`.
+Mistral Vibe's config format is TOML. The `env` field for stdio servers is documented as a TOML inline table: `env = { "KEY" = "value", "KEY2" = "value2" }`. The `mcp.hbs` template renders this with an `{{#each}}` loop producing valid TOML inline-table syntax — `{{json this}}` produces JSON-quoted string values which are also valid TOML basic strings. The `headers` field for HTTP servers uses the same inline-table syntax but is not rendered by the template because `ServerConfig.Http` has a `headers` map that would need the same treatment; this is a known gap. The `args` field is a TOML array that accepts JSON array literal syntax, so `{{json this.args}}` is valid. `cwd` and `env_file` are not documented for Mistral Vibe's `[[mcp_servers]]` and are not emitted.
 
 ---
 

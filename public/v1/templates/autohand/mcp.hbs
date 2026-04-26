@@ -11,7 +11,9 @@
         {{else}}
         "command": "{{this.command}}",
         "args": {{json this.args}}{{#if this.env}},
-        "env": {{json this.env}}{{/if}}
+        "env": {{json this.env}}{{/if}}{{#if this.cwd}},
+        "cwd": {{json this.cwd}}{{/if}}{{#if this.env_file}},
+        "env_file": {{json this.env_file}}{{/if}}
         {{/ifEq}}
       }{{#unless @last}},{{/unless}}
       {{/each}}

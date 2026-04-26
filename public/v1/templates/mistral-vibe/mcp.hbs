@@ -8,5 +8,6 @@ url = "{{this.url}}"
 transport = "stdio"
 command = "{{this.command}}"
 args = {{json this.args}}
-{{/ifEq}}
+{{#if this.env}}env = { {{#each this.env}}"{{@key}}" = {{json this}}{{#unless @last}}, {{/unless}}{{/each}} }
+{{/if}}{{/ifEq}}
 {{/each}}

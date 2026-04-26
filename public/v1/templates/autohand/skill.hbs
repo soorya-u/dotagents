@@ -1,7 +1,7 @@
 ---
-name: {{skill.name}}
-description: {{skill.description}}
-{{#if skill.[allowed-tools]}}allowed-tools: {{skill.[allowed-tools]}}
+name: {{json skill.name}}
+description: {{json skill.description}}
+{{#if skill.[allowed-tools]}}allowed-tools: {{json skill.[allowed-tools]}}
 {{/if}}---
 
 {{{skill.content}}}

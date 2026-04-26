@@ -10,8 +10,8 @@ target = "{{dir.workspace}}/.agents/skills/{{skill.name}}/SKILL.md"
 
 [providers.cursor.instructions]
 template = "https://dotagents.soorya-u.dev/templates/cursor/instruction.hbs"
-target = "{{ dir.workspace }}/AGENTS.md"
+target = "{{dir.workspace}}/AGENTS.md"
 
 [providers.cursor.mcp]
 template = "https://dotagents.soorya-u.dev/templates/cursor/mcp.hbs"
-target = "{{ dir.workspace }}/.cursor/mcp.json"
+target = "{{dir.workspace}}/.cursor/mcp.json"
