@@ -19,12 +19,6 @@
     "codebuddy": {
       "path": "/templates/codebuddy/provider.toml"
     },
-    "deepagents": {
-      "path": "/templates/deepagents/provider.toml"
-    },
-    "factory-droid": {
-      "path": "/templates/factory-droid/provider.toml"
-    },
     "codex": {
       "path": "/templates/codex/provider.toml"
     },
@@ -33,6 +27,12 @@
     },
     "cursor": {
       "path": "/templates/cursor/provider.toml"
+    },
+    "deepagents": {
+      "path": "/templates/deepagents/provider.toml"
+    },
+    "factory-droid": {
+      "path": "/templates/factory-droid/provider.toml"
     },
     "gemini": {
       "path": "/templates/gemini/provider.toml"
