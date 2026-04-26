@@ -1,10 +1,8 @@
 use std::collections::HashSet;
-use std::io::Write;
+use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
 
 use anyhow::Result;
-use crossterm::event::{self, Event, KeyCode};
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 
 use crate::utils::fs::read_file;
 use crate::utils::fs::write_file;
@@ -131,43 +129,9 @@ pub(crate) fn write_gitignore(workspace_root: &Path, new_paths: &[PathBuf]) -> R
     Ok(())
 }
 
-/// Detect whether stdin is an interactive terminal.
+/// Detects whether both stdin and stdout are interactive terminals.
 pub(crate) fn is_tty() -> bool {
-    use std::io::IsTerminal;
-    std::io::stdin().is_terminal()
-}
-
-/// Prompt the user to confirm adding deployed paths to .gitignore.
-///
-/// Returns `false` immediately in non-TTY environments.
-pub(crate) fn prompt_gitignore_update(new_path_count: usize) -> bool {
-    if !is_tty() {
-        return false;
-    }
-
-    print!(
-        "Add {} deployed path(s) to .gitignore? [y/N]: ",
-        new_path_count
-    );
-    std::io::stdout().flush().ok();
-
-    if enable_raw_mode().is_err() {
-        return false;
-    }
-
-    let result = loop {
-        match event::read() {
-            Ok(Event::Key(key)) => {
-                break matches!(key.code, KeyCode::Char('y') | KeyCode::Char('Y'));
-            }
-            Ok(_) => continue,
-            Err(_) => break false,
-        }
-    };
-
-    disable_raw_mode().ok();
-    println!();
-    result
+    std::io::stdin().is_terminal() && std::io::stdout().is_terminal()
 }
 
 #[cfg(test)]

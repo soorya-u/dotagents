@@ -54,7 +54,8 @@ fn init_creates_feature_source_files() {
 #[test]
 fn init_creates_all_mycode_template_files() {
     let ws = TestWorkspace::new();
-    ws.run(&["init"]).assert_success();
+    ws.run(&["init", "--template", "with-custom-provider"])
+        .assert_success();
     let d = ws.root_dir_name();
     for rel in &[
         format!("{d}/templates/mycode/command.hbs"),
@@ -69,7 +70,8 @@ fn init_creates_all_mycode_template_files() {
 #[test]
 fn init_creates_subdirectory_structure() {
     let ws = TestWorkspace::new();
-    ws.run(&["init"]).assert_success();
+    ws.run(&["init", "--template", "with-custom-provider"])
+        .assert_success();
     let d = ws.root_dir_name();
     assert!(ws.dir_exists(format!("{d}/commands")));
     assert!(ws.dir_exists(format!("{d}/skills")));
@@ -277,6 +279,8 @@ fn init_all_no_flags_keeps_config_and_templates_but_no_feature_files() {
         "--no-skill",
         "--no-mcp",
         "--no-instruction",
+        "--template",
+        "with-custom-provider",
     ])
     .assert_success();
     let d = ws.root_dir_name();
@@ -296,6 +300,87 @@ fn init_all_no_flags_keeps_config_and_templates_but_no_feature_files() {
     // Template files are not feature-gated; they must still exist.
     assert!(ws.file_exists(format!("{d}/templates/mycode/command.hbs")));
     assert!(ws.file_exists(format!("{d}/templates/mycode/skill.hbs")));
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Group 4 – --template flag behaviour
+// ═════════════════════════════════════════════════════════════════════════════
+
+#[test]
+fn init_default_non_tty_uses_starter_no_mycode_templates() {
+    // In a non-TTY environment (CI / tests) the wizard is skipped and template
+    // defaults to Starter, which must NOT write any templates/mycode/ files.
+    let ws = TestWorkspace::new();
+    ws.run(&["init"]).assert_success();
+    let d = ws.root_dir_name();
+    assert!(
+        !ws.dir_exists(format!("{d}/templates")),
+        "Starter template must not create a templates/ dir"
+    );
+}
+
+#[test]
+fn init_template_starter_explicit_does_not_create_mycode_template_files() {
+    // Explicitly passing --template starter must produce the same result as the default.
+    let ws = TestWorkspace::new();
+    ws.run(&["init", "--template", "starter"]).assert_success();
+    let d = ws.root_dir_name();
+    assert!(
+        !ws.file_exists(format!("{d}/templates/mycode/command.hbs")),
+        "--template starter must not create templates/mycode/command.hbs"
+    );
+    assert!(
+        !ws.dir_exists(format!("{d}/templates/mycode")),
+        "--template starter must not create templates/mycode/ directory"
+    );
+}
+
+#[test]
+fn init_template_starter_local_config_has_empty_targets() {
+    // The Starter local.config.toml must ship with targets = [] so a plain init
+    // never targets a provider that doesn't exist yet.
+    let ws = TestWorkspace::new();
+    ws.run(&["init", "--template", "starter"]).assert_success();
+    let content = ws.read(format!("{}/local.config.toml", ws.root_dir_name()));
+    assert!(
+        content.contains("targets"),
+        "local.config.toml should declare targets"
+    );
+    // The targets array must be empty — no provider name should be present.
+    assert!(
+        !content.contains("mycode"),
+        "Starter local.config.toml should not reference mycode provider"
+    );
+}
+
+#[test]
+fn init_template_with_custom_provider_local_config_has_mycode_provider_block() {
+    // The WithCustomProvider local.config.toml must contain a [providers.mycode.*] block.
+    let ws = TestWorkspace::new();
+    ws.run(&["init", "--template", "with-custom-provider"])
+        .assert_success();
+    let content = ws.read(format!("{}/local.config.toml", ws.root_dir_name()));
+    assert!(
+        content.contains("mycode"),
+        "with-custom-provider local.config.toml should declare mycode provider"
+    );
+    assert!(
+        content.contains("[providers.mycode"),
+        "with-custom-provider local.config.toml should have a [providers.mycode.*] section"
+    );
+}
+
+#[test]
+fn init_template_with_custom_provider_still_writes_all_feature_source_files() {
+    // WithCustomProvider must write the same feature source files as Starter.
+    let ws = TestWorkspace::new();
+    ws.run(&["init", "--template", "with-custom-provider"])
+        .assert_success();
+    let d = ws.root_dir_name();
+    assert!(ws.file_exists(format!("{d}/INSTRUCTIONS.md")));
+    assert!(ws.file_exists(format!("{d}/mcp.jsonc")));
+    assert!(ws.file_exists(format!("{d}/commands/hello.md")));
+    assert!(ws.file_exists(format!("{d}/skills/hello-skill/SKILL.md")));
 }
 
 #[test]

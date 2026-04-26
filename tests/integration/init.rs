@@ -50,7 +50,8 @@ fn init_creates_skills_directory_with_sample_file() {
 #[test]
 fn init_creates_templates_directory() {
     let ws = TestWorkspace::new();
-    ws.run_command(&["init"]).assert_success();
+    ws.run_command(&["init", "--template", "with-custom-provider"])
+        .assert_success();
 
     let d = ws.root_dir_name();
     assert!(ws.dir_exists(Path::new(&format!("{d}/templates"))));

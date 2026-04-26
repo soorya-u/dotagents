@@ -71,12 +71,15 @@ fn deploy_reflects_updated_command_source_on_redeploy() {
 #[test]
 fn init_force_then_deploy_still_succeeds() {
     let ws = TestWorkspace::new();
-    ws.run(&["init"]).assert_success();
+    ws.run(&["init", "--template", "with-custom-provider"])
+        .assert_success();
 
     #[cfg(not(debug_assertions))]
-    ws.run(&["init", "--force"]).assert_success();
+    ws.run(&["init", "--force", "--template", "with-custom-provider"])
+        .assert_success();
     #[cfg(debug_assertions)]
-    ws.run(&["init"]).assert_success(); // force=true by default in debug
+    ws.run(&["init", "--template", "with-custom-provider"])
+        .assert_success(); // force=true by default in debug
 
     ws.run(&["deploy"]).assert_success();
     assert!(ws.file_exists(".mycode/commands/hello.md"));

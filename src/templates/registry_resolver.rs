@@ -348,6 +348,7 @@ mod tests {
             targets: targets.iter().map(|s| s.to_string()).collect(),
             providers: None,
             variables: None,
+            package_runner: None,
         }
     }
 

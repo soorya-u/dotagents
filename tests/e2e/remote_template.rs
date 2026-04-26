@@ -125,8 +125,8 @@ fn deploy_local_template_path_still_works_after_remote_branch() {
     // URL-detection branch inside renderer.rs.
     let ws = TestWorkspace::new();
     ws.init_and_deploy();
-    // The default init scaffolds a `mycode` provider that uses local .hbs
-    // templates; all three output files must still be present.
+    // init_and_deploy uses --template with-custom-provider which scaffolds a
+    // mycode provider that uses local .hbs templates; all three output files must still be present.
     assert!(
         ws.file_exists(".mycode/commands/hello.md"),
         "local command template should still deploy"
@@ -151,11 +151,12 @@ fn deploy_local_template_path_still_works_after_remote_branch() {
 // --offline succeeds when every provider is fully configured (cache never consulted)
 #[test]
 fn deploy_offline_succeeds_when_all_providers_fully_configured() {
-    // The default `init` config wires up `mycode` with explicit template+target for
-    // all features.  Because the resolver skips fully-configured providers, --offline
-    // does not consult the template cache at all and deploy must succeed.
+    // The `with-custom-provider` init config wires up `mycode` with explicit
+    // template+target for all features.  Because the resolver skips fully-configured
+    // providers, --offline does not consult the template cache at all and deploy must succeed.
     let ws = TestWorkspace::new();
-    ws.run(&["init"]).assert_success();
+    ws.run(&["init", "--template", "with-custom-provider"])
+        .assert_success();
     ws.run(&["deploy", "--offline"]).assert_success();
     assert!(
         ws.file_exists(".mycode/commands/hello.md"),

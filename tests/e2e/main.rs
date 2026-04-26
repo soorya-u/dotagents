@@ -141,6 +141,9 @@ impl TestWorkspace {
     pub fn run(&self, args: &[&str]) -> CmdOutput {
         let mut cmd = Command::new(env!("CARGO_BIN_EXE_dotagents"));
         cmd.current_dir(self.root());
+        // Explicitly null stdin so the binary always sees a non-TTY, preventing
+        // interactive prompts from firing during automated test runs.
+        cmd.stdin(std::process::Stdio::null());
         for arg in args {
             cmd.arg(arg);
         }
@@ -154,10 +157,11 @@ impl TestWorkspace {
 
     // ── convenience ───────────────────────────────────────────────────────────
 
-    /// Run `init` then `deploy`, panicking if either fails.  Returns the
-    /// deploy output.
+    /// Run `init --template with-custom-provider` then `deploy`, panicking if either fails.
+    /// Uses the with-custom-provider template so mycode example files are present for tests.
     pub fn init_and_deploy(&self) -> CmdOutput {
-        self.run(&["init"]).assert_success();
+        self.run(&["init", "--template", "with-custom-provider"])
+            .assert_success();
         let out = self.run(&["deploy"]);
         out.assert_success();
         out

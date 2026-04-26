@@ -106,7 +106,8 @@ fn deploy_creates_hello_skill_output_file() {
 #[test]
 fn deploy_creates_nested_output_directories_automatically() {
     let ws = TestWorkspace::new();
-    ws.run(&["init"]).assert_success();
+    ws.run(&["init", "--template", "with-custom-provider"])
+        .assert_success();
     assert!(
         !ws.dir_exists(".mycode"),
         ".mycode/ must not exist before deploy"
@@ -306,7 +307,8 @@ fn deploy_instructions_interpolates_env_variable_app_name() {
 #[test]
 fn deploy_custom_instructions_source_variable_is_rendered() {
     let ws = TestWorkspace::new();
-    ws.run(&["init"]).assert_success();
+    ws.run(&["init", "--template", "with-custom-provider"])
+        .assert_success();
     // Override with a minimal template that uses both a var and an env var.
     ws.write_in_root_dir(
         "INSTRUCTIONS.md",
@@ -359,7 +361,8 @@ target = "{{ dir.workspace }}/.mycode/commands/{{ command.name }}.md"
 fn deploy_succeeds_when_skills_listed_as_feature_in_config() {
     // "skills" is a valid feature; the validator must accept it and deploy must succeed.
     let ws = TestWorkspace::new();
-    ws.run(&["init"]).assert_success();
+    ws.run(&["init", "--template", "with-custom-provider"])
+        .assert_success();
     ws.write_in_root_dir(
         "local.config.toml",
         r#"schema = "https://dotagents.soorya-u.dev/schemas/config.schema.json"
@@ -380,7 +383,8 @@ fn deploy_succeeds_with_inert_skills_provider_config() {
     // A skills provider section is harmless when "skills" is absent from
     // `features`; the deploy pipeline skips the feature.
     let ws = TestWorkspace::new();
-    ws.run(&["init"]).assert_success();
+    ws.run(&["init", "--template", "with-custom-provider"])
+        .assert_success();
     ws.write_in_root_dir("local.config.toml", LOCAL_CONFIG_WITH_SKILL_PROVIDER_ONLY);
     ws.run(&["deploy"]).assert_success();
     // Other features must still deploy correctly.
@@ -392,7 +396,8 @@ fn deploy_succeeds_with_inert_skills_provider_config() {
 #[test]
 fn deploy_does_not_create_skills_output_when_feature_not_in_features_list() {
     let ws = TestWorkspace::new();
-    ws.run(&["init"]).assert_success();
+    ws.run(&["init", "--template", "with-custom-provider"])
+        .assert_success();
     ws.write_in_root_dir("local.config.toml", LOCAL_CONFIG_WITH_SKILL_PROVIDER_ONLY);
     ws.run(&["deploy"]).assert_success();
     assert!(
@@ -406,7 +411,8 @@ fn deploy_disabled_provider_feature_skips_output() {
     // `disabled = true` on the commands provider must prevent any command files
     // from being written.  Instructions and MCP should still deploy.
     let ws = TestWorkspace::new();
-    ws.run(&["init"]).assert_success();
+    ws.run(&["init", "--template", "with-custom-provider"])
+        .assert_success();
     ws.write_in_root_dir("local.config.toml", LOCAL_CONFIG_COMMANDS_DISABLED);
     ws.run(&["deploy"]).assert_success();
     assert!(
@@ -420,7 +426,8 @@ fn deploy_disabled_provider_feature_skips_output() {
 #[test]
 fn deploy_multiple_command_files_are_all_deployed() {
     let ws = TestWorkspace::new();
-    ws.run(&["init"]).assert_success();
+    ws.run(&["init", "--template", "with-custom-provider"])
+        .assert_success();
     ws.write_in_root_dir(
         "commands/greet.md",
         "---\nname: greet\ndescription: A second command.\n---\n\n# Greet\n\nSay hello.\n",
@@ -436,7 +443,8 @@ fn deploy_multiple_command_files_are_all_deployed() {
 #[test]
 fn deploy_second_command_contains_correct_body_and_no_frontmatter() {
     let ws = TestWorkspace::new();
-    ws.run(&["init"]).assert_success();
+    ws.run(&["init", "--template", "with-custom-provider"])
+        .assert_success();
     ws.write_in_root_dir(
         "commands/greet.md",
         "---\nname: greet\ndescription: A second command.\n---\n\n# Greet Command\n\nSay hello.\n",
