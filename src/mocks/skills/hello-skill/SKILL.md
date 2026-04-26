@@ -8,9 +8,9 @@ metadata:
   version: "1.0.0"
 ---
 
-# Hello Skill
+# Hello Skill for {{ var.agent_name }}
 
-This is a sample skill demonstrating the Agent Skills specification format.
+This is a sample skill demonstrating the Agent Skills specification format using {{ env.app_name }}
 
 ## Instructions
 
