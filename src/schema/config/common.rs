@@ -17,6 +17,68 @@ use crate::{
     },
 };
 
+/// Package runner used to invoke the `skills` CLI.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, clap::ValueEnum)]
+#[serde(rename_all = "lowercase")]
+pub enum PackageRunner {
+    Npm,
+    Pnpm,
+    Yarn,
+    Bun,
+}
+
+impl PackageRunner {
+    /// Returns the executable name to check on PATH and use as the first argv element.
+    pub(crate) fn binary(&self) -> &str {
+        match self {
+            PackageRunner::Npm => "npx",
+            PackageRunner::Pnpm => "pnpm",
+            PackageRunner::Yarn => "yarn",
+            PackageRunner::Bun => "bunx",
+        }
+    }
+
+    /// Returns the full argument list for `skills add <skill_name>`.
+    pub(crate) fn args(&self, skill_name: &str) -> Vec<String> {
+        match self {
+            PackageRunner::Npm => vec![
+                "npx".into(),
+                "skills".into(),
+                "add".into(),
+                skill_name.into(),
+                "--agent".into(),
+                "claude-code".into(),
+            ],
+            PackageRunner::Pnpm => vec![
+                "pnpm".into(),
+                "dlx".into(),
+                "skills".into(),
+                "add".into(),
+                skill_name.into(),
+                "--agent".into(),
+                "claude-code".into(),
+            ],
+            PackageRunner::Yarn => vec![
+                "yarn".into(),
+                "dlx".into(),
+                "skills".into(),
+                "add".into(),
+                skill_name.into(),
+                "--agent".into(),
+                "claude-code".into(),
+            ],
+            PackageRunner::Bun => vec![
+                "bunx".into(),
+                "skills".into(),
+                "add".into(),
+                skill_name.into(),
+                "--agent".into(),
+                "claude-code".into(),
+            ],
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(transparent)]
 pub struct Targets {
@@ -243,5 +305,114 @@ mod tests {
 
         let skill_config = settings.get_config(&Feature::Skill);
         assert!(skill_config.is_none());
+    }
+
+    #[test]
+    fn package_runner_serialises_to_lowercase() {
+        // TOML requires a key-value context; use a wrapper struct as in real usage
+        #[derive(Serialize, Deserialize)]
+        struct W {
+            r: PackageRunner,
+        }
+        for (variant, expected) in [
+            (PackageRunner::Npm, "npm"),
+            (PackageRunner::Pnpm, "pnpm"),
+            (PackageRunner::Yarn, "yarn"),
+            (PackageRunner::Bun, "bun"),
+        ] {
+            let s = toml::to_string(&W { r: variant }).unwrap();
+            assert!(
+                s.contains(&format!("\"{expected}\"")),
+                "expected \"{expected}\" in: {s}"
+            );
+        }
+    }
+
+    #[test]
+    fn package_runner_deserialises_from_lowercase() {
+        // round-trip from TOML key-value string back to enum
+        #[derive(Serialize, Deserialize)]
+        struct W {
+            r: PackageRunner,
+        }
+        for (toml_val, expected) in [
+            ("npm", PackageRunner::Npm),
+            ("pnpm", PackageRunner::Pnpm),
+            ("yarn", PackageRunner::Yarn),
+            ("bun", PackageRunner::Bun),
+        ] {
+            let w: W = toml::from_str(&format!("r = \"{toml_val}\"\n")).unwrap();
+            assert_eq!(w.r, expected);
+        }
+    }
+
+    #[test]
+    fn package_runner_args_npm() {
+        // npm produces the npx-based argv
+        let args = PackageRunner::Npm.args("vercel-labs/agent-skills");
+        assert_eq!(
+            args,
+            vec![
+                "npx",
+                "skills",
+                "add",
+                "vercel-labs/agent-skills",
+                "--agent",
+                "claude-code"
+            ]
+        );
+    }
+
+    #[test]
+    fn package_runner_args_pnpm() {
+        // pnpm produces the dlx-based argv
+        let args = PackageRunner::Pnpm.args("my-skill");
+        assert_eq!(
+            args,
+            vec![
+                "pnpm",
+                "dlx",
+                "skills",
+                "add",
+                "my-skill",
+                "--agent",
+                "claude-code"
+            ]
+        );
+    }
+
+    #[test]
+    fn package_runner_args_yarn() {
+        // yarn produces the dlx-based argv
+        let args = PackageRunner::Yarn.args("my-skill");
+        assert_eq!(
+            args,
+            vec![
+                "yarn",
+                "dlx",
+                "skills",
+                "add",
+                "my-skill",
+                "--agent",
+                "claude-code"
+            ]
+        );
+    }
+
+    #[test]
+    fn package_runner_args_bun() {
+        // bun produces the bunx-based argv
+        let args = PackageRunner::Bun.args("my-skill");
+        assert_eq!(
+            args,
+            vec![
+                "bunx",
+                "skills",
+                "add",
+                "my-skill",
+                "--agent",
+                "claude-code"
+            ]
+        );
     }
 }

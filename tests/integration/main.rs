@@ -25,6 +25,7 @@ mod completions;
 mod deploy;
 mod flags;
 mod init;
+mod skills;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared test harness

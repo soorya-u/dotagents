@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use super::common::{Providers, Targets};
+use super::common::{PackageRunner, Providers, Targets};
 use super::traits::TomlConfig;
 use crate::constants::schema::CONFIG_SCHEMA;
 use crate::schema::features::Feature;
@@ -19,6 +19,8 @@ pub struct LocalConfig {
     pub providers: Option<Providers>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub variables: Option<HashMap<String, String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub package_runner: Option<PackageRunner>,
 }
 
 impl LocalConfig {
@@ -29,6 +31,7 @@ impl LocalConfig {
             targets: None,
             providers: None,
             variables: None,
+            package_runner: None,
         }
     }
 
@@ -39,6 +42,7 @@ impl LocalConfig {
             targets: None,
             providers: None,
             variables: None,
+            package_runner: None,
         }
     }
 
@@ -49,6 +53,7 @@ impl LocalConfig {
             targets: None,
             providers: Some(providers),
             variables: None,
+            package_runner: None,
         }
     }
 
@@ -74,6 +79,7 @@ impl LocalConfig {
             && self.features.is_none()
             && self.targets.is_none()
             && self.providers.is_none()
+            && self.package_runner.is_none()
     }
 }
 
@@ -84,3 +90,30 @@ impl Default for LocalConfig {
 }
 
 impl TomlConfig for LocalConfig {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn package_runner_field_deserialises_in_local_config() {
+        // all four runner values parse correctly from TOML
+        for (toml_val, expected) in [
+            ("npm", PackageRunner::Npm),
+            ("pnpm", PackageRunner::Pnpm),
+            ("yarn", PackageRunner::Yarn),
+            ("bun", PackageRunner::Bun),
+        ] {
+            let toml = format!("package-runner = \"{toml_val}\"\n");
+            let config: LocalConfig = toml::from_str(&toml).unwrap();
+            assert_eq!(config.package_runner, Some(expected));
+        }
+    }
+
+    #[test]
+    fn package_runner_absent_yields_none_in_local_config() {
+        // omitting the field deserialises to None
+        let config: LocalConfig = toml::from_str("").unwrap();
+        assert_eq!(config.package_runner, None);
+    }
+}
