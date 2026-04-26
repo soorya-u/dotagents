@@ -153,10 +153,11 @@ impl TestWorkspace {
 
     // ── convenience ───────────────────────────────────────────────────────────
 
-    /// Run `init` then `deploy`, panicking if either fails.  Returns the
-    /// deploy output.
+    /// Run `init --template with-custom-provider` then `deploy`, panicking if either fails.
+    /// Uses the with-custom-provider template so mycode example files are present for tests.
     pub fn init_and_deploy(&self) -> CmdOutput {
-        self.run(&["init"]).assert_success();
+        self.run(&["init", "--template", "with-custom-provider"])
+            .assert_success();
         let out = self.run(&["deploy"]);
         out.assert_success();
         out

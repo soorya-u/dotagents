@@ -20,7 +20,8 @@ fn deploy_after_init_succeeds() {
 #[test]
 fn deploy_creates_mycode_output_directory() {
     let ws = TestWorkspace::new();
-    ws.run_command(&["init"]).assert_success();
+    ws.run_command(&["init", "--template", "with-custom-provider"])
+        .assert_success();
     ws.run_command(&["deploy"]).assert_success();
 
     // The default local.config.toml targets the `mycode` custom provider,
@@ -34,7 +35,8 @@ fn deploy_creates_mycode_output_directory() {
 #[test]
 fn deploy_creates_command_output_files() {
     let ws = TestWorkspace::new();
-    ws.run_command(&["init"]).assert_success();
+    ws.run_command(&["init", "--template", "with-custom-provider"])
+        .assert_success();
     ws.run_command(&["deploy"]).assert_success();
 
     let commands_dir = ws.root().join(".mycode/commands");
@@ -98,7 +100,8 @@ target = "{{ dir.workspace }}/.mycode/commands/{{ command.name }}.md"
 fn init_and_deploy_end_to_end() {
     let ws = TestWorkspace::new();
 
-    ws.run_command(&["init"]).assert_success();
+    ws.run_command(&["init", "--template", "with-custom-provider"])
+        .assert_success();
     assert!(ws.active_root_dir().exists());
 
     let d = ws.root_dir_name();

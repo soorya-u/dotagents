@@ -28,7 +28,8 @@ fn very_verbose_flag_does_not_break_init() {
 #[test]
 fn verbose_flag_does_not_break_deploy() {
     let ws = TestWorkspace::new();
-    ws.run(&["init"]).assert_success();
+    ws.run(&["init", "--template", "with-custom-provider"])
+        .assert_success();
     ws.run(&["deploy", "-v"]).assert_success();
     assert!(ws.file_exists(".mycode/commands/hello.md"));
 }
@@ -47,7 +48,8 @@ fn quiet_flag_does_not_break_init() {
 #[test]
 fn quiet_flag_does_not_break_deploy() {
     let ws = TestWorkspace::new();
-    ws.run(&["init"]).assert_success();
+    ws.run(&["init", "--template", "with-custom-provider"])
+        .assert_success();
     ws.run(&["deploy", "--quiet"]).assert_success();
     assert!(ws.file_exists(".mycode/commands/hello.md"));
 }

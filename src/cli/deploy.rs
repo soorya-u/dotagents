@@ -7,6 +7,7 @@ use serde_json::{Value, to_value};
 use std::sync::{Arc, Mutex};
 
 use crate::cli::options::DeployOptions;
+use crate::cli::ui::deploy::{prompt_gitignore_update, prompt_offline};
 use crate::schema::config::{AppConfig, CACHE_SINGLETON_KEY, CacheConfig, CacheEntry, CacheUpdate};
 use crate::schema::features::{
     Feature, command::CommandFeature, instruction::InstructionFeature, mcp::McpFeature,
@@ -17,9 +18,7 @@ use crate::templates::{
     TemplateCache, Templater, get_templater, registry_url, render_feature_with_settings,
     resolve_provider_defaults,
 };
-use crate::utils::gitignore::{
-    parse_fenced_section, prompt_gitignore_update, read_gitignore, write_gitignore,
-};
+use crate::utils::gitignore::{is_tty, parse_fenced_section, read_gitignore, write_gitignore};
 use crate::utils::path::{get_workspace_dir, make_workspace_relative};
 
 /// Deploys one feature across all enabled providers, collecting written paths and updating cache.
@@ -94,10 +93,15 @@ where
     Ok(paths)
 }
 
-pub(super) fn deploy(opts: DeployOptions) -> Result<()> {
+pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
     let templater = get_templater();
     let mut app_config =
         AppConfig::from_application(templater).context("Failed to load application config")?;
+
+    // In interactive sessions, ask whether to run offline before the registry fetch.
+    if !opts.offline && is_tty() {
+        opts.offline = prompt_offline();
+    }
 
     // Resolve missing template/target fields from the official provider registry.
     // registry.json is fetched at most once here; the result is shared across all providers.

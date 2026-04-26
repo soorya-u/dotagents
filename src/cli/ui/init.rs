@@ -1,0 +1,111 @@
+use anyhow::{Context, Result};
+use cliclack::{intro, multiselect, outro, outro_cancel, select, spinner};
+
+use crate::cli::options::{InitOptions, InitTemplate};
+use crate::schema::registry::Registry;
+use crate::templates::registry_url;
+
+/// Runs the interactive init wizard, populating `opts` from user input.
+/// Returns true if init should proceed, false if the user chose to cancel.
+pub(crate) fn run_init_wizard(opts: &mut InitOptions, dir_exists: bool) -> Result<bool> {
+    intro("dotagents · init").ok();
+
+    // Overwrite confirmation — only shown when the directory exists and --force was not passed.
+    if dir_exists && !opts.force {
+        let mut sel = select("A .dotagents directory already exists. Overwrite?")
+            .item(false, "No, cancel", "")
+            .item(true, "Yes, overwrite", "existing files will be deleted");
+        let overwrite = sel.interact().context("Failed to get overwrite choice")?;
+        if !overwrite {
+            outro_cancel("Init cancelled.").ok();
+            return Ok(false);
+        }
+        opts.force = true;
+    }
+
+    // Feature multiselect — all four features pre-checked by default.
+    let mut ms = multiselect("Which features do you want to enable?")
+        .item(
+            "commands",
+            "commands",
+            "Sync slash commands to your AI tools",
+        )
+        .item(
+            "instructions",
+            "instructions",
+            "Sync a global INSTRUCTIONS.md",
+        )
+        .item("mcp", "mcp", "Sync MCP server configuration")
+        .item("skills", "skills", "Sync skills (experimental)")
+        .initial_values(vec!["commands", "instructions", "mcp", "skills"])
+        .required(false);
+    let features = ms.interact().context("Failed to get feature selection")?;
+
+    opts.no_command = !features.contains(&"commands");
+    opts.no_instruction = !features.contains(&"instructions");
+    opts.no_mcp = !features.contains(&"mcp");
+    opts.no_skill = !features.contains(&"skills");
+
+    // Template select — Starter is the first item (default).
+    let mut ts = select("Which starting template?")
+        .item(InitTemplate::Starter, "Starter", "Core files only")
+        .item(
+            InitTemplate::WithCustomProvider,
+            "With Custom Provider",
+            "Adds a mycode example provider",
+        );
+    let template = ts.interact().context("Failed to get template choice")?;
+    opts.template = Some(template);
+
+    Ok(true)
+}
+
+/// Logs a file-written step line inside the active wizard session.
+pub(crate) fn show_file_written(relative_path: &str) {
+    cliclack::log::step(format!("wrote {}", relative_path)).ok();
+}
+
+/// Fetches the provider registry and prompts the user to select deployment targets.
+/// Returns the selected provider names sorted alphabetically.
+/// On registry fetch failure, warns and returns an empty vec.
+pub(crate) fn prompt_targets() -> Result<Vec<String>> {
+    let mut sp = spinner();
+    sp.start("Fetching provider registry…");
+
+    let registry = match Registry::fetch(registry_url()) {
+        Ok(r) => {
+            sp.stop("Provider registry loaded");
+            r
+        }
+        Err(e) => {
+            sp.error(format!("Could not reach registry: {}", e));
+            cliclack::log::warning(
+                "Skipping provider selection — run `dotagents init` again with a network connection to set targets.",
+            )
+            .ok();
+            return Ok(vec![]);
+        }
+    };
+
+    let mut providers: Vec<String> = registry.providers.keys().cloned().collect();
+    providers.sort();
+
+    if providers.is_empty() {
+        return Ok(vec![]);
+    }
+
+    let mut ms = multiselect::<String>("Which providers would you like to target?")
+        .required(false)
+        .max_rows(12);
+    for provider in &providers {
+        ms = ms.item(provider.clone(), provider.as_str(), "");
+    }
+    let selected = ms.interact().context("Failed to get provider selection")?;
+
+    Ok(selected)
+}
+
+/// Shows the closing outro message after init completes successfully.
+pub(crate) fn finish_init() {
+    outro("Done! Run `dotagents deploy` to render your templates.").ok();
+}

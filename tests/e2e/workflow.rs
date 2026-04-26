@@ -10,7 +10,8 @@ fn full_workflow_init_deploy_produces_complete_output_tree() {
     let ws = TestWorkspace::new();
 
     // ── Step 1: init ──────────────────────────────────────────────────────
-    ws.run(&["init"]).assert_success();
+    ws.run(&["init", "--template", "with-custom-provider"])
+        .assert_success();
     let d = ws.root_dir_name();
     assert!(ws.file_exists(format!("{d}/config.toml")));
     assert!(ws.file_exists(format!("{d}/local.config.toml")));
@@ -52,7 +53,8 @@ fn full_workflow_with_inert_skill_provider_config() {
     // A skills provider section in local.config.toml is harmless when "skills"
     // is absent from `features`.  All other features must deploy correctly.
     let ws = TestWorkspace::new();
-    ws.run(&["init"]).assert_success();
+    ws.run(&["init", "--template", "with-custom-provider"])
+        .assert_success();
     ws.write_in_root_dir("local.config.toml", LOCAL_CONFIG_WITH_SKILL_PROVIDER_ONLY);
     ws.run(&["deploy"]).assert_success();
 
@@ -68,7 +70,8 @@ fn full_workflow_with_inert_skill_provider_config() {
 #[test]
 fn full_workflow_init_modify_source_redeploy_picks_up_change() {
     let ws = TestWorkspace::new();
-    ws.run(&["init"]).assert_success();
+    ws.run(&["init", "--template", "with-custom-provider"])
+        .assert_success();
     ws.run(&["deploy"]).assert_success();
 
     // Replace the instructions source.

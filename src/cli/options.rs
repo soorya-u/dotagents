@@ -1,4 +1,4 @@
-use clap::{Args, Parser, Subcommand};
+use clap::{Args, Parser, Subcommand, ValueEnum};
 use clap_complete::Shell;
 use std::path::PathBuf;
 
@@ -63,6 +63,15 @@ pub(crate) struct DeployOptions {
     pub offline: bool,
 }
 
+/// Scaffolding template to use when running `dotagents init`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
+pub(crate) enum InitTemplate {
+    /// Core files only — no example custom-provider templates.
+    Starter,
+    /// Core files plus a mycode example provider (templates/ dir + local.config.toml provider block).
+    WithCustomProvider,
+}
+
 #[derive(Args)]
 pub(crate) struct InitOptions {
     /// Disables the MCP Templating for all the Targets.
@@ -88,6 +97,11 @@ pub(crate) struct InitOptions {
     /// Force overwriting existing configuration.
     #[clap(long, short, default_value_t = cfg!(debug_assertions))]
     pub force: bool,
+
+    /// Scaffolding template: 'starter' (core files only) or 'with-custom-provider' (adds mycode example).
+    /// When omitted in an interactive terminal, the wizard will prompt for a choice.
+    #[clap(long, value_enum)]
+    pub template: Option<InitTemplate>,
 }
 
 pub fn get_options() -> Options {
@@ -118,19 +132,32 @@ mod tests {
 
     #[test]
     fn test_init_options_defaults() {
-        // Test default values for InitOptions
+        // Test default values for InitOptions — template defaults to None (wizard mode)
         let init_options = InitOptions {
             no_mcp: false,
             no_command: false,
             no_instruction: false,
             no_skill: false,
             force: false,
+            template: None,
         };
 
         assert!(!init_options.no_mcp);
         assert!(!init_options.no_command);
         assert!(!init_options.no_instruction);
         assert!(!init_options.no_skill);
+        assert!(init_options.template.is_none());
+    }
+
+    #[test]
+    fn test_init_template_variants() {
+        // Both template variants are distinct and correct
+        assert_eq!(InitTemplate::Starter, InitTemplate::Starter);
+        assert_eq!(
+            InitTemplate::WithCustomProvider,
+            InitTemplate::WithCustomProvider
+        );
+        assert_ne!(InitTemplate::Starter, InitTemplate::WithCustomProvider);
     }
 
     #[test]

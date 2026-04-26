@@ -12,7 +12,8 @@ fn init_with_verbose_flag_succeeds() {
 #[test]
 fn deploy_with_verbose_flag_succeeds() {
     let ws = TestWorkspace::new();
-    ws.run_command(&["init"]).assert_success();
+    ws.run_command(&["init", "--template", "with-custom-provider"])
+        .assert_success();
     ws.run_command(&["deploy", "-v"]).assert_success();
     assert!(ws.root().join(".mycode").is_dir());
 }
