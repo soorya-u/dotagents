@@ -74,6 +74,7 @@
       "checksums": {
         "provider.toml": "86fa7114c96bb5d15a785b08860af4b57d82ad5e39a7ac4d57e69db5585ace2a",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
+        "instructions.hbs": "b222124d15921246abc76e3ec91e7968ad85f436632adb47ce777ce8eafcd1d3",
         "mcp.hbs": "54bc8b6dda17e65322eb16a4edee638a0f487107a983bbffc3f9cd55f7857aaa",
         "skill.hbs": "ffeba830939b06b1e911b5d3132a33c932cd427bd0a5c6f9bf201cb95a69d598"
       }
