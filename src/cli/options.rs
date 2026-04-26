@@ -2,6 +2,8 @@ use clap::{Args, Parser, Subcommand, ValueEnum};
 use clap_complete::Shell;
 use std::path::PathBuf;
 
+use crate::schema::config::common::PackageRunner;
+
 #[derive(Parser, Default)]
 #[clap(author, version, about, long_about=None)]
 pub(crate) struct Options {
@@ -37,6 +39,29 @@ pub(crate) enum Action {
 
     /// Deploy templates
     Deploy(DeployOptions),
+
+    /// Manage skills
+    Skills {
+        #[clap(subcommand)]
+        action: SkillsAction,
+    },
+}
+
+/// Subcommands for `dotagents skills`.
+#[derive(Subcommand)]
+pub(crate) enum SkillsAction {
+    /// Install a skill from skills.sh or a GitHub owner/repo into .dotagents/skills/
+    Add(SkillsAddOptions),
+}
+
+#[derive(Args)]
+pub(crate) struct SkillsAddOptions {
+    /// Skill name or owner/repo to install (e.g. vercel-labs/agent-skills)
+    pub name: String,
+
+    /// Package runner to use for this invocation [npm, pnpm, yarn, bun]
+    #[clap(long, short)]
+    pub runner: Option<PackageRunner>,
 }
 
 #[derive(Args, Default)]
