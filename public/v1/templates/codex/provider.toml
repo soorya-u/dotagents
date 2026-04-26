@@ -6,4 +6,12 @@ target = "{{dir.workspace}}/.codex/prompts/{{command.name}}.md"
 # Codex Skills
 [providers.codex.skills]
 template = "https://dotagents.soorya-u.dev/templates/codex/skill.hbs"
-target = "{{dir.workspace}}/.codex/skills/{{skill.name}}/SKILL.md"
+target = "{{dir.workspace}}/.agents/skills/{{skill.name}}/SKILL.md"
+
+[providers.codex.instructions]
+template = "https://dotagents.soorya-u.dev/templates/codex/instruction.hbs"
+target = "{{ dir.workspace }}/AGENTS.md"
+
+[providers.codex.mcp]
+template = "https://dotagents.soorya-u.dev/templates/codex/mcp.hbs"
+target = "{{ dir.workspace }}/.codex/config.toml"

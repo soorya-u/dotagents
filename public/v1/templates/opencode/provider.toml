@@ -1,4 +1,19 @@
-# Augment Commands
+# OpenCode Instructions
+[providers.opencode.instructions]
+template = "https://dotagents.soorya-u.dev/templates/opencode/instruction.hbs"
+target = "{{dir.workspace}}/AGENTS.md"
+
+# OpenCode Skills
+[providers.opencode.skills]
+template = "https://dotagents.soorya-u.dev/templates/opencode/skill.hbs"
+target = "{{dir.workspace}}/.opencode/skills/{{skill.name}}/SKILL.md"
+
+# OpenCode Commands
 [providers.opencode.commands]
 template = "https://dotagents.soorya-u.dev/templates/opencode/command.hbs"
-target = "{{dir.workspace}}/.opencode/command/{{command.name}}.md"
+target = "{{dir.workspace}}/.opencode/commands/{{command.name}}.md"
+
+# OpenCode MCP (overwrites opencode.json; merge manually if other project settings exist)
+[providers.opencode.mcp]
+template = "https://dotagents.soorya-u.dev/templates/opencode/mcp.hbs"
+target = "{{dir.workspace}}/opencode.json"

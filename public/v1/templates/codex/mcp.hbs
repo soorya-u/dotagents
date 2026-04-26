@@ -1,0 +1,22 @@
+{{#each mcp.servers}}
+{{#ifEq this.type "http"}}
+[mcp_servers.{{@key}}]
+url = "{{this.url}}"
+{{#if this.headers}}
+[mcp_servers.{{@key}}.http_headers]
+{{#each this.headers}}{{@key}} = "{{this}}"
+{{/each}}
+{{/if}}
+{{else}}
+[mcp_servers.{{@key}}]
+command = "{{this.command}}"
+args = {{json this.args}}
+{{#if this.cwd}}cwd = "{{this.cwd}}"
+{{/if}}{{#if this.env_file}}env_file = "{{this.env_file}}"
+{{/if}}{{#if this.env}}
+[mcp_servers.{{@key}}.env]
+{{#each this.env}}{{@key}} = "{{this}}"
+{{/each}}
+{{/if}}
+{{/ifEq}}
+{{/each}}

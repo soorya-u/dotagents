@@ -7,3 +7,11 @@ target = "{{dir.workspace}}/.claude/commands/{{command.name}}.md"
 [providers.claude.skills]
 template = "https://dotagents.soorya-u.dev/templates/claude/skill.hbs"
 target = "{{dir.workspace}}/.claude/skills/{{skill.name}}/SKILL.md"
+
+[providers.claude.instructions]
+template = "https://dotagents.soorya-u.dev/templates/claude/instruction.hbs"
+target = "{{ dir.workspace }}/CLAUDE.md"
+
+[providers.claude.mcp]
+template = "https://dotagents.soorya-u.dev/templates/claude/mcp.hbs"
+target = "{{ dir.workspace }}/.mcp.json"

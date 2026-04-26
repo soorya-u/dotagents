@@ -1,4 +1,17 @@
-# Augment Commands
+# Cursor Commands
 [providers.cursor.commands]
 template = "https://dotagents.soorya-u.dev/templates/cursor/command.hbs"
 target = "{{dir.workspace}}/.cursor/commands/{{command.name}}.md"
+
+# Cursor Skills
+[providers.cursor.skills]
+template = "https://dotagents.soorya-u.dev/templates/cursor/skill.hbs"
+target = "{{dir.workspace}}/.agents/skills/{{skill.name}}/SKILL.md"
+
+[providers.cursor.instructions]
+template = "https://dotagents.soorya-u.dev/templates/cursor/instruction.hbs"
+target = "{{dir.workspace}}/AGENTS.md"
+
+[providers.cursor.mcp]
+template = "https://dotagents.soorya-u.dev/templates/cursor/mcp.hbs"
+target = "{{dir.workspace}}/.cursor/mcp.json"

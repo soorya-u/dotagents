@@ -1,0 +1,9 @@
+# Pi Commands (Prompt Templates)
+[providers.pi.commands]
+template = "https://dotagents.soorya-u.dev/templates/pi/command.hbs"
+target = "{{dir.workspace}}/.pi/prompts/{{command.name}}.md"
+
+# Pi Skills
+[providers.pi.skills]
+template = "https://dotagents.soorya-u.dev/templates/pi/skill.hbs"
+target = "{{dir.workspace}}/.pi/skills/{{skill.name}}/SKILL.md"

@@ -7,11 +7,23 @@
     "auggie": {
       "path": "/templates/auggie/provider.toml"
     },
+    "autohand": {
+      "path": "/templates/autohand/provider.toml"
+    },
     "claude": {
       "path": "/templates/claude/provider.toml"
     },
+    "cline": {
+      "path": "/templates/cline/provider.toml"
+    },
     "codebuddy": {
       "path": "/templates/codebuddy/provider.toml"
+    },
+    "deepagents": {
+      "path": "/templates/deepagents/provider.toml"
+    },
+    "factory-droid": {
+      "path": "/templates/factory-droid/provider.toml"
     },
     "codex": {
       "path": "/templates/codex/provider.toml"
@@ -25,11 +37,29 @@
     "gemini": {
       "path": "/templates/gemini/provider.toml"
     },
+    "goose": {
+      "path": "/templates/goose/provider.toml"
+    },
+    "junie": {
+      "path": "/templates/junie/provider.toml"
+    },
     "kilocode": {
       "path": "/templates/kilocode/provider.toml"
     },
+    "kimi": {
+      "path": "/templates/kimi/provider.toml"
+    },
+    "mistral-vibe": {
+      "path": "/templates/mistral-vibe/provider.toml"
+    },
     "opencode": {
       "path": "/templates/opencode/provider.toml"
+    },
+    "pi": {
+      "path": "/templates/pi/provider.toml"
+    },
+    "qoder-cli": {
+      "path": "/templates/qoder-cli/provider.toml"
     },
     "qwen": {
       "path": "/templates/qwen/provider.toml"

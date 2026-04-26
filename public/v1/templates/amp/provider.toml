@@ -2,10 +2,14 @@
 template = "https://dotagents.soorya-u.dev/templates/amp/command.hbs"
 target = "{{dir.workspace}}/.agents/commands/{{command.name}}.md"
 
+[providers.amp.skills]
+template = "https://dotagents.soorya-u.dev/templates/amp/skill.hbs"
+target = "{{dir.workspace}}/.agents/skills/{{skill.name}}/SKILL.md"
+
 [providers.amp.instructions]
 template = "https://dotagents.soorya-u.dev/templates/amp/instruction.hbs"
 target = "{{ dir.workspace }}/AGENTS.md"
 
 [providers.amp.mcp]
 template = "https://dotagents.soorya-u.dev/templates/amp/mcp.hbs"
-target = "{{ dir.workspace }}/.amp/settings.json"
+target = "{{ dir.workspace }}/.amp/settings.jsonc"
