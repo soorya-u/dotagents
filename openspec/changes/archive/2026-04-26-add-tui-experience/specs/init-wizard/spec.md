@@ -1,0 +1,75 @@
+## ADDED Requirements
+
+### Requirement: Init wizard runs when no flags are given in a TTY
+When `dotagents init` is invoked with no feature flags and no `--template` flag, and stdin is an interactive terminal, the CLI SHALL display an interactive cliclack prompt sequence before writing any files.
+
+#### Scenario: Full wizard flow with no flags in TTY
+- **WHEN** `dotagents init` is run with no flags in an interactive terminal
+- **THEN** the wizard shows: intro header, feature multiselect, template select, and per-file log steps, then an outro message
+
+#### Scenario: Flag presence skips wizard
+- **WHEN** `dotagents init --no-mcp` is run (any feature or --template flag present)
+- **THEN** no interactive prompts are shown and init proceeds immediately using the flag values
+
+#### Scenario: Non-TTY skips wizard silently
+- **WHEN** `dotagents init` is run with stdin not attached to a terminal (e.g. piped or CI)
+- **THEN** no prompts are shown; init proceeds with all features enabled and Starter template
+
+### Requirement: Feature multiselect defaults to all features enabled
+The feature selection prompt SHALL present all four features (commands, instructions, mcp, skills) as a multiselect with all options pre-checked.
+
+#### Scenario: User accepts defaults
+- **WHEN** the user presses Enter without toggling any feature
+- **THEN** all four features are enabled and all corresponding mock files are written
+
+#### Scenario: User deselects one feature
+- **WHEN** the user deselects `mcp` and confirms
+- **THEN** `mcp.jsonc` is not written; all other feature files are written
+
+### Requirement: Overwrite confirmation replaces --force in interactive mode
+When `.dotagents/` already exists and no `--force` flag is given, the wizard SHALL ask for confirmation before overwriting. If the user declines, init SHALL exit 0 without writing any files.
+
+#### Scenario: Existing directory — user confirms overwrite
+- **WHEN** `.dotagents/` exists, no `--force` flag is passed, and the user selects Yes
+- **THEN** the directory is removed and re-created with new files
+
+#### Scenario: Existing directory — user declines
+- **WHEN** `.dotagents/` exists, no `--force` flag is passed, and the user selects No
+- **THEN** init exits 0 and `.dotagents/` is not modified
+
+### Requirement: Per-file log feedback during write
+After all prompts are answered the CLI SHALL print a `log::step` confirmation line for each file successfully written.
+
+#### Scenario: File write feedback
+- **WHEN** init writes `commands/hello.md`
+- **THEN** a step line such as `wrote commands/hello.md` is printed to stdout
+
+### Requirement: Registry target selection runs after file writes
+After all scaffold files are written, the wizard SHALL fetch `registry.json` using `Registry::fetch(REGISTRY_URL)`, display a cliclack multiselect of all provider names from `registry.providers`, and write the user's selections as `targets = [...]` in the generated `config.toml` (global config only — `local.config.toml` is not modified). If the registry fetch fails, a warning is shown and the step is skipped; `targets` remains as the default empty value in `config.toml`.
+
+#### Scenario: Registry fetched — user selects providers
+- **WHEN** the registry is reachable and the user selects `claude`, `cursor`, and `codex`
+- **THEN** `.dotagents/config.toml` contains `targets = ["claude", "cursor", "codex"]`
+
+#### Scenario: User selects no providers
+- **WHEN** the registry is reachable and the user confirms with no providers selected
+- **THEN** `.dotagents/config.toml` contains `targets = []`
+
+#### Scenario: Registry fetch fails — step skipped gracefully
+- **WHEN** the registry is unreachable during init
+- **THEN** a cliclack warning is printed, the target selection prompt is not shown, and `config.toml` is written with `targets = []`
+
+#### Scenario: Flag mode skips target selection
+- **WHEN** any feature or `--template` flag is present (non-interactive mode)
+- **THEN** the registry is not fetched and `targets` is left as the default in `config.toml`
+
+### Requirement: Intro and outro frame the wizard session
+The wizard SHALL start with a cliclack `intro` banner and end with a cliclack `outro` message that hints at running `dotagents deploy`.
+
+#### Scenario: Intro shown at start
+- **WHEN** the wizard begins
+- **THEN** an intro line identifying `dotagents · init` is printed before any prompts
+
+#### Scenario: Outro shown on success
+- **WHEN** all files have been written and target selection is complete (or skipped)
+- **THEN** an outro line is printed suggesting the user run `dotagents deploy`
