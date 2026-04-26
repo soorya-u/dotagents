@@ -12,7 +12,11 @@ use crate::schema::features::{
     Feature, command::CommandFeature, instruction::InstructionFeature, mcp::McpFeature,
     skill::SkillFeature, traits::FeatureTrait,
 };
-use crate::templates::{Templater, get_templater, render_feature_with_settings};
+use crate::schema::registry::Registry;
+use crate::templates::{
+    REGISTRY_URL, TemplateCache, Templater, get_templater, render_feature_with_settings,
+    resolve_provider_defaults,
+};
 use crate::utils::gitignore::{
     parse_fenced_section, prompt_gitignore_update, read_gitignore, write_gitignore,
 };
@@ -92,8 +96,35 @@ where
 
 pub(super) fn deploy(opts: DeployOptions) -> Result<()> {
     let templater = get_templater();
-    let app_config =
+    let mut app_config =
         AppConfig::from_application(templater).context("Failed to load application config")?;
+
+    // Resolve missing template/target fields from the official provider registry.
+    // registry.json is fetched at most once here; the result is shared across all providers.
+    let template_cache = TemplateCache::new().context("Failed to initialise template cache")?;
+    let registry: Option<Registry> = if opts.offline {
+        None // --offline: skip fetch entirely, resolve from cache only
+    } else {
+        match Registry::fetch(REGISTRY_URL) {
+            Ok(r) => Some(r),
+            Err(e) => {
+                warn!(
+                    "Failed to fetch provider registry: {} — falling back to local cache",
+                    e
+                );
+                None
+            }
+        }
+    };
+    resolve_provider_defaults(
+        &mut app_config,
+        registry.as_ref(),
+        &template_cache,
+        opts.offline,
+        opts.no_cache,
+    )
+    .context("Failed to resolve provider template defaults")?;
+
     let variables =
         Some(to_value(app_config.variables.clone()).context("Failed to extract variables")?);
 

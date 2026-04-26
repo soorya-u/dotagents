@@ -8,3 +8,6 @@ pub(crate) const CACHE_DIR: &str = "cache";
 pub(crate) const TEMPLATE_DIR: &str = "templates";
 
 pub(crate) const MOCK_CUSTOM_AGENT_DIR: &str = "mycode";
+
+/// Subdirectory inside the user-level cache dir that holds downloaded provider template files.
+pub(crate) const TEMPLATE_CACHE_SUBDIR: &str = "templates";

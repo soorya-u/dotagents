@@ -56,6 +56,11 @@ pub(crate) struct DeployOptions {
     /// Never update .gitignore.
     #[clap(long)]
     pub no_gitignore: bool,
+
+    /// Skip the remote registry fetch; resolve missing templates from the local cache only.
+    /// Errors if a required template has not been cached by a previous online deploy.
+    #[clap(long)]
+    pub offline: bool,
 }
 
 #[derive(Args)]

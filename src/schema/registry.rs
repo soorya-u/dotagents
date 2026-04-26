@@ -1,0 +1,95 @@
+use std::collections::HashMap;
+
+use anyhow::{Result, anyhow};
+use serde::Deserialize;
+
+use crate::templates::do_get;
+
+/// The full provider registry, deserialised from `registry.json`.
+#[derive(Debug, Clone, Deserialize)]
+pub(crate) struct Registry {
+    pub providers: HashMap<String, ProviderRegistryEntry>,
+}
+
+/// A single provider's entry in the registry.
+#[derive(Debug, Clone, Deserialize)]
+pub(crate) struct ProviderRegistryEntry {
+    /// URL path to the provider's `provider.toml`, relative to the registry base URL.
+    pub path: String,
+
+    /// SHA-256 checksums keyed by filename, used for template-source cache invalidation.
+    pub checksums: Option<HashMap<String, String>>,
+}
+
+impl Registry {
+    /// Fetches and deserialises the registry from `url`.
+    pub(crate) fn fetch(url: &str) -> Result<Self> {
+        let body =
+            do_get(url).map_err(|e| anyhow!("Failed to fetch registry from {}: {}", url, e))?;
+        serde_json::from_str(&body)
+            .map_err(|e| anyhow!("Failed to parse registry JSON from {}: {}", url, e))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // full entry with checksums deserialises correctly
+    #[test]
+    fn deserialise_entry_with_checksums() {
+        let json = r#"{
+            "providers": {
+                "claude": {
+                    "path": "/templates/claude/provider.toml",
+                    "checksums": {
+                        "command.hbs": "abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234",
+                        "provider.toml": "1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd"
+                    }
+                }
+            }
+        }"#;
+        let registry: Registry = serde_json::from_str(json).unwrap();
+        let entry = registry.providers.get("claude").unwrap();
+        assert_eq!(entry.path, "/templates/claude/provider.toml");
+        let checksums = entry.checksums.as_ref().unwrap();
+        assert!(checksums.contains_key("command.hbs"));
+        assert!(checksums.contains_key("provider.toml"));
+    }
+
+    // entry without checksums field deserialises with None
+    #[test]
+    fn deserialise_entry_without_checksums() {
+        let json = r#"{
+            "providers": {
+                "cursor": {
+                    "path": "/templates/cursor/provider.toml"
+                }
+            }
+        }"#;
+        let registry: Registry = serde_json::from_str(json).unwrap();
+        let entry = registry.providers.get("cursor").unwrap();
+        assert!(entry.checksums.is_none());
+    }
+
+    // unknown extra fields in entry are ignored (forward compatibility)
+    #[test]
+    fn deserialise_ignores_unknown_fields() {
+        let json = r#"{
+            "providers": {
+                "codex": {
+                    "path": "/templates/codex/provider.toml",
+                    "future_field": "ignored",
+                    "checksums": {}
+                }
+            },
+            "$schema": "https://example.com/schema.json"
+        }"#;
+        let result = serde_json::from_str::<Registry>(json);
+        assert!(
+            result.is_ok(),
+            "should ignore unknown fields, got: {:?}",
+            result
+        );
+    }
+}

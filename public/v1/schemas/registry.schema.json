@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dotagents.soorya-u.dev/v1/schemas/registry.schema.json",
+  "title": "Provider Registry",
+  "description": "Registry of available provider templates for the dotagents CLI.",
+  "type": "object",
+  "required": ["providers"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "URL reference to this schema definition."
+    },
+    "providers": {
+      "type": "object",
+      "description": "Map of provider names to their registry entries.",
+      "additionalProperties": {
+        "$ref": "#/$defs/ProviderEntry"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "ProviderEntry": {
+      "type": "object",
+      "description": "Registry entry for a single provider.",
+      "required": ["path"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "URL path to the provider's provider.toml, relative to the registry base URL."
+        },
+        "checksums": {
+          "type": "object",
+          "description": "SHA-256 checksums of each template file, keyed by filename. Used by the CLI for cache invalidation — if a checksum matches the cached copy, the file is not re-downloaded.",
+          "additionalProperties": {
+            "type": "string",
+            "description": "Hex-encoded SHA-256 digest of the file contents.",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
