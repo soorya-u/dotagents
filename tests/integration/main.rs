@@ -69,6 +69,8 @@ impl TestWorkspace {
     pub fn run_command(&self, args: &[&str]) -> CmdResult {
         let mut cmd = Command::new(env!("CARGO_BIN_EXE_dotagents"));
         cmd.current_dir(self.root());
+        // Null stdin so the binary sees a non-TTY and never shows interactive prompts.
+        cmd.stdin(std::process::Stdio::null());
         for arg in args {
             cmd.arg(arg);
         }

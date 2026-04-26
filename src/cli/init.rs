@@ -59,8 +59,7 @@ fn is_tui_mode(opts: &InitOptions) -> bool {
 fn update_config_targets(config_path: &Path, targets: &[String]) -> Result<()> {
     let content =
         fs::read_to_string(config_path).context("Failed to read config.toml for target update")?;
-    let mut value: toml::Value =
-        toml::from_str(&content).context("Failed to parse config.toml")?;
+    let mut value: toml::Value = toml::from_str(&content).context("Failed to parse config.toml")?;
     if let toml::Value::Table(ref mut table) = value {
         table.insert(
             "targets".to_owned(),
@@ -256,10 +255,42 @@ mod tests {
         }));
     }
 
-    // is_tui_mode returns false in test processes (stdin is not a terminal)
+    // is_tui_mode returns false whenever any feature flag is set, even with no other flags
     #[test]
-    fn is_tui_mode_false_in_non_tty_test_process() {
-        assert!(!is_tui_mode(&default_opts()));
+    fn is_tui_mode_false_when_any_single_flag_set() {
+        // Each flag individually must suppress TUI mode, regardless of TTY state.
+        let cases = [
+            InitOptions {
+                no_mcp: true,
+                ..default_opts()
+            },
+            InitOptions {
+                no_command: true,
+                ..default_opts()
+            },
+            InitOptions {
+                no_instruction: true,
+                ..default_opts()
+            },
+            InitOptions {
+                no_skill: true,
+                ..default_opts()
+            },
+            InitOptions {
+                template: Some(InitTemplate::Starter),
+                ..default_opts()
+            },
+            InitOptions {
+                template: Some(InitTemplate::WithCustomProvider),
+                ..default_opts()
+            },
+        ];
+        for opts in &cases {
+            assert!(
+                !is_tui_mode(opts),
+                "expected TUI mode disabled when a flag is set"
+            );
+        }
     }
 
     // update_config_targets writes the targets array into the TOML file
@@ -284,8 +315,14 @@ mod tests {
         update_config_targets(f.path(), &["new-provider".to_string()])
             .expect("update should succeed");
         let result = fs::read_to_string(f.path()).unwrap();
-        assert!(result.contains("new-provider"), "new target should be present");
-        assert!(!result.contains("windsurf"), "old targets should be replaced");
+        assert!(
+            result.contains("new-provider"),
+            "new target should be present"
+        );
+        assert!(
+            !result.contains("windsurf"),
+            "old targets should be replaced"
+        );
     }
 
     // update_config_targets errors on a missing file
