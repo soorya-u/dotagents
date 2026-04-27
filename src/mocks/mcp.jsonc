@@ -1,5 +1,5 @@
 {
-  "$schema": "https://dotagents.soorya-u.dev/json/schemas/mcp.schema.json",
+  "$schema": "https://dotagents.soorya-u.dev/v1/schemas/mcp.schema.json",
   "servers": {
     "server-stdio": {
       "type": "stdio",
@@ -7,14 +7,14 @@
       "args": [],
       "cwd": "{{ dir.workspace }}",
       "env": {},
-      "env_file": null,
+      "env_file": null
     },
     "server-mcp": {
       "type": "http",
       "url": "http://localhost:9000",
       "headers": {
-        "Authorization": "Bearer ${API_KEY}",
-      },
-    },
-  },
+        "Authorization": "Bearer ${API_KEY}"
+      }
+    }
+  }
 }

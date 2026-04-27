@@ -127,6 +127,10 @@ pub(crate) struct InitOptions {
     /// When omitted in an interactive terminal, the wizard will prompt for a choice.
     #[clap(long, value_enum)]
     pub template: Option<InitTemplate>,
+
+    /// Provider targets selected interactively by the wizard; not a CLI flag.
+    #[clap(skip)]
+    pub targets: Vec<String>,
 }
 
 pub fn get_options() -> Options {
@@ -165,6 +169,7 @@ mod tests {
             no_skill: false,
             force: false,
             template: None,
+            targets: vec![],
         };
 
         assert!(!init_options.no_mcp);

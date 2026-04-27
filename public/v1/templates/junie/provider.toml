@@ -1,19 +1,19 @@
 # Junie Instructions (requires "guidelines-location": "./guidelines.md" in .junie/config.json)
 [providers.junie.instructions]
-template = "https://dotagents.soorya-u.dev/templates/junie/instruction.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/junie/instruction.hbs"
 target = "{{dir.workspace}}/.junie/guidelines.md"
 
 # Junie Skills
 [providers.junie.skills]
-template = "https://dotagents.soorya-u.dev/templates/junie/skill.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/junie/skill.hbs"
 target = "{{dir.workspace}}/.junie/skills/{{skill.name}}/SKILL.md"
 
 # Junie Commands (Custom Slash Commands)
 [providers.junie.commands]
-template = "https://dotagents.soorya-u.dev/templates/junie/command.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/junie/command.hbs"
 target = "{{dir.workspace}}/.junie/commands/{{command.name}}.md"
 
 # Junie MCP
 [providers.junie.mcp]
-template = "https://dotagents.soorya-u.dev/templates/junie/mcp.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/junie/mcp.hbs"
 target = "{{dir.workspace}}/.junie/mcp/mcp.json"

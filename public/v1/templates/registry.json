@@ -2,7 +2,7 @@
   "$schema": "https://dotagents.soorya-u.dev/v1/schemas/registry.schema.json",
   "providers": {
     "amp": {
-      "path": "/templates/amp/provider.toml",
+      "path": "/v1/templates/amp/provider.toml",
       "checksums": {
         "provider.toml": "6d199c09595a7fbaffb1f41714af2f5659bb156ad97f3076c1d1c1653f685ff6",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
@@ -12,7 +12,7 @@
       }
     },
     "auggie": {
-      "path": "/templates/auggie/provider.toml",
+      "path": "/v1/templates/auggie/provider.toml",
       "checksums": {
         "provider.toml": "717aababee3c279365c8ec04fc956b76261cbb849c4308ea8b207d784800408d",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
@@ -22,7 +22,7 @@
       }
     },
     "autohand": {
-      "path": "/templates/autohand/provider.toml",
+      "path": "/v1/templates/autohand/provider.toml",
       "checksums": {
         "provider.toml": "e8b24902a05354cd72969e55e900775447f635c7330a76bc18ff53ab1f7ecc5c",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
@@ -31,7 +31,7 @@
       }
     },
     "claude": {
-      "path": "/templates/claude/provider.toml",
+      "path": "/v1/templates/claude/provider.toml",
       "checksums": {
         "provider.toml": "be9e78d44028534fb10ad905423eeccad5f56f73a33b00f52807642bec2ed53b",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
@@ -41,7 +41,7 @@
       }
     },
     "cline": {
-      "path": "/templates/cline/provider.toml",
+      "path": "/v1/templates/cline/provider.toml",
       "checksums": {
         "provider.toml": "fac557944108dd9eb131fc7f8367d5fc8025c879d02fb9667b0f218b81627469",
         "command.hbs": "2ff2983122964767e8a8d98702fbaf57d1e392d5e4cbc8d21b9f494f92b90e94",
@@ -50,7 +50,7 @@
       }
     },
     "codebuddy": {
-      "path": "/templates/codebuddy/provider.toml",
+      "path": "/v1/templates/codebuddy/provider.toml",
       "checksums": {
         "provider.toml": "9326ac7de4f839f56f5ca1125d0e15f83d946ae09b354f57c925aa7f92aa5807",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
@@ -60,7 +60,7 @@
       }
     },
     "codex": {
-      "path": "/templates/codex/provider.toml",
+      "path": "/v1/templates/codex/provider.toml",
       "checksums": {
         "provider.toml": "53635f9c2a0f865d2baf69065bced9bc446648ed60f8a033541d999d05a1382b",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
@@ -70,7 +70,7 @@
       }
     },
     "copilot": {
-      "path": "/templates/copilot/provider.toml",
+      "path": "/v1/templates/copilot/provider.toml",
       "checksums": {
         "provider.toml": "86fa7114c96bb5d15a785b08860af4b57d82ad5e39a7ac4d57e69db5585ace2a",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
@@ -80,7 +80,7 @@
       }
     },
     "cursor": {
-      "path": "/templates/cursor/provider.toml",
+      "path": "/v1/templates/cursor/provider.toml",
       "checksums": {
         "provider.toml": "cd6086deb334f44a7e7a517e9fb2c95e0117d98394d20d29c42384eb06b0b139",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
@@ -90,7 +90,7 @@
       }
     },
     "deepagents": {
-      "path": "/templates/deepagents/provider.toml",
+      "path": "/v1/templates/deepagents/provider.toml",
       "checksums": {
         "provider.toml": "ed73783f1bd7f6f698ffbf6a97617474232d9eef0ef040382b47c70516d5f42a",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
@@ -99,7 +99,7 @@
       }
     },
     "factory-droid": {
-      "path": "/templates/factory-droid/provider.toml",
+      "path": "/v1/templates/factory-droid/provider.toml",
       "checksums": {
         "provider.toml": "533d23292ac2662f34f4ec21eb9716a71112772ce52bdfe441d6ca433b8fef82",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
@@ -109,7 +109,7 @@
       }
     },
     "gemini": {
-      "path": "/templates/gemini/provider.toml",
+      "path": "/v1/templates/gemini/provider.toml",
       "checksums": {
         "provider.toml": "e4ca0e09c874f4aafdb6704e90aa631e7bf5d12b07727b62e4365c7dd8d3d0ab",
         "command.hbs": "009ad4a010c91f439c62ea47cd5fcc71d276d100bb9174b79d56bb4c3b7b6df3",
@@ -119,7 +119,7 @@
       }
     },
     "goose": {
-      "path": "/templates/goose/provider.toml",
+      "path": "/v1/templates/goose/provider.toml",
       "checksums": {
         "provider.toml": "05a23f9bfadbf6da2c62a45beef1f3d37c23d7504b641651011f8406f87613a4",
         "command.hbs": "27da9b4869cfb52fe8ac303b4e80b0146e094f123a92f670b96eb9614c403fd4",
@@ -129,7 +129,7 @@
       }
     },
     "junie": {
-      "path": "/templates/junie/provider.toml",
+      "path": "/v1/templates/junie/provider.toml",
       "checksums": {
         "provider.toml": "f7c4cd85883a2fb6fbd2964c6fd0e096811681e5f38df6e8f3522e0accab60f9",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
@@ -139,7 +139,7 @@
       }
     },
     "kilocode": {
-      "path": "/templates/kilocode/provider.toml",
+      "path": "/v1/templates/kilocode/provider.toml",
       "checksums": {
         "provider.toml": "cb290995ef24404334129773cc3daabf3688fb49cc4983dc2e8cfd8c4b93632b",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
@@ -149,7 +149,7 @@
       }
     },
     "kimi": {
-      "path": "/templates/kimi/provider.toml",
+      "path": "/v1/templates/kimi/provider.toml",
       "checksums": {
         "provider.toml": "e65ab72f71c3c11e1def0344ec30021149c13fd0b5771ae30436fded2cb7136b",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
@@ -158,7 +158,7 @@
       }
     },
     "mistral-vibe": {
-      "path": "/templates/mistral-vibe/provider.toml",
+      "path": "/v1/templates/mistral-vibe/provider.toml",
       "checksums": {
         "provider.toml": "b7320f3701f60fec82d01589beef887ac6653a126c0edbef12f4758dc7a27dc4",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
@@ -167,7 +167,7 @@
       }
     },
     "opencode": {
-      "path": "/templates/opencode/provider.toml",
+      "path": "/v1/templates/opencode/provider.toml",
       "checksums": {
         "provider.toml": "2fe2c1b015072df71995abed9fed970b98c8e8cdfeaf970cf120c914b47068fd",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
@@ -177,7 +177,7 @@
       }
     },
     "pi": {
-      "path": "/templates/pi/provider.toml",
+      "path": "/v1/templates/pi/provider.toml",
       "checksums": {
         "provider.toml": "9dcc4823441052dfea808032e002059151179faff2ed339797479f8fd894485d",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
@@ -185,7 +185,7 @@
       }
     },
     "qoder-cli": {
-      "path": "/templates/qoder-cli/provider.toml",
+      "path": "/v1/templates/qoder-cli/provider.toml",
       "checksums": {
         "provider.toml": "6cf4153cc877911093dabe378c6d56a5a09f99356bb06cce4155b58fa1332d2c",
         "command.hbs": "6650ba27e033d911b3ea2dd264c2a5ed1a7724630bc16a08e36d4423c3beb48f",
@@ -195,7 +195,7 @@
       }
     },
     "qwen": {
-      "path": "/templates/qwen/provider.toml",
+      "path": "/v1/templates/qwen/provider.toml",
       "checksums": {
         "provider.toml": "13d9dce3334baeec70244744b83ebc759e3d6bfcfda624050cf2c6816f5f321d",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
@@ -204,21 +204,21 @@
       }
     },
     "roo": {
-      "path": "/templates/roo/provider.toml",
+      "path": "/v1/templates/roo/provider.toml",
       "checksums": {
         "provider.toml": "f21a0e17ad955823d1a95b564c1a96b02db80e468948c8bcb2a94551fb650519",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa"
       }
     },
     "shai": {
-      "path": "/templates/shai/provider.toml",
+      "path": "/v1/templates/shai/provider.toml",
       "checksums": {
         "provider.toml": "3de22f74eb2e7bce55ca3122e6b5705b70b5ce1a5d498295dd06c258035dc0c3",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa"
       }
     },
     "windsurf": {
-      "path": "/templates/windsurf/provider.toml",
+      "path": "/v1/templates/windsurf/provider.toml",
       "checksums": {
         "provider.toml": "aa9e201770cfb84b019c1925f32d4b04287e9a21f1d70dde7c228fa4234e9db7",
         "command.hbs": "2ff2983122964767e8a8d98702fbaf57d1e392d5e4cbc8d21b9f494f92b90e94",

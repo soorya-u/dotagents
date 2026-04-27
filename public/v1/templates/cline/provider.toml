@@ -1,11 +1,11 @@
 [providers.cline.commands]
-template = "https://dotagents.soorya-u.dev/templates/cline/command.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/cline/command.hbs"
 target = "{{dir.workspace}}/.clinerules/workflows/{{command.name}}.md"
 
 [providers.cline.skills]
-template = "https://dotagents.soorya-u.dev/templates/cline/skill.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/cline/skill.hbs"
 target = "{{dir.workspace}}/.cline/skills/{{skill.name}}/SKILL.md"
 
 [providers.cline.instructions]
-template = "https://dotagents.soorya-u.dev/templates/cline/instruction.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/cline/instruction.hbs"
 target = "{{ dir.workspace }}/.clinerules/instructions.md"

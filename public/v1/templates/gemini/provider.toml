@@ -1,19 +1,19 @@
 # Gemini Commands
 [providers.gemini.commands]
-template = "https://dotagents.soorya-u.dev/templates/gemini/command.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/gemini/command.hbs"
 target = "{{dir.workspace}}/.gemini/commands/{{command.name}}.toml"
 
 # Gemini Skills
 [providers.gemini.skills]
-template = "https://dotagents.soorya-u.dev/templates/gemini/skill.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/gemini/skill.hbs"
 target = "{{dir.workspace}}/.gemini/skills/{{skill.name}}/SKILL.md"
 
 # Gemini Instructions
 [providers.gemini.instructions]
-template = "https://dotagents.soorya-u.dev/templates/gemini/instruction.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/gemini/instruction.hbs"
 target = "{{ dir.workspace }}/GEMINI.md"
 
 # Gemini MCP
 [providers.gemini.mcp]
-template = "https://dotagents.soorya-u.dev/templates/gemini/mcp.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/gemini/mcp.hbs"
 target = "{{ dir.workspace }}/.gemini/settings.json"

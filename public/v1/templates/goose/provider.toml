@@ -1,19 +1,19 @@
 # Goose Instructions
 [providers.goose.instructions]
-template = "https://dotagents.soorya-u.dev/templates/goose/instruction.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/goose/instruction.hbs"
 target = "{{dir.workspace}}/AGENTS.md"
 
 # Goose Skills
 [providers.goose.skills]
-template = "https://dotagents.soorya-u.dev/templates/goose/skill.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/goose/skill.hbs"
 target = "{{dir.workspace}}/.agents/skills/{{skill.name}}/SKILL.md"
 
 # Goose Commands (as Recipes)
 [providers.goose.commands]
-template = "https://dotagents.soorya-u.dev/templates/goose/command.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/goose/command.hbs"
 target = "{{dir.workspace}}/.goose/recipes/{{command.name}}.yaml"
 
 # Goose MCP (Extensions — requires manual merge into ~/.config/goose/config.yaml)
 [providers.goose.mcp]
-template = "https://dotagents.soorya-u.dev/templates/goose/mcp.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/goose/mcp.hbs"
 target = "{{dir.workspace}}/.goose/extensions.yaml"

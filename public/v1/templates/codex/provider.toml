@@ -1,17 +1,17 @@
 # Codex Commands
 [providers.codex.commands]
-template = "https://dotagents.soorya-u.dev/templates/codex/command.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/codex/command.hbs"
 target = "{{dir.workspace}}/.codex/prompts/{{command.name}}.md"
 
 # Codex Skills
 [providers.codex.skills]
-template = "https://dotagents.soorya-u.dev/templates/codex/skill.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/codex/skill.hbs"
 target = "{{dir.workspace}}/.agents/skills/{{skill.name}}/SKILL.md"
 
 [providers.codex.instructions]
-template = "https://dotagents.soorya-u.dev/templates/codex/instruction.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/codex/instruction.hbs"
 target = "{{ dir.workspace }}/AGENTS.md"
 
 [providers.codex.mcp]
-template = "https://dotagents.soorya-u.dev/templates/codex/mcp.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/codex/mcp.hbs"
 target = "{{ dir.workspace }}/.codex/config.toml"

@@ -135,6 +135,38 @@ pub(crate) fn resolve_provider_defaults(
             continue;
         }
 
+        // Skip the network fetch entirely when every active feature is already fully configured.
+        let needs_any = all_features.iter().any(|f| {
+            if !app_config.has_feature(f) {
+                return false;
+            }
+            let s = app_config
+                .providers
+                .as_ref()
+                .and_then(|p| p.0.as_ref())
+                .and_then(|m| m.get(&provider_name))
+                .and_then(|fs| fs.get_config(f));
+            s.is_none_or(|s| s.template.is_none() || s.target.is_none())
+        });
+        if !needs_any {
+            continue;
+        }
+
+        // Fetch provider.toml once for all features so the warning fires at most once per provider.
+        let toml_content =
+            match get_provider_toml(&provider_name, registry, cache, offline, no_cache) {
+                Ok(Some(c)) => c,
+                Ok(None) => continue,
+                Err(e) if offline => return Err(e),
+                Err(e) => {
+                    warn!(
+                        "Failed to fetch provider.toml for provider '{}': {}",
+                        &provider_name, e
+                    );
+                    continue;
+                }
+            };
+
         for feature in &all_features {
             if !app_config.has_feature(feature) {
                 continue;
@@ -156,9 +188,15 @@ pub(crate) fn resolve_provider_defaults(
             }
 
             // Attempt resolution; propagate as hard error only in --offline mode.
-            match resolve_for_provider(&provider_name, feature, registry, cache, offline, no_cache)
-            {
-                Ok(None) => continue, // warning already emitted inside
+            match resolve_for_provider(
+                &provider_name,
+                feature,
+                &toml_content,
+                registry,
+                cache,
+                no_cache,
+            ) {
+                Ok(None) => continue,
                 Ok(Some(resolved)) => {
                     // Merge: user-config takes priority over resolved defaults.
                     let merged = existing
@@ -177,24 +215,17 @@ pub(crate) fn resolve_provider_defaults(
     Ok(())
 }
 
-/// Resolves a single (provider, feature) pair from the registry/cache, returning `None` when the provider/feature should be skipped.
+/// Resolves a single (provider, feature) pair from pre-fetched `toml_content`, returning `None` when the feature should be skipped.
 fn resolve_for_provider(
     provider: &str,
     feature: &Feature,
+    toml_content: &str,
     registry: Option<&Registry>,
     cache: &TemplateCache,
-    offline: bool,
     no_cache: bool,
 ) -> Result<Option<FeatureSettings>> {
-    // Step 1: obtain provider.toml content.
-    let toml_content = get_provider_toml(provider, registry, cache, offline, no_cache)?;
-    let toml_content = match toml_content {
-        Some(c) => c,
-        None => return Ok(None),
-    };
-
-    // Step 2: parse and extract the feature settings.
-    let mut feature_settings = match parse_provider_toml(&toml_content, provider, feature)? {
+    // Step 1: parse and extract the feature settings.
+    let mut feature_settings = match parse_provider_toml(toml_content, provider, feature)? {
         Some(s) => s,
         None => {
             warn!(

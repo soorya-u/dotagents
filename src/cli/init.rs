@@ -122,7 +122,7 @@ pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
             LOCAL_CONFIG_FILE,
             match template {
                 InitTemplate::WithCustomProvider => mocks::LOCAL_CONFIG_WITH_PROVIDER,
-                InitTemplate::Starter => mocks::LOCAL_CONFIG_STARTER,
+                InitTemplate::Starter => mocks::CONFIG,
             },
         ),
         InitFile::new(INSTRUCTIONS_FILE, mocks::INSTRUCTIONS)
@@ -175,15 +175,12 @@ pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
             continue;
         }
         write_file(&main_dir.join(&file.path), file.content)?;
-        if tui_mode {
-            ui::init::show_file_written(&file.path.display().to_string());
-        }
     }
 
     if tui_mode {
-        let targets = ui::init::prompt_targets()?;
-        if !targets.is_empty() {
-            update_config_targets(&main_dir.join(GLOBAL_CONFIG_FILE), &targets)?;
+        if !opts.targets.is_empty() {
+            update_config_targets(&main_dir.join(GLOBAL_CONFIG_FILE), &opts.targets)?;
+            update_config_targets(&main_dir.join(LOCAL_CONFIG_FILE), &opts.targets)?;
         }
         ui::init::finish_init();
     }
@@ -204,6 +201,7 @@ mod tests {
             no_skill: false,
             force: false,
             template: None,
+            targets: vec![],
         }
     }
 

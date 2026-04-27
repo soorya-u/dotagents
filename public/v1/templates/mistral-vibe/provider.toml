@@ -1,14 +1,14 @@
 # Mistral Vibe Instructions
 [providers.mistral-vibe.instructions]
-template = "https://dotagents.soorya-u.dev/templates/mistral-vibe/instruction.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/mistral-vibe/instruction.hbs"
 target = "{{dir.workspace}}/AGENTS.md"
 
 # Mistral Vibe Skills
 [providers.mistral-vibe.skills]
-template = "https://dotagents.soorya-u.dev/templates/mistral-vibe/skill.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/mistral-vibe/skill.hbs"
 target = "{{dir.workspace}}/.vibe/skills/{{skill.name}}/SKILL.md"
 
 # Mistral Vibe MCP (requires manual merge into .vibe/config.toml under [[mcp_servers]])
 [providers.mistral-vibe.mcp]
-template = "https://dotagents.soorya-u.dev/templates/mistral-vibe/mcp.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/mistral-vibe/mcp.hbs"
 target = "{{dir.workspace}}/.vibe/mcp.toml"
