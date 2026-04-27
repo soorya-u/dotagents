@@ -45,6 +45,21 @@ pub(crate) enum Action {
         #[clap(subcommand)]
         action: SkillsAction,
     },
+
+    /// List skills and commands from .dotagents/
+    Ls(LsOptions),
+
+    /// Add a new command or skill to .dotagents/
+    Add {
+        #[clap(subcommand)]
+        action: AddAction,
+    },
+
+    /// Remove a command or skill from .dotagents/
+    Rm {
+        #[clap(subcommand)]
+        action: RmAction,
+    },
 }
 
 /// Subcommands for `dotagents skills`.
@@ -131,6 +146,121 @@ pub(crate) struct InitOptions {
     /// Provider targets selected interactively by the wizard; not a CLI flag.
     #[clap(skip)]
     pub targets: Vec<String>,
+}
+
+/// Options for `dotagents ls`.
+#[derive(Args, Default)]
+pub(crate) struct LsOptions {
+    /// Show only commands.
+    #[clap(long, short = 'c')]
+    pub commands: bool,
+
+    /// Show only skills.
+    #[clap(long, short = 's')]
+    pub skills: bool,
+
+    /// Show full descriptions (word-wrapped) instead of truncating.
+    /// Can also be enabled with the global -v flag.
+    #[clap(long = "full")]
+    pub verbose: bool,
+}
+
+/// Subcommands for `dotagents add`.
+#[derive(Subcommand)]
+pub(crate) enum AddAction {
+    /// Create a new command in .dotagents/commands/
+    Command(AddCommandOptions),
+    /// Create a new skill in .dotagents/skills/
+    Skill(AddSkillOptions),
+}
+
+#[derive(Args)]
+pub(crate) struct AddCommandOptions {
+    /// Name of the command (used as the filename, e.g. "hello" → hello.md).
+    pub name: String,
+
+    /// Short description of the command.
+    #[clap(long, short = 'd')]
+    pub description: Option<String>,
+
+    /// Category for the command.
+    #[clap(long, short = 'c')]
+    pub category: Option<String>,
+
+    /// Comma-separated tags for the command.
+    #[clap(long, short = 't')]
+    pub tags: Option<String>,
+
+    /// Overwrite if the file already exists.
+    #[clap(long, short = 'f')]
+    pub force: bool,
+
+    /// Run deploy after creating the command.
+    #[clap(long)]
+    pub deploy: bool,
+}
+
+#[derive(Args)]
+pub(crate) struct AddSkillOptions {
+    /// Name of the skill (used as the directory name).
+    pub name: String,
+
+    /// Short description of the skill.
+    #[clap(long, short = 'd')]
+    pub description: Option<String>,
+
+    /// License for the skill (e.g. MIT).
+    #[clap(long, short = 'l')]
+    pub license: Option<String>,
+
+    /// Compatibility notes for the skill.
+    #[clap(long)]
+    pub compatibility: Option<String>,
+
+    /// Overwrite if the skill already exists.
+    #[clap(long, short = 'f')]
+    pub force: bool,
+
+    /// Run deploy after creating the skill.
+    #[clap(long)]
+    pub deploy: bool,
+}
+
+/// Subcommands for `dotagents rm`.
+#[derive(Subcommand)]
+pub(crate) enum RmAction {
+    /// Remove a command from .dotagents/commands/
+    Command(RmCommandOptions),
+    /// Remove a skill from .dotagents/skills/
+    Skill(RmSkillOptions),
+}
+
+#[derive(Args)]
+pub(crate) struct RmCommandOptions {
+    /// Name of the command to remove.
+    pub name: String,
+
+    /// Skip the confirmation prompt.
+    #[clap(long, short = 'f')]
+    pub force: bool,
+
+    /// Run deploy after removing the command.
+    #[clap(long)]
+    pub deploy: bool,
+}
+
+#[derive(Args)]
+pub(crate) struct RmSkillOptions {
+    /// Name of the skill to remove.
+    pub name: String,
+
+    /// Skip the confirmation prompt.
+    #[clap(long, short = 'f')]
+    pub force: bool,
+
+    /// Run deploy after removing the skill.
+    #[clap(long)]
+    pub deploy: bool,
 }
 
 pub fn get_options() -> Options {

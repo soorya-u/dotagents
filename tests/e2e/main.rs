@@ -26,13 +26,16 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use tempfile::TempDir;
 
+mod add;
 mod completions;
 mod deploy;
 mod flags;
 mod idempotency;
 mod init;
+mod ls;
 mod no_subcommand;
 mod remote_template;
+mod rm;
 mod skills;
 mod workflow;
 

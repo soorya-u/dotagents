@@ -20,10 +20,11 @@ use crate::templates::{
     resolve_provider_defaults,
 };
 use crate::utils::gitignore::{
-    GitignorePath, GitignoreScope, gitignore_path_to_pattern, is_tty, parse_fenced_section,
-    read_gitignore, write_gitignore,
+    GitignorePath, GitignoreScope, gitignore_path_to_pattern, parse_fenced_section, read_gitignore,
+    write_gitignore,
 };
 use crate::utils::path::get_workspace_dir;
+use crate::utils::tty::is_tty;
 
 /// Deploys one feature across all enabled providers, collecting gitignore entries and updating cache.
 fn deploy_feature<T>(

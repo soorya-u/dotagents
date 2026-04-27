@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
 
 use anyhow::Result;
@@ -7,6 +6,7 @@ use anyhow::Result;
 use crate::utils::fs::read_file;
 use crate::utils::fs::write_file;
 use crate::utils::path::make_workspace_relative;
+use crate::utils::tty::is_tty;
 
 /// Controls how a feature's deployed paths are represented in .gitignore.
 pub(crate) enum GitignoreScope {
@@ -162,11 +162,6 @@ pub(crate) fn write_gitignore(workspace_root: &Path, new_paths: &[GitignorePath]
     }
 
     Ok(())
-}
-
-/// Detects whether both stdin and stdout are interactive terminals.
-pub(crate) fn is_tty() -> bool {
-    std::io::stdin().is_terminal() && std::io::stdout().is_terminal()
 }
 
 #[cfg(test)]
