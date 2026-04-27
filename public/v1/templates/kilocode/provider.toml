@@ -1,19 +1,19 @@
 # KiloCode Instructions
 [providers.kilocode.instructions]
-template = "https://dotagents.soorya-u.dev/templates/kilocode/instruction.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/kilocode/instruction.hbs"
 target = "{{dir.workspace}}/AGENTS.md"
 
 # KiloCode Skills
 [providers.kilocode.skills]
-template = "https://dotagents.soorya-u.dev/templates/kilocode/skill.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/kilocode/skill.hbs"
 target = "{{dir.workspace}}/.kilo/skills/{{skill.name}}/SKILL.md"
 
 # KiloCode Commands (Workflows / Slash Commands)
 [providers.kilocode.commands]
-template = "https://dotagents.soorya-u.dev/templates/kilocode/command.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/kilocode/command.hbs"
 target = "{{dir.workspace}}/.kilo/commands/{{command.name}}.md"
 
 # KiloCode MCP (requires manual merge into .kilo/kilo.jsonc under the "mcp" key)
 [providers.kilocode.mcp]
-template = "https://dotagents.soorya-u.dev/templates/kilocode/mcp.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/kilocode/mcp.hbs"
 target = "{{dir.workspace}}/.kilo/mcp.json"

@@ -6,7 +6,4 @@ features = [
     "skills",
 ]
 
-targets = [
-    "windsurf",
-    "gemini",
-]
+targets = []

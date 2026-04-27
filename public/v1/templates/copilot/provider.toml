@@ -1,19 +1,19 @@
 # Copilot Instructions
 [providers.copilot.instructions]
-template = "https://dotagents.soorya-u.dev/templates/copilot/instructions.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/copilot/instructions.hbs"
 target = "{{dir.workspace}}/.github/copilot-instructions.md"
 
 # Copilot Commands
 [providers.copilot.commands]
-template = "https://dotagents.soorya-u.dev/templates/copilot/command.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/copilot/command.hbs"
 target = "{{dir.workspace}}/.github/prompts/{{command.name}}.prompt.md"
 
 # Copilot Skills
 [providers.copilot.skills]
-template = "https://dotagents.soorya-u.dev/templates/copilot/skill.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/copilot/skill.hbs"
 target = "{{dir.workspace}}/.github/skills/{{skill.name}}/SKILL.md"
 
 # Copilot MCP
 [providers.copilot.mcp]
-template = "https://dotagents.soorya-u.dev/templates/copilot/mcp.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/copilot/mcp.hbs"
 target = "{{dir.home}}/.copilot/mcp-config.json"

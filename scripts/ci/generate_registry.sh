@@ -35,7 +35,7 @@ for d in "$ROOT"/*; do
 
     jq \
       --arg name "$name" \
-      --arg path "/templates/$name/provider.toml" \
+      --arg path "/v1/templates/$name/provider.toml" \
       --argjson checksums "$checksums" \
       '.providers[$name] = { "path": $path, "checksums": $checksums }' \
       "$TMP_FILE" > "${TMP_FILE}.new"

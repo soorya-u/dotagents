@@ -27,16 +27,12 @@ pub(crate) fn run_init_wizard(opts: &mut InitOptions, dir_exists: bool) -> Resul
     let mut ms = multiselect("Which features do you want to enable?")
         .item(
             "commands",
-            "commands",
+            "Custom Commands",
             "Sync slash commands to your AI tools",
         )
-        .item(
-            "instructions",
-            "instructions",
-            "Sync a global INSTRUCTIONS.md",
-        )
-        .item("mcp", "mcp", "Sync MCP server configuration")
-        .item("skills", "skills", "Sync skills (experimental)")
+        .item("instructions", "AGENTS.md", "Sync a global AGENTS.md")
+        .item("mcp", "MCP Configuration", "Sync MCP server configuration")
+        .item("skills", "Skills", "Sync skills")
         .initial_values(vec!["commands", "instructions", "mcp", "skills"])
         .required(false);
     let features = ms.interact().context("Failed to get feature selection")?;
@@ -52,17 +48,15 @@ pub(crate) fn run_init_wizard(opts: &mut InitOptions, dir_exists: bool) -> Resul
         .item(
             InitTemplate::WithCustomProvider,
             "With Custom Provider",
-            "Adds a mycode example provider",
+            "Adds an example of a custom provider",
         );
     let template = ts.interact().context("Failed to get template choice")?;
     opts.template = Some(template);
 
-    Ok(true)
-}
+    // Provider selection — runs before files are written so targets are known upfront.
+    opts.targets = prompt_targets()?;
 
-/// Logs a file-written step line inside the active wizard session.
-pub(crate) fn show_file_written(relative_path: &str) {
-    cliclack::log::step(format!("wrote {}", relative_path)).ok();
+    Ok(true)
 }
 
 /// Fetches the provider registry and prompts the user to select deployment targets.

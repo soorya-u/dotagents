@@ -1,19 +1,19 @@
 # Factory Droid Commands
 [providers.factory-droid.commands]
-template = "https://dotagents.soorya-u.dev/templates/factory-droid/command.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/factory-droid/command.hbs"
 target = "{{dir.workspace}}/.factory/commands/{{command.name}}.md"
 
 # Factory Droid Skills
 [providers.factory-droid.skills]
-template = "https://dotagents.soorya-u.dev/templates/factory-droid/skill.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/factory-droid/skill.hbs"
 target = "{{dir.workspace}}/.factory/skills/{{skill.name}}/SKILL.md"
 
 # Factory Droid Instructions
 [providers.factory-droid.instructions]
-template = "https://dotagents.soorya-u.dev/templates/factory-droid/instruction.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/factory-droid/instruction.hbs"
 target = "{{ dir.workspace }}/AGENTS.md"
 
 # Factory Droid MCP
 [providers.factory-droid.mcp]
-template = "https://dotagents.soorya-u.dev/templates/factory-droid/mcp.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/factory-droid/mcp.hbs"
 target = "{{ dir.workspace }}/.factory/mcp.json"
