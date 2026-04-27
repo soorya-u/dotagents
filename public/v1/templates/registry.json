@@ -72,7 +72,7 @@
     "copilot": {
       "path": "/v1/templates/copilot/provider.toml",
       "checksums": {
-        "provider.toml": "6773008cc67c0c8f958fd92dd6d2b91a2cd240b4cfa56b0b025e494e8dd5fc8e",
+        "provider.toml": "6594e165b2cd97fab47ff0da577f959314c9ea37d202e2a0bc656478d673cf52",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instructions.hbs": "b222124d15921246abc76e3ec91e7968ad85f436632adb47ce777ce8eafcd1d3",
         "mcp.hbs": "54bc8b6dda17e65322eb16a4edee638a0f487107a983bbffc3f9cd55f7857aaa",
@@ -151,7 +151,7 @@
     "kimi": {
       "path": "/v1/templates/kimi/provider.toml",
       "checksums": {
-        "provider.toml": "194d905d648c48c34732b944c0a86d19e8a3597bd6e97e1b088404ff467c6532",
+        "provider.toml": "8b600981a6d62a533ddd569fb3b195f57ddfa099ea3f6a6140903625c172105f",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "fbb971bb237ff0996718968a1fb2eccef56a64e315c76a8796b8f0da29e3ae2c",
         "skill.hbs": "cd7d332b53c929a4d244cfedbe9bc7920e3874394e9e490e62998c391afba48c"
