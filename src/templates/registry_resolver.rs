@@ -287,11 +287,13 @@ fn get_provider_toml(
     if offline {
         return match cache.read(provider, "provider.toml")? {
             Some(c) => Ok(Some(c)),
-            None => Err(anyhow!(
-                "Provider '{}': no cached provider.toml found. \
-                 Run without --offline first to populate the cache.",
-                provider
-            )),
+            None => {
+                warn!(
+                    "Provider '{}': no cached provider.toml found (run without --offline to populate the cache) — skipping",
+                    provider
+                );
+                Ok(None)
+            }
         };
     }
 
@@ -458,14 +460,13 @@ mod tests {
         assert_eq!(result.unwrap().as_deref(), Some(content));
     }
 
-    // offline + cold cache returns a hard error
+    // offline + cold cache skips the provider and succeeds (no hard error)
     #[test]
     fn resolve_provider_defaults_offline_cold_cache_errors() {
         let (_dir, cache) = make_cache_dir();
         let mut config = minimal_app_config(&["claude"], &["commands"]);
         let result = resolve_provider_defaults(&mut config, None, &cache, true, false);
-        assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("--offline"));
+        assert!(result.is_ok());
     }
 
     // provider absent from registry → warning logged, config unchanged
