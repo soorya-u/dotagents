@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::path::PathBuf;
 
 use anyhow::{Context, Result};
@@ -18,11 +19,14 @@ use crate::templates::{
     TemplateCache, Templater, get_templater, registry_url, render_feature_with_settings,
     resolve_provider_defaults,
 };
-use crate::utils::gitignore::{parse_fenced_section, read_gitignore, write_gitignore};
-use crate::utils::path::{get_workspace_dir, make_workspace_relative};
+use crate::utils::gitignore::{
+    GitignorePath, GitignoreScope, gitignore_path_to_pattern, parse_fenced_section, read_gitignore,
+    write_gitignore,
+};
+use crate::utils::path::get_workspace_dir;
 use crate::utils::tty::is_tty;
 
-/// Deploys one feature across all enabled providers, collecting written paths and updating cache.
+/// Deploys one feature across all enabled providers, collecting gitignore entries and updating cache.
 fn deploy_feature<T>(
     app_config: &AppConfig,
     templater: &Templater,
@@ -31,7 +35,7 @@ fn deploy_feature<T>(
     cache: &Option<Arc<Mutex<CacheConfig>>>,
     force: bool,
     loader: impl FnOnce() -> Result<Vec<T>>,
-) -> Result<Vec<PathBuf>>
+) -> Result<Vec<GitignorePath>>
 where
     T: FeatureTrait + Sync,
 {
@@ -43,11 +47,14 @@ where
     let items = loader().context(format!("Failed to load {} feature", feature))?;
     let providers = app_config.get_provider_feature_settings(feature);
 
-    let paths: Vec<PathBuf> = providers
+    let paths: Vec<GitignorePath> = providers
         .par_iter()
         .try_fold(
             Vec::new,
-            |mut acc, (provider_name, settings)| -> Result<Vec<PathBuf>> {
+            |mut acc, (provider_name, settings)| -> Result<Vec<GitignorePath>> {
+                // For directory-scoped features, collect unique parent dirs to avoid duplicates.
+                let mut dir_entries: HashSet<PathBuf> = HashSet::new();
+
                 for item in items.iter() {
                     let file_name = item.get_file_name();
                     let item_key = file_name.as_deref().unwrap_or(CACHE_SINGLETON_KEY);
@@ -70,9 +77,17 @@ where
                         force,
                     )?;
 
-                    // If a file was written, collect the path and update cache.
+                    // If a file was written, collect the gitignore entry and update cache.
                     if let CacheUpdate::Written { hash, target } = update {
-                        acc.push(PathBuf::from(&target));
+                        let target_path = PathBuf::from(&target);
+                        match item.gitignore_scope() {
+                            GitignoreScope::File => acc.push(GitignorePath::File(target_path)),
+                            GitignoreScope::Directory => {
+                                if let Some(parent) = target_path.parent() {
+                                    dir_entries.insert(parent.to_path_buf());
+                                }
+                            }
+                        }
                         if let Some(c) = cache {
                             c.lock().unwrap().set(
                                 provider_name,
@@ -83,6 +98,12 @@ where
                         }
                     }
                 }
+
+                // Flush deduplicated directory entries into the accumulator.
+                for dir in dir_entries {
+                    acc.push(GitignorePath::Directory(dir));
+                }
+
                 Ok(acc)
             },
         )
@@ -130,8 +151,13 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
     )
     .context("Failed to resolve provider template defaults")?;
 
-    let variables =
-        Some(to_value(app_config.variables.clone()).context("Failed to extract variables")?);
+    // Serialize user-defined variables only when present; None stays None so the
+    // renderer doesn't receive Value::Null, which would wipe the Templater globals.
+    let variables: Option<Value> = app_config
+        .variables
+        .as_ref()
+        .map(|v| to_value(v).context("Failed to extract variables"))
+        .transpose()?;
 
     // Load cache unless --no-cache is specified.
     let cache: Option<Arc<Mutex<CacheConfig>>> = if opts.no_cache {
@@ -142,7 +168,7 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
         )))
     };
 
-    let mut all_paths = Vec::new();
+    let mut all_paths: Vec<GitignorePath> = Vec::new();
 
     all_paths.extend(deploy_feature::<CommandFeature>(
         &app_config,
@@ -199,15 +225,16 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
     let should_update = if opts.gitignore {
         true
     } else {
-        // Compute how many paths would be added to decide whether to prompt.
+        // Compute how many patterns would be added to decide whether to prompt.
         let gitignore_path = workspace_root.join(".gitignore");
         let current_content = read_gitignore(&gitignore_path)?;
         let existing = parse_fenced_section(&current_content);
         let new_count = all_paths
             .iter()
-            .filter_map(|p| make_workspace_relative(p, &workspace_root))
+            .filter_map(|entry| gitignore_path_to_pattern(entry, &workspace_root))
             .filter(|s| !existing.contains(s.as_str()))
-            .count();
+            .collect::<HashSet<_>>()
+            .len();
 
         if new_count == 0 {
             return Ok(());

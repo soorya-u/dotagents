@@ -13,8 +13,9 @@ pub(crate) fn get_dir_variables() -> Result<Value> {
         "dir": {
             "workspace": get_workspace_dir()?,
             "application": get_application_dir()?,
-            "config": get_config_dir()?,
-            "home": get_home_dir()?,
+            // TODO(soorya): Not Supported in v1.
+            // "config": get_config_dir()?,
+            // "home": get_home_dir()?,
         }
     }))
 }

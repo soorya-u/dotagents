@@ -1,49 +1,8 @@
 pub(crate) mod command;
+pub(crate) mod common;
 pub(crate) mod instruction;
 pub(crate) mod mcp;
 pub(crate) mod skill;
 pub(crate) mod traits;
 
-use std::fmt;
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum Feature {
-    Command,
-    Instruction,
-    Mcp,
-    Skill,
-}
-
-impl Feature {
-    /// String key used in config files and the deploy pipeline.
-    pub(crate) fn as_str(&self) -> &'static str {
-        match self {
-            Feature::Command => "commands",
-            Feature::Instruction => "instructions",
-            Feature::Mcp => "mcp",
-            Feature::Skill => "skills",
-        }
-    }
-
-    /// Parse from the config-file string representation; returns None for unknown names.
-    pub(crate) fn from_str(s: &str) -> Option<Self> {
-        match s {
-            "commands" => Some(Feature::Command),
-            "instructions" => Some(Feature::Instruction),
-            "mcp" => Some(Feature::Mcp),
-            "skills" => Some(Feature::Skill),
-            _ => None,
-        }
-    }
-
-    /// All valid feature name strings, for use in error messages.
-    pub(crate) fn all_names() -> &'static [&'static str] {
-        &["commands", "instructions", "mcp", "skills"]
-    }
-}
-
-impl fmt::Display for Feature {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.as_str())
-    }
-}
+pub(crate) use common::Feature;

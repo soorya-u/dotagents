@@ -68,7 +68,7 @@ pub(crate) fn prompt_targets() -> Result<Vec<String>> {
 
     let registry = match Registry::fetch(registry_url()) {
         Ok(r) => {
-            sp.stop("Provider registry loaded");
+            sp.clear();
             r
         }
         Err(e) => {
