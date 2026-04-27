@@ -8,6 +8,22 @@ use crate::utils::fs::read_file;
 use crate::utils::fs::write_file;
 use crate::utils::path::make_workspace_relative;
 
+/// Controls how a feature's deployed paths are represented in .gitignore.
+pub(crate) enum GitignoreScope {
+    /// Write the exact deployed file path into .gitignore.
+    File,
+    /// Write the parent directory as a glob pattern (`dir/*`) into .gitignore.
+    Directory,
+}
+
+/// Represents how a deployed path should appear in .gitignore.
+pub(crate) enum GitignorePath {
+    /// Write the exact file path (e.g. `.kilo/mcp.json`).
+    File(PathBuf),
+    /// Write a glob covering the whole directory (e.g. `.kilo/commands/*`).
+    Directory(PathBuf),
+}
+
 const FENCE_START: &str = "# BEGIN dotagents managed - do not edit manually";
 const FENCE_END: &str = "# END dotagents managed";
 
@@ -107,12 +123,27 @@ pub(crate) fn update_gitignore(content: &str, new_paths: &[String]) -> String {
     }
 }
 
+/// Convert a `GitignorePath` to its workspace-relative gitignore pattern string.
+pub(crate) fn gitignore_path_to_pattern(
+    entry: &GitignorePath,
+    workspace_root: &Path,
+) -> Option<String> {
+    match entry {
+        GitignorePath::File(p) => make_workspace_relative(p, workspace_root),
+        GitignorePath::Directory(p) => {
+            make_workspace_relative(p, workspace_root).map(|s| format!("{s}/*"))
+        }
+    }
+}
+
 /// Orchestrate read → update → write; skips write if nothing changed.
-pub(crate) fn write_gitignore(workspace_root: &Path, new_paths: &[PathBuf]) -> Result<()> {
+pub(crate) fn write_gitignore(workspace_root: &Path, new_paths: &[GitignorePath]) -> Result<()> {
     let gitignore_path = workspace_root.join(".gitignore");
     let relative_paths: Vec<String> = new_paths
         .iter()
-        .filter_map(|p| make_workspace_relative(p, workspace_root))
+        .filter_map(|entry| gitignore_path_to_pattern(entry, workspace_root))
+        .collect::<HashSet<_>>()
+        .into_iter()
         .collect();
 
     if relative_paths.is_empty() {
@@ -227,5 +258,66 @@ mod tests {
     fn test_is_tty_returns_bool() {
         // helper returns a bool without panicking
         let _result: bool = is_tty();
+    }
+
+    #[test]
+    fn test_gitignore_path_to_pattern_file() {
+        // File variant produces exact workspace-relative path
+        let root = PathBuf::from("/workspace");
+        let entry = GitignorePath::File(PathBuf::from("/workspace/.kilo/mcp.json"));
+        let pattern = gitignore_path_to_pattern(&entry, &root).unwrap();
+        assert_eq!(pattern, ".kilo/mcp.json");
+    }
+
+    #[test]
+    fn test_gitignore_path_to_pattern_directory() {
+        // Directory variant appends /* to the workspace-relative path
+        let root = PathBuf::from("/workspace");
+        let entry = GitignorePath::Directory(PathBuf::from("/workspace/.kilo/commands"));
+        let pattern = gitignore_path_to_pattern(&entry, &root).unwrap();
+        assert_eq!(pattern, ".kilo/commands/*");
+    }
+
+    #[test]
+    fn test_gitignore_path_to_pattern_out_of_workspace() {
+        // path outside workspace root returns None
+        let root = PathBuf::from("/workspace");
+        let entry = GitignorePath::File(PathBuf::from("/other/.kilo/mcp.json"));
+        let pattern = gitignore_path_to_pattern(&entry, &root);
+        assert!(pattern.is_none());
+    }
+
+    #[test]
+    fn test_update_gitignore_with_directory_glob() {
+        // directory glob patterns are written with /* suffix
+        let content = "";
+        let new_paths = vec![".kilo/commands/*".to_string(), ".kilo/mcp.json".to_string()];
+        let result = update_gitignore(content, &new_paths);
+        assert!(result.contains(".kilo/commands/*"));
+        assert!(result.contains(".kilo/mcp.json"));
+    }
+
+    #[test]
+    fn test_update_gitignore_directory_no_duplicates() {
+        // same directory glob added twice appears only once
+        let content = "# BEGIN dotagents managed - do not edit manually\n.kilo/commands/*\n# END dotagents managed";
+        let new_paths = vec![".kilo/commands/*".to_string()];
+        let result = update_gitignore(content, &new_paths);
+        assert_eq!(result.matches(".kilo/commands/*").count(), 1);
+    }
+
+    #[test]
+    fn test_update_gitignore_file_and_directory_coexist() {
+        // File and Directory patterns can coexist in the fenced section
+        let content = "";
+        let new_paths = vec![
+            ".kilo/commands/*".to_string(),
+            ".kilo/mcp.json".to_string(),
+            ".windsurf/workflows/*".to_string(),
+        ];
+        let result = update_gitignore(content, &new_paths);
+        assert!(result.contains(".kilo/commands/*"));
+        assert!(result.contains(".kilo/mcp.json"));
+        assert!(result.contains(".windsurf/workflows/*"));
     }
 }

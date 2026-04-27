@@ -36,15 +36,16 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
         .as_deref()
         .ok_or_else(|| anyhow!("Target config not found for provider {}", provider_name))?;
 
-    let target_path = if let Some(filename) = feature.get_file_name() {
-        let name_var = feature.get_name_variable(&filename)?;
-        PathBuf::from(templater.render_template(
-            RenderType::Content(target_str.to_string()),
-            name_var.as_ref(),
-        )?)
-    } else {
-        PathBuf::from(target_str)
-    };
+    let name_var: Option<Value> = feature
+        .get_file_name()
+        .map(|filename| feature.get_name_variable(&filename))
+        .transpose()?
+        .flatten();
+    let target_vars = merge_json(variables, name_var.as_ref());
+    let target_path = PathBuf::from(templater.render_template(
+        RenderType::Content(target_str.to_string()),
+        Some(&target_vars),
+    )?);
 
     let local_vars = feature_settings
         .variables

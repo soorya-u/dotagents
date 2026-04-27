@@ -2,6 +2,7 @@ use anyhow::{Result, anyhow};
 use serde_json::Value;
 
 use crate::templates::{RenderType, Templater};
+use crate::utils::gitignore::GitignoreScope;
 
 pub trait FeatureTrait: Sized {
     fn from_string(value: &str) -> Result<Self>;
@@ -23,5 +24,10 @@ pub trait FeatureTrait: Sized {
     /// Must be overridden by any feature that returns `Some` from `get_file_name`.
     fn get_name_variable(&self, _filename: &str) -> Result<Option<Value>> {
         Ok(None)
+    }
+
+    /// Returns how this feature's deployed paths should be represented in .gitignore.
+    fn gitignore_scope(&self) -> GitignoreScope {
+        GitignoreScope::File
     }
 }
