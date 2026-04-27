@@ -130,9 +130,13 @@ pub(crate) fn gitignore_path_to_pattern(
 ) -> Option<String> {
     match entry {
         GitignorePath::File(p) => make_workspace_relative(p, workspace_root),
-        GitignorePath::Directory(p) => {
-            make_workspace_relative(p, workspace_root).map(|s| format!("{s}/*"))
-        }
+        GitignorePath::Directory(p) => make_workspace_relative(p, workspace_root).and_then(|s| {
+            debug_assert!(
+                !s.is_empty(),
+                "GitignorePath::Directory resolved to workspace root"
+            );
+            (!s.is_empty()).then(|| format!("{s}/*"))
+        }),
     }
 }
 
