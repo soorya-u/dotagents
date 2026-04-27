@@ -21,10 +21,13 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use tempfile::TempDir;
 
+mod add;
 mod completions;
 mod deploy;
 mod flags;
 mod init;
+mod ls;
+mod rm;
 mod skills;
 
 // ─────────────────────────────────────────────────────────────────────────────

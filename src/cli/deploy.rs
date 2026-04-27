@@ -18,8 +18,9 @@ use crate::templates::{
     TemplateCache, Templater, get_templater, registry_url, render_feature_with_settings,
     resolve_provider_defaults,
 };
-use crate::utils::gitignore::{is_tty, parse_fenced_section, read_gitignore, write_gitignore};
+use crate::utils::gitignore::{parse_fenced_section, read_gitignore, write_gitignore};
 use crate::utils::path::{get_workspace_dir, make_workspace_relative};
+use crate::utils::tty::is_tty;
 
 /// Deploys one feature across all enabled providers, collecting written paths and updating cache.
 fn deploy_feature<T>(

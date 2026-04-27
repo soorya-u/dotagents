@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
 
 use anyhow::Result;
@@ -7,6 +6,7 @@ use anyhow::Result;
 use crate::utils::fs::read_file;
 use crate::utils::fs::write_file;
 use crate::utils::path::make_workspace_relative;
+use crate::utils::tty::is_tty;
 
 const FENCE_START: &str = "# BEGIN dotagents managed - do not edit manually";
 const FENCE_END: &str = "# END dotagents managed";
@@ -129,11 +129,6 @@ pub(crate) fn write_gitignore(workspace_root: &Path, new_paths: &[PathBuf]) -> R
     Ok(())
 }
 
-/// Detects whether both stdin and stdout are interactive terminals.
-pub(crate) fn is_tty() -> bool {
-    std::io::stdin().is_terminal() && std::io::stdout().is_terminal()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -221,11 +216,5 @@ mod tests {
         assert!(result.contains(".DS_Store"));
         assert!(result.contains("CLAUDE.md"));
         assert!(result.contains("AGENTS.md"));
-    }
-
-    #[test]
-    fn test_is_tty_returns_bool() {
-        // helper returns a bool without panicking
-        let _result: bool = is_tty();
     }
 }
