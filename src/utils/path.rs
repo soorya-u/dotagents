@@ -4,7 +4,7 @@ use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
-use crate::constants::dir::{ROOT_DIR, TEMPLATE_CACHE_SUBDIR};
+use crate::constants::dir::{CACHE_DIR, ROOT_DIR, TEMPLATE_CACHE_SUBDIR};
 
 static WORKSPACE_DIR: OnceLock<Result<PathBuf, String>> = OnceLock::new();
 
@@ -20,15 +20,6 @@ fn get_dir_or_die(path: PathBuf) -> Result<PathBuf> {
 }
 
 /// Walk up from `start` until a directory containing `ROOT_DIR` is found.
-///
-/// `boundary` is an optional upper limit for the walk — the search will not
-/// ascend past that directory.  Pass `None` for an unbounded walk (production
-/// use); pass `Some(start_path)` in tests to confine the walk to a controlled
-/// temp directory and avoid flakiness from any real `ROOT_DIR` that might
-/// exist in an ancestor of the temp dir.
-///
-/// Separated from the `OnceLock` wrapper so it can be unit-tested with
-/// arbitrary starting paths without touching global state.
 fn find_workspace_dir(
     start: PathBuf,
     boundary: Option<&std::path::Path>,
@@ -71,10 +62,10 @@ pub fn get_home_dir() -> Result<PathBuf> {
     home::home_dir().ok_or_else(|| anyhow!("failed to get user home directory"))
 }
 
-// TODO: Valid only for Unix as of Now. Make Win Compatible
 pub fn get_config_dir() -> Result<PathBuf> {
-    let home_dir = get_home_dir()?;
-    let config_dir = home_dir.join(".config");
+    let base =
+        dirs::config_dir().ok_or_else(|| anyhow!("failed to locate user config directory"))?;
+    let config_dir = base.join("dotagents");
     get_dir_or_die(config_dir)
 }
 
@@ -89,17 +80,9 @@ pub fn get_commands_dir() -> Result<PathBuf> {
 }
 
 /// Returns the user-level template source cache directory, creating it if necessary.
-///
-/// Platform paths: Linux `~/.config/dotagents/cache/templates`,
-/// macOS `~/Library/Application Support/dotagents/cache/templates`,
-/// Windows `%APPDATA%/dotagents/cache/templates`.
 pub fn get_global_template_cache_dir() -> Result<PathBuf> {
-    let base =
-        dirs::config_dir().ok_or_else(|| anyhow!("failed to locate user config directory"))?;
-    let dir = base
-        .join("dotagents")
-        .join("cache")
-        .join(TEMPLATE_CACHE_SUBDIR);
+    let config_base = get_config_dir()?;
+    let dir = config_base.join(CACHE_DIR).join(TEMPLATE_CACHE_SUBDIR);
     std::fs::create_dir_all(&dir).map_err(|e| {
         anyhow!(
             "failed to create template cache directory {}: {}",
