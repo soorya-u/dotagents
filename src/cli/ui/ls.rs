@@ -1,7 +1,8 @@
-use cliclack::{intro, log, outro};
+use cliclack::{intro, outro};
 use crossterm::terminal;
 
 use crate::cli::options::LsOptions;
+use crate::prelude::*;
 
 /// A name+description pair for display.
 pub(crate) struct ListItem {
@@ -54,7 +55,7 @@ pub(crate) fn wrap_at_width(text: &str, width: usize, indent: &str) -> String {
 
 /// Render one section (Skills or Commands) with cliclack log output.
 fn render_section(title: &str, items: &[ListItem], opts: &LsOptions, name_col: usize, cols: usize) {
-    log::step(title).ok();
+    step!("{}", title);
     for item in items {
         let desc = if opts.verbose {
             let indent_width = name_col + 3; // "  name   " prefix width
@@ -68,7 +69,7 @@ fn render_section(title: &str, items: &[ListItem], opts: &LsOptions, name_col: u
         };
 
         let padded_name = format!("{:<width$}", item.name, width = name_col);
-        log::info(format!("  {}   {}", padded_name, desc)).ok();
+        info!("  {}   {}", padded_name, desc);
     }
 }
 
@@ -90,7 +91,7 @@ pub(crate) fn render_ls(skills: Vec<ListItem>, commands: Vec<ListItem>, opts: &L
 
     if skills_to_show.is_empty() && commands_to_show.is_empty() {
         intro("dotagents ls").ok();
-        log::info("No skills or commands found.").ok();
+        info!("No skills or commands found.");
         outro("").ok();
         return;
     }

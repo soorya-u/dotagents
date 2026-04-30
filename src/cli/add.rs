@@ -1,9 +1,9 @@
-use anyhow::{Context, Result, bail};
-use cliclack::{confirm, input, intro, log, outro};
+use cliclack::{confirm, input, intro, outro};
 
 use crate::cli::deploy::deploy;
 use crate::cli::options::{AddAction, AddCommandOptions, AddSkillOptions, DeployOptions};
 use crate::constants::templates::{COMMAND_STARTER, SKILL_STARTER, render_starter};
+use crate::prelude::*;
 use crate::utils::fs::write_file;
 use crate::utils::path::get_application_dir;
 use crate::utils::tty::is_tty;
@@ -89,11 +89,7 @@ fn add_command(opts: AddCommandOptions) -> Result<bool> {
 
     write_file(&target, &content).context("failed to write command file")?;
 
-    if use_interactive {
-        log::success(format!("Created {}", target.display())).ok();
-    } else {
-        println!("Created {}", target.display());
-    }
+    success!("Created {}", target.display());
 
     maybe_prompt_deploy(opts.deploy)?;
 
@@ -154,11 +150,7 @@ fn add_skill(opts: AddSkillOptions) -> Result<bool> {
 
     write_file(&target, &content).context("failed to write SKILL.md")?;
 
-    if use_interactive {
-        log::success(format!("Created {}", target.display())).ok();
-    } else {
-        println!("Created {}", target.display());
-    }
+    success!("Created {}", target.display());
 
     maybe_prompt_deploy(opts.deploy)?;
 

@@ -2,9 +2,10 @@
 
 mod cli;
 mod constants;
+mod prelude;
 mod schema;
 mod templates;
-mod utils;
+pub(crate) mod utils;
 
 fn main() {
     let opts = cli::get_options();
@@ -15,6 +16,9 @@ fn main() {
         Ok(_) => std::process::exit(1),
         Err(e) => {
             utils::display_error(e);
+            if utils::logs::log_config().is_some_and(|c| c.is_tty) {
+                cliclack::outro_cancel("Fatal error").ok();
+            }
             std::process::exit(1);
         }
     }
