@@ -55,7 +55,7 @@ pub(crate) fn wrap_at_width(text: &str, width: usize, indent: &str) -> String {
 
 /// Render one section (Skills or Commands) with cliclack log output.
 fn render_section(title: &str, items: &[ListItem], opts: &LsOptions, name_col: usize, cols: usize) {
-    step!("{}", title);
+    info!("{}", title);
     for item in items {
         let desc = if opts.verbose {
             let indent_width = name_col + 3; // "  name   " prefix width

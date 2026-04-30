@@ -18,10 +18,10 @@ pub(crate) fn log_config() -> Option<&'static LogConfig> {
 }
 
 /// Initialises logging: TTY → cliclack backend; non-TTY → simplelog backend.
-pub(crate) fn set_log_config(quite: bool, verbosity: u8) {
+pub(crate) fn set_log_config(quiet: bool, verbosity: u8) {
     let tty = is_tty();
 
-    let level = if quite {
+    let level = if quiet {
         LevelFilter::Error
     } else {
         match verbosity {
@@ -138,7 +138,7 @@ macro_rules! success {
     }};
 }
 
-/// Routes to `cliclack::log::step` in TTY mode (always), or `log::info!` in non-TTY mode (visible by default).
+/// Routes to `cliclack::log::step` in TTY mode (always), or `log::debug!` in non-TTY mode (visible with `-vv`).
 #[macro_export]
 macro_rules! step {
     ($($arg:tt)*) => {{
@@ -146,7 +146,7 @@ macro_rules! step {
             Some(cfg) if cfg.is_tty => {
                 let _ = ::cliclack::log::step(::std::format!($($arg)*));
             }
-            Some(_) => ::log::info!($($arg)*),
+            Some(_) => ::log::debug!($($arg)*),
             None => {}
         }
     }};
