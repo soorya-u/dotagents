@@ -212,14 +212,11 @@ mod tests {
 
     #[test]
     #[cfg(unix)]
+    // returns a path ending in "dotagents" when the directory exists
     fn test_get_config_dir() {
-        let result = get_config_dir();
-        // Config dir should exist on Unix systems
-        if result.is_ok() {
-            let config = result.unwrap();
-            assert!(config.ends_with(".config"));
-            assert!(config.is_dir());
-        }
+        let config = get_config_dir().expect("get_config_dir() should succeed");
+        assert!(config.ends_with("dotagents"));
+        assert!(config.is_dir());
     }
 
     #[test]

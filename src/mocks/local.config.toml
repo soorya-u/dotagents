@@ -6,7 +6,8 @@ features = [
     "skills",
 ]
 
-targets = ["mycode"]
+targets = ["gemini"]
+variables = { "agent_name" = "my agent" }
 
 [providers.mycode.mcp]
 template = "{{ dir.application }}/templates/mycode/mcp.hbs"

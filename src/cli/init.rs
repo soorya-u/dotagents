@@ -1,4 +1,6 @@
 use std::io::IsTerminal;
+
+use crate::prelude::*;
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -102,7 +104,7 @@ pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
             ));
         } else {
             if !tui_mode {
-                log::warn!("Overwriting existing configuration");
+                warn!("Overwriting existing configuration");
             }
             fs::remove_dir_all(main_dir).context("failed to remove .dotagents directory")?;
         }
@@ -171,7 +173,7 @@ pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
 
     for file in init_files {
         if file.should_skip(&opts) {
-            log::info!("Skipping {}", file.path.display());
+            info!("Skipping {}", file.path.display());
             continue;
         }
         write_file(&main_dir.join(&file.path), file.content)?;

@@ -1,6 +1,8 @@
 use anyhow::Error;
 use std::fmt::Write;
 
+use crate::prelude::*;
+
 pub(crate) fn display_error(error: Error) {
     let mut chain = error.chain();
     let mut error_message = format!("Failed to {}\nCaused by:\n", chain.next().unwrap());
@@ -11,7 +13,7 @@ pub(crate) fn display_error(error: Error) {
 
     error_message.pop();
 
-    log::error!("{}", error_message);
+    error!("{}", error_message);
 }
 
 #[cfg(test)]

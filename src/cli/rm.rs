@@ -1,7 +1,8 @@
 use std::fs;
 
-use anyhow::{Context, Result, bail};
-use cliclack::{confirm, intro, log, outro};
+use cliclack::{confirm, intro, outro};
+
+use crate::prelude::*;
 
 use crate::cli::deploy::deploy;
 use crate::cli::options::{DeployOptions, RmAction, RmCommandOptions, RmSkillOptions};
@@ -58,7 +59,7 @@ fn rm_command(opts: RmCommandOptions) -> Result<bool> {
 
     fs::remove_file(&target).with_context(|| format!("failed to remove {}", target.display()))?;
 
-    log::success(format!("Removed {}", target.display())).ok();
+    success!("Removed {}", target.display());
 
     maybe_prompt_deploy(opts.deploy)?;
 
@@ -103,7 +104,7 @@ fn rm_skill(opts: RmSkillOptions) -> Result<bool> {
     fs::remove_dir_all(&skill_dir)
         .with_context(|| format!("failed to remove {}", skill_dir.display()))?;
 
-    log::success(format!("Removed {}", skill_dir.display())).ok();
+    success!("Removed {}", skill_dir.display());
 
     maybe_prompt_deploy(opts.deploy)?;
 

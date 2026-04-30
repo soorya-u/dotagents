@@ -7,3 +7,4 @@ features = [
 ]
 
 targets = []
+variables = { "agent_name" = "my agent" }

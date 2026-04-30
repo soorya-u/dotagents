@@ -2,7 +2,7 @@ mod error;
 pub(crate) mod fs;
 pub(crate) mod gitignore;
 mod json;
-mod logs;
+pub(crate) mod logs;
 pub(crate) mod merge;
 pub(crate) mod path;
 pub(crate) mod tty;
