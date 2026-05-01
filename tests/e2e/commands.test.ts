@@ -3,18 +3,18 @@ import { join } from "node:path";
 import { expect, test } from "@microsoft/tui-test";
 import { cleanup, makeTmpDir, run, shellProgram } from "./helpers.js";
 
-// ── CLI flows ────────────────────────────────────────────────────────────────
+// ── commands new – CLI ────────────────────────────────────────────────────────
 
-test.describe("add command CLI", () => {
-	// C08: add command with all flags populates frontmatter
+test.describe("commands new CLI", () => {
+	// C08: all flags populate frontmatter fields
 	test("all flags populate frontmatter fields", async () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
 			const { exitCode } = run(
 				[
-					"add",
-					"command",
+					"commands",
+					"new",
 					"greet",
 					"--description",
 					"Say hello",
@@ -39,12 +39,12 @@ test.describe("add command CLI", () => {
 		}
 	});
 
-	// command file contains expected sections
+	// generated file contains expected sections
 	test("command file contains Steps and When to use sections", async () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
-			run(["add", "command", "greet", "--description", "Say hello"], d);
+			run(["commands", "new", "greet", "--description", "Say hello"], d);
 			const content = readFileSync(
 				join(d, ".dotagents-debug/commands/greet.md"),
 				"utf8",
@@ -61,9 +61,9 @@ test.describe("add command CLI", () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
-			run(["add", "command", "greet", "--description", "first"], d);
+			run(["commands", "new", "greet", "--description", "first"], d);
 			const { exitCode } = run(
-				["add", "command", "greet", "--description", "second", "--force"],
+				["commands", "new", "greet", "--description", "second", "--force"],
 				d,
 			);
 			expect(exitCode).toBe(0);
@@ -82,9 +82,9 @@ test.describe("add command CLI", () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
-			run(["add", "command", "greet", "--description", "first"], d);
+			run(["commands", "new", "greet", "--description", "first"], d);
 			const { exitCode, stderr } = run(
-				["add", "command", "greet", "--description", "second"],
+				["commands", "new", "greet", "--description", "second"],
 				d,
 			);
 			expect(exitCode).not.toBe(0);
@@ -95,95 +95,106 @@ test.describe("add command CLI", () => {
 	});
 });
 
-test.describe("add skill CLI", () => {
-	// C09: add skill with all flags populates frontmatter
-	test("all flags populate frontmatter fields", async () => {
+// ── commands ls – CLI ─────────────────────────────────────────────────────────
+
+test.describe("commands ls CLI", () => {
+	// shows commands from init scaffold
+	test("shows hello command from init scaffold", async () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
-			const { exitCode } = run(
-				[
-					"add",
-					"skill",
-					"my-skill",
-					"--description",
-					"Greet users",
-					"--license",
-					"MIT",
-					"--compatibility",
-					"Requires node",
-				],
-				d,
-			);
+			const { exitCode, stderr } = run(["commands", "ls"], d);
 			expect(exitCode).toBe(0);
-			const content = readFileSync(
-				join(d, ".dotagents-debug/skills/my-skill/SKILL.md"),
-				"utf8",
-			);
-			expect(content).toContain("name: my-skill");
-			expect(content).toContain('"Greet users"');
-			expect(content).toContain("license: MIT");
-			expect(content).toContain('"Requires node"');
-			expect(content).toContain('version: "1.0"');
+			expect(stderr).toMatch(/hello/);
 		} finally {
 			cleanup(d);
 		}
 	});
 
-	// skill file contains expected sections
-	test("skill file contains Instructions and When to use sections", async () => {
+	// shows count summary
+	test("shows command count summary line", async () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
-			run(["add", "skill", "my-skill", "--description", "Greet users"], d);
-			const content = readFileSync(
-				join(d, ".dotagents-debug/skills/my-skill/SKILL.md"),
-				"utf8",
-			);
-			expect(content).toContain("## When to use");
-			expect(content).toContain("## Instructions");
+			const { exitCode, stderr } = run(["commands", "ls"], d);
+			expect(exitCode).toBe(0);
+			expect(stderr).toMatch(/command\(s\)/);
 		} finally {
 			cleanup(d);
 		}
 	});
 
-	// C11: --force overwrites existing skill
-	test("--force overwrites existing skill", async () => {
+	// C24: --full flag succeeds
+	test("--full exits zero", async () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
-			run(["add", "skill", "my-skill", "--description", "first"], d);
-			const { exitCode } = run(
-				["add", "skill", "my-skill", "--description", "second", "--force"],
-				d,
-			);
+			const { exitCode } = run(["commands", "ls", "--full"], d);
 			expect(exitCode).toBe(0);
-			const content = readFileSync(
-				join(d, ".dotagents-debug/skills/my-skill/SKILL.md"),
-				"utf8",
-			);
-			expect(content).toContain('"second"');
 		} finally {
 			cleanup(d);
 		}
 	});
 });
 
-// ── TUI flows ────────────────────────────────────────────────────────────────
+// ── commands rm – CLI ─────────────────────────────────────────────────────────
+
+test.describe("commands rm CLI", () => {
+	// C26: --force deletes the file
+	test("--force deletes command file", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			expect(existsSync(join(d, ".dotagents-debug/commands/hello.md"))).toBe(
+				true,
+			);
+			const { exitCode } = run(["commands", "rm", "hello", "--force"], d);
+			expect(exitCode).toBe(0);
+			expect(existsSync(join(d, ".dotagents-debug/commands/hello.md"))).toBe(
+				false,
+			);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// only the named command is removed
+	test("only removes the named command, others remain", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			run(["commands", "new", "greet", "--description", "test"], d);
+			expect(existsSync(join(d, ".dotagents-debug/commands/greet.md"))).toBe(
+				true,
+			);
+			run(["commands", "rm", "greet", "--force"], d);
+			expect(existsSync(join(d, ".dotagents-debug/commands/hello.md"))).toBe(
+				true,
+			);
+			expect(existsSync(join(d, ".dotagents-debug/commands/greet.md"))).toBe(
+				false,
+			);
+		} finally {
+			cleanup(d);
+		}
+	});
+});
+
+// ── commands new – TUI ────────────────────────────────────────────────────────
 // Each TUI test has its own describe block so test.use() is at describe level.
 // Workspace setup runs synchronously at describe evaluation time.
 
 // T06: all three prompts appear, deploy prompt defaults to No
-test.describe("add command TUI – T06 interactive prompts", () => {
+test.describe("commands new TUI – T06 interactive prompts", () => {
 	const d = makeTmpDir();
 	run(["init", "--template", "starter"], d);
-	test.use({ program: shellProgram(d, ["add", "command", "greet"]) });
+	test.use({ program: shellProgram(d, ["commands", "new", "greet"]) });
 
 	test("prompts for description, category, tags then deploy", async ({
 		terminal,
 	}) => {
 		try {
-			await expect(terminal.getByText("dotagents add command")).toBeVisible();
+			await expect(terminal.getByText("dotagents commands new")).toBeVisible();
 			await expect(terminal.getByText("Description")).toBeVisible();
 			await expect(
 				terminal.getByText("What does this command do?"),
@@ -204,7 +215,6 @@ test.describe("add command TUI – T06 interactive prompts", () => {
 			await expect(terminal.getByText("Deploy now?")).toBeVisible();
 			terminal.keyPress("Enter"); // accept default No
 
-			// file created with the provided metadata
 			expect(existsSync(join(d, ".dotagents-debug/commands/greet.md"))).toBe(
 				true,
 			);
@@ -225,7 +235,7 @@ test.describe("add command TUI – T06 interactive prompts", () => {
 // the terminal interaction flow too complex for reliable TUI testing. The
 // deploy functionality is covered by the deploy CLI tests (T15) and journey
 // tests (J07).
-test.describe("add command TUI – T07 deploy on Yes (skipped)", () => {
+test.describe("commands new TUI – T07 deploy on Yes (skipped)", () => {
 	// stub program — setup runs inside the (skipped) body so no filesystem
 	// mutations happen at describe evaluation time
 	test.use({ program: { file: "bash", args: ["-c", "true"] } });
@@ -261,37 +271,48 @@ test.describe("add command TUI – T07 deploy on Yes (skipped)", () => {
 	});
 });
 
-// T08: all three prompts appear for skill
-test.describe("add skill TUI – T08 interactive prompts", () => {
+// ── commands rm – TUI ─────────────────────────────────────────────────────────
+
+// T10: confirm prompt appears, navigating to Yes removes the file
+test.describe("commands rm TUI – T10 confirm Yes", () => {
 	const d = makeTmpDir();
 	run(["init", "--template", "starter"], d);
-	test.use({ program: shellProgram(d, ["add", "skill", "my-skill"]) });
+	test.use({ program: shellProgram(d, ["commands", "rm", "hello"]) });
 
-	test("prompts for description, license, compatibility", async ({
-		terminal,
-	}) => {
+	test("confirm Yes removes the command", async ({ terminal }) => {
 		try {
-			await expect(terminal.getByText("dotagents add skill")).toBeVisible();
-			await expect(terminal.getByText("Description")).toBeVisible();
-
-			terminal.write("A skill description");
+			await expect(terminal.getByText("Remove command 'hello'?")).toBeVisible();
+			await expect(terminal.getByText("This cannot be undone.")).toBeVisible();
+			// default is No; navigate up to Yes
+			terminal.keyUp();
 			terminal.keyPress("Enter");
 
-			await expect(terminal.getByText("License")).toBeVisible();
-			terminal.write("MIT");
-			terminal.keyPress("Enter");
+			await expect(terminal.getByText("Removed")).toBeVisible();
 
-			await expect(terminal.getByText("Compatibility")).toBeVisible();
-			terminal.write("Requires node");
-			terminal.keyPress("Enter");
+			expect(existsSync(join(d, ".dotagents-debug/commands/hello.md"))).toBe(
+				false,
+			);
+		} finally {
+			cleanup(d);
+		}
+	});
+});
 
-			// wait for deploy prompt — it appears after the file is written
-			await expect(terminal.getByText("Deploy now?")).toBeVisible();
+// T11: pressing Enter on default No cancels the removal
+test.describe("commands rm TUI – T11 confirm No", () => {
+	const d = makeTmpDir();
+	run(["init", "--template", "starter"], d);
+	test.use({ program: shellProgram(d, ["commands", "rm", "hello"]) });
+
+	test("confirm No leaves the command file intact", async ({ terminal }) => {
+		try {
+			await expect(terminal.getByText("Remove command 'hello'?")).toBeVisible();
 			terminal.keyPress("Enter"); // accept default No
+			await expect(terminal.getByText("Cancelled")).toBeVisible();
 
-			expect(
-				existsSync(join(d, ".dotagents-debug/skills/my-skill/SKILL.md")),
-			).toBe(true);
+			expect(existsSync(join(d, ".dotagents-debug/commands/hello.md"))).toBe(
+				true,
+			);
 		} finally {
 			cleanup(d);
 		}

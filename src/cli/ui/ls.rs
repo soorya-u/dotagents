@@ -1,7 +1,6 @@
 use cliclack::{intro, outro};
 use crossterm::terminal;
 
-use crate::cli::options::LsOptions;
 use crate::prelude::*;
 
 /// A name+description pair for display.
@@ -53,11 +52,11 @@ pub(crate) fn wrap_at_width(text: &str, width: usize, indent: &str) -> String {
     lines.join("\n")
 }
 
-/// Render one section (Skills or Commands) with cliclack log output.
-fn render_section(title: &str, items: &[ListItem], opts: &LsOptions, name_col: usize, cols: usize) {
+/// Render one section of items with cliclack log output.
+fn render_section(title: &str, items: &[ListItem], full: bool, name_col: usize, cols: usize) {
     info!("{}", title);
     for item in items {
-        let desc = if opts.verbose {
+        let desc = if full {
             let indent_width = name_col + 3; // "  name   " prefix width
             let avail = cols.saturating_sub(indent_width);
             let indent = " ".repeat(indent_width);
@@ -73,75 +72,50 @@ fn render_section(title: &str, items: &[ListItem], opts: &LsOptions, name_col: u
     }
 }
 
-/// Render the full ls output using cliclack.
-pub(crate) fn render_ls(skills: Vec<ListItem>, commands: Vec<ListItem>, opts: &LsOptions) {
-    let show_skills = !opts.commands || opts.skills;
-    let show_commands = !opts.skills || opts.commands;
-
-    let skills_to_show: Vec<&ListItem> = if show_skills {
-        skills.iter().collect()
-    } else {
-        vec![]
-    };
-    let commands_to_show: Vec<&ListItem> = if show_commands {
-        commands.iter().collect()
-    } else {
-        vec![]
-    };
-
-    if skills_to_show.is_empty() && commands_to_show.is_empty() {
-        intro("dotagents ls").ok();
-        info!("No skills or commands found.");
+/// Render the commands listing for `dotagents commands ls`.
+pub(crate) fn render_commands(items: Vec<ListItem>, full: bool) {
+    if items.is_empty() {
+        intro("dotagents commands ls").ok();
+        info!("No commands found.");
         outro("").ok();
         return;
     }
 
-    // Compute name column width from the longest name across all shown items.
-    let name_col = skills_to_show
+    let name_col = items
         .iter()
-        .chain(commands_to_show.iter())
         .map(|i| i.name.len())
         .max()
         .unwrap_or(10)
         .max(10);
-
     let cols = terminal_cols();
 
-    intro("dotagents ls").ok();
+    intro("dotagents commands ls").ok();
+    let header = format!("Commands ({})", items.len());
+    render_section(&header, &items, full, name_col, cols);
+    outro(format!("{} command(s)", items.len())).ok();
+}
 
-    if !skills_to_show.is_empty() {
-        let owned: Vec<ListItem> = skills_to_show
-            .into_iter()
-            .map(|i| ListItem {
-                name: i.name.clone(),
-                description: i.description.clone(),
-            })
-            .collect();
-        let header = format!("Skills ({})", owned.len());
-        render_section(&header, &owned, opts, name_col, cols);
+/// Render the skills listing for `dotagents skills ls`.
+pub(crate) fn render_skills(items: Vec<ListItem>, full: bool) {
+    if items.is_empty() {
+        intro("dotagents skills ls").ok();
+        info!("No skills found.");
+        outro("").ok();
+        return;
     }
 
-    if !commands_to_show.is_empty() {
-        let owned: Vec<ListItem> = commands_to_show
-            .into_iter()
-            .map(|i| ListItem {
-                name: i.name.clone(),
-                description: i.description.clone(),
-            })
-            .collect();
-        let header = format!("Commands ({})", owned.len());
-        render_section(&header, &owned, opts, name_col, cols);
-    }
+    let name_col = items
+        .iter()
+        .map(|i| i.name.len())
+        .max()
+        .unwrap_or(10)
+        .max(10);
+    let cols = terminal_cols();
 
-    let skill_count = skills.len();
-    let cmd_count = commands.len();
-    let summary = match (show_skills, show_commands) {
-        (true, true) => format!("{} skill(s) · {} command(s)", skill_count, cmd_count),
-        (true, false) => format!("{} skill(s)", skill_count),
-        (false, true) => format!("{} command(s)", cmd_count),
-        (false, false) => String::new(),
-    };
-    outro(summary).ok();
+    intro("dotagents skills ls").ok();
+    let header = format!("Skills ({})", items.len());
+    render_section(&header, &items, full, name_col, cols);
+    outro(format!("{} skill(s)", items.len())).ok();
 }
 
 #[cfg(test)]

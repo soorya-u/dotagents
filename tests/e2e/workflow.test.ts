@@ -19,8 +19,8 @@ test.describe("J01-J02: init → add → deploy", () => {
 			initWithLocalProvider(d);
 			run(
 				[
-					"add",
-					"command",
+					"commands",
+					"new",
 					"greet",
 					"--description",
 					"Greet user",
@@ -49,7 +49,7 @@ test.describe("J01-J02: init → add → deploy", () => {
 		const d = makeTmpDir();
 		try {
 			initWithLocalProvider(d);
-			run(["add", "skill", "my-skill", "--description", "Test skill"], d);
+			run(["skills", "new", "my-skill", "--description", "Test skill"], d);
 			run(["deploy", "--offline", "--no-gitignore"], d);
 
 			expect(existsSync(join(d, ".mycode/skills/my-skill/SKILLS.md"))).toBe(
@@ -67,20 +67,20 @@ test.describe("J03-J04: CRUD – add, list, remove", () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
-			run(["add", "command", "greet", "--description", "test"], d);
+			run(["commands", "new", "greet", "--description", "test"], d);
 
 			// ls shows the new command
-			const { stderr } = run(["ls", "--commands"], d);
+			const { stderr } = run(["commands", "ls"], d);
 			expect(stderr).toMatch(/greet/);
 
 			// rm it
-			run(["rm", "command", "greet", "--force"], d);
+			run(["commands", "rm", "greet", "--force"], d);
 			expect(existsSync(join(d, ".dotagents-debug/commands/greet.md"))).toBe(
 				false,
 			);
 
 			// ls no longer shows greet as a command name (hello's description contains "greet" so use stricter pattern)
-			const { stderr: afterStderr } = run(["ls", "--commands"], d);
+			const { stderr: afterStderr } = run(["commands", "ls"], d);
 			expect(afterStderr).not.toMatch(/^\[.*INFO.*\]\s+greet\s/m);
 		} finally {
 			cleanup(d);
@@ -92,12 +92,12 @@ test.describe("J03-J04: CRUD – add, list, remove", () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
-			run(["add", "skill", "my-skill", "--description", "test"], d);
+			run(["skills", "new", "my-skill", "--description", "test"], d);
 			expect(existsSync(join(d, ".dotagents-debug/skills/my-skill"))).toBe(
 				true,
 			);
 
-			run(["rm", "skill", "my-skill", "--force"], d);
+			run(["skills", "rm", "my-skill", "--force"], d);
 			expect(existsSync(join(d, ".dotagents-debug/skills/my-skill"))).toBe(
 				false,
 			);
@@ -203,19 +203,29 @@ test.describe("J08: full CRUD both types", () => {
 			run(["init", "--template", "starter"], d);
 
 			// Add a second command and skill beyond the init scaffold
-			run(["add", "command", "greet", "--description", "greet"], d);
-			run(["add", "skill", "my-skill", "--description", "skill"], d);
+			run(["commands", "new", "greet", "--description", "greet"], d);
+			run(["skills", "new", "my-skill", "--description", "skill"], d);
 
 			// Remove all commands and skills including scaffold items
-			run(["rm", "command", "hello", "--force"], d);
-			run(["rm", "command", "greet", "--force"], d);
-			run(["rm", "skill", "hello-skill", "--force"], d);
-			run(["rm", "skill", "my-skill", "--force"], d);
+			run(["commands", "rm", "hello", "--force"], d);
+			run(["commands", "rm", "greet", "--force"], d);
+			run(["skills", "rm", "hello-skill", "--force"], d);
+			run(["skills", "rm", "my-skill", "--force"], d);
 
-			// ls shows no items left
-			const { exitCode, stderr } = run(["ls"], d);
-			expect(exitCode).toBe(0);
-			expect(stderr).toMatch(/No skills or commands found/);
+			// commands ls and skills ls both show empty
+			const { exitCode: cmdExit, stderr: cmdStderr } = run(
+				["commands", "ls"],
+				d,
+			);
+			expect(cmdExit).toBe(0);
+			expect(cmdStderr).toMatch(/No commands found/);
+
+			const { exitCode: skillExit, stderr: skillStderr } = run(
+				["skills", "ls"],
+				d,
+			);
+			expect(skillExit).toBe(0);
+			expect(skillStderr).toMatch(/No skills found/);
 		} finally {
 			cleanup(d);
 		}

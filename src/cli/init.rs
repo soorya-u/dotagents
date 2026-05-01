@@ -6,7 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use super::options::{InitOptions, InitTemplate};
+use super::options::{Feature, InitOptions, InitTemplate};
 use crate::cli::ui;
 use crate::constants::{
     dir::{COMMANDS_DIR, MOCK_CUSTOM_AGENT_DIR, ROOT_DIR, SKILLS_DIR, TEMPLATE_DIR},
@@ -49,12 +49,24 @@ impl InitFile {
 
 /// Returns true when init should run in interactive TUI mode.
 fn is_tui_mode(opts: &InitOptions) -> bool {
-    let any_flag = opts.no_mcp
-        || opts.no_command
-        || opts.no_instruction
-        || opts.no_skill
-        || opts.template.is_some();
-    !any_flag && std::io::stdin().is_terminal()
+    opts.features.is_none() && opts.template.is_none() && std::io::stdin().is_terminal()
+}
+
+/// Validates the `--features` flag: errors on empty value or `none` combined with others.
+fn validate_features(opts: &InitOptions) -> Result<()> {
+    let Some(features) = &opts.features else {
+        return Ok(());
+    };
+    if features.is_empty() {
+        anyhow::bail!(
+            "--features requires at least one value. Use '--features none' to disable all features."
+        );
+    }
+    let has_none = features.iter().any(|f| matches!(f, Feature::None));
+    if has_none && features.len() > 1 {
+        anyhow::bail!("'none' cannot be combined with other feature names in --features.");
+    }
+    Ok(())
 }
 
 /// Updates the `targets` array in the given TOML config file.
@@ -81,6 +93,8 @@ fn update_config_targets(config_path: &Path, targets: &[String]) -> Result<()> {
 }
 
 pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
+    validate_features(&opts)?;
+
     let main_dir = Path::new(ROOT_DIR);
 
     let dir_exists = main_dir
@@ -128,18 +142,18 @@ pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
             },
         ),
         InitFile::new(INSTRUCTIONS_FILE, mocks::INSTRUCTIONS)
-            .with_skip_if(|opts| opts.no_instruction),
-        InitFile::new(MCP_FILE, mocks::MCP).with_skip_if(|opts| opts.no_mcp),
+            .with_skip_if(|opts| !opts.has_feature(Feature::Instructions)),
+        InitFile::new(MCP_FILE, mocks::MCP).with_skip_if(|opts| !opts.has_feature(Feature::Mcp)),
         InitFile::new(
             Path::new(COMMANDS_DIR).join(MOCK_COMMAND_FILE),
             mocks::COMMAND_HELLO,
         )
-        .with_skip_if(|opts| opts.no_command),
+        .with_skip_if(|opts| !opts.has_feature(Feature::Commands)),
         InitFile::new(
             Path::new(SKILLS_DIR).join(MOCK_SKILL_DIR).join(SKILL_FILE),
             mocks::SKILL_HELLO,
         )
-        .with_skip_if(|opts| opts.no_skill),
+        .with_skip_if(|opts| !opts.has_feature(Feature::Skills)),
         // Template files — only written for the WithCustomProvider template.
         InitFile::new(
             Path::new(TEMPLATE_DIR)
@@ -197,48 +211,27 @@ mod tests {
 
     fn default_opts() -> InitOptions {
         InitOptions {
-            no_mcp: false,
-            no_command: false,
-            no_instruction: false,
-            no_skill: false,
+            features: None,
             force: false,
             template: None,
             targets: vec![],
         }
     }
 
-    // is_tui_mode returns false when --no-mcp is set
+    // is_tui_mode returns false when --features is set
     #[test]
-    fn is_tui_mode_false_when_no_mcp_set() {
+    fn is_tui_mode_false_when_features_set() {
         assert!(!is_tui_mode(&InitOptions {
-            no_mcp: true,
+            features: Some(vec![Feature::Commands]),
             ..default_opts()
         }));
     }
 
-    // is_tui_mode returns false when --no-command is set
+    // is_tui_mode returns false when --features none is set
     #[test]
-    fn is_tui_mode_false_when_no_command_set() {
+    fn is_tui_mode_false_when_features_none_set() {
         assert!(!is_tui_mode(&InitOptions {
-            no_command: true,
-            ..default_opts()
-        }));
-    }
-
-    // is_tui_mode returns false when --no-instruction is set
-    #[test]
-    fn is_tui_mode_false_when_no_instruction_set() {
-        assert!(!is_tui_mode(&InitOptions {
-            no_instruction: true,
-            ..default_opts()
-        }));
-    }
-
-    // is_tui_mode returns false when --no-skill is set
-    #[test]
-    fn is_tui_mode_false_when_no_skill_set() {
-        assert!(!is_tui_mode(&InitOptions {
-            no_skill: true,
+            features: Some(vec![Feature::None]),
             ..default_opts()
         }));
     }
@@ -256,25 +249,20 @@ mod tests {
         }));
     }
 
-    // is_tui_mode returns false whenever any feature flag is set, even with no other flags
+    // is_tui_mode returns false whenever any headless flag is set
     #[test]
-    fn is_tui_mode_false_when_any_single_flag_set() {
-        // Each flag individually must suppress TUI mode, regardless of TTY state.
+    fn is_tui_mode_false_when_any_headless_flag_set() {
         let cases = [
             InitOptions {
-                no_mcp: true,
+                features: Some(vec![Feature::Commands]),
                 ..default_opts()
             },
             InitOptions {
-                no_command: true,
+                features: Some(vec![Feature::Commands, Feature::Mcp]),
                 ..default_opts()
             },
             InitOptions {
-                no_instruction: true,
-                ..default_opts()
-            },
-            InitOptions {
-                no_skill: true,
+                features: Some(vec![Feature::None]),
                 ..default_opts()
             },
             InitOptions {
@@ -289,15 +277,50 @@ mod tests {
         for opts in &cases {
             assert!(
                 !is_tui_mode(opts),
-                "expected TUI mode disabled when a flag is set"
+                "expected TUI mode disabled when a headless flag is set"
             );
         }
+    }
+
+    // validate_features errors on none combined with other values
+    #[test]
+    fn validate_features_errors_on_none_combined() {
+        let opts = InitOptions {
+            features: Some(vec![Feature::None, Feature::Commands]),
+            ..default_opts()
+        };
+        assert!(validate_features(&opts).is_err());
+    }
+
+    // validate_features succeeds for a valid explicit list
+    #[test]
+    fn validate_features_ok_for_explicit_list() {
+        let opts = InitOptions {
+            features: Some(vec![Feature::Commands, Feature::Mcp]),
+            ..default_opts()
+        };
+        assert!(validate_features(&opts).is_ok());
+    }
+
+    // validate_features succeeds for none sentinel alone
+    #[test]
+    fn validate_features_ok_for_none_alone() {
+        let opts = InitOptions {
+            features: Some(vec![Feature::None]),
+            ..default_opts()
+        };
+        assert!(validate_features(&opts).is_ok());
+    }
+
+    // validate_features succeeds when flag is absent
+    #[test]
+    fn validate_features_ok_when_absent() {
+        assert!(validate_features(&default_opts()).is_ok());
     }
 
     // update_config_targets writes the targets array into the TOML file
     #[test]
     fn update_config_targets_sets_targets_array() {
-        // Use the real config mock so the TOML document format is known-good.
         let f = NamedTempFile::new().expect("temp file");
         fs::write(f.path(), mocks::CONFIG).expect("write config");
         let targets = vec!["claude".to_string(), "codex".to_string()];
@@ -312,7 +335,6 @@ mod tests {
     fn update_config_targets_replaces_existing_targets() {
         let f = NamedTempFile::new().expect("temp file");
         fs::write(f.path(), mocks::CONFIG).expect("write config");
-        // mocks::CONFIG already has targets; replace them with a single new one.
         update_config_targets(f.path(), &["new-provider".to_string()])
             .expect("update should succeed");
         let result = fs::read_to_string(f.path()).unwrap();
@@ -340,20 +362,22 @@ mod tests {
         assert!(!file.should_skip(&default_opts()));
     }
 
-    // InitFile::should_skip returns true when the condition is satisfied
+    // InitFile::should_skip returns true when the feature is not in the list
     #[test]
-    fn init_file_should_skip_when_condition_satisfied() {
-        let file = InitFile::new("some.txt", "content").with_skip_if(|o| o.no_mcp);
+    fn init_file_should_skip_when_feature_disabled() {
+        let file =
+            InitFile::new("some.txt", "content").with_skip_if(|o| !o.has_feature(Feature::Mcp));
         assert!(file.should_skip(&InitOptions {
-            no_mcp: true,
+            features: Some(vec![Feature::Commands]),
             ..default_opts()
         }));
     }
 
-    // InitFile::should_skip returns false when the condition is not satisfied
+    // InitFile::should_skip returns false when the feature is enabled
     #[test]
-    fn init_file_should_not_skip_when_condition_not_satisfied() {
-        let file = InitFile::new("some.txt", "content").with_skip_if(|o| o.no_mcp);
+    fn init_file_should_not_skip_when_feature_enabled() {
+        let file =
+            InitFile::new("some.txt", "content").with_skip_if(|o| !o.has_feature(Feature::Mcp));
         assert!(!file.should_skip(&default_opts()));
     }
 }
