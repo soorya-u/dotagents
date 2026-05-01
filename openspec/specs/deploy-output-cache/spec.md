@@ -37,16 +37,20 @@ When `--force` is passed to `dotagents deploy`, all target files SHALL be writte
 - **WHEN** `dotagents deploy --force` is run
 - **THEN** every target file is written and every cache entry is updated, even if rendered output is unchanged
 
-### Requirement: `--no-cache` flag bypasses cache entirely
-When `--no-cache` is passed to `dotagents deploy`, the cache file SHALL NOT be read and SHALL NOT be written during that run. All target files are rendered and written as if no cache existed.
+### Requirement: `--no-cache` flag skips hash comparison only
+When `--no-cache` is passed to `dotagents deploy`, the cache file SHALL NOT be read for hash comparison — all target files are rendered and written as if no cache existed. However, the cache SHALL still be written at the end of the run with the hashes and paths of every file deployed in that run.
 
-#### Scenario: No-cache deploy skips reading cache
+#### Scenario: No-cache deploy skips reading cache for comparison
 - **WHEN** `dotagents deploy --no-cache` is run
-- **THEN** cache.toml is not read; all target files are written; cache.toml is not modified
+- **THEN** no hash comparison is performed; all target files are written unconditionally
 
-#### Scenario: No-cache and force are mutually acceptable
+#### Scenario: No-cache deploy still writes cache.toml
+- **WHEN** `dotagents deploy --no-cache` completes
+- **THEN** `cache.toml` is written with entries for every file that was deployed in that run
+
+#### Scenario: No-cache and force produce identical observable file output
 - **WHEN** both `--no-cache` and `--force` are passed
-- **THEN** deploy behaves as `--no-cache` (cache is ignored entirely)
+- **THEN** all target files are written (same as each flag alone); cache is written at the end
 
 ### Requirement: Cache file is per-machine and gitignored
 The cache file SHALL be stored at `.dotagents/cache.toml` (`.dotagents-debug/cache.toml` in debug builds). The file SHALL be listed in the `.dotagents/.gitignore` scaffold written by `dotagents init` so it is not committed to version control.
