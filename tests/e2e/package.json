@@ -1,7 +1,13 @@
 {
-  "name": "dotagents-e2e",
-  "private": true,
-  "devDependencies": {
-    "@microsoft/tui-test": "latest"
-  }
+	"name": "dotagents-e2e",
+	"private": true,
+	"scripts": {
+		"lint": "biome lint .",
+		"format": "biome format --write .",
+		"check": "biome check --write ."
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.4.13",
+		"@microsoft/tui-test": "^0.0.4"
+	}
 }
