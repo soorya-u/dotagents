@@ -1,7 +1,7 @@
 [tools]
-rust = "1.92.0"
-bun = "latest"
-"npm:tui-devtools" = "latest"
+rust = "1.92"
+bun = "1.3"
+"npm:tui-devtools" = "0.1"
 
 [settings.npm]
 package_manager = "bun"
@@ -12,46 +12,35 @@ package_manager = "bun"
 description = "Compile a debug build"
 run = "cargo build"
 
-[tasks.build-release]
+[tasks."build:release"]
 description = "Compile an optimised release build"
 run = "cargo build --release"
 
-[tasks.dev]
-description = "Build (debug) and run the CLI – pass extra args with: mise run run -- <subcommand> [args]"
-run = "cargo run --"
-
-[tasks.fmt]
+[tasks."check:fmt"]
 description = "Format source code with rustfmt"
 run = "cargo fmt"
 
-[tasks.lint]
+[tasks."check:lint"]
 description = "Run Clippy lints"
 run = "cargo clippy"
 
 [tasks.check]
-description = "Format then lint (run before committing)"
-depends = ["fmt", "lint"]
+description = "Format then lint"
+depends = ["check:fmt", "check:lint"]
 
-[tasks.test]
-description = "Run all unit tests (colocated #[cfg(test)] blocks inside src/)"
+[tasks."tests:unit"]
+description = "Run all unit tests"
 run = "cargo test --bin dotagents"
 
-[tasks.test-integration]
+[tasks."tests:integration"]
 description = "Run the integration test suite"
 run = "cargo test --test integration"
 
-[tasks.e2e-install]
-description = "Install bun deps for the tui-test e2e suite and tui-devtools for discovery"
-run = """
-bun install --cwd tests/e2e
-bun add -g tui-devtools
-"""
-
-[tasks.test-e2e]
+[tasks."tests:e2e"]
 description = "Run the full end-to-end test suite (tests/e2e/) via tui-test"
-depends = ["build", "e2e-install"]
+depends = ["build"]
 run = "cd tests/e2e && bunx tui-test"
 
-[tasks.test-all]
+[tasks.tests]
 description = "Run every test: unit + integration + e2e"
-depends = ["test", "test-integration", "test-e2e"]
+depends = ["tests:unit", "tests:integration", "tests:e2e"]
