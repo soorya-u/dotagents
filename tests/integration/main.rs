@@ -1,18 +1,19 @@
 //! Integration tests for the dotagents CLI.
 //!
-//! These are coarser-grained "smoke" tests that run the compiled binary and
-//! check exit codes and basic file existence.  For detailed content and
-//! variable-interpolation tests see the `e2e` suite.
+//! These tests exercise specific behavioral scenarios by spawning the compiled
+//! binary with crafted config files, then inspecting output files and exit codes.
+//! They complement the unit tests (colocated in `src/`) and the e2e suite (`tests/e2e/`).
 //!
 //! Suite layout
 //! ────────────
-//!  init         – `init` command creates expected scaffolding
-//!  deploy       – `deploy` command produces output after init
-//!  completions  – `gen-completions` for all supported shells
-//!  flags        – global --verbose / --quiet flags
+//!  config      – AppConfig merge scenarios (feature override, provider disable, variable deep-merge)
+//!  render      – Render pipeline (variable/env interpolation, frontmatter stripping)
+//!  features    – Feature source-file format and deploy output
+//!  cache       – Deploy idempotency and --no-cache flag behaviour
+//!  gitignore   – .gitignore fence management (--gitignore / --no-gitignore flags)
 //!
 //! Run the whole suite:   cargo test --test integration
-//! Run one test:          cargo test --test integration <test_name>
+//! Run one module:        cargo test --test integration config
 
 #![allow(dead_code)]
 
@@ -21,14 +22,11 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use tempfile::TempDir;
 
-mod add;
-mod completions;
-mod deploy;
-mod flags;
-mod init;
-mod ls;
-mod rm;
-mod skills;
+mod cache;
+mod config;
+mod features;
+mod gitignore;
+mod render;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared test harness
@@ -99,6 +97,15 @@ impl TestWorkspace {
             .unwrap_or_else(|_| panic!("failed to read file: {}", full.display()))
     }
 
+    pub fn write_file(&self, path: impl AsRef<Path>, content: &str) {
+        let full = self.root().join(&path);
+        if let Some(parent) = full.parent() {
+            fs::create_dir_all(parent).expect("failed to create parent dirs");
+        }
+        fs::write(&full, content)
+            .unwrap_or_else(|_| panic!("failed to write file: {}", full.display()));
+    }
+
     pub fn list_files(&self, dir: impl AsRef<Path>) -> Vec<String> {
         let full = self.root().join(dir);
         fs::read_dir(&full)
@@ -141,4 +148,20 @@ impl CmdResult {
             self.stdout
         );
     }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared helpers for test modules
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Initialises a `with-custom-provider` workspace and strips the remote
+/// `gemini` target so that deploy can run fully offline in tests.
+pub fn init_with_mycode_provider(ws: &TestWorkspace) {
+    ws.run_command(&["init", "--template", "with-custom-provider"])
+        .assert_success();
+    let config_path = ws.active_root_dir().join("local.config.toml");
+    let content = fs::read_to_string(&config_path).expect("failed to read local.config.toml");
+    // Remove the remote gemini target; mycode inline provider remains.
+    let patched = content.replace(r#"targets = ["gemini"]"#, "targets = []");
+    fs::write(&config_path, patched).expect("failed to patch local.config.toml");
 }

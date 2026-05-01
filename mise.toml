@@ -1,5 +1,7 @@
 [tools]
 rust = "1.92.0"
+bun = "latest"
+"npm:tui-devtools" = "latest"
 
 # ── Tasks ────────────────────────────────────────────────────────────────────
 
@@ -32,13 +34,21 @@ description = "Run all unit tests (colocated #[cfg(test)] blocks inside src/)"
 run = "cargo test --bin dotagents"
 
 [tasks.test-integration]
-description = "Run the integration smoke-test suite (tests/integration/)"
+description = "Run the integration test suite"
 run = "cargo test --test integration"
 
+[tasks.e2e-install]
+description = "Install bun deps for the tui-test e2e suite and tui-devtools for discovery"
+run = """
+bun install --cwd tests/e2e
+bun add -g tui-devtools
+"""
+
 [tasks.test-e2e]
-description = "Run the full end-to-end test suite (tests/e2e/)"
-run = "cargo test --test e2e"
+description = "Run the full end-to-end test suite (tests/e2e/) via tui-test"
+depends = ["build", "e2e-install"]
+run = "cd tests/e2e && bunx tui-test"
 
 [tasks.test-all]
 description = "Run every test: unit + integration + e2e"
-run = "cargo test"
+depends = ["test", "test-integration", "test-e2e"]

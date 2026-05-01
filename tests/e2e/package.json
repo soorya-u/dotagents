@@ -1,0 +1,7 @@
+{
+  "name": "dotagents-e2e",
+  "private": true,
+  "devDependencies": {
+    "@microsoft/tui-test": "latest"
+  }
+}
