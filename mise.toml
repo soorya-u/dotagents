@@ -3,6 +3,9 @@ rust = "1.92.0"
 bun = "latest"
 "npm:tui-devtools" = "latest"
 
+[settings.npm]
+package_manager = "bun"
+
 # ── Tasks ────────────────────────────────────────────────────────────────────
 
 [tasks.build]
