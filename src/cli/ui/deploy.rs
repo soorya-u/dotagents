@@ -1,5 +1,6 @@
 use cliclack::select;
 
+use crate::cli::deploy::DeployStats;
 use crate::utils::tty::is_tty;
 
 /// Prompts whether to run deploy in offline mode using a cliclack select.
@@ -16,6 +17,18 @@ pub(crate) fn prompt_offline() -> bool {
             "skips registry fetch",
         );
     sel.interact().unwrap_or(false)
+}
+
+/// Prints deploy completion summary to stdout; no-op in non-TTY environments.
+pub(crate) fn print_deploy_summary(stats: &DeployStats) {
+    if !is_tty() {
+        return;
+    }
+    if stats.written == 0 && stats.skipped == 0 {
+        println!("✓ Nothing deployed");
+    } else {
+        println!("✓ {} written, {} skipped", stats.written, stats.skipped);
+    }
 }
 
 /// Prompts whether to add deployed paths to .gitignore using a cliclack select.

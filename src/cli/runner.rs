@@ -6,6 +6,7 @@ use super::ls::run_ls;
 use super::options::{Action, Options, SkillsAction};
 use super::rm::run_rm;
 use super::skills;
+use super::undeploy::undeploy;
 use anyhow::Result;
 use clap::CommandFactory;
 
@@ -42,6 +43,10 @@ pub(crate) fn run(opts: Options) -> Result<bool> {
         }
         Action::Add { action } => run_add(action)?,
         Action::Rm { action } => run_rm(action)?,
+        Action::Undeploy(opts) => {
+            undeploy(opts)?;
+            true
+        }
     };
 
     Ok(success)

@@ -23,8 +23,8 @@ fn cache_toml_written_after_first_deploy() {
 }
 
 #[test]
-fn no_cache_flag_does_not_write_cache_toml() {
-    // --no-cache should skip both reading and writing cache.toml.
+fn no_cache_flag_still_writes_cache_toml() {
+    // --no-cache skips hash comparison but cache.toml is still written.
     let ws = TestWorkspace::new();
     init_with_mycode_provider(&ws);
 
@@ -32,8 +32,8 @@ fn no_cache_flag_does_not_write_cache_toml() {
         .assert_success();
 
     assert!(
-        !ws.file_exists(format!("{}/cache.toml", ws.root_dir_name())),
-        "cache.toml should not be written when --no-cache is supplied"
+        ws.file_exists(format!("{}/cache.toml", ws.root_dir_name())),
+        "cache.toml should still be written when --no-cache is supplied (flag only skips comparison)"
     );
 }
 
