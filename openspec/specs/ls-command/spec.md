@@ -1,60 +1,21 @@
-## ADDED Requirements
+## REMOVED Requirements
 
 ### Requirement: List skills and commands from source directory
-`dotagents ls` SHALL read skills from `.dotagents/skills/*/SKILL.md` and commands from `.dotagents/commands/*.md`, parse frontmatter for `name` and `description`, and display them grouped in two sections (Skills, Commands) using cliclack output.
-
-#### Scenario: Both sections shown by default
-- **WHEN** user runs `dotagents ls` with no flags
-- **THEN** both a Skills section and a Commands section are rendered, each listing all items found in `.dotagents/`
-
-#### Scenario: Filter to commands only
-- **WHEN** user runs `dotagents ls --commands`
-- **THEN** only the Commands section is rendered; Skills section is omitted
-
-#### Scenario: Filter to skills only
-- **WHEN** user runs `dotagents ls --skills`
-- **THEN** only the Skills section is rendered; Commands section is omitted
-
-#### Scenario: Both filter flags show both sections
-- **WHEN** user runs `dotagents ls --commands --skills`
-- **THEN** both sections are rendered (same as no flags)
-
-#### Scenario: Empty section is omitted
-- **WHEN** a section has zero items (e.g. no commands exist in `.dotagents/commands/`)
-- **THEN** that section is not rendered and no empty header is shown
+**Reason**: The top-level `dotagents ls` command is removed. Listing splits into two domain-scoped subcommands: `dotagents commands ls` and `dotagents skills ls`.
+**Migration**: Replace `dotagents ls` with `dotagents commands ls && dotagents skills ls`. Replace `dotagents ls --commands` with `dotagents commands ls`. Replace `dotagents ls --skills` with `dotagents skills ls`.
 
 ### Requirement: Descriptions truncated to terminal width by default
-Description text displayed next to each item name SHALL be truncated to fit within the current terminal width. Truncated descriptions SHALL end with `…`.
-
-#### Scenario: Long description is truncated
-- **WHEN** a description exceeds the available column width
-- **THEN** it is cut at the available width and `…` is appended
-
-#### Scenario: Short description is shown in full
-- **WHEN** a description fits within the available column width
-- **THEN** it is shown without modification
-
-#### Scenario: Terminal width detection fails
-- **WHEN** `crossterm::terminal::size()` returns an error
-- **THEN** the display falls back to 80-column width
+**Reason**: Removed with the top-level `ls` command. Truncation behaviour is preserved on `commands ls` and `skills ls`.
+**Migration**: No action needed; truncation and `--full` behaviour are unchanged on the replacement subcommands.
 
 ### Requirement: Verbose flag shows full descriptions
-With `--verbose`, descriptions SHALL be shown in full, word-wrapped at terminal width, rather than truncated on a single line.
-
-#### Scenario: Verbose shows complete text
-- **WHEN** user runs `dotagents ls --verbose`
-- **THEN** each item's full description is shown, wrapped across multiple lines if needed
+**Reason**: Removed with the top-level `ls` command. Additionally, the implicit tie-in between the global `-v`/`--verbose` flag and full-description display is removed entirely as incorrect behaviour. Full descriptions are now shown only via the explicit `--full` flag on `commands ls` and `skills ls`.
+**Migration**: Replace `dotagents ls --verbose` with `dotagents commands ls --full` or `dotagents skills ls --full` as appropriate.
 
 ### Requirement: No items found exits cleanly
-If no skills or commands exist in `.dotagents/` (after applying filters), the command SHALL print a message indicating nothing was found and exit 0.
-
-#### Scenario: Empty workspace
-- **WHEN** `.dotagents/skills/` and `.dotagents/commands/` are both empty or absent
-- **THEN** a message like "No skills or commands found." is displayed and the command exits 0
+**Reason**: Removed with the top-level `ls` command. Empty-state handling is preserved on `commands ls` and `skills ls`.
+**Migration**: No action needed.
 
 ### Requirement: Workspace not found produces actionable error
-If no `.dotagents/` directory is found by walking parent directories, `ls` SHALL exit 1 with an error message directing the user to run `dotagents init`.
-
-#### Scenario: Missing workspace
-- **WHEN** no `.dotagents/` directory exists in the current or any parent directory
-- **THEN** the command exits 1 with an error referencing `dotagents init`
+**Reason**: Removed with the top-level `ls` command. Workspace-not-found error handling is preserved on `commands ls` and `skills ls`.
+**Migration**: No action needed.
