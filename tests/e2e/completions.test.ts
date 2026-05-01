@@ -63,7 +63,11 @@ test.describe("gen-completions CLI", () => {
 		const d = makeTmpDir();
 		try {
 			mkdirSync(join(d, "out"));
-			run(["gen-completions", "--shell", "bash", "--to", "./out"], d);
+			const { exitCode } = run(
+				["gen-completions", "--shell", "bash", "--to", "./out"],
+				d,
+			);
+			expect(exitCode).toBe(0);
 			const content = readFileSync(join(d, "out/dotagents.bash"), "utf8");
 			expect(content).toContain("dotagents");
 		} finally {

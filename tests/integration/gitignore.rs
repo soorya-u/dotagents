@@ -43,9 +43,15 @@ fn deploy_gitignore_flag_adds_output_paths_to_fence() {
         .assert_success();
 
     let content = ws.read_file(".gitignore");
+    // Extract just the managed section between the fence markers.
+    let fenced_section = content
+        .split_once(FENCE_START)
+        .and_then(|(_, rest)| rest.split_once(FENCE_END))
+        .map(|(section, _)| section)
+        .unwrap_or("");
     // The mycode provider writes to .mycode/; at least one .mycode path should be listed.
     assert!(
-        content.contains(".mycode"),
+        fenced_section.contains(".mycode"),
         ".gitignore fence should reference .mycode output paths; got:\n{content}"
     );
 }

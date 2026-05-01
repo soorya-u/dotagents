@@ -30,6 +30,10 @@ test.describe("rm command CLI", () => {
 		try {
 			run(["init", "--template", "starter"], d);
 			run(["add", "command", "greet", "--description", "test"], d);
+			// precondition: greet was actually created before we remove it
+			expect(existsSync(join(d, ".dotagents-debug/commands/greet.md"))).toBe(
+				true,
+			);
 			run(["rm", "command", "greet", "--force"], d);
 			// hello.md from init scaffold still exists
 			expect(existsSync(join(d, ".dotagents-debug/commands/hello.md"))).toBe(

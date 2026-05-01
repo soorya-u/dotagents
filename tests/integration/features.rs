@@ -54,8 +54,12 @@ fn add_command_with_category_and_tags_includes_them_in_source() {
     let d = ws.root_dir_name();
     let source = ws.read_file(format!("{d}/commands/tag-cmd.md"));
     assert!(
-        source.contains("Utilities") || source.contains("tag1"),
-        "category or tags should appear in source frontmatter; got:\n{source}"
+        source.contains("Utilities"),
+        "category should appear in source frontmatter; got:\n{source}"
+    );
+    assert!(
+        source.contains("tag1"),
+        "tags should appear in source frontmatter; got:\n{source}"
     );
 }
 

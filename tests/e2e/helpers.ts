@@ -40,26 +40,36 @@ export function run(
 export function initWithLocalProvider(dir: string): void {
 	run(["init", "--template", "with-custom-provider"], dir);
 	const path = join(dir, ".dotagents-debug/local.config.toml");
-	const content = readFileSync(path, "utf8").replace(
+	const original = readFileSync(path, "utf8");
+	const patched = original.replace(
 		/targets\s*=\s*\["gemini"\]/,
 		"targets = []",
 	);
-	writeFileSync(path, content);
+	if (patched === original) {
+		throw new Error(
+			`initWithLocalProvider: expected 'targets = ["gemini"]' in ${path} — nothing replaced; check the mock template`,
+		);
+	}
+	writeFileSync(path, patched);
 }
 
 /// Return a bash invocation suitable for test.use({ program: ... }) that
 /// changes to `dir` then execs the binary with `args`. Using `exec` replaces
 /// the shell process so the PTY is connected directly to dotagents.
+/// Single-quote a shell argument, escaping any embedded single quotes.
+function quoteShellArg(value: string): string {
+	return `'${value.replace(/'/g, "'\\''")}'`;
+}
+
 export function shellProgram(
 	dir: string,
 	args: string[],
 ): { file: string; args: string[] } {
-	const escaped = [dir, BIN, ...args].map((a) => `'${a}'`).join(" ");
 	return {
 		file: "bash",
 		args: [
 			"-c",
-			`cd ${escaped.split(" ")[0]} && exec ${escaped.split(" ").slice(1).join(" ")}`,
+			`cd ${quoteShellArg(dir)} && exec ${quoteShellArg(BIN)} ${args.map(quoteShellArg).join(" ")}`,
 		],
 	};
 }

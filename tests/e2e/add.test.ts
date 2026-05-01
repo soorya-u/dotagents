@@ -226,21 +226,24 @@ test.describe("add command TUI – T06 interactive prompts", () => {
 // deploy functionality is covered by the deploy CLI tests (T15) and journey
 // tests (J07).
 test.describe("add command TUI – T07 deploy on Yes (skipped)", () => {
-	const d = makeTmpDir();
-	run(["init", "--template", "with-custom-provider"], d);
-	const lcPath = join(d, ".dotagents-debug/local.config.toml");
-	writeFileSync(
-		lcPath,
-		readFileSync(lcPath, "utf8").replace(
-			/targets\s*=\s*\["gemini"\]/,
-			"targets = []",
-		),
-	);
-	test.use({ program: shellProgram(d, ["add", "command", "greet"]) });
+	// stub program — setup runs inside the (skipped) body so no filesystem
+	// mutations happen at describe evaluation time
+	test.use({ program: { file: "bash", args: ["-c", "true"] } });
 
 	test.skip("answering Yes to deploy prompt runs deploy (deploy prompt is nested inside add)", async ({
 		terminal,
 	}) => {
+		// setup deferred into body — never runs because test is skipped
+		const d = makeTmpDir();
+		run(["init", "--template", "with-custom-provider"], d);
+		const lcPath = join(d, ".dotagents-debug/local.config.toml");
+		writeFileSync(
+			lcPath,
+			readFileSync(lcPath, "utf8").replace(
+				/targets\s*=\s*\["gemini"\]/,
+				"targets = []",
+			),
+		);
 		try {
 			await expect(terminal.getByText("Description")).toBeVisible();
 			terminal.write("Deploy test");

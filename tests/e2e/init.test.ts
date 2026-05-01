@@ -273,13 +273,16 @@ test.describe("init TUI – T03 WithCustomProvider template", () => {
 // T05: overwrite cancel — NOTE: debug binary defaults force=true so the
 //      overwrite prompt is suppressed; mark as skip
 test.describe("init TUI – T05 overwrite cancel (skipped)", () => {
-	const d = makeTmpDir();
-	run(["init", "--template", "starter"], d);
-	test.use({ program: shellProgram(d, ["init"]) });
+	// stub program — setup runs inside the (skipped) body so no filesystem
+	// mutations happen at describe evaluation time
+	test.use({ program: { file: "bash", args: ["-c", "true"] } });
 
 	test.skip("cancel overwrite exits without changes (release binary only)", async ({
 		terminal,
 	}) => {
+		// setup deferred into body — never runs because test is skipped
+		const d = makeTmpDir();
+		run(["init", "--template", "starter"], d);
 		try {
 			await expect(terminal.getByText("already exists")).toBeVisible();
 			terminal.keyDown(); // move to No

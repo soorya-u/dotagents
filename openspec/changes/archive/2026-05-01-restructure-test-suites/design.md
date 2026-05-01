@@ -16,7 +16,7 @@ The restructure introduces three layers:
 - E2E tests that cover every user flow — CLI (flag-driven) and TUI (interactive cliclack prompts) — using a real PTY so both paths are exercised.
 - A discovery phase where an agent observes actual runtime behaviour (terminal output, prompt order, filesystem state) before tests are written, so assertions reflect reality not assumptions.
 - All JS tooling (`bun`, `tui-devtools`, `@microsoft/tui-test`) installed and versioned through mise — no manual setup step.
-- `mise test-all` continues to be the single command to run everything.
+- `mise tests` continues to be the single command to run everything.
 
 **Non-Goals:**
 - Replacing unit tests (`#[cfg(test)]` blocks in `src/`) — those stay as-is.
@@ -66,7 +66,7 @@ The restructure introduces three layers:
 
 ## Risks / Trade-offs
 
-**[Risk] Node.js/TypeScript in a Rust project's CI** → Mitigation: all JS tooling installs through a single `mise install` step; `bun` is fast (cold install ~3s). The `e2e-install` task is a `depends` prerequisite of `test-e2e` so the install is never forgotten.
+**[Risk] Node.js/TypeScript in a Rust project's CI** → Mitigation: all JS tooling installs through a single `mise install` step; `bun` is fast (cold install ~3s). The `bun install --cwd tests/e2e` step is a `depends` prerequisite of `tests:e2e` so the install is never forgotten.
 
 **[Risk] tui-devtools daemon requirement** → tui-devtools runs as a daemon with WebSocket communication. The discovery agent must start the daemon before using it and kill it after. If the daemon crashes mid-discovery, a flow may be skipped. Mitigation: agent retries daemon start on failure; each flow runs in an isolated temp workspace so a crash doesn't corrupt other flows.
 
@@ -74,7 +74,7 @@ The restructure introduces three layers:
 
 **[Risk] Registry-dependent prompts in `init` wizard (provider multiselect)** → The provider list is fetched from a remote registry; order is non-deterministic and content changes over time. Mitigation: discovery agent runs `init` with `--offline` for provider-list tests, or asserts on structural output (spinner appeared, multiselect appeared) rather than exact provider names.
 
-**[Risk] `tests/e2e` is no longer a Rust test crate** → `cargo test` will no longer find e2e tests. `mise test-all` must be updated to run `bun x tui-test` separately. Mitigation: `test-all` task uses `depends = ["test", "test-integration", "test-e2e"]`; CI must use `mise test-all` not raw `cargo test`.
+**[Risk] `tests/e2e` is no longer a Rust test crate** → `cargo test` will no longer find e2e tests. `mise tests` must be used instead of raw `cargo test`. Mitigation: `tests` task uses `depends = ["tests:unit", "tests:integration", "tests:e2e"]`; CI must use `mise tests` not raw `cargo test`.
 
 ## Migration Plan
 
@@ -85,7 +85,7 @@ The restructure introduces three layers:
 5. Run discovery agent across all 57 flows; store structured observations.
 6. Write tui-test files from observations.
 7. Rewrite `tests/integration/` as Rust library tests.
-8. Verify `mise test-all` exits 0.
+8. Verify `mise tests` exits 0.
 
 **Rollback:** The old binary-spawning tests are deleted as part of this change. Git history preserves them. If tui-test proves unworkable, the Rust binary-invocation approach can be restored from git.
 
