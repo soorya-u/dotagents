@@ -1,5 +1,10 @@
 [tools]
-rust = "1.92.0"
+rust = "1.92"
+bun = "1.3"
+"npm:tui-devtools" = "0.1"
+
+[settings.npm]
+package_manager = "bun"
 
 # ── Tasks ────────────────────────────────────────────────────────────────────
 
@@ -7,38 +12,59 @@ rust = "1.92.0"
 description = "Compile a debug build"
 run = "cargo build"
 
-[tasks.build-release]
+[tasks."build:release"]
 description = "Compile an optimised release build"
 run = "cargo build --release"
 
-[tasks.dev]
-description = "Build (debug) and run the CLI – pass extra args with: mise run run -- <subcommand> [args]"
-run = "cargo run --"
+[tasks."check:ts:fmt"]
+description = "Format e2e TypeScript (biome format)"
+run = "cd tests/e2e && bunx biome format --write ."
 
-[tasks.fmt]
-description = "Format source code with rustfmt"
+[tasks."check:ts:lint"]
+description = "Lint e2e TypeScript (biome lint)"
+run = "cd tests/e2e && bunx biome lint ."
+
+[tasks."check:ts"]
+description = "Format and lint e2e TypeScript (biome check)"
+run = "cd tests/e2e && bunx biome check --write ."
+
+[tasks."check:rust:fmt"]
+description = "Format Rust source (rustfmt)"
 run = "cargo fmt"
 
-[tasks.lint]
-description = "Run Clippy lints"
+[tasks."check:rust:lint"]
+description = "Lint Rust source (clippy)"
 run = "cargo clippy"
 
-[tasks.check]
-description = "Format then lint (run before committing)"
-depends = ["fmt", "lint"]
+[tasks."check:rust"]
+description = "Format and lint Rust source (rustfmt + clippy)"
+depends = ["check:rust:fmt", "check:rust:lint"]
 
-[tasks.test]
-description = "Run all unit tests (colocated #[cfg(test)] blocks inside src/)"
+[tasks."check:fmt"]
+description = "Format Rust source (rustfmt) and e2e TypeScript (biome format)"
+depends = ["check:rust:fmt", "check:ts:fmt"]
+
+[tasks."check:lint"]
+description = "Lint Rust source (clippy) and e2e TypeScript (biome lint)"
+depends = ["check:rust:lint", "check:ts:lint"]
+
+[tasks.check]
+description = "Format then lint"
+depends = ["check:fmt", "check:lint"]
+
+[tasks."tests:unit"]
+description = "Run all unit tests"
 run = "cargo test --bin dotagents"
 
-[tasks.test-integration]
-description = "Run the integration smoke-test suite (tests/integration/)"
+[tasks."tests:integration"]
+description = "Run the integration test suite"
 run = "cargo test --test integration"
 
-[tasks.test-e2e]
-description = "Run the full end-to-end test suite (tests/e2e/)"
-run = "cargo test --test e2e"
+[tasks."tests:e2e"]
+description = "Run the full end-to-end test suite (tests/e2e/) via tui-test"
+depends = ["build"]
+run = "cd tests/e2e && bunx tui-test"
 
-[tasks.test-all]
+[tasks.tests]
 description = "Run every test: unit + integration + e2e"
-run = "cargo test"
+depends = ["tests:unit", "tests:integration", "tests:e2e"]
