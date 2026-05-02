@@ -27,6 +27,7 @@ mod config;
 mod features;
 mod gitignore;
 mod render;
+mod undeploy;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared test harness

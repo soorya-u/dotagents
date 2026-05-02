@@ -126,7 +126,7 @@ impl FeatureTrait for SkillFeature {
     }
 
     fn gitignore_scope(&self) -> GitignoreScope {
-        GitignoreScope::Directory
+        GitignoreScope::File
     }
 }
 
@@ -318,8 +318,8 @@ Minimal body"#;
     }
 
     #[test]
-    fn test_gitignore_scope_is_directory() {
-        // skills deploy many files into an owned directory → Directory scope
+    fn test_gitignore_scope_is_file() {
+        // skills use File scope — individual file paths in .gitignore
         let skill = SkillFeature {
             metadata: SkillMetadata {
                 name: "scope-test".to_string(),
@@ -331,7 +331,7 @@ Minimal body"#;
             },
             content: "Body".to_string(),
         };
-        assert!(matches!(skill.gitignore_scope(), GitignoreScope::Directory));
+        assert!(matches!(skill.gitignore_scope(), GitignoreScope::File));
     }
 
     #[test]

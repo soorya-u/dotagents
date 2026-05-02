@@ -60,6 +60,9 @@ pub(crate) enum Action {
         #[clap(subcommand)]
         action: RmAction,
     },
+
+    /// Remove all files deployed by the last `dotagents deploy` run
+    Undeploy(UndeployOptions),
 }
 
 /// Subcommands for `dotagents skills`.
@@ -85,7 +88,8 @@ pub(crate) struct DeployOptions {
     #[clap(long, short)]
     pub force: bool,
 
-    /// Bypass cache entirely; do not read or update cache.toml.
+    /// Skip hash comparison; always re-render and write all target files.
+    /// cache.toml is still written at the end of the run.
     #[clap(long)]
     pub no_cache: bool,
 
@@ -261,6 +265,18 @@ pub(crate) struct RmSkillOptions {
     /// Run deploy after removing the skill.
     #[clap(long)]
     pub deploy: bool,
+}
+
+/// Options for `dotagents undeploy`.
+#[derive(Args, Default)]
+pub(crate) struct UndeployOptions {
+    /// Skip confirmation prompt and delete user-edited files without asking.
+    #[clap(long, short)]
+    pub force: bool,
+
+    /// Do not remove entries from .gitignore.
+    #[clap(long)]
+    pub no_gitignore: bool,
 }
 
 pub fn get_options() -> Options {

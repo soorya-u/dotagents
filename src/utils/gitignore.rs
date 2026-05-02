@@ -3,8 +3,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 
-use crate::utils::fs::read_file;
-use crate::utils::fs::write_file;
+use crate::utils::fs::{read_file, write_file};
 use crate::utils::path::make_workspace_relative;
 use crate::utils::tty::is_tty;
 
@@ -12,16 +11,13 @@ use crate::utils::tty::is_tty;
 pub(crate) enum GitignoreScope {
     /// Write the exact deployed file path into .gitignore.
     File,
-    /// Write the parent directory as a glob pattern (`dir/*`) into .gitignore.
-    Directory,
 }
 
 /// Represents how a deployed path should appear in .gitignore.
+#[derive(Debug)]
 pub(crate) enum GitignorePath {
     /// Write the exact file path (e.g. `.kilo/mcp.json`).
     File(PathBuf),
-    /// Write a glob covering the whole directory (e.g. `.kilo/commands/*`).
-    Directory(PathBuf),
 }
 
 const FENCE_START: &str = "# BEGIN dotagents managed - do not edit manually";
@@ -130,13 +126,6 @@ pub(crate) fn gitignore_path_to_pattern(
 ) -> Option<String> {
     match entry {
         GitignorePath::File(p) => make_workspace_relative(p, workspace_root),
-        GitignorePath::Directory(p) => make_workspace_relative(p, workspace_root).and_then(|s| {
-            debug_assert!(
-                !s.is_empty(),
-                "GitignorePath::Directory resolved to workspace root"
-            );
-            (!s.is_empty()).then(|| format!("{s}/*"))
-        }),
     }
 }
 
@@ -164,12 +153,68 @@ pub(crate) fn write_gitignore(workspace_root: &Path, new_paths: &[GitignorePath]
     Ok(())
 }
 
+/// Remove the entire dotagents-managed fenced section from .gitignore.
+pub(crate) fn clear_gitignore_fence(workspace_root: &Path) -> Result<()> {
+    let gitignore_path = workspace_root.join(".gitignore");
+    let content = read_gitignore(&gitignore_path)?;
+    if content.is_empty() || !content.contains(FENCE_START) {
+        return Ok(());
+    }
+    let new_content = remove_fence(&content);
+    if content != new_content {
+        write_file(&gitignore_path, &new_content)?;
+    }
+    Ok(())
+}
+
+/// Strip the fenced section and the blank line that preceded it from raw content.
+fn remove_fence(content: &str) -> String {
+    if !content.contains(FENCE_START) {
+        return content.to_string();
+    }
+
+    let mut result: Vec<&str> = Vec::new();
+    let mut in_fence = false;
+
+    for line in content.lines() {
+        if line == FENCE_START {
+            in_fence = true;
+            // Remove blank line that update_gitignore inserts before the fence
+            if result.last() == Some(&"") {
+                result.pop();
+            }
+            continue;
+        }
+        if in_fence {
+            if line == FENCE_END {
+                in_fence = false;
+            }
+            continue;
+        }
+        result.push(line);
+    }
+
+    // Trim trailing blank lines left behind by fence removal
+    while result.last() == Some(&"") {
+        result.pop();
+    }
+
+    if result.is_empty() {
+        return String::new();
+    }
+
+    let mut out = result.join("\n");
+    out.push('\n');
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_parse_fenced_section_empty() {
+        // empty content yields no paths
         let content = "";
         let paths = parse_fenced_section(content);
         assert!(paths.is_empty());
@@ -177,6 +222,7 @@ mod tests {
 
     #[test]
     fn test_parse_fenced_section_with_fence() {
+        // paths inside the fence are extracted
         let content = "# BEGIN dotagents managed - do not edit manually\n.claude/commands/hello.md\nAGENTS.md\n# END dotagents managed";
         let paths = parse_fenced_section(content);
         assert_eq!(paths.len(), 2);
@@ -186,6 +232,7 @@ mod tests {
 
     #[test]
     fn test_parse_fenced_section_no_fence() {
+        // content without fence yields no paths
         let content = "node_modules/\n.env";
         let paths = parse_fenced_section(content);
         assert!(paths.is_empty());
@@ -193,6 +240,7 @@ mod tests {
 
     #[test]
     fn test_update_gitignore_new_file() {
+        // creates fenced section when none exists
         let content = "";
         let new_paths = vec![
             ".claude/commands/hello.md".to_string(),
@@ -208,6 +256,7 @@ mod tests {
 
     #[test]
     fn test_update_gitignore_existing_no_fence() {
+        // appends fence when user content exists without one
         let content = "node_modules/\n.env";
         let new_paths = vec!["CLAUDE.md".to_string()];
         let result = update_gitignore(content, &new_paths);
@@ -220,6 +269,7 @@ mod tests {
 
     #[test]
     fn test_update_gitignore_existing_with_fence() {
+        // adds new path to existing fence without touching others
         let content = "node_modules/\n# BEGIN dotagents managed - do not edit manually\n.claude/commands/hello.md\n# END dotagents managed";
         let new_paths = vec!["CLAUDE.md".to_string()];
         let result = update_gitignore(content, &new_paths);
@@ -231,6 +281,7 @@ mod tests {
 
     #[test]
     fn test_update_gitignore_no_duplicates() {
+        // already-present path is not written twice
         let content =
             "# BEGIN dotagents managed - do not edit manually\nCLAUDE.md\n# END dotagents managed";
         let new_paths = vec!["CLAUDE.md".to_string()];
@@ -269,15 +320,6 @@ mod tests {
     }
 
     #[test]
-    fn test_gitignore_path_to_pattern_directory() {
-        // Directory variant appends /* to the workspace-relative path
-        let root = PathBuf::from("/workspace");
-        let entry = GitignorePath::Directory(PathBuf::from("/workspace/.kilo/commands"));
-        let pattern = gitignore_path_to_pattern(&entry, &root).unwrap();
-        assert_eq!(pattern, ".kilo/commands/*");
-    }
-
-    #[test]
     fn test_gitignore_path_to_pattern_out_of_workspace() {
         // path outside workspace root returns None
         let root = PathBuf::from("/workspace");
@@ -287,36 +329,90 @@ mod tests {
     }
 
     #[test]
-    fn test_update_gitignore_with_directory_glob() {
-        // directory glob patterns are written with /* suffix
-        let content = "";
-        let new_paths = vec![".kilo/commands/*".to_string(), ".kilo/mcp.json".to_string()];
-        let result = update_gitignore(content, &new_paths);
-        assert!(result.contains(".kilo/commands/*"));
-        assert!(result.contains(".kilo/mcp.json"));
+    fn test_remove_fence_only_fence() {
+        // content consisting only of a fence returns empty string
+        let content = "# BEGIN dotagents managed - do not edit manually\n.claude/mcp.json\n# END dotagents managed\n";
+        let result = remove_fence(content);
+        assert_eq!(result, "");
     }
 
     #[test]
-    fn test_update_gitignore_directory_no_duplicates() {
-        // same directory glob added twice appears only once
-        let content = "# BEGIN dotagents managed - do not edit manually\n.kilo/commands/*\n# END dotagents managed";
-        let new_paths = vec![".kilo/commands/*".to_string()];
-        let result = update_gitignore(content, &new_paths);
-        assert_eq!(result.matches(".kilo/commands/*").count(), 1);
+    fn test_remove_fence_with_preceding_content() {
+        // blank line before fence is removed along with the fence
+        let content = "node_modules/\n.env\n\n# BEGIN dotagents managed - do not edit manually\n.claude/mcp.json\n# END dotagents managed\n";
+        let result = remove_fence(content);
+        assert_eq!(result, "node_modules/\n.env\n");
     }
 
     #[test]
-    fn test_update_gitignore_file_and_directory_coexist() {
-        // File and Directory patterns can coexist in the fenced section
-        let content = "";
-        let new_paths = vec![
-            ".kilo/commands/*".to_string(),
-            ".kilo/mcp.json".to_string(),
-            ".windsurf/workflows/*".to_string(),
-        ];
-        let result = update_gitignore(content, &new_paths);
-        assert!(result.contains(".kilo/commands/*"));
-        assert!(result.contains(".kilo/mcp.json"));
-        assert!(result.contains(".windsurf/workflows/*"));
+    fn test_remove_fence_no_fence_unchanged() {
+        // content without a fence is returned unchanged
+        let content = "node_modules/\n.env\n";
+        let result = remove_fence(content);
+        assert_eq!(result, content);
+    }
+
+    #[test]
+    fn test_remove_fence_preserves_content_after_fence() {
+        // user content after the fence is preserved
+        let content = "# BEGIN dotagents managed - do not edit manually\n.claude/mcp.json\n# END dotagents managed\n.DS_Store\n";
+        let result = remove_fence(content);
+        assert_eq!(result, ".DS_Store\n");
+    }
+
+    #[test]
+    fn test_clear_gitignore_fence_no_fence() {
+        // no-op when .gitignore has no fence
+        use std::fs;
+        use tempfile::TempDir;
+        let tmp = TempDir::new().unwrap();
+        let gi = tmp.path().join(".gitignore");
+        fs::write(&gi, "node_modules/\n").unwrap();
+        clear_gitignore_fence(tmp.path()).unwrap();
+        assert_eq!(fs::read_to_string(&gi).unwrap(), "node_modules/\n");
+    }
+
+    #[test]
+    fn test_clear_gitignore_fence_removes_fence() {
+        // removes fenced section and writes back
+        use std::fs;
+        use tempfile::TempDir;
+        let tmp = TempDir::new().unwrap();
+        let gi = tmp.path().join(".gitignore");
+        fs::write(
+            &gi,
+            "node_modules/\n\n# BEGIN dotagents managed - do not edit manually\n.claude/mcp.json\n# END dotagents managed\n",
+        )
+        .unwrap();
+        clear_gitignore_fence(tmp.path()).unwrap();
+        let after = fs::read_to_string(&gi).unwrap();
+        assert!(!after.contains(FENCE_START));
+        assert!(!after.contains(".claude/mcp.json"));
+        assert!(after.contains("node_modules/"));
+    }
+
+    #[test]
+    fn test_clear_gitignore_fence_missing_file_is_noop() {
+        // missing .gitignore does not produce an error
+        use tempfile::TempDir;
+        let tmp = TempDir::new().unwrap();
+        assert!(clear_gitignore_fence(tmp.path()).is_ok());
+    }
+
+    #[test]
+    fn test_clear_gitignore_fence_only_fence_writes_empty() {
+        // when entire file was the fence, result is empty string
+        use std::fs;
+        use tempfile::TempDir;
+        let tmp = TempDir::new().unwrap();
+        let gi = tmp.path().join(".gitignore");
+        fs::write(
+            &gi,
+            "# BEGIN dotagents managed - do not edit manually\n.claude/mcp.json\n# END dotagents managed\n",
+        )
+        .unwrap();
+        clear_gitignore_fence(tmp.path()).unwrap();
+        let after = fs::read_to_string(&gi).unwrap();
+        assert_eq!(after, "");
     }
 }

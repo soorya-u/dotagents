@@ -8,6 +8,7 @@ mod rm;
 mod runner;
 mod skills;
 pub(crate) mod ui;
+mod undeploy;
 
 pub(crate) use options::{InitOptions, get_options};
 pub(crate) use runner::run;

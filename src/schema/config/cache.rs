@@ -57,6 +57,24 @@ impl CacheConfig {
             .insert(item.to_string(), entry);
     }
 
+    /// Iterates all cache entries, yielding `(provider, feature, item, entry)` tuples.
+    pub fn iter_entries(&self) -> impl Iterator<Item = (&str, &str, &str, &CacheEntry)> + '_ {
+        self.providers.iter().flat_map(|(provider, features)| {
+            let provider = provider.as_str();
+            features.iter().flat_map(move |(feature, items)| {
+                let feature = feature.as_str();
+                items
+                    .iter()
+                    .map(move |(item, entry)| (provider, feature, item.as_str(), entry))
+            })
+        })
+    }
+
+    /// Removes all entries from the cache.
+    pub fn clear(&mut self) {
+        self.providers.clear();
+    }
+
     /// Reads `cache.toml` from the application directory; returns empty on missing or parse error.
     pub fn load() -> Result<Self> {
         let app_dir = match get_application_dir() {
@@ -161,5 +179,63 @@ mod tests {
         // The TOML parser rejects the corrupt content …
         assert!(parsed.is_err());
         // … and CacheConfig::load() wraps that in Ok(default)
+    }
+
+    // iter_entries yields all (provider, feature, item, entry) tuples
+    #[test]
+    fn test_iter_entries_yields_all() {
+        let mut cache = CacheConfig::default();
+        cache.set(
+            "claude",
+            "commands",
+            "hello",
+            CacheEntry {
+                hash: "h1".to_string(),
+                target: "/p1".to_string(),
+            },
+        );
+        cache.set(
+            "claude",
+            "mcp",
+            CACHE_SINGLETON_KEY,
+            CacheEntry {
+                hash: "h2".to_string(),
+                target: "/p2".to_string(),
+            },
+        );
+        let entries: Vec<_> = cache.iter_entries().collect();
+        assert_eq!(entries.len(), 2);
+        let targets: Vec<&str> = entries
+            .iter()
+            .map(|(_, _, _, e)| e.target.as_str())
+            .collect();
+        assert!(targets.contains(&"/p1"));
+        assert!(targets.contains(&"/p2"));
+    }
+
+    // iter_entries on empty cache yields nothing
+    #[test]
+    fn test_iter_entries_empty() {
+        let cache = CacheConfig::default();
+        assert_eq!(cache.iter_entries().count(), 0);
+    }
+
+    // clear removes all entries
+    #[test]
+    fn test_clear_empties_cache() {
+        let mut cache = CacheConfig::default();
+        cache.set(
+            "claude",
+            "commands",
+            "hello",
+            CacheEntry {
+                hash: "abc".to_string(),
+                target: "/path".to_string(),
+            },
+        );
+        assert_eq!(cache.iter_entries().count(), 1);
+        cache.clear();
+        assert_eq!(cache.iter_entries().count(), 0);
+        assert!(cache.providers.is_empty());
     }
 }
