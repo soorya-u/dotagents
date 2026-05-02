@@ -4,7 +4,7 @@ use super::deploy::deploy;
 use super::init::initialize_agents_dir;
 use super::options::{Action, Options};
 use super::skills;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::CommandFactory;
 
 pub(crate) fn run(opts: Options) -> Result<bool> {
@@ -26,8 +26,12 @@ pub(crate) fn run(opts: Options) -> Result<bool> {
             deploy(opts)?;
             true
         }
-        Action::Skills { action } => skills::run_skills(action)?,
-        Action::Commands { action } => commands::run_commands(action)?,
+        Action::Skills { action } => {
+            skills::run_skills(action).context("failed to run `skills` subcommand")?
+        }
+        Action::Commands { action } => {
+            commands::run_commands(action).context("failed to run `commands` subcommand")?
+        }
     };
 
     Ok(success)

@@ -30,8 +30,8 @@ test.describe("commands new CLI", () => {
 				join(d, ".dotagents-debug/commands/greet.md"),
 				"utf8",
 			);
-			expect(content).toContain('name: "greet"');
-			expect(content).toContain('"Say hello"');
+			expect(content).toContain("name: greet");
+			expect(content).toContain("Say hello");
 			expect(content).toContain("Greetings");
 			expect(content).toContain("greeting");
 		} finally {
@@ -71,7 +71,7 @@ test.describe("commands new CLI", () => {
 				join(d, ".dotagents-debug/commands/greet.md"),
 				"utf8",
 			);
-			expect(content).toContain('"second"');
+			expect(content).toContain("second");
 		} finally {
 			cleanup(d);
 		}
@@ -222,7 +222,7 @@ test.describe("commands new TUI – T06 interactive prompts", () => {
 				join(d, ".dotagents-debug/commands/greet.md"),
 				"utf8",
 			);
-			expect(content).toContain('"A greeting command"');
+			expect(content).toContain("A greeting command");
 			expect(content).toContain("Greetings");
 		} finally {
 			cleanup(d);

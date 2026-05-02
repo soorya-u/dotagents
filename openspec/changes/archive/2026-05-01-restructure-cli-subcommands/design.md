@@ -23,7 +23,7 @@ The project uses Clap (derive API) for all CLI parsing. Feature logic (file crea
 
 ### 1. `commands` as a first-class subcommand group
 
-**Decision:** Add a new `CommandsAction` enum in `src/cli/options.rs` with variants `New(AddCommandOptions)`, `Rm(RmCommandOptions)`, `Ls(LsOptions)`. Wire it through a new `src/cli/commands.rs` handler that delegates to the existing logic functions currently in `add.rs` and `rm.rs`.
+**Decision:** Add a new `CommandsAction` enum in `src/cli/options.rs` with variants `New(AddCommandOptions)`, `Rm(RmCommandOptions)`, `Ls(SubLsOptions)`. Wire it through a new `src/cli/commands.rs` handler that contains the business logic inline (file I/O, TUI prompts).
 
 **Alternatives considered:**
 - Keep top-level `add`/`rm`/`ls` and add `commands` as aliases — rejected; leaves dead surface and doubles maintenance burden.
@@ -55,11 +55,9 @@ The four boolean flags are removed entirely; their only job was to set `is_tui_m
 - Blacklist (keep `--no-*`, add new ones) — rejected; grows without bound and is the problem being solved.
 - Separate `--enable-features` / `--disable-features` pair — rejected; over-engineered for the current feature count.
 
-### 4. `LsOptions` reuse across `commands ls` and `skills ls`
+### 4. `SubLsOptions` for `commands ls` and `skills ls`
 
-**Decision:** The same `LsOptions` struct (currently carrying `commands: bool`, `skills: bool`, `full: bool`) is reused as the argument type for both `commands ls` and `skills ls`. The `commands` and `skills` filter fields become irrelevant in those contexts (they are always implicitly true) but cause no harm. Alternatively, a trimmed `SubLsOptions { full: bool }` could be introduced for clarity.
-
-**Preferred:** Introduce a lightweight `SubLsOptions { full: bool }` to avoid confusing field names (`commands ls --commands` is nonsensical). This is a small struct addition with no behaviour change.
+**Decision:** Introduce a lightweight `SubLsOptions { full: bool }` as the argument type for both `commands ls` and `skills ls`. This avoids the confusing filter fields from the old top-level `LsOptions` struct (`commands ls --commands` is nonsensical). The old `LsOptions` type is deleted along with `src/cli/ls.rs`.
 
 ### 5. Remove `-v` → `--full` implicit tie-in
 

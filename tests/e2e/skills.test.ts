@@ -31,10 +31,10 @@ test.describe("skills new CLI", () => {
 				"utf8",
 			);
 			expect(content).toContain("name: my-skill");
-			expect(content).toContain('"Greet users"');
+			expect(content).toContain("Greet users");
 			expect(content).toContain("license: MIT");
-			expect(content).toContain('"Requires node"');
-			expect(content).toContain('version: "1.0"');
+			expect(content).toContain("Requires node");
+			expect(content).toContain("version: '1.0'");
 		} finally {
 			cleanup(d);
 		}
@@ -72,7 +72,7 @@ test.describe("skills new CLI", () => {
 				join(d, ".dotagents-debug/skills/my-skill/SKILL.md"),
 				"utf8",
 			);
-			expect(content).toContain('"second"');
+			expect(content).toContain("second");
 		} finally {
 			cleanup(d);
 		}

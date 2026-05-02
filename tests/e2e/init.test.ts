@@ -66,7 +66,7 @@ test.describe("init CLI – file tree", () => {
 	test("--features without commands omits commands directory", async () => {
 		const d = makeTmpDir();
 		try {
-			run(
+			const { exitCode } = run(
 				[
 					"init",
 					"--template",
@@ -76,6 +76,7 @@ test.describe("init CLI – file tree", () => {
 				],
 				d,
 			);
+			expect(exitCode).toBe(0);
 			expect(existsSync(join(d, ".dotagents-debug/commands"))).toBe(false);
 		} finally {
 			cleanup(d);
@@ -86,7 +87,7 @@ test.describe("init CLI – file tree", () => {
 	test("--features without skills omits skills directory", async () => {
 		const d = makeTmpDir();
 		try {
-			run(
+			const { exitCode } = run(
 				[
 					"init",
 					"--template",
@@ -96,6 +97,7 @@ test.describe("init CLI – file tree", () => {
 				],
 				d,
 			);
+			expect(exitCode).toBe(0);
 			expect(existsSync(join(d, ".dotagents-debug/skills"))).toBe(false);
 		} finally {
 			cleanup(d);
@@ -106,7 +108,7 @@ test.describe("init CLI – file tree", () => {
 	test("--features without mcp omits mcp.jsonc", async () => {
 		const d = makeTmpDir();
 		try {
-			run(
+			const { exitCode } = run(
 				[
 					"init",
 					"--template",
@@ -116,6 +118,7 @@ test.describe("init CLI – file tree", () => {
 				],
 				d,
 			);
+			expect(exitCode).toBe(0);
 			expect(existsSync(join(d, ".dotagents-debug/mcp.jsonc"))).toBe(false);
 		} finally {
 			cleanup(d);
@@ -126,10 +129,11 @@ test.describe("init CLI – file tree", () => {
 	test("--features without instructions omits INSTRUCTIONS.md", async () => {
 		const d = makeTmpDir();
 		try {
-			run(
+			const { exitCode } = run(
 				["init", "--template", "starter", "--features", "commands,mcp,skills"],
 				d,
 			);
+			expect(exitCode).toBe(0);
 			expect(existsSync(join(d, ".dotagents-debug/INSTRUCTIONS.md"))).toBe(
 				false,
 			);

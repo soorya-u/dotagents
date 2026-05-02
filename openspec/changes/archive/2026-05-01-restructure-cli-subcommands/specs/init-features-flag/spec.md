@@ -11,9 +11,10 @@
 - **WHEN** user runs `dotagents init --features commands --features mcp`
 - **THEN** only `commands` and `mcp` feature files are scaffolded; same result as comma-separated form
 
-#### Scenario: All features enabled when flag is absent
-- **WHEN** user runs `dotagents init` with no `--features` flag
+#### Scenario: All features enabled when flag is absent (non-interactive)
+- **WHEN** user runs `dotagents init` with no `--features` flag in a non-interactive (headless) environment, or accepts the wizard defaults in an interactive terminal
 - **THEN** all four feature sets (commands, instructions, mcp, skills) are scaffolded
+- **NOTE** in interactive terminals the TUI wizard runs and the user may deselect features; this scenario covers the headless path and the wizard-default-accept path only
 
 ### Requirement: --features none disables all feature scaffolding
 The sentinel value `none` SHALL be accepted as the sole value for `--features` and SHALL cause no feature files to be written. Only the base config files (`config.toml`, `local.config.toml`, `.env`, `.gitignore`) SHALL be written.

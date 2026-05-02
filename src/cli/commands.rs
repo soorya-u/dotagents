@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::fs;
 
 use anyhow::{Context, Result};
@@ -5,6 +6,7 @@ use cliclack::{confirm, input, intro, outro};
 use gray_matter::Matter;
 use gray_matter::engine::YAML;
 use serde_json::Value;
+use serde_yaml::Value as YamlValue;
 
 use crate::cli::deploy::deploy;
 use crate::cli::options::{
@@ -82,16 +84,21 @@ fn new_command(opts: AddCommandOptions) -> Result<bool> {
     let category = collect_field(opts.category, "Category", "e.g. Workflow")?;
     let tags_raw = collect_field(opts.tags, "Tags (comma-separated)", "e.g. workflow,explore")?;
 
-    // Build frontmatter manually to preserve optional fields cleanly.
-    let mut frontmatter = format!("name: \"{}\"\n", opts.name);
-    frontmatter.push_str(&format!("description: \"{}\"\n", description));
-    if !category.is_empty() {
-        frontmatter.push_str(&format!("category: {}\n", category));
-    }
-    if !tags_raw.is_empty() {
-        let tag_list: Vec<&str> = tags_raw.split(',').map(str::trim).collect();
-        frontmatter.push_str(&format!("tags: [{}]\n", tag_list.join(", ")));
-    }
+    // Build frontmatter via serde_yaml to properly escape all values.
+    let tags: Vec<String> = if tags_raw.is_empty() {
+        vec![]
+    } else {
+        tags_raw.split(',').map(|t| t.trim().to_string()).collect()
+    };
+    let mut fm: BTreeMap<&str, YamlValue> = BTreeMap::new();
+    fm.insert("name", YamlValue::String(opts.name.clone()));
+    fm.insert("description", YamlValue::String(description));
+    fm.insert("category", YamlValue::String(category));
+    fm.insert(
+        "tags",
+        YamlValue::Sequence(tags.into_iter().map(YamlValue::String).collect()),
+    );
+    let frontmatter = serde_yaml::to_string(&fm).context("failed to serialize frontmatter")?;
 
     let body = render_starter(COMMAND_STARTER, &opts.name);
     let content = format!("---\n{}---\n\n{}", frontmatter, body);

@@ -3,6 +3,8 @@ use cliclack::{confirm, input, intro, outro};
 use gray_matter::Matter;
 use gray_matter::engine::YAML;
 use serde_json::Value;
+use serde_yaml::Value as YamlValue;
+use std::collections::BTreeMap;
 use std::fs;
 use std::io::ErrorKind;
 
@@ -144,16 +146,25 @@ fn new_skill(opts: AddSkillOptions) -> Result<bool> {
         "e.g. Requires openspec CLI.",
     )?;
 
-    // Build frontmatter.
-    let mut frontmatter = format!("name: {}\n", opts.name);
-    frontmatter.push_str(&format!("description: \"{}\"\n", description));
-    if !license.is_empty() {
-        frontmatter.push_str(&format!("license: {}\n", license));
-    }
-    if !compatibility.is_empty() {
-        frontmatter.push_str(&format!("compatibility: \"{}\"\n", compatibility));
-    }
-    frontmatter.push_str("metadata:\n  version: \"1.0\"\n");
+    // Build frontmatter via serde_yaml to properly escape all values.
+    let mut metadata: BTreeMap<&str, YamlValue> = BTreeMap::new();
+    metadata.insert("version", YamlValue::String("1.0".to_string()));
+
+    let mut fm: BTreeMap<&str, YamlValue> = BTreeMap::new();
+    fm.insert("name", YamlValue::String(opts.name.clone()));
+    fm.insert("description", YamlValue::String(description));
+    fm.insert("license", YamlValue::String(license));
+    fm.insert("compatibility", YamlValue::String(compatibility));
+    fm.insert(
+        "metadata",
+        YamlValue::Mapping(
+            metadata
+                .into_iter()
+                .map(|(k, v)| (YamlValue::String(k.to_string()), v))
+                .collect(),
+        ),
+    );
+    let frontmatter = serde_yaml::to_string(&fm).context("failed to serialize frontmatter")?;
 
     let body = render_starter(SKILL_STARTER, &opts.name);
     let content = format!("---\n{}---\n\n{}", frontmatter, body);

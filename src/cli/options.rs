@@ -147,7 +147,8 @@ pub(crate) enum InitTemplate {
 pub(crate) struct InitOptions {
     /// Features to scaffold. Accepts comma-separated values and/or repeated flags.
     /// Valid values: commands, instructions, mcp, skills, none.
-    /// Defaults to all features when omitted. Use `none` to disable all features.
+    /// When omitted, features are chosen interactively when possible; otherwise all features are enabled.
+    /// Use `none` to disable all features.
     #[clap(long, value_delimiter = ',', num_args = 1..)]
     pub features: Option<Vec<Feature>>,
 
