@@ -91,7 +91,7 @@ impl FeatureTrait for CommandFeature {
     }
 
     fn gitignore_scope(&self) -> GitignoreScope {
-        GitignoreScope::Directory
+        GitignoreScope::File
     }
 }
 
@@ -186,8 +186,8 @@ Command content here"#;
     }
 
     #[test]
-    fn test_gitignore_scope_is_directory() {
-        // commands deploy many files into an owned directory → Directory scope
+    fn test_gitignore_scope_is_file() {
+        // commands use File scope — individual file paths in .gitignore
         let command = CommandFeature {
             metadata: CommandMetadata {
                 name: "scope-test".to_string(),
@@ -195,10 +195,7 @@ Command content here"#;
             },
             content: "Content".to_string(),
         };
-        assert!(matches!(
-            command.gitignore_scope(),
-            GitignoreScope::Directory
-        ));
+        assert!(matches!(command.gitignore_scope(), GitignoreScope::File));
     }
 
     #[test]
