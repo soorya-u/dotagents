@@ -185,10 +185,7 @@ test.describe("undeploy CLI – user-edited files", () => {
 				"User has manually edited this file.",
 			);
 
-			const { exitCode } = run(
-				["undeploy", "--no-gitignore", "--force"],
-				d,
-			);
+			const { exitCode } = run(["undeploy", "--no-gitignore", "--force"], d);
 			expect(exitCode).toBe(0);
 			expect(existsSync(join(d, ".mycode/instructions.md"))).toBe(false);
 		} finally {
@@ -222,7 +219,9 @@ test.describe("undeploy CLI – empty dir pruning", () => {
 test.describe("deploy TUI – T-D1 outro summary", () => {
 	const d = makeTmpDir();
 	initWithLocalProvider(d);
-	test.use({ program: shellProgram(d, ["deploy", "--offline", "--no-gitignore"]) });
+	test.use({
+		program: shellProgram(d, ["deploy", "--offline", "--no-gitignore"]),
+	});
 
 	test("deploy prints written/skipped summary to TTY", async ({ terminal }) => {
 		try {
