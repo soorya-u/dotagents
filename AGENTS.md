@@ -8,10 +8,37 @@ After every change — no exceptions — run both of these and fix anything that
 
 ```bash
 mise check      # cargo fmt + cargo clippy (format & lint)
-mise test-all   # cargo test  (unit + integration + e2e)
+mise tests      # cargo test  (unit + integration + e2e)
 ```
 
 Both commands must exit 0 before a task is considered done.
+
+## Testing Workflow
+
+**For each feature implementation:**
+
+1. **Discovery with tui-devtools** (required before writing TUI e2e tests)
+   - `tui-devtools` is a mise npm tool (see `mise.toml`), not a Rust binary. Run it as a daemon: `tui-devtools` from a mise shell.
+   - For any feature that adds or changes interactive TUI prompts, run a discovery pass first: drive every affected flow through the actual PTY and record exact terminal output (symbols, spacing, prompt order, success/error text).
+   - Write tui-test assertions from those observations — never from source-reading alone. cliclack prompt rendering is opaque from source; deviation between assumed and actual output causes all snapshot tests to fail on first run.
+   - Each flow runs in an isolated temp workspace (`mkdtemp`) so a crash doesn't corrupt others.
+
+2. **Unit Tests**
+   - Add unit tests (`#[cfg(test)] mod tests`) in the same file as the implementation.
+   - Test functions get a **single-line comment** explaining what is being tested (e.g. `// renders error when path does not exist`).
+   - Unit tests are colocated with the code they test, not in separate files.
+
+3. **E2E Tests** (required for any user-visible CLI or TUI behavior)
+   - Add tests in `tests/e2e/` for every new flow — both the CLI (flag-driven) path and the interactive TUI path.
+   - Use `@microsoft/tui-test` (the framework already in `tests/e2e/package.json`). See existing `*.test.ts` files for patterns.
+   - Use `getByText` for semantic assertions; reserve snapshots for layout-sensitive output like `ls` tables.
+   - CLI paths: assert on exit code, stdout/stderr content, and filesystem state.
+   - TUI paths: write from tui-devtools observations (step 1), not from source assumptions.
+
+**When to add which type of test:**
+- Unit tests: always, for internal logic (parsing, config merging, rendering helpers, etc.)
+- E2E tests: always, for any feature that changes user-visible CLI output, prompts, or deployed file content.
+- tui-devtools discovery: required before writing e2e tests that cover interactive prompts.
 
 ## Common Commands
 
@@ -26,9 +53,9 @@ mise run run -- deploy
 mise run run -- gen-completions --shell bash --to ./completions
 
 # Tests (individual suites)
-mise run test              # unit tests only (src/ colocated #[cfg(test)] blocks)
-mise run test-integration  # tests/integration/ smoke tests
-mise run test-e2e          # tests/e2e/ full end-to-end suite
+mise run tests:unit         # unit tests only (src/ colocated #[cfg(test)] blocks)
+mise run tests:integration  # tests/integration/ smoke tests
+mise run tests:e2e          # tests/e2e/ full end-to-end suite via tui-test
 
 # Raw cargo (useful for filtering by test name)
 cargo test <name>                                 # single test by name (substring match)

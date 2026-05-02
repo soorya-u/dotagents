@@ -3,18 +3,23 @@ schema: spec-driven
 # Project context (optional)
 # This is shown to AI when creating artifacts.
 # Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Tech stack: Rust CLI, Handlebars templating, tui-test for e2e
+  Domain: AI agent configuration management (Dotagents CLI)
+  Testing requirement: All features must be manually tested with tui-devtools before unit/e2e testing is added
+  Verification: Must run `mise check` and `mise tests` before finishing (both must exit 0)
+  Code style: One-liner comments only, pub(crate) visibility, no top-level file comments
 
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+rules:
+  proposal:
+    - Always mention testing approach: manual tui-devtools testing, then unit/e2e coverage
+    - Include verification checklist (mise check + mise tests)
+  tasks:
+    - Each implementation task must include a "Test with tui-devtools" step before adding automated tests
+    - Break testing into: manual feature validation → add unit tests → add e2e tests
+    - Max 2-hour chunks per task, but testing steps can be separate tasks
+  specs:
+    - Document testing requirements alongside feature specs
+    - Note which features need tui-devtools manual testing before automation
