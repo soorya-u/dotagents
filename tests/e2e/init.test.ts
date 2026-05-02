@@ -62,44 +62,78 @@ test.describe("init CLI – file tree", () => {
 		}
 	});
 
-	// C04: --no-command omits commands dir
-	test("--no-command omits commands directory", async () => {
+	// C04: --features without commands omits commands dir
+	test("--features without commands omits commands directory", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter", "--no-command"], d);
+			const { exitCode } = run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"instructions,mcp,skills",
+				],
+				d,
+			);
+			expect(exitCode).toBe(0);
 			expect(existsSync(join(d, ".dotagents-debug/commands"))).toBe(false);
 		} finally {
 			cleanup(d);
 		}
 	});
 
-	// C05: --no-skill omits skills dir
-	test("--no-skill omits skills directory", async () => {
+	// C05: --features without skills omits skills dir
+	test("--features without skills omits skills directory", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter", "--no-skill"], d);
+			const { exitCode } = run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp",
+				],
+				d,
+			);
+			expect(exitCode).toBe(0);
 			expect(existsSync(join(d, ".dotagents-debug/skills"))).toBe(false);
 		} finally {
 			cleanup(d);
 		}
 	});
 
-	// C06: --no-mcp omits mcp.jsonc
-	test("--no-mcp omits mcp.jsonc", async () => {
+	// C06: --features without mcp omits mcp.jsonc
+	test("--features without mcp omits mcp.jsonc", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter", "--no-mcp"], d);
+			const { exitCode } = run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,skills",
+				],
+				d,
+			);
+			expect(exitCode).toBe(0);
 			expect(existsSync(join(d, ".dotagents-debug/mcp.jsonc"))).toBe(false);
 		} finally {
 			cleanup(d);
 		}
 	});
 
-	// C07: --no-instruction omits INSTRUCTIONS.md
-	test("--no-instruction omits INSTRUCTIONS.md", async () => {
+	// C07: --features without instructions omits INSTRUCTIONS.md
+	test("--features without instructions omits INSTRUCTIONS.md", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter", "--no-instruction"], d);
+			const { exitCode } = run(
+				["init", "--template", "starter", "--features", "commands,mcp,skills"],
+				d,
+			);
+			expect(exitCode).toBe(0);
 			expect(existsSync(join(d, ".dotagents-debug/INSTRUCTIONS.md"))).toBe(
 				false,
 			);

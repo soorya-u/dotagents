@@ -46,23 +46,29 @@ pub(crate) enum Action {
         action: SkillsAction,
     },
 
-    /// List skills and commands from .dotagents/
-    Ls(LsOptions),
-
-    /// Add a new command or skill to .dotagents/
-    Add {
+    /// Manage commands
+    Commands {
         #[clap(subcommand)]
-        action: AddAction,
-    },
-
-    /// Remove a command or skill from .dotagents/
-    Rm {
-        #[clap(subcommand)]
-        action: RmAction,
+        action: CommandsAction,
     },
 
     /// Remove all files deployed by the last `dotagents deploy` run
     Undeploy(UndeployOptions),
+}
+
+/// Features that can be scaffolded by `dotagents init`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
+pub(crate) enum Feature {
+    /// Enable command templating.
+    Commands,
+    /// Enable instruction templating.
+    Instructions,
+    /// Enable MCP templating.
+    Mcp,
+    /// Enable skill templating.
+    Skills,
+    /// Disable all features (exclusive — cannot be combined with other values).
+    None,
 }
 
 /// Subcommands for `dotagents skills`.
@@ -70,6 +76,31 @@ pub(crate) enum Action {
 pub(crate) enum SkillsAction {
     /// Install a skill from skills.sh or a GitHub owner/repo into .dotagents/skills/
     Add(SkillsAddOptions),
+    /// Create a new local skill scaffold in .dotagents/skills/
+    New(AddSkillOptions),
+    /// Remove a local skill from .dotagents/skills/
+    Rm(RmSkillOptions),
+    /// List local skills in .dotagents/skills/
+    Ls(SubLsOptions),
+}
+
+/// Subcommands for `dotagents commands`.
+#[derive(Subcommand)]
+pub(crate) enum CommandsAction {
+    /// Create a new command in .dotagents/commands/
+    New(AddCommandOptions),
+    /// Remove a command from .dotagents/commands/
+    Rm(RmCommandOptions),
+    /// List commands in .dotagents/commands/
+    Ls(SubLsOptions),
+}
+
+/// Options shared by `commands ls` and `skills ls`.
+#[derive(Args, Default)]
+pub(crate) struct SubLsOptions {
+    /// Show full descriptions (word-wrapped) instead of truncating.
+    #[clap(long = "full")]
+    pub full: bool,
 }
 
 #[derive(Args)]
@@ -118,25 +149,12 @@ pub(crate) enum InitTemplate {
 
 #[derive(Args)]
 pub(crate) struct InitOptions {
-    /// Disables the MCP Templating for all the Targets.
-    /// You can override this later in config.toml file.
-    #[clap(long)]
-    pub no_mcp: bool,
-
-    /// Disables the Command Templating for all the Targets.
-    /// You can override this later in config.toml file.
-    #[clap(long)]
-    pub no_command: bool,
-
-    /// Disables the Instruction Templating for all the Targets.
-    /// You can override this later in config.toml file.
-    #[clap(long)]
-    pub no_instruction: bool,
-
-    /// Disables the Skill Templating for all the Targets.
-    /// You can override this later in config.toml file.
-    #[clap(long)]
-    pub no_skill: bool,
+    /// Features to scaffold. Accepts comma-separated values and/or repeated flags.
+    /// Valid values: commands, instructions, mcp, skills, none.
+    /// When omitted, features are chosen interactively when possible; otherwise all features are enabled.
+    /// Use `none` to disable all features.
+    #[clap(long, value_delimiter = ',', num_args = 1..)]
+    pub features: Option<Vec<Feature>>,
 
     /// Force overwriting existing configuration.
     #[clap(long, short, default_value_t = cfg!(debug_assertions))]
@@ -152,30 +170,20 @@ pub(crate) struct InitOptions {
     pub targets: Vec<String>,
 }
 
-/// Options for `dotagents ls`.
-#[derive(Args, Default)]
-pub(crate) struct LsOptions {
-    /// Show only commands.
-    #[clap(long, short = 'c')]
-    pub commands: bool,
-
-    /// Show only skills.
-    #[clap(long, short = 's')]
-    pub skills: bool,
-
-    /// Show full descriptions (word-wrapped) instead of truncating.
-    /// Can also be enabled with the global -v flag.
-    #[clap(long = "full")]
-    pub verbose: bool,
-}
-
-/// Subcommands for `dotagents add`.
-#[derive(Subcommand)]
-pub(crate) enum AddAction {
-    /// Create a new command in .dotagents/commands/
-    Command(AddCommandOptions),
-    /// Create a new skill in .dotagents/skills/
-    Skill(AddSkillOptions),
+impl InitOptions {
+    /// Returns true if the given feature is enabled based on the `--features` flag.
+    pub(crate) fn has_feature(&self, feature: Feature) -> bool {
+        match &self.features {
+            None => true, // all features enabled when flag is absent
+            Some(list) => {
+                if list.iter().any(|f| matches!(f, Feature::None)) {
+                    false // none sentinel: all features disabled
+                } else {
+                    list.contains(&feature)
+                }
+            }
+        }
+    }
 }
 
 #[derive(Args)]
@@ -228,15 +236,6 @@ pub(crate) struct AddSkillOptions {
     /// Run deploy after creating the skill.
     #[clap(long)]
     pub deploy: bool,
-}
-
-/// Subcommands for `dotagents rm`.
-#[derive(Subcommand)]
-pub(crate) enum RmAction {
-    /// Remove a command from .dotagents/commands/
-    Command(RmCommandOptions),
-    /// Remove a skill from .dotagents/skills/
-    Skill(RmSkillOptions),
 }
 
 #[derive(Args)]
@@ -307,21 +306,15 @@ mod tests {
 
     #[test]
     fn test_init_options_defaults() {
-        // Test default values for InitOptions — template defaults to None (wizard mode)
+        // features defaults to None (all features enabled, TUI mode possible)
         let init_options = InitOptions {
-            no_mcp: false,
-            no_command: false,
-            no_instruction: false,
-            no_skill: false,
+            features: None,
             force: false,
             template: None,
             targets: vec![],
         };
 
-        assert!(!init_options.no_mcp);
-        assert!(!init_options.no_command);
-        assert!(!init_options.no_instruction);
-        assert!(!init_options.no_skill);
+        assert!(init_options.features.is_none());
         assert!(init_options.template.is_none());
     }
 
@@ -342,5 +335,50 @@ mod tests {
         assert_eq!(options.verbosity, 0);
         assert!(!options.quiet);
         assert!(options.action.is_none());
+    }
+
+    #[test]
+    fn has_feature_returns_true_when_features_absent() {
+        // None (flag absent) enables all features
+        let opts = InitOptions {
+            features: None,
+            force: false,
+            template: None,
+            targets: vec![],
+        };
+        assert!(opts.has_feature(Feature::Commands));
+        assert!(opts.has_feature(Feature::Instructions));
+        assert!(opts.has_feature(Feature::Mcp));
+        assert!(opts.has_feature(Feature::Skills));
+    }
+
+    #[test]
+    fn has_feature_returns_false_for_unlisted_feature() {
+        // Only Commands is listed → Mcp is disabled
+        let opts = InitOptions {
+            features: Some(vec![Feature::Commands]),
+            force: false,
+            template: None,
+            targets: vec![],
+        };
+        assert!(opts.has_feature(Feature::Commands));
+        assert!(!opts.has_feature(Feature::Mcp));
+        assert!(!opts.has_feature(Feature::Instructions));
+        assert!(!opts.has_feature(Feature::Skills));
+    }
+
+    #[test]
+    fn has_feature_returns_false_for_all_when_none_sentinel() {
+        // Feature::None sentinel disables everything
+        let opts = InitOptions {
+            features: Some(vec![Feature::None]),
+            force: false,
+            template: None,
+            targets: vec![],
+        };
+        assert!(!opts.has_feature(Feature::Commands));
+        assert!(!opts.has_feature(Feature::Instructions));
+        assert!(!opts.has_feature(Feature::Mcp));
+        assert!(!opts.has_feature(Feature::Skills));
     }
 }

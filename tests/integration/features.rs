@@ -11,8 +11,14 @@ fn add_command_source_has_yaml_frontmatter() {
     // `add command` should create a markdown file with YAML frontmatter.
     let ws = TestWorkspace::new();
     ws.run_command(&["init"]).assert_success();
-    ws.run_command(&["add", "command", "greet", "--description", "Greet the user"])
-        .assert_success();
+    ws.run_command(&[
+        "commands",
+        "new",
+        "greet",
+        "--description",
+        "Greet the user",
+    ])
+    .assert_success();
 
     let d = ws.root_dir_name();
     let source = ws.read_file(format!("{d}/commands/greet.md"));
@@ -39,8 +45,8 @@ fn add_command_with_category_and_tags_includes_them_in_source() {
     let ws = TestWorkspace::new();
     ws.run_command(&["init"]).assert_success();
     ws.run_command(&[
-        "add",
-        "command",
+        "commands",
+        "new",
         "tag-cmd",
         "--description",
         "Tagged",
@@ -72,7 +78,7 @@ fn add_skill_source_has_expected_metadata() {
     // `add skill` should create SKILL.md with YAML frontmatter inside a subdirectory.
     let ws = TestWorkspace::new();
     ws.run_command(&["init"]).assert_success();
-    ws.run_command(&["add", "skill", "my-skill", "--description", "A test skill"])
+    ws.run_command(&["skills", "new", "my-skill", "--description", "A test skill"])
         .assert_success();
 
     let d = ws.root_dir_name();
@@ -124,7 +130,7 @@ fn deploy_creates_one_output_file_per_command() {
     init_with_mycode_provider(&ws);
 
     // Add a second command beyond the scaffold's hello.md.
-    ws.run_command(&["add", "command", "greet", "--description", "Greet user"])
+    ws.run_command(&["commands", "new", "greet", "--description", "Greet user"])
         .assert_success();
 
     ws.run_command(&["deploy", "--offline", "--no-gitignore"])
@@ -166,7 +172,7 @@ fn deployed_command_output_name_matches_source_name() {
     let ws = TestWorkspace::new();
     init_with_mycode_provider(&ws);
 
-    ws.run_command(&["add", "command", "custom-cmd", "--description", "Custom"])
+    ws.run_command(&["commands", "new", "custom-cmd", "--description", "Custom"])
         .assert_success();
 
     ws.run_command(&["deploy", "--offline", "--no-gitignore"])

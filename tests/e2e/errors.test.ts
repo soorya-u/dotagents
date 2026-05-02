@@ -4,12 +4,12 @@ import { cleanup, makeTmpDir, run } from "./helpers.js";
 // C31–C34: error flows — binary gives helpful messages for common mistakes
 
 test.describe("error flows – no workspace", () => {
-	// C32: add command outside workspace
-	test("add command without workspace exits non-zero with helpful message", async () => {
+	// C32: commands new outside workspace
+	test("commands new without workspace exits non-zero with helpful message", async () => {
 		const d = makeTmpDir();
 		try {
 			const { exitCode, stderr } = run(
-				["add", "command", "hello", "--description", "x"],
+				["commands", "new", "hello", "--description", "x"],
 				d,
 			);
 			expect(exitCode).not.toBe(0);
@@ -19,11 +19,11 @@ test.describe("error flows – no workspace", () => {
 		}
 	});
 
-	// C33: ls outside workspace
-	test("ls without workspace exits non-zero mentioning init", async () => {
+	// C33: commands ls outside workspace
+	test("commands ls without workspace exits non-zero mentioning init", async () => {
 		const d = makeTmpDir();
 		try {
-			const { exitCode, stderr } = run(["ls"], d);
+			const { exitCode, stderr } = run(["commands", "ls"], d);
 			expect(exitCode).not.toBe(0);
 			expect(stderr).toContain("dotagents init");
 		} finally {
@@ -50,7 +50,7 @@ test.describe("error flows – missing targets", () => {
 		try {
 			run(["init", "--template", "starter"], d);
 			const { exitCode, stderr } = run(
-				["rm", "command", "ghost", "--force"],
+				["commands", "rm", "ghost", "--force"],
 				d,
 			);
 			expect(exitCode).not.toBe(0);
@@ -65,7 +65,7 @@ test.describe("error flows – missing targets", () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
-			const { exitCode, stderr } = run(["rm", "skill", "ghost", "--force"], d);
+			const { exitCode, stderr } = run(["skills", "rm", "ghost", "--force"], d);
 			expect(exitCode).not.toBe(0);
 			expect(stderr).toContain("ghost");
 		} finally {
@@ -74,13 +74,13 @@ test.describe("error flows – missing targets", () => {
 	});
 
 	// duplicate add without --force mentions --force in error
-	test("duplicate add command without --force mentions --force", async () => {
+	test("duplicate commands new without --force mentions --force", async () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
 			// hello.md already exists from init
 			const { exitCode, stderr } = run(
-				["add", "command", "hello", "--description", "x"],
+				["commands", "new", "hello", "--description", "x"],
 				d,
 			);
 			expect(exitCode).not.toBe(0);

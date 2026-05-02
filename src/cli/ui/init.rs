@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use cliclack::{intro, multiselect, outro, outro_cancel, select, spinner};
 
-use crate::cli::options::{InitOptions, InitTemplate};
+use crate::cli::options::{Feature, InitOptions, InitTemplate};
 use crate::schema::registry::Registry;
 use crate::templates::registry_url;
 
@@ -37,10 +37,18 @@ pub(crate) fn run_init_wizard(opts: &mut InitOptions, dir_exists: bool) -> Resul
         .required(false);
     let features = ms.interact().context("Failed to get feature selection")?;
 
-    opts.no_command = !features.contains(&"commands");
-    opts.no_instruction = !features.contains(&"instructions");
-    opts.no_mcp = !features.contains(&"mcp");
-    opts.no_skill = !features.contains(&"skills");
+    // Map the string selections back to Feature enum values and store in opts.features.
+    let feature_list: Vec<Feature> = features
+        .iter()
+        .filter_map(|&f| match f {
+            "commands" => Some(Feature::Commands),
+            "instructions" => Some(Feature::Instructions),
+            "mcp" => Some(Feature::Mcp),
+            "skills" => Some(Feature::Skills),
+            _ => None,
+        })
+        .collect();
+    opts.features = Some(feature_list);
 
     // Template select — Starter is the first item (default).
     let mut ts = select("Which starting template?")
