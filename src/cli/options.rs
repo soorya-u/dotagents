@@ -22,7 +22,7 @@ pub(crate) struct Options {
 
 #[derive(Subcommand)]
 pub(crate) enum Action {
-    /// Initialize .agents directory with a single package containing all the files in the current
+    /// Initialize .dotagents directory with a single package containing all the files in the current
     /// directory creating a mock templates for commands, instructions and mcp configuration.
     Init(InitOptions),
 

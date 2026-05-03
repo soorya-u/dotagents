@@ -8,6 +8,10 @@ package_manager = "bun"
 
 # ── Tasks ────────────────────────────────────────────────────────────────────
 
+[tasks.dev]
+description = "Run the development server"
+run = "cargo run -- "
+
 [tasks.build]
 description = "Compile a debug build"
 run = "cargo build"
