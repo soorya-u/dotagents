@@ -137,6 +137,10 @@ pub(crate) struct DeployOptions {
     #[clap(long)]
     pub offline: bool,
 
+    /// Preview what would be deployed without writing any files, saving cache, or updating .gitignore.
+    #[clap(long)]
+    pub dry_run: bool,
+
     /// Custom .env file(s) to load instead of .dotagents/.env. Repeatable; later files override earlier ones on duplicate keys.
     #[clap(long)]
     pub env: Vec<std::path::PathBuf>,
@@ -280,6 +284,10 @@ pub(crate) struct UndeployOptions {
     /// Do not remove entries from .gitignore.
     #[clap(long)]
     pub no_gitignore: bool,
+
+    /// Preview what would be undeployed without deleting any files, clearing cache, or touching .gitignore.
+    #[clap(long)]
+    pub dry_run: bool,
 }
 
 pub fn get_options() -> Options {

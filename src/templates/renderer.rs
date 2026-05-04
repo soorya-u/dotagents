@@ -16,6 +16,7 @@ use crate::{
 };
 
 /// Renders a feature for a provider, applying cache skip/detect logic.
+#[allow(clippy::too_many_arguments)]
 pub fn render_feature_with_settings<T: FeatureTrait>(
     provider_name: &str,
     feature: &T,
@@ -24,6 +25,7 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
     variables: Option<&Value>,
     cache: Option<&CacheEntry>,
     force: bool,
+    dry_run: bool,
 ) -> Result<CacheUpdate> {
     let template_str = feature_settings
         .template
@@ -109,6 +111,14 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
         // rendered_hash == entry.hash but file was missing → fall through to write.
     }
     // No cache entry, force=true, or inputs changed → fall through to write.
+
+    // In dry-run mode skip the actual write; return content for caller classification.
+    if dry_run {
+        return Ok(CacheUpdate::DryRun {
+            target: target_path,
+            content,
+        });
+    }
 
     write_file(&target_path, &content)
         .context(format!("failed to write file in {}", target_path.display()))?;

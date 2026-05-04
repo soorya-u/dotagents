@@ -4,6 +4,9 @@ use std::path::{Path, PathBuf};
 use crate::prelude::*;
 
 use crate::cli::options::UndeployOptions;
+use crate::cli::ui::dry_run::{
+    DryRunUndeployEntry, UndeployDryRunStatus, print_dry_run_undeploy_summary,
+};
 use crate::cli::ui::undeploy::{
     print_undeploy_summary, prompt_confirm_undeploy, prompt_delete_edited,
 };
@@ -27,9 +30,41 @@ pub(super) fn undeploy(opts: UndeployOptions) -> Result<()> {
         .collect();
 
     if entries.is_empty() {
-        if is_tty() {
+        if opts.dry_run {
+            print_dry_run_undeploy_summary(&[]);
+        } else if is_tty() {
             println!("Nothing to undeploy.");
         }
+        return Ok(());
+    }
+
+    // Dry-run: classify each entry and print summary without touching anything.
+    if opts.dry_run {
+        let mut dry_run_entries: Vec<DryRunUndeployEntry> = Vec::new();
+
+        for (path, expected_hash) in &entries {
+            if !path.exists() {
+                warn!("already removed: {}", path.display());
+                continue;
+            }
+
+            let disk_hash = hash_file(path)
+                .with_context(|| format!("failed to hash {}", path.display()))?
+                .unwrap_or_default();
+
+            let status = if disk_hash != *expected_hash {
+                UndeployDryRunStatus::Edited
+            } else {
+                UndeployDryRunStatus::WouldDelete
+            };
+
+            dry_run_entries.push(DryRunUndeployEntry {
+                path: path.clone(),
+                status,
+            });
+        }
+
+        print_dry_run_undeploy_summary(&dry_run_entries);
         return Ok(());
     }
 
