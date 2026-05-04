@@ -301,3 +301,44 @@ test.describe("deploy CLI – --env flag", () => {
 		}
 	});
 });
+
+// ── CLI flows – PATH argument ────────────────────────────────────────────────
+
+test.describe("deploy CLI – PATH argument", () => {
+	// C-PA04: explicit absolute PATH deploys to correct workspace
+	test("absolute PATH deploys to the specified workspace", async () => {
+		const cwd = makeTmpDir();
+		const target = makeTmpDir();
+		try {
+			initWithLocalProvider(target);
+			const { exitCode } = run(
+				["deploy", target, "--offline", "--no-gitignore"],
+				cwd,
+			);
+			expect(exitCode).toBe(0);
+			// Output files should be inside the target workspace, not CWD
+			expect(existsSync(join(target, ".mycode/commands/hello.md"))).toBe(true);
+			expect(existsSync(join(cwd, ".mycode"))).toBe(false);
+		} finally {
+			cleanup(cwd);
+			cleanup(target);
+		}
+	});
+
+	// C-PA05: PATH missing .dotagents exits non-zero with error message
+	test("PATH without .dotagents exits non-zero with error", async () => {
+		const cwd = makeTmpDir();
+		const target = makeTmpDir(); // exists but has no .dotagents-debug
+		try {
+			const { exitCode, stderr } = run(
+				["deploy", target, "--offline", "--no-gitignore"],
+				cwd,
+			);
+			expect(exitCode).not.toBe(0);
+			expect(stderr).toContain(".dotagents");
+		} finally {
+			cleanup(cwd);
+			cleanup(target);
+		}
+	});
+});

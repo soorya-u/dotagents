@@ -45,6 +45,15 @@ fn find_workspace_dir(
     ))
 }
 
+/// Pre-populate the workspace dir from an explicit path; must be called before get_workspace_dir().
+pub fn override_workspace_dir(path: PathBuf) -> Result<()> {
+    if !path.join(ROOT_DIR).is_dir() {
+        anyhow::bail!("No `{}` directory found in `{}`", ROOT_DIR, path.display());
+    }
+    let _ = WORKSPACE_DIR.set(Ok(path));
+    Ok(())
+}
+
 pub fn get_workspace_dir() -> Result<PathBuf> {
     WORKSPACE_DIR
         .get_or_init(|| {
@@ -231,5 +240,38 @@ mod tests {
             path.display()
         );
         assert!(path.is_dir(), "directory should have been created");
+    }
+
+    #[test]
+    // override_workspace_dir returns Ok when path contains ROOT_DIR
+    fn override_workspace_dir_ok_when_root_dir_present() {
+        let temp = TempDir::new().unwrap();
+        std::fs::create_dir(temp.path().join(ROOT_DIR)).unwrap();
+        // Use a fresh OnceLock-independent check via the validation logic directly
+        let result = override_workspace_dir(temp.path().to_path_buf());
+        // Either Ok (lock wasn't set yet) or Ok regardless — validation passed
+        assert!(
+            result.is_ok(),
+            "expected Ok for a valid workspace path, got {:?}",
+            result
+        );
+    }
+
+    #[test]
+    // override_workspace_dir returns Err when path has no ROOT_DIR subdirectory
+    fn override_workspace_dir_err_when_no_root_dir() {
+        let temp = TempDir::new().unwrap();
+        // No ROOT_DIR created — validation should fail
+        let result = override_workspace_dir(temp.path().to_path_buf());
+        assert!(
+            result.is_err(),
+            "expected Err when ROOT_DIR is absent, got Ok"
+        );
+        let msg = result.unwrap_err().to_string();
+        assert!(
+            msg.contains(ROOT_DIR),
+            "error message should mention ROOT_DIR, got: {}",
+            msg
+        );
     }
 }

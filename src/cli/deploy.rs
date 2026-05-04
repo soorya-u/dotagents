@@ -26,7 +26,7 @@ use crate::utils::fs::{hash_content, hash_file};
 use crate::utils::gitignore::{
     GitignorePath, gitignore_path_to_pattern, parse_fenced_section, read_gitignore, write_gitignore,
 };
-use crate::utils::path::get_workspace_dir;
+use crate::utils::path::{get_workspace_dir, override_workspace_dir};
 use crate::utils::tty::is_tty;
 use cliclack::outro;
 
@@ -165,6 +165,16 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
     }
     // Must be called before get_templater() so ENV_PATHS is set before the LazyLock fires.
     set_env_paths(std::mem::take(&mut opts.env));
+
+    // Override workspace root before any path resolution is triggered.
+    if let Some(dir) = opts.dir.take() {
+        let workspace = std::env::current_dir()
+            .context("failed to get current directory")?
+            .join(dir);
+        override_workspace_dir(workspace).context("Failed to set workspace directory")?;
+    }
+
+
     let templater = get_templater();
     let mut app_config =
         AppConfig::from_application(templater).context("Failed to load application config")?;

@@ -278,3 +278,45 @@ test.describe("undeploy TUI – T-U2 confirm No aborts", () => {
 		}
 	});
 });
+
+// ── CLI flows – PATH argument ────────────────────────────────────────────────
+
+test.describe("undeploy CLI – PATH argument", () => {
+	// C-PA06: explicit PATH removes files from the specified workspace
+	test("absolute PATH undeplooys from the specified workspace", async () => {
+		const cwd = makeTmpDir();
+		const target = makeTmpDir();
+		try {
+			initWithLocalProvider(target);
+			run(["deploy", target, "--offline", "--no-gitignore"], cwd);
+			expect(existsSync(join(target, ".mycode/instructions.md"))).toBe(true);
+
+			const { exitCode } = run(
+				["undeploy", target, "--force", "--no-gitignore"],
+				cwd,
+			);
+			expect(exitCode).toBe(0);
+			expect(existsSync(join(target, ".mycode/instructions.md"))).toBe(false);
+		} finally {
+			cleanup(cwd);
+			cleanup(target);
+		}
+	});
+
+	// C-PA07: PATH without .dotagents exits non-zero with error message
+	test("PATH without .dotagents exits non-zero with error", async () => {
+		const cwd = makeTmpDir();
+		const target = makeTmpDir(); // exists but has no .dotagents-debug
+		try {
+			const { exitCode, stderr } = run(
+				["undeploy", target, "--force", "--no-gitignore"],
+				cwd,
+			);
+			expect(exitCode).not.toBe(0);
+			expect(stderr).toContain(".dotagents");
+		} finally {
+			cleanup(cwd);
+			cleanup(target);
+		}
+	});
+});

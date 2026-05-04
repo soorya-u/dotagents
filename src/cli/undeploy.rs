@@ -15,10 +15,18 @@ use crate::utils::fs::{delete_file, hash_file, prune_empty_dir};
 use crate::utils::gitignore::{
     GitignorePath, clear_gitignore_fence, gitignore_path_to_pattern, remove_paths_from_fence,
 };
-use crate::utils::path::get_workspace_dir;
+use crate::utils::path::{get_workspace_dir, override_workspace_dir};
 use crate::utils::tty::is_tty;
 
-pub(super) fn undeploy(opts: UndeployOptions) -> Result<()> {
+pub(super) fn undeploy(mut opts: UndeployOptions) -> Result<()> {
+    // Override workspace root before any path resolution is triggered.
+    if let Some(dir) = opts.dir.take() {
+        let workspace = std::env::current_dir()
+            .context("failed to get current directory")?
+            .join(dir);
+        override_workspace_dir(workspace).context("Failed to set workspace directory")?;
+    }
+
     let workspace_root = get_workspace_dir().context("Failed to get workspace directory")?;
 
     let mut cache = CacheConfig::load().context("Failed to load cache")?;

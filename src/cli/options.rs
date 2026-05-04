@@ -115,6 +115,10 @@ pub(crate) struct SkillsAddOptions {
 
 #[derive(Args, Default)]
 pub(crate) struct DeployOptions {
+    /// Workspace root directory containing `.dotagents/` (default: inferred from current directory).
+    #[clap(value_name = "PATH")]
+    pub dir: Option<PathBuf>,
+
     /// Force overwrite all target files regardless of cache state.
     #[clap(long, short)]
     pub force: bool,
@@ -157,6 +161,10 @@ pub(crate) enum InitTemplate {
 
 #[derive(Args)]
 pub(crate) struct InitOptions {
+    /// Workspace root directory to initialise (default: current directory). Created if it does not exist.
+    #[clap(value_name = "PATH")]
+    pub dir: Option<PathBuf>,
+
     /// Features to scaffold. Accepts comma-separated values and/or repeated flags.
     /// Valid values: commands, instructions, mcp, skills, none.
     /// When omitted, features are chosen interactively when possible; otherwise all features are enabled.
@@ -277,6 +285,10 @@ pub(crate) struct RmSkillOptions {
 /// Options for `dotagents undeploy`.
 #[derive(Args, Default)]
 pub(crate) struct UndeployOptions {
+    /// Workspace root directory containing `.dotagents/` (default: inferred from current directory).
+    #[clap(value_name = "PATH")]
+    pub dir: Option<PathBuf>,
+
     /// Skip confirmation prompt and delete user-edited files without asking.
     #[clap(long, short)]
     pub force: bool,
@@ -320,6 +332,7 @@ mod tests {
     fn test_init_options_defaults() {
         // features defaults to None (all features enabled, TUI mode possible)
         let init_options = InitOptions {
+            dir: None,
             features: None,
             force: false,
             template: None,
@@ -353,6 +366,7 @@ mod tests {
     fn has_feature_returns_true_when_features_absent() {
         // None (flag absent) enables all features
         let opts = InitOptions {
+            dir: None,
             features: None,
             force: false,
             template: None,
@@ -368,6 +382,7 @@ mod tests {
     fn has_feature_returns_false_for_unlisted_feature() {
         // Only Commands is listed → Mcp is disabled
         let opts = InitOptions {
+            dir: None,
             features: Some(vec![Feature::Commands]),
             force: false,
             template: None,
@@ -383,6 +398,7 @@ mod tests {
     fn has_feature_returns_false_for_all_when_none_sentinel() {
         // Feature::None sentinel disables everything
         let opts = InitOptions {
+            dir: None,
             features: Some(vec![Feature::None]),
             force: false,
             template: None,
