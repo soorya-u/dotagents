@@ -232,6 +232,60 @@ test.describe("init CLI – config content", () => {
 	});
 });
 
+// ── CLI flows – PATH argument ────────────────────────────────────────────────
+
+test.describe("init CLI – PATH argument", () => {
+	// C-PA01: absolute PATH creates .dotagents inside that directory
+	test("absolute PATH scaffolds .dotagents inside the target dir", async () => {
+		const cwd = makeTmpDir();
+		const target = makeTmpDir();
+		try {
+			const { exitCode } = run(["init", target, "--template", "starter"], cwd);
+			expect(exitCode).toBe(0);
+			expect(existsSync(join(target, ".dotagents-debug/config.toml"))).toBe(
+				true,
+			);
+			// CWD should NOT have been initialised
+			expect(existsSync(join(cwd, ".dotagents-debug"))).toBe(false);
+		} finally {
+			cleanup(cwd);
+			cleanup(target);
+		}
+	});
+
+	// C-PA02: relative PATH is resolved against CWD
+	test("relative PATH resolves against CWD", async () => {
+		const cwd = makeTmpDir();
+		try {
+			const { exitCode } = run(
+				["init", "./subproject", "--template", "starter"],
+				cwd,
+			);
+			expect(exitCode).toBe(0);
+			expect(
+				existsSync(join(cwd, "subproject/.dotagents-debug/config.toml")),
+			).toBe(true);
+		} finally {
+			cleanup(cwd);
+		}
+	});
+
+	// C-PA03: non-existent PATH is created automatically
+	test("non-existent PATH is created before scaffolding", async () => {
+		const cwd = makeTmpDir();
+		const target = join(cwd, "brand", "new", "nested");
+		try {
+			const { exitCode } = run(["init", target, "--template", "starter"], cwd);
+			expect(exitCode).toBe(0);
+			expect(existsSync(join(target, ".dotagents-debug/config.toml"))).toBe(
+				true,
+			);
+		} finally {
+			cleanup(cwd);
+		}
+	});
+});
+
 // ── TUI flows (interactive, uses tui-test terminal) ──────────────────────────
 // Each TUI test lives in its own describe block so that test.use() (which sets
 // the terminal program) is evaluated at describe level — not inside the test body.
@@ -339,6 +393,43 @@ test.describe("init TUI – T03 WithCustomProvider template", () => {
 			).toBe(true);
 		} finally {
 			cleanup(d);
+		}
+	});
+});
+
+// T-PA: PATH arg — wizard still runs when a PATH argument is provided
+test.describe("init TUI – T-PA wizard runs with PATH argument", () => {
+	const cwd = makeTmpDir();
+	const target = makeTmpDir();
+	test.use({ program: shellProgram(cwd, ["init", target]) });
+
+	test("wizard appears and completes when PATH argument is provided", async ({
+		terminal,
+	}) => {
+		try {
+			// Wizard must start even though PATH was supplied
+			await expect(
+				terminal.getByText("Which features do you want to enable?"),
+			).toBeVisible();
+
+			terminal.keyPress("Enter");
+			await expect(
+				terminal.getByText("Which starting template?"),
+			).toBeVisible();
+
+			terminal.keyPress("Enter");
+			// skip providers
+			terminal.keyPress("Enter");
+			await expect(terminal.getByText("Done! Run")).toBeVisible();
+
+			// Files must land inside the PATH directory, not CWD
+			expect(existsSync(join(target, ".dotagents-debug/config.toml"))).toBe(
+				true,
+			);
+			expect(existsSync(join(cwd, ".dotagents-debug"))).toBe(false);
+		} finally {
+			cleanup(cwd);
+			cleanup(target);
 		}
 	});
 });

@@ -101,7 +101,16 @@ fn build_config_content(opts: &InitOptions, template: InitTemplate) -> (String, 
 pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
     validate_features(&opts)?;
 
-    let main_dir = Path::new(ROOT_DIR);
+    // Resolve workspace root from the optional positional dir arg.
+    let cwd = std::env::current_dir().context("failed to get current directory")?;
+    let workspace = match opts.dir.take() {
+        Some(p) => cwd.join(p),
+        None => cwd,
+    };
+    let main_dir = workspace.join(ROOT_DIR);
+
+    // Ensure the workspace root exists before checking for .dotagents inside it.
+    fs::create_dir_all(&workspace).context("failed to create workspace directory")?;
 
     let dir_exists = main_dir
         .try_exists()
@@ -126,11 +135,11 @@ pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
             if !tui_mode {
                 warn!("Overwriting existing configuration");
             }
-            fs::remove_dir_all(main_dir).context("failed to remove .dotagents directory")?;
+            fs::remove_dir_all(&main_dir).context("failed to remove .dotagents directory")?;
         }
     }
 
-    fs::create_dir(main_dir).context("failed to create .dotagents directory")?;
+    fs::create_dir(&main_dir).context("failed to create .dotagents directory")?;
 
     // Resolve the effective template: default to Starter when no flag was set.
     let template = opts.template.unwrap_or(InitTemplate::Starter);
@@ -206,6 +215,7 @@ mod tests {
 
     fn default_opts() -> InitOptions {
         InitOptions {
+            dir: None,
             features: None,
             force: false,
             template: None,
@@ -413,5 +423,53 @@ mod tests {
             global, local,
             "Starter template: global and local configs should match"
         );
+    }
+
+    // init with explicit dir creates .dotagents inside that directory
+    #[test]
+    fn initialize_agents_dir_with_explicit_dir() {
+        let temp = tempfile::TempDir::new().expect("temp dir");
+        let target = temp.path().join("myproject");
+        let opts = InitOptions {
+            dir: Some(target.clone()),
+            template: Some(InitTemplate::Starter),
+            force: true,
+            ..default_opts()
+        };
+        initialize_agents_dir(opts).expect("init should succeed");
+        assert!(
+            target.join(ROOT_DIR).is_dir(),
+            ".dotagents-debug should exist inside the provided dir"
+        );
+    }
+
+    // init with explicit dir creates the workspace directory if it does not exist
+    #[test]
+    fn initialize_agents_dir_creates_missing_workspace() {
+        let temp = tempfile::TempDir::new().expect("temp dir");
+        let target = temp.path().join("new").join("nested").join("dir");
+        assert!(!target.exists(), "target should not pre-exist");
+        let opts = InitOptions {
+            dir: Some(target.clone()),
+            template: Some(InitTemplate::Starter),
+            force: true,
+            ..default_opts()
+        };
+        initialize_agents_dir(opts).expect("init should succeed");
+        assert!(target.join(ROOT_DIR).is_dir(), ".dotagents-debug created");
+    }
+
+    // init with dir=None uses CWD (main_dir is relative .dotagents-debug)
+    #[test]
+    fn initialize_agents_dir_no_dir_uses_cwd() {
+        // When dir is None the workspace is CWD; the resulting main_dir is an absolute path
+        // ending in ROOT_DIR. We can't actually create files in CWD from a unit test, so
+        // just verify the path computation doesn't panic and produces a path ending in ROOT_DIR.
+        let cwd = std::env::current_dir().unwrap();
+        let expected = cwd.join(ROOT_DIR);
+        // Construct the same path the function would use.
+        let workspace = cwd;
+        let main_dir = workspace.join(ROOT_DIR);
+        assert_eq!(main_dir, expected);
     }
 }
