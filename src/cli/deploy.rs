@@ -174,7 +174,6 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
         override_workspace_dir(workspace).context("Failed to set workspace directory")?;
     }
 
-
     let templater = get_templater();
     let mut app_config =
         AppConfig::from_application(templater).context("Failed to load application config")?;
