@@ -85,12 +85,12 @@ test.describe("undeploy CLI – gitignore handling", () => {
 			run(["deploy", "--offline", "--gitignore"], d);
 
 			const giBefore = readFileSync(join(d, ".gitignore"), "utf8");
-			expect(giBefore).toContain("BEGIN dotagents managed");
+			expect(giBefore).toContain("region dotagents");
 
 			run(["undeploy", "--no-gitignore"], d);
 
 			const giAfter = readFileSync(join(d, ".gitignore"), "utf8");
-			expect(giAfter).toContain("BEGIN dotagents managed");
+			expect(giAfter).toContain("region dotagents");
 		} finally {
 			cleanup(d);
 		}
@@ -104,12 +104,12 @@ test.describe("undeploy CLI – gitignore handling", () => {
 			run(["deploy", "--offline", "--gitignore"], d);
 
 			const giBefore = readFileSync(join(d, ".gitignore"), "utf8");
-			expect(giBefore).toContain("BEGIN dotagents managed");
+			expect(giBefore).toContain("region dotagents");
 
 			run(["undeploy"], d);
 
 			const giAfter = readFileSync(join(d, ".gitignore"), "utf8");
-			expect(giAfter).not.toContain("BEGIN dotagents managed");
+			expect(giAfter).not.toContain("region dotagents");
 		} finally {
 			cleanup(d);
 		}

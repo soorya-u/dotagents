@@ -25,6 +25,11 @@ pub(crate) struct CommandFeature {
 }
 
 impl CommandFeature {
+    /// Returns the starter hello.md mock content used during `init`.
+    pub(crate) fn mock() -> &'static str {
+        crate::constants::mocks::COMMAND_MOCK
+    }
+
     pub fn to_markdown(&self) -> Result<String> {
         let yaml = serde_yaml::to_string(&self.metadata)
             .context("failed to serialize metadata to YAML")?;

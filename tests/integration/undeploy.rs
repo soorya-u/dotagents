@@ -68,7 +68,7 @@ fn undeploy_no_gitignore_leaves_fence_intact() {
     // Fence should now exist.
     let gi_before = ws.read_file(".gitignore");
     assert!(
-        gi_before.contains("BEGIN dotagents managed"),
+        gi_before.contains("region dotagents"),
         ".gitignore should contain managed fence after deploy"
     );
 
@@ -77,7 +77,7 @@ fn undeploy_no_gitignore_leaves_fence_intact() {
 
     let gi_after = ws.read_file(".gitignore");
     assert!(
-        gi_after.contains("BEGIN dotagents managed"),
+        gi_after.contains("region dotagents"),
         ".gitignore fence should be preserved with --no-gitignore"
     );
 }
@@ -93,7 +93,7 @@ fn undeploy_removes_gitignore_fence_by_default() {
 
     let gi_before = ws.read_file(".gitignore");
     assert!(
-        gi_before.contains("BEGIN dotagents managed"),
+        gi_before.contains("region dotagents"),
         ".gitignore should have fence after deploy"
     );
 
@@ -101,7 +101,7 @@ fn undeploy_removes_gitignore_fence_by_default() {
 
     let gi_after = ws.read_file(".gitignore");
     assert!(
-        !gi_after.contains("BEGIN dotagents managed"),
+        !gi_after.contains("region dotagents"),
         ".gitignore fence should be removed after undeploy; got:\n{gi_after}"
     );
 }

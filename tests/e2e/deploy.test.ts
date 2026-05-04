@@ -22,7 +22,7 @@ test.describe("deploy CLI – output structure", () => {
 			expect(existsSync(join(d, ".mycode/commands/hello.md"))).toBe(true);
 			expect(existsSync(join(d, ".mycode/instructions.md"))).toBe(true);
 			expect(existsSync(join(d, ".mycode/mcp.json"))).toBe(true);
-			expect(existsSync(join(d, ".mycode/skills/hello-skill/SKILLS.md"))).toBe(
+			expect(existsSync(join(d, ".mycode/skills/hello-skill/SKILL.md"))).toBe(
 				true,
 			);
 		} finally {

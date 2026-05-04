@@ -50,6 +50,11 @@ pub enum ServerConfig {
 }
 
 impl McpFeature {
+    /// Returns the starter mcp.jsonc mock content used during `init`.
+    pub(crate) fn mock() -> &'static str {
+        crate::constants::mocks::MCP_MOCK
+    }
+
     pub fn from_json(json: &str) -> Result<Self> {
         let result = serde_json5::from_str::<McpFeature>(json)
             .context("failed to parse MCP config from JSON")?;

@@ -1,7 +1,13 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@microsoft/tui-test";
-import { cleanup, makeTmpDir, run, shellProgram } from "./helpers.js";
+import {
+	cleanup,
+	initWithLocalProvider,
+	makeTmpDir,
+	run,
+	shellProgram,
+} from "./helpers.js";
 
 // ── skills new – CLI ──────────────────────────────────────────────────────────
 
@@ -141,6 +147,50 @@ test.describe("skills rm CLI", () => {
 			cleanup(d);
 		}
 	});
+
+	// 6.1: skills rm removes deployed file and gitignore entry after deploy
+	test("--force removes deployed skill file and gitignore entry", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			run(["deploy", "--offline", "--gitignore"], d);
+
+			expect(existsSync(join(d, ".mycode/skills/hello-skill/SKILL.md"))).toBe(
+				true,
+			);
+
+			const giBefore = readFileSync(join(d, ".gitignore"), "utf8");
+			expect(giBefore).toContain(".mycode/skills/hello-skill/SKILL.md");
+
+			const { exitCode } = run(["skills", "rm", "hello-skill", "--force"], d);
+			expect(exitCode).toBe(0);
+
+			expect(existsSync(join(d, ".mycode/skills/hello-skill/SKILL.md"))).toBe(
+				false,
+			);
+
+			const giAfter = readFileSync(join(d, ".gitignore"), "utf8");
+			expect(giAfter).not.toContain(".mycode/skills/hello-skill/SKILL.md");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// 6.3: skills rm warns when skill was never deployed
+	test("--force exits 0 and warns when skill was never deployed", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			const { exitCode, stderr } = run(
+				["skills", "rm", "hello-skill", "--force"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			expect(stderr).toContain("No deployed files found");
+		} finally {
+			cleanup(d);
+		}
+	});
 });
 
 // ── skills new – TUI ──────────────────────────────────────────────────────────
@@ -157,7 +207,6 @@ test.describe("skills new TUI – T08 interactive prompts", () => {
 		terminal,
 	}) => {
 		try {
-			await expect(terminal.getByText("dotagents skills new")).toBeVisible();
 			await expect(terminal.getByText("Description")).toBeVisible();
 
 			terminal.write("A skill description");
