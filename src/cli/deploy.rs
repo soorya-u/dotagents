@@ -14,6 +14,7 @@ use crate::schema::features::{
     skill::SkillFeature, traits::FeatureTrait,
 };
 use crate::schema::registry::Registry;
+use crate::templates::variables::set_env_paths;
 use crate::templates::{
     TemplateCache, Templater, get_templater, registry_url, render_feature_with_settings,
     resolve_provider_defaults,
@@ -122,6 +123,17 @@ where
 }
 
 pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
+    // Validate env paths before the LazyLock fires so missing files surface as clean errors.
+    for path in &opts.env {
+        if !path.exists() {
+            return Err(anyhow::anyhow!(
+                "load env file '{}': file not found",
+                path.display()
+            ));
+        }
+    }
+    // Must be called before get_templater() so ENV_PATHS is set before the LazyLock fires.
+    set_env_paths(std::mem::take(&mut opts.env));
     let templater = get_templater();
     let mut app_config =
         AppConfig::from_application(templater).context("Failed to load application config")?;
