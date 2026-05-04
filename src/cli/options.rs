@@ -136,6 +136,10 @@ pub(crate) struct DeployOptions {
     /// Errors if a required template has not been cached by a previous online deploy.
     #[clap(long)]
     pub offline: bool,
+
+    /// Custom .env file(s) to load instead of .dotagents/.env. Repeatable; later files override earlier ones on duplicate keys.
+    #[clap(long)]
+    pub env: Vec<std::path::PathBuf>,
 }
 
 /// Scaffolding template to use when running `dotagents init`.
