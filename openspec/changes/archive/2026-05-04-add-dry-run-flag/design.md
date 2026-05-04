@@ -58,7 +58,7 @@ Both commands have interactive prompts (gitignore consent, edit-detected confirm
 
 ### Output format
 
-```
+```text
 Dry run — no files will be written
 
   [+] .claude/commands/hello.md
@@ -67,7 +67,7 @@ Dry run — no files will be written
 2 files would be affected
 ```
 
-```
+```text
 Dry run — no files will be deleted
 
   [-] .claude/commands/hello.md
