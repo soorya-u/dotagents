@@ -28,7 +28,7 @@ Specifies the extended `dotagents skills` subcommand group, adding `new`, `rm`, 
 - **THEN** the file is overwritten with new frontmatter and the starter body
 
 ### Requirement: skills rm deletes a skill directory
-`dotagents skills rm <name>` SHALL delete `.dotagents/skills/<name>/` and all its contents. If the directory does not exist, the command SHALL exit 1 with a clear error. Behaviour is identical to the removed `dotagents rm skill`.
+`dotagents skills rm <name>` SHALL delete `.dotagents/skills/<name>/` and all its contents. If the directory does not exist, the command SHALL exit 1 with a clear error. Behaviour is identical to the removed `dotagents rm skill`. After removing the source directory, the command SHALL also remove all deployed files, cache entries, and `.gitignore` fence entries for that skill across every provider (see `rm-cleanup` spec).
 
 #### Scenario: Existing skill directory is removed
 - **WHEN** user runs `dotagents skills rm my-skill` and `.dotagents/skills/my-skill/` exists
@@ -53,6 +53,10 @@ Specifies the extended `dotagents skills` subcommand group, adding `new`, `rm`, 
 #### Scenario: Non-TTY skips confirm
 - **WHEN** stdin is not a TTY
 - **THEN** deletion proceeds without prompting regardless of `--force`
+
+#### Scenario: Deployed output cleaned up after source removal
+- **WHEN** user runs `dotagents skills rm my-skill` and the skill has been previously deployed
+- **THEN** the deployed file is deleted, the cache entry is removed, and the `.gitignore` entry is removed
 
 ### Requirement: skills ls lists local skill source directories
 `dotagents skills ls` SHALL read skills from `.dotagents/skills/*/SKILL.md`, parse frontmatter for `name` and `description`, and display them using cliclack output. Descriptions SHALL be truncated to fit terminal width by default.

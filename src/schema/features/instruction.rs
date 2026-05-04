@@ -16,6 +16,11 @@ pub(crate) struct InstructionFeature {
 }
 
 impl InstructionFeature {
+    /// Returns the starter INSTRUCTIONS.md mock content used during `init`.
+    pub(crate) fn mock() -> &'static str {
+        crate::constants::mocks::INSTRUCTION_MOCK
+    }
+
     pub fn from_application() -> Result<Self> {
         let dir = get_application_dir()?;
         let path = dir.join(INSTRUCTIONS_FILE);

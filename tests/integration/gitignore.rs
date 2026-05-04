@@ -2,8 +2,8 @@
 
 use super::{TestWorkspace, init_with_mycode_provider};
 
-const FENCE_START: &str = "# BEGIN dotagents managed - do not edit manually";
-const FENCE_END: &str = "# END dotagents managed";
+const FENCE_START: &str = "#region dotagents";
+const FENCE_END: &str = "#endregion dotagents";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // --gitignore flag

@@ -43,7 +43,7 @@ fn feature_subset_limits_deployed_artifacts() {
         "mcp.json should not be deployed when mcp feature is absent"
     );
     assert!(
-        !ws.file_exists(".mycode/skills/hello-skill/SKILLS.md"),
+        !ws.file_exists(".mycode/skills/hello-skill/SKILL.md"),
         "skills should not be deployed when skills feature is absent"
     );
 }
@@ -67,7 +67,7 @@ fn features_all_enabled_deploys_all_artifacts() {
     );
     assert!(ws.file_exists(".mycode/mcp.json"), "mcp deployed");
     assert!(
-        ws.file_exists(".mycode/skills/hello-skill/SKILLS.md"),
+        ws.file_exists(".mycode/skills/hello-skill/SKILL.md"),
         "skill deployed"
     );
 }

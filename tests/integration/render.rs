@@ -123,7 +123,7 @@ fn deployed_skill_output_retains_frontmatter_from_template() {
     ws.run_command(&["deploy", "--offline", "--no-gitignore"])
         .assert_success();
 
-    let content = ws.read_file(".mycode/skills/hello-skill/SKILLS.md");
+    let content = ws.read_file(".mycode/skills/hello-skill/SKILL.md");
     assert!(
         content.contains("name: hello-skill"),
         "deployed skill output should contain the skill name in frontmatter; got:\n{content}"

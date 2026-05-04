@@ -162,6 +162,47 @@ test.describe("init CLI – config content", () => {
 		}
 	});
 
+	// C08: --features flag persists only selected features to config.toml
+	test("--features flag persists selected features to config.toml", async () => {
+		const d = makeTmpDir();
+		try {
+			const { exitCode } = run(
+				["init", "--template", "starter", "--features", "commands,mcp"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			const config = readFileSync(
+				join(d, ".dotagents-debug/config.toml"),
+				"utf8",
+			);
+			expect(config).toContain('"commands"');
+			expect(config).toContain('"mcp"');
+			expect(config).not.toContain('"instructions"');
+			expect(config).not.toContain('"skills"');
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// C09: --features none writes empty features array to config.toml
+	test("--features none writes empty features array to config.toml", async () => {
+		const d = makeTmpDir();
+		try {
+			const { exitCode } = run(
+				["init", "--template", "starter", "--features", "none"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			const config = readFileSync(
+				join(d, ".dotagents-debug/config.toml"),
+				"utf8",
+			);
+			expect(config).toContain("features = []");
+		} finally {
+			cleanup(d);
+		}
+	});
+
 	test(".gitignore excludes local.config.toml and .env", async () => {
 		const d = makeTmpDir();
 		try {
@@ -206,8 +247,6 @@ test.describe("init TUI – T01 wizard happy path", () => {
 		terminal,
 	}) => {
 		try {
-			// intro and first prompt
-			await expect(terminal.getByText("dotagents · init")).toBeVisible();
 			await expect(
 				terminal.getByText("Which features do you want to enable?"),
 			).toBeVisible();

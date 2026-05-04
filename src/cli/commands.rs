@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::fs;
 
 use anyhow::{Context, Result};
-use cliclack::{confirm, input, intro, outro};
+use cliclack::{confirm, input, outro};
 use gray_matter::Matter;
 use gray_matter::engine::YAML;
 use serde_json::Value;
@@ -15,8 +15,9 @@ use crate::cli::options::{
 use crate::cli::ui::ls::{ListItem, render_commands};
 use crate::constants::templates::{COMMAND_STARTER, render_starter};
 use crate::prelude::*;
+use crate::schema::config::CacheConfig;
 use crate::utils::fs::write_file;
-use crate::utils::path::{get_application_dir, get_commands_dir};
+use crate::utils::path::{get_application_dir, get_commands_dir, get_workspace_dir};
 use crate::utils::tty::is_tty;
 
 /// Collect a string field: use provided value, prompt in TTY mode, or default to empty.
@@ -72,10 +73,6 @@ fn new_command(opts: AddCommandOptions) -> Result<bool> {
     let use_interactive =
         is_tty() && opts.description.is_none() && opts.category.is_none() && opts.tags.is_none();
 
-    if use_interactive {
-        intro("dotagents commands new").ok();
-    }
-
     let description = collect_field(
         opts.description,
         "Description",
@@ -128,8 +125,6 @@ fn rm_command(opts: RmCommandOptions) -> Result<bool> {
         bail!("Command '{}' not found at {}.", opts.name, target.display());
     }
 
-    intro("dotagents commands rm").ok();
-
     // Confirm in TTY unless --force.
     if is_tty() && !opts.force {
         let confirmed = confirm(format!(
@@ -146,9 +141,43 @@ fn rm_command(opts: RmCommandOptions) -> Result<bool> {
         }
     }
 
+    // Load cache before removing the source — cleanup runs unconditionally after removal.
+    let cache_opt: Option<CacheConfig> = match CacheConfig::load() {
+        Ok(c) => Some(c),
+        Err(e) => {
+            warn!(
+                "Failed to load cache, deployed files will not be cleaned up: {}",
+                e
+            );
+            None
+        }
+    };
+
     fs::remove_file(&target).with_context(|| format!("failed to remove {}", target.display()))?;
 
     success!("Removed {}", target.display());
+
+    // Clean up deployed output across all providers.
+    if let Some(mut cache) = cache_opt {
+        match get_workspace_dir() {
+            Ok(workspace_dir) => {
+                if let Err(e) = super::undeploy::undeploy_item(
+                    "commands",
+                    &opts.name,
+                    &mut cache,
+                    &workspace_dir,
+                ) {
+                    warn!("Failed to clean up deployed files: {}", e);
+                }
+                if let Err(e) = cache.save() {
+                    warn!("Failed to save cache after cleanup: {}", e);
+                }
+            }
+            Err(e) => {
+                warn!("Failed to get workspace directory for cleanup: {}", e);
+            }
+        }
+    }
 
     maybe_prompt_deploy(opts.deploy)?;
 

@@ -1,5 +1,5 @@
 use anyhow::{Context, Result, bail};
-use cliclack::{confirm, input, intro, outro};
+use cliclack::{confirm, input, outro};
 use gray_matter::Matter;
 use gray_matter::engine::YAML;
 use serde_json::Value;
@@ -15,11 +15,12 @@ use crate::cli::options::{
 use crate::cli::ui::ls::{ListItem, render_skills};
 use crate::constants::templates::{SKILL_STARTER, render_starter};
 use crate::prelude::*;
+use crate::schema::config::CacheConfig;
 use crate::schema::config::app::AppConfig;
 use crate::schema::config::common::PackageRunner;
 use crate::templates::get_templater;
 use crate::utils::fs::write_file;
-use crate::utils::path::{get_application_dir, get_skills_dir};
+use crate::utils::path::{get_application_dir, get_skills_dir, get_workspace_dir};
 use crate::utils::tty::is_tty;
 
 /// Collect a string field: use provided value, prompt in TTY mode, or default to empty.
@@ -134,10 +135,6 @@ fn new_skill(opts: AddSkillOptions) -> Result<bool> {
         && opts.license.is_none()
         && opts.compatibility.is_none();
 
-    if use_interactive {
-        intro("dotagents skills new").ok();
-    }
-
     let description = collect_field(opts.description, "Description", "What does this skill do?")?;
     let license = collect_field(opts.license, "License", "e.g. MIT")?;
     let compatibility = collect_field(
@@ -198,8 +195,6 @@ fn rm_skill(opts: RmSkillOptions) -> Result<bool> {
         );
     }
 
-    intro("dotagents skills rm").ok();
-
     // Confirm in TTY unless --force.
     if is_tty() && !opts.force {
         let confirmed = confirm(format!(
@@ -216,10 +211,41 @@ fn rm_skill(opts: RmSkillOptions) -> Result<bool> {
         }
     }
 
+    // Load cache before removing the source — cleanup runs unconditionally after removal.
+    let cache_opt: Option<CacheConfig> = match CacheConfig::load() {
+        Ok(c) => Some(c),
+        Err(e) => {
+            warn!(
+                "Failed to load cache, deployed files will not be cleaned up: {}",
+                e
+            );
+            None
+        }
+    };
+
     fs::remove_dir_all(&skill_dir)
         .with_context(|| format!("failed to remove {}", skill_dir.display()))?;
 
     success!("Removed {}", skill_dir.display());
+
+    // Clean up deployed output across all providers.
+    if let Some(mut cache) = cache_opt {
+        match get_workspace_dir() {
+            Ok(workspace_dir) => {
+                if let Err(e) =
+                    super::undeploy::undeploy_item("skills", &opts.name, &mut cache, &workspace_dir)
+                {
+                    warn!("Failed to clean up deployed files: {}", e);
+                }
+                if let Err(e) = cache.save() {
+                    warn!("Failed to save cache after cleanup: {}", e);
+                }
+            }
+            Err(e) => {
+                warn!("Failed to get workspace directory for cleanup: {}", e);
+            }
+        }
+    }
 
     maybe_prompt_deploy(opts.deploy)?;
 
