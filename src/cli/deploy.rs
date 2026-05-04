@@ -23,6 +23,7 @@ use crate::utils::gitignore::{
 };
 use crate::utils::path::get_workspace_dir;
 use crate::utils::tty::is_tty;
+use cliclack::outro;
 
 /// Aggregated result of deploying one feature across all providers.
 #[derive(Debug, Default)]
@@ -227,6 +228,9 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
 
     // Skip gitignore update when no files were written or the user opted out.
     if stats.paths.is_empty() || opts.no_gitignore {
+        if is_tty() {
+            outro("Done.").ok();
+        }
         return Ok(());
     }
 
@@ -248,6 +252,9 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
             .len();
 
         if new_count == 0 {
+            if is_tty() {
+                outro("Done.").ok();
+            }
             return Ok(());
         }
 
@@ -256,6 +263,10 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
 
     if should_update && let Err(e) = write_gitignore(&workspace_root, &stats.paths) {
         warn!("Failed to update .gitignore: {}", e);
+    }
+
+    if is_tty() {
+        outro("Done.").ok();
     }
 
     Ok(())

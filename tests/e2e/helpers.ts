@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -34,23 +34,11 @@ export function run(
 	};
 }
 
-/// Initialise a workspace in dir using `init --template with-custom-provider`,
-/// then patch local.config.toml to drop the `gemini` registry target so deploy
-/// works fully offline with only the local mycode templates.
+/// Initialise a workspace in dir using `init --template with-custom-provider`.
+/// The generated local.config.toml already has `targets = []` and the mycode
+/// provider sections, so deploy works fully offline with only the local templates.
 export function initWithLocalProvider(dir: string): void {
 	run(["init", "--template", "with-custom-provider"], dir);
-	const path = join(dir, ".dotagents-debug/local.config.toml");
-	const original = readFileSync(path, "utf8");
-	const patched = original.replace(
-		/targets\s*=\s*\["gemini"\]/,
-		"targets = []",
-	);
-	if (patched === original) {
-		throw new Error(
-			`initWithLocalProvider: expected 'targets = ["gemini"]' in ${path} — nothing replaced; check the mock template`,
-		);
-	}
-	writeFileSync(path, patched);
 }
 
 /// Return a bash invocation suitable for test.use({ program: ... }) that
