@@ -147,7 +147,7 @@ variables = {agent_name = "Mycode"}
 
 [providers.mycode.skills]
 template = "{{ dir.application }}/templates/mycode/skill.hbs"
-target = "{{ dir.workspace }}/.mycode/skills/{{ skill.name }}/SKILLS.md"
+target = "{{ dir.workspace }}/.mycode/skills/{{ skill.name }}/SKILL.md"
 variables = {agent_name = "Mycode"}
 "#;
 

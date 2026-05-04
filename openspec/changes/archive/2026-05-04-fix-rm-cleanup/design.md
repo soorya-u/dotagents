@@ -38,7 +38,7 @@ Implementation: read `.gitignore`, rebuild the fence without the given paths, wr
 
 **D4 — `undeploy_item` algorithm**
 
-```
+```text
 fn undeploy_item(feature: &str, item_key: &str, cache: &mut CacheConfig, workspace_dir: &Path)
 ```
 

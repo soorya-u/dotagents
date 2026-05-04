@@ -153,7 +153,7 @@ fn deploy_creates_one_output_file_per_command() {
 
 #[test]
 fn deploy_creates_skill_output_under_skill_name_directory() {
-    // Each skill is deployed to `.mycode/skills/<name>/SKILLS.md`.
+    // Each skill is deployed to `.mycode/skills/<name>/SKILL.md`.
     let ws = TestWorkspace::new();
     init_with_mycode_provider(&ws);
 
@@ -161,8 +161,8 @@ fn deploy_creates_skill_output_under_skill_name_directory() {
         .assert_success();
 
     assert!(
-        ws.file_exists(".mycode/skills/hello-skill/SKILLS.md"),
-        "skill output should be at .mycode/skills/<name>/SKILLS.md"
+        ws.file_exists(".mycode/skills/hello-skill/SKILL.md"),
+        "skill output should be at .mycode/skills/<name>/SKILL.md"
     );
 }
 

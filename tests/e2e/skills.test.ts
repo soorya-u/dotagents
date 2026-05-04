@@ -155,22 +155,22 @@ test.describe("skills rm CLI", () => {
 			initWithLocalProvider(d);
 			run(["deploy", "--offline", "--gitignore"], d);
 
-			expect(existsSync(join(d, ".mycode/skills/hello-skill/SKILLS.md"))).toBe(
+			expect(existsSync(join(d, ".mycode/skills/hello-skill/SKILL.md"))).toBe(
 				true,
 			);
 
 			const giBefore = readFileSync(join(d, ".gitignore"), "utf8");
-			expect(giBefore).toContain(".mycode/skills/hello-skill/SKILLS.md");
+			expect(giBefore).toContain(".mycode/skills/hello-skill/SKILL.md");
 
 			const { exitCode } = run(["skills", "rm", "hello-skill", "--force"], d);
 			expect(exitCode).toBe(0);
 
-			expect(existsSync(join(d, ".mycode/skills/hello-skill/SKILLS.md"))).toBe(
+			expect(existsSync(join(d, ".mycode/skills/hello-skill/SKILL.md"))).toBe(
 				false,
 			);
 
 			const giAfter = readFileSync(join(d, ".gitignore"), "utf8");
-			expect(giAfter).not.toContain(".mycode/skills/hello-skill/SKILLS.md");
+			expect(giAfter).not.toContain(".mycode/skills/hello-skill/SKILL.md");
 		} finally {
 			cleanup(d);
 		}

@@ -81,6 +81,23 @@ fn feature_to_str(f: &Feature) -> Option<&'static str> {
     }
 }
 
+/// Derives the global and local config file content from init options.
+fn build_config_content(opts: &InitOptions, template: InitTemplate) -> (String, String) {
+    let config_features: Vec<&str> = opts
+        .features
+        .as_ref()
+        .map(|fs| fs.iter().filter_map(feature_to_str).collect())
+        .unwrap_or_else(|| vec!["commands", "instructions", "mcp", "skills"]);
+    let config_targets: Vec<&str> = opts.targets.iter().map(String::as_str).collect();
+    let base_config = mocks::default_config(&config_features, &config_targets);
+    let local_config = if template == InitTemplate::WithCustomProvider {
+        format!("{}{}", base_config, mocks::MYCODE_PROVIDER_CONFIG)
+    } else {
+        base_config.clone()
+    };
+    (base_config, local_config)
+}
+
 pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
     validate_features(&opts)?;
 
@@ -118,25 +135,12 @@ pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
     // Resolve the effective template: default to Starter when no flag was set.
     let template = opts.template.unwrap_or(InitTemplate::Starter);
 
-    // Derive features and targets for the config files.
-    let config_features: Vec<&str> = opts
-        .features
-        .as_ref()
-        .map(|fs| fs.iter().filter_map(feature_to_str).collect())
-        .unwrap_or_else(|| vec!["commands", "instructions", "mcp", "skills"]);
-    let config_targets: Vec<&str> = opts.targets.iter().map(String::as_str).collect();
-
     // Write config files directly — content is runtime-generated so cannot live in InitFile.
-    let base_config = mocks::default_config(&config_features, &config_targets);
-    write_file(&main_dir.join(GLOBAL_CONFIG_FILE), &base_config)?;
-
-    // local.config.toml gets provider sections appended for the WithCustomProvider template.
-    let local_config = if template == InitTemplate::WithCustomProvider {
-        format!("{}{}", base_config, mocks::MYCODE_PROVIDER_CONFIG)
-    } else {
-        base_config
-    };
-    write_file(&main_dir.join(LOCAL_CONFIG_FILE), &local_config)?;
+    let (base_config, local_config) = build_config_content(&opts, template);
+    write_file(&main_dir.join(GLOBAL_CONFIG_FILE), &base_config)
+        .with_context(|| format!("failed to write {GLOBAL_CONFIG_FILE}"))?;
+    write_file(&main_dir.join(LOCAL_CONFIG_FILE), &local_config)
+        .with_context(|| format!("failed to write {LOCAL_CONFIG_FILE}"))?;
 
     let init_files = vec![
         InitFile::new(ENV_EXAMPLE_FILE, mocks::ENV_EXAMPLE),
@@ -333,5 +337,81 @@ mod tests {
         let file =
             InitFile::new("some.txt", "content").with_skip_if(|o| !o.has_feature(Feature::Mcp));
         assert!(!file.should_skip(&default_opts()));
+    }
+
+    // build_config_content with no features flag defaults to all four features
+    #[test]
+    fn build_config_content_defaults_to_all_features() {
+        let opts = default_opts();
+        let (global, local) = build_config_content(&opts, InitTemplate::Starter);
+        for feature in ["commands", "instructions", "mcp", "skills"] {
+            assert!(
+                global.contains(feature),
+                "expected {feature} in global config"
+            );
+            assert!(
+                local.contains(feature),
+                "expected {feature} in local config"
+            );
+        }
+    }
+
+    // build_config_content with a subset of features writes only those features
+    #[test]
+    fn build_config_content_writes_selected_features() {
+        let opts = InitOptions {
+            features: Some(vec![Feature::Commands, Feature::Instructions]),
+            ..default_opts()
+        };
+        let (global, _) = build_config_content(&opts, InitTemplate::Starter);
+        assert!(global.contains("commands"));
+        assert!(global.contains("instructions"));
+        assert!(!global.contains("\"mcp\""));
+        assert!(!global.contains("\"skills\""));
+    }
+
+    // build_config_content with --features none produces features = []
+    #[test]
+    fn build_config_content_none_sentinel_produces_empty_features() {
+        let opts = InitOptions {
+            features: Some(vec![Feature::None]),
+            ..default_opts()
+        };
+        let (global, local) = build_config_content(&opts, InitTemplate::Starter);
+        assert!(
+            global.contains("features = []"),
+            "expected empty features list; got: {global}"
+        );
+        assert!(
+            local.contains("features = []"),
+            "expected empty features list in local; got: {local}"
+        );
+    }
+
+    // build_config_content with WithCustomProvider appends provider block to local config
+    #[test]
+    fn build_config_content_with_custom_provider_appends_provider_block() {
+        let opts = default_opts();
+        let (global, local) = build_config_content(&opts, InitTemplate::WithCustomProvider);
+        assert!(
+            !global.contains("providers.mycode"),
+            "global should not have provider block"
+        );
+        assert!(
+            local.contains("providers.mycode"),
+            "local should contain mycode provider block"
+        );
+        assert!(local.contains(mocks::MYCODE_PROVIDER_CONFIG));
+    }
+
+    // build_config_content with Starter template produces identical global and local content
+    #[test]
+    fn build_config_content_starter_global_and_local_are_identical() {
+        let opts = default_opts();
+        let (global, local) = build_config_content(&opts, InitTemplate::Starter);
+        assert_eq!(
+            global, local,
+            "Starter template: global and local configs should match"
+        );
     }
 }

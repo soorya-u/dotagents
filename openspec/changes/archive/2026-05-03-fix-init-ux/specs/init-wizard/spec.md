@@ -17,12 +17,12 @@ After the wizard completes, the features the user selected SHALL be written to b
 
 ## MODIFIED Requirements
 
-### Requirement: Intro and outro frame the wizard session
-The wizard SHALL start with a cliclack `intro` banner and end with a cliclack `outro` message that hints at running `dotagents deploy`. The intro text SHALL NOT mirror the command the user typed; it SHALL use a short descriptive phrase (e.g. the app name `dotagents`).
+### Requirement: Outro frames the wizard session on completion
+The wizard SHALL end with a cliclack `outro` message that hints at running `dotagents deploy`. No `intro` banner is shown — the first interactive element the user sees SHALL be the feature multiselect prompt.
 
-#### Scenario: Intro shown at start
+#### Scenario: No intro shown at start
 - **WHEN** the wizard begins
-- **THEN** an intro line is printed before any prompts that does not repeat `dotagents init` verbatim
+- **THEN** the first visible output is the feature-selection prompt (no preceding intro banner)
 
 #### Scenario: Outro shown on success
 - **WHEN** all files have been written and target selection is complete (or skipped)
