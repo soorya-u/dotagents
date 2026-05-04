@@ -1,4 +1,5 @@
-use std::path::PathBuf;
+use std::io::ErrorKind;
+use std::path::{Path, PathBuf};
 
 use crate::prelude::*;
 
@@ -11,7 +12,9 @@ use crate::cli::ui::undeploy::{
 };
 use crate::schema::config::CacheConfig;
 use crate::utils::fs::{delete_file, hash_file, prune_empty_dir};
-use crate::utils::gitignore::clear_gitignore_fence;
+use crate::utils::gitignore::{
+    GitignorePath, clear_gitignore_fence, gitignore_path_to_pattern, remove_paths_from_fence,
+};
 use crate::utils::path::get_workspace_dir;
 use crate::utils::tty::is_tty;
 
@@ -118,4 +121,115 @@ pub(super) fn undeploy(opts: UndeployOptions) -> Result<()> {
     print_undeploy_summary(removed, skipped);
 
     Ok(())
+}
+
+/// Removes deployed files, cache entries, and .gitignore fence paths for one removed item across all providers.
+pub(crate) fn undeploy_item(
+    feature: &str,
+    item_key: &str,
+    cache: &mut CacheConfig,
+    workspace_dir: &Path,
+) -> Result<()> {
+    let entries: Vec<(String, String)> = cache
+        .iter_entries()
+        .filter(|(_, f, i, _)| *f == feature && *i == item_key)
+        .map(|(p, _, _, e)| (p.to_string(), e.target.clone()))
+        .collect();
+
+    if entries.is_empty() {
+        warn!(
+            "No deployed files found for '{}' — was it ever deployed?",
+            item_key
+        );
+        return Ok(());
+    }
+
+    let mut gitignore_paths: Vec<String> = Vec::new();
+
+    for (provider, target_path) in &entries {
+        match std::fs::remove_file(target_path) {
+            Ok(()) => {}
+            Err(e) if e.kind() == ErrorKind::NotFound => {}
+            Err(e) => {
+                warn!("Failed to delete deployed file {}: {}", target_path, e);
+            }
+        }
+        // Convert the absolute cache path to a workspace-relative gitignore pattern.
+        if let Some(rel) = gitignore_path_to_pattern(
+            &GitignorePath::File(PathBuf::from(target_path)),
+            workspace_dir,
+        ) {
+            gitignore_paths.push(rel);
+        }
+        cache.remove(provider, feature, item_key);
+    }
+
+    if let Err(e) = remove_paths_from_fence(&gitignore_paths, workspace_dir) {
+        warn!("Failed to update .gitignore: {}", e);
+    }
+
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // empty cache → warn and return Ok without touching files
+    #[test]
+    fn undeploy_item_warns_when_no_cache_entries() {
+        let mut cache = CacheConfig::default();
+        let tmp = tempfile::TempDir::new().unwrap();
+        let result = undeploy_item("skills", "my-skill", &mut cache, tmp.path());
+        assert!(result.is_ok());
+    }
+
+    // file exists and cache entry exists → file deleted, cache entry removed
+    #[test]
+    fn undeploy_item_deletes_deployed_file_and_clears_cache() {
+        use crate::schema::config::CacheEntry;
+        let mut cache = CacheConfig::default();
+        let tmp = tempfile::TempDir::new().unwrap();
+        let file = tmp.path().join("deployed.md");
+        std::fs::write(&file, "content").unwrap();
+        let file_str = file.to_str().unwrap().to_string();
+        cache.set(
+            "mycode",
+            "commands",
+            "hello",
+            CacheEntry {
+                hash: "abc".to_string(),
+                target: file_str,
+            },
+        );
+        undeploy_item("commands", "hello", &mut cache, tmp.path()).unwrap();
+        assert!(!file.exists(), "deployed file should be deleted");
+        assert!(cache.get("mycode", "commands", "hello").is_none());
+    }
+
+    // file is missing but cache entry exists → Ok, cache entry removed, no panic
+    #[test]
+    fn undeploy_item_continues_when_file_already_deleted() {
+        use crate::schema::config::CacheEntry;
+        let mut cache = CacheConfig::default();
+        let tmp = tempfile::TempDir::new().unwrap();
+        let file_str = tmp
+            .path()
+            .join("nonexistent.md")
+            .to_str()
+            .unwrap()
+            .to_string();
+        cache.set(
+            "mycode",
+            "commands",
+            "hello",
+            CacheEntry {
+                hash: "abc".to_string(),
+                target: file_str,
+            },
+        );
+        let result = undeploy_item("commands", "hello", &mut cache, tmp.path());
+        assert!(result.is_ok(), "should not fail when file is missing");
+        assert!(cache.get("mycode", "commands", "hello").is_none());
+    }
 }

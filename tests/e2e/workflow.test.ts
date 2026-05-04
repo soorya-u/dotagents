@@ -52,7 +52,7 @@ test.describe("J01-J02: init → add → deploy", () => {
 			run(["skills", "new", "my-skill", "--description", "Test skill"], d);
 			run(["deploy", "--offline", "--no-gitignore"], d);
 
-			expect(existsSync(join(d, ".mycode/skills/my-skill/SKILLS.md"))).toBe(
+			expect(existsSync(join(d, ".mycode/skills/my-skill/SKILL.md"))).toBe(
 				true,
 			);
 		} finally {

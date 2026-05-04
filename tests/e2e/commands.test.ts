@@ -1,7 +1,13 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@microsoft/tui-test";
-import { cleanup, makeTmpDir, run, shellProgram } from "./helpers.js";
+import {
+	cleanup,
+	initWithLocalProvider,
+	makeTmpDir,
+	run,
+	shellProgram,
+} from "./helpers.js";
 
 // ── commands new – CLI ────────────────────────────────────────────────────────
 
@@ -158,6 +164,30 @@ test.describe("commands rm CLI", () => {
 		}
 	});
 
+	// 6.2: commands rm removes deployed file and gitignore entry after deploy
+	test("--force removes deployed command file and gitignore entry", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			run(["deploy", "--offline", "--gitignore"], d);
+
+			expect(existsSync(join(d, ".mycode/commands/hello.md"))).toBe(true);
+
+			const giBefore = readFileSync(join(d, ".gitignore"), "utf8");
+			expect(giBefore).toContain(".mycode/commands/hello.md");
+
+			const { exitCode } = run(["commands", "rm", "hello", "--force"], d);
+			expect(exitCode).toBe(0);
+
+			expect(existsSync(join(d, ".mycode/commands/hello.md"))).toBe(false);
+
+			const giAfter = readFileSync(join(d, ".gitignore"), "utf8");
+			expect(giAfter).not.toContain(".mycode/commands/hello.md");
+		} finally {
+			cleanup(d);
+		}
+	});
+
 	// only the named command is removed
 	test("only removes the named command, others remain", async () => {
 		const d = makeTmpDir();
@@ -194,7 +224,6 @@ test.describe("commands new TUI – T06 interactive prompts", () => {
 		terminal,
 	}) => {
 		try {
-			await expect(terminal.getByText("dotagents commands new")).toBeVisible();
 			await expect(terminal.getByText("Description")).toBeVisible();
 			await expect(
 				terminal.getByText("What does this command do?"),

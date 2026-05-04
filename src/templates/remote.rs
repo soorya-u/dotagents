@@ -1,6 +1,11 @@
+use std::time::Duration;
+
 use anyhow::{Result, anyhow};
 
 use crate::constants::domain::TRUSTED_DOMAIN;
+
+/// Global timeout for all outbound HTTP requests so the registry fetch never hangs indefinitely.
+const HTTP_TIMEOUT: Duration = Duration::from_secs(5);
 
 /// Fetch a template from a remote URL, validating domain and HTTPS first.
 pub(crate) fn fetch_template(url: &str) -> Result<String> {
@@ -39,7 +44,13 @@ fn validate_url(url: &str) -> Result<()> {
 ///
 /// Exposed as `pub(crate)` for testing with a local mock server.
 pub(crate) fn do_get(url: &str) -> Result<String> {
-    let response = ureq::get(url)
+    let agent = ureq::Agent::config_builder()
+        .timeout_global(Some(HTTP_TIMEOUT))
+        .build()
+        .new_agent();
+
+    let response = agent
+        .get(url)
         .call()
         .map_err(|e| anyhow!("Remote template fetch failed for {}: {}", url, e))?;
 

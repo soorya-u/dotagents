@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use cliclack::{intro, multiselect, outro, outro_cancel, select, spinner};
+use cliclack::{multiselect, outro, outro_cancel, select, spinner};
 
 use crate::cli::options::{Feature, InitOptions, InitTemplate};
 use crate::schema::registry::Registry;
@@ -8,8 +8,6 @@ use crate::templates::registry_url;
 /// Runs the interactive init wizard, populating `opts` from user input.
 /// Returns true if init should proceed, false if the user chose to cancel.
 pub(crate) fn run_init_wizard(opts: &mut InitOptions, dir_exists: bool) -> Result<bool> {
-    intro("dotagents · init").ok();
-
     // Overwrite confirmation — only shown when the directory exists and --force was not passed.
     if dir_exists && !opts.force {
         let mut sel = select("A .dotagents directory already exists. Overwrite?")

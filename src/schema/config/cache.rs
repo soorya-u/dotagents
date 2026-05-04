@@ -72,6 +72,14 @@ impl CacheConfig {
         })
     }
 
+    /// Removes and returns the entry for the given (provider, feature, item) triple.
+    pub fn remove(&mut self, provider: &str, feature: &str, item: &str) -> Option<CacheEntry> {
+        self.providers
+            .get_mut(provider)?
+            .get_mut(feature)?
+            .remove(item)
+    }
+
     /// Removes all entries from the cache.
     pub fn clear(&mut self) {
         self.providers.clear();
@@ -220,6 +228,28 @@ mod tests {
     fn test_iter_entries_empty() {
         let cache = CacheConfig::default();
         assert_eq!(cache.iter_entries().count(), 0);
+    }
+
+    // set an entry, remove it, assert it returns the entry and a subsequent get returns None
+    #[test]
+    fn cache_remove_returns_entry_and_deletes_it() {
+        let mut cache = CacheConfig::default();
+        let entry = CacheEntry {
+            hash: "abc123".to_string(),
+            target: "/some/path".to_string(),
+        };
+        cache.set("claude", "commands", "hello", entry.clone());
+        let removed = cache.remove("claude", "commands", "hello");
+        assert_eq!(removed, Some(entry));
+        assert!(cache.get("claude", "commands", "hello").is_none());
+    }
+
+    // remove on absent key returns None without panicking
+    #[test]
+    fn cache_remove_returns_none_when_absent() {
+        let mut cache = CacheConfig::default();
+        let result = cache.remove("claude", "commands", "nonexistent");
+        assert!(result.is_none());
     }
 
     // clear removes all entries

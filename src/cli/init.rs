@@ -9,14 +9,15 @@ use std::{
 use super::options::{Feature, InitOptions, InitTemplate};
 use crate::cli::ui;
 use crate::constants::{
-    dir::{COMMANDS_DIR, MOCK_CUSTOM_AGENT_DIR, ROOT_DIR, SKILLS_DIR, TEMPLATE_DIR},
+    dir::{COMMANDS_DIR, ROOT_DIR, SKILLS_DIR},
     file::{
         ENV_EXAMPLE_FILE, ENV_FILE, GITIGNORE_FILE, GLOBAL_CONFIG_FILE, INSTRUCTIONS_FILE,
-        LOCAL_CONFIG_FILE, MCP_FILE, MOCK_COMMAND_FILE, MOCK_COMMAND_TEMPLATE_FILE,
-        MOCK_INSTRUCTION_TEMPLATE_FILE, MOCK_MCP_TEMPLATE_FILE, MOCK_SKILL_DIR,
-        MOCK_SKILL_TEMPLATE_FILE, SKILL_FILE,
+        LOCAL_CONFIG_FILE, MCP_FILE, SKILL_FILE,
     },
     mocks,
+};
+use crate::schema::features::{
+    command::CommandFeature, instruction::InstructionFeature, mcp::McpFeature, skill::SkillFeature,
 };
 use crate::utils::fs::write_file;
 use anyhow::{Context, Result};
@@ -69,27 +70,32 @@ fn validate_features(opts: &InitOptions) -> Result<()> {
     Ok(())
 }
 
-/// Updates the `targets` array in the given TOML config file.
-fn update_config_targets(config_path: &Path, targets: &[String]) -> Result<()> {
-    let content =
-        fs::read_to_string(config_path).context("Failed to read config.toml for target update")?;
-    let mut value: toml::Value = toml::from_str(&content).context("Failed to parse config.toml")?;
-    let toml::Value::Table(ref mut table) = value else {
-        anyhow::bail!("config.toml root is not a TOML table");
+/// Maps a Feature variant to its config string; Feature::None produces no entry (yields empty list).
+fn feature_to_str(f: &Feature) -> Option<&'static str> {
+    match f {
+        Feature::Commands => Some("commands"),
+        Feature::Instructions => Some("instructions"),
+        Feature::Mcp => Some("mcp"),
+        Feature::Skills => Some("skills"),
+        Feature::None => Option::None,
+    }
+}
+
+/// Derives the global and local config file content from init options.
+fn build_config_content(opts: &InitOptions, template: InitTemplate) -> (String, String) {
+    let config_features: Vec<&str> = opts
+        .features
+        .as_ref()
+        .map(|fs| fs.iter().filter_map(feature_to_str).collect())
+        .unwrap_or_else(|| vec!["commands", "instructions", "mcp", "skills"]);
+    let config_targets: Vec<&str> = opts.targets.iter().map(String::as_str).collect();
+    let base_config = mocks::default_config(&config_features, &config_targets);
+    let local_config = if template == InitTemplate::WithCustomProvider {
+        format!("{}{}", base_config, mocks::MYCODE_PROVIDER_CONFIG)
+    } else {
+        base_config.clone()
     };
-    table.insert(
-        "targets".to_owned(),
-        toml::Value::Array(
-            targets
-                .iter()
-                .map(|s| toml::Value::String(s.clone()))
-                .collect(),
-        ),
-    );
-    let new_content =
-        toml::to_string_pretty(&value).context("Failed to serialise updated config.toml")?;
-    fs::write(config_path, new_content).context("Failed to write updated config.toml")?;
-    Ok(())
+    (base_config, local_config)
 }
 
 pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
@@ -129,57 +135,51 @@ pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
     // Resolve the effective template: default to Starter when no flag was set.
     let template = opts.template.unwrap_or(InitTemplate::Starter);
 
+    // Write config files directly — content is runtime-generated so cannot live in InitFile.
+    let (base_config, local_config) = build_config_content(&opts, template);
+    write_file(&main_dir.join(GLOBAL_CONFIG_FILE), &base_config)
+        .with_context(|| format!("failed to write {GLOBAL_CONFIG_FILE}"))?;
+    write_file(&main_dir.join(LOCAL_CONFIG_FILE), &local_config)
+        .with_context(|| format!("failed to write {LOCAL_CONFIG_FILE}"))?;
+
     let init_files = vec![
         InitFile::new(ENV_EXAMPLE_FILE, mocks::ENV_EXAMPLE),
         InitFile::new(ENV_FILE, mocks::ENV_EXAMPLE),
         InitFile::new(GITIGNORE_FILE, mocks::GITIGNORE),
-        InitFile::new(GLOBAL_CONFIG_FILE, mocks::CONFIG),
-        InitFile::new(
-            LOCAL_CONFIG_FILE,
-            match template {
-                InitTemplate::WithCustomProvider => mocks::LOCAL_CONFIG_WITH_PROVIDER,
-                InitTemplate::Starter => mocks::CONFIG,
-            },
-        ),
-        InitFile::new(INSTRUCTIONS_FILE, mocks::INSTRUCTIONS)
+        InitFile::new(INSTRUCTIONS_FILE, InstructionFeature::mock())
             .with_skip_if(|opts| !opts.has_feature(Feature::Instructions)),
-        InitFile::new(MCP_FILE, mocks::MCP).with_skip_if(|opts| !opts.has_feature(Feature::Mcp)),
+        InitFile::new(MCP_FILE, McpFeature::mock())
+            .with_skip_if(|opts| !opts.has_feature(Feature::Mcp)),
         InitFile::new(
-            Path::new(COMMANDS_DIR).join(MOCK_COMMAND_FILE),
-            mocks::COMMAND_HELLO,
+            Path::new(COMMANDS_DIR).join("hello.md"),
+            CommandFeature::mock(),
         )
         .with_skip_if(|opts| !opts.has_feature(Feature::Commands)),
         InitFile::new(
-            Path::new(SKILLS_DIR).join(MOCK_SKILL_DIR).join(SKILL_FILE),
-            mocks::SKILL_HELLO,
+            Path::new(SKILLS_DIR).join("hello-skill").join(SKILL_FILE),
+            SkillFeature::mock(),
         )
         .with_skip_if(|opts| !opts.has_feature(Feature::Skills)),
         // Template files — only written for the WithCustomProvider template.
         InitFile::new(
-            Path::new(TEMPLATE_DIR)
-                .join(MOCK_CUSTOM_AGENT_DIR)
-                .join(MOCK_COMMAND_TEMPLATE_FILE),
+            Path::new("templates").join("mycode").join("command.hbs"),
             mocks::TEMPLATE_MYCODE_COMMAND,
         )
         .with_skip_if(|opts| opts.template != Some(InitTemplate::WithCustomProvider)),
         InitFile::new(
-            Path::new(TEMPLATE_DIR)
-                .join(MOCK_CUSTOM_AGENT_DIR)
-                .join(MOCK_SKILL_TEMPLATE_FILE),
+            Path::new("templates").join("mycode").join("skill.hbs"),
             mocks::TEMPLATE_MYCODE_SKILL,
         )
         .with_skip_if(|opts| opts.template != Some(InitTemplate::WithCustomProvider)),
         InitFile::new(
-            Path::new(TEMPLATE_DIR)
-                .join(MOCK_CUSTOM_AGENT_DIR)
-                .join(MOCK_INSTRUCTION_TEMPLATE_FILE),
+            Path::new("templates")
+                .join("mycode")
+                .join("instructions.hbs"),
             mocks::TEMPLATE_MYCODE_INSTRUCTIONS,
         )
         .with_skip_if(|opts| opts.template != Some(InitTemplate::WithCustomProvider)),
         InitFile::new(
-            Path::new(TEMPLATE_DIR)
-                .join(MOCK_CUSTOM_AGENT_DIR)
-                .join(MOCK_MCP_TEMPLATE_FILE),
+            Path::new("templates").join("mycode").join("mcp.hbs"),
             mocks::TEMPLATE_MYCODE_MCP,
         )
         .with_skip_if(|opts| opts.template != Some(InitTemplate::WithCustomProvider)),
@@ -187,17 +187,13 @@ pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
 
     for file in init_files {
         if file.should_skip(&opts) {
-            info!("Skipping {}", file.path.display());
+            debug!("Skipping {}", file.path.display());
             continue;
         }
         write_file(&main_dir.join(&file.path), file.content)?;
     }
 
     if tui_mode {
-        if !opts.targets.is_empty() {
-            update_config_targets(&main_dir.join(GLOBAL_CONFIG_FILE), &opts.targets)?;
-            update_config_targets(&main_dir.join(LOCAL_CONFIG_FILE), &opts.targets)?;
-        }
         ui::init::finish_init();
     }
 
@@ -207,7 +203,6 @@ pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::NamedTempFile;
 
     fn default_opts() -> InitOptions {
         InitOptions {
@@ -318,43 +313,6 @@ mod tests {
         assert!(validate_features(&default_opts()).is_ok());
     }
 
-    // update_config_targets writes the targets array into the TOML file
-    #[test]
-    fn update_config_targets_sets_targets_array() {
-        let f = NamedTempFile::new().expect("temp file");
-        fs::write(f.path(), mocks::CONFIG).expect("write config");
-        let targets = vec!["claude".to_string(), "codex".to_string()];
-        update_config_targets(f.path(), &targets).expect("update should succeed");
-        let result = fs::read_to_string(f.path()).unwrap();
-        assert!(result.contains("claude"), "targets should contain 'claude'");
-        assert!(result.contains("codex"), "targets should contain 'codex'");
-    }
-
-    // update_config_targets replaces a previously set targets array
-    #[test]
-    fn update_config_targets_replaces_existing_targets() {
-        let f = NamedTempFile::new().expect("temp file");
-        fs::write(f.path(), mocks::CONFIG).expect("write config");
-        update_config_targets(f.path(), &["new-provider".to_string()])
-            .expect("update should succeed");
-        let result = fs::read_to_string(f.path()).unwrap();
-        assert!(
-            result.contains("new-provider"),
-            "new target should be present"
-        );
-        assert!(
-            !result.contains("windsurf"),
-            "old targets should be replaced"
-        );
-    }
-
-    // update_config_targets errors on a missing file
-    #[test]
-    fn update_config_targets_errors_on_missing_file() {
-        let result = update_config_targets(Path::new("/nonexistent/config.toml"), &[]);
-        assert!(result.is_err(), "should error when file does not exist");
-    }
-
     // InitFile::should_skip returns false when no condition is set
     #[test]
     fn init_file_should_not_skip_without_condition() {
@@ -379,5 +337,81 @@ mod tests {
         let file =
             InitFile::new("some.txt", "content").with_skip_if(|o| !o.has_feature(Feature::Mcp));
         assert!(!file.should_skip(&default_opts()));
+    }
+
+    // build_config_content with no features flag defaults to all four features
+    #[test]
+    fn build_config_content_defaults_to_all_features() {
+        let opts = default_opts();
+        let (global, local) = build_config_content(&opts, InitTemplate::Starter);
+        for feature in ["commands", "instructions", "mcp", "skills"] {
+            assert!(
+                global.contains(feature),
+                "expected {feature} in global config"
+            );
+            assert!(
+                local.contains(feature),
+                "expected {feature} in local config"
+            );
+        }
+    }
+
+    // build_config_content with a subset of features writes only those features
+    #[test]
+    fn build_config_content_writes_selected_features() {
+        let opts = InitOptions {
+            features: Some(vec![Feature::Commands, Feature::Instructions]),
+            ..default_opts()
+        };
+        let (global, _) = build_config_content(&opts, InitTemplate::Starter);
+        assert!(global.contains("commands"));
+        assert!(global.contains("instructions"));
+        assert!(!global.contains("\"mcp\""));
+        assert!(!global.contains("\"skills\""));
+    }
+
+    // build_config_content with --features none produces features = []
+    #[test]
+    fn build_config_content_none_sentinel_produces_empty_features() {
+        let opts = InitOptions {
+            features: Some(vec![Feature::None]),
+            ..default_opts()
+        };
+        let (global, local) = build_config_content(&opts, InitTemplate::Starter);
+        assert!(
+            global.contains("features = []"),
+            "expected empty features list; got: {global}"
+        );
+        assert!(
+            local.contains("features = []"),
+            "expected empty features list in local; got: {local}"
+        );
+    }
+
+    // build_config_content with WithCustomProvider appends provider block to local config
+    #[test]
+    fn build_config_content_with_custom_provider_appends_provider_block() {
+        let opts = default_opts();
+        let (global, local) = build_config_content(&opts, InitTemplate::WithCustomProvider);
+        assert!(
+            !global.contains("providers.mycode"),
+            "global should not have provider block"
+        );
+        assert!(
+            local.contains("providers.mycode"),
+            "local should contain mycode provider block"
+        );
+        assert!(local.contains(mocks::MYCODE_PROVIDER_CONFIG));
+    }
+
+    // build_config_content with Starter template produces identical global and local content
+    #[test]
+    fn build_config_content_starter_global_and_local_are_identical() {
+        let opts = default_opts();
+        let (global, local) = build_config_content(&opts, InitTemplate::Starter);
+        assert_eq!(
+            global, local,
+            "Starter template: global and local configs should match"
+        );
     }
 }
