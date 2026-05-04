@@ -137,15 +137,13 @@ pub(crate) struct DeployOptions {
     #[clap(long)]
     pub offline: bool,
 
-<<<<<<< t3code/a335bf7b
     /// Preview what would be deployed without writing any files, saving cache, or updating .gitignore.
     #[clap(long)]
     pub dry_run: bool,
-=======
+
     /// Custom .env file(s) to load instead of .dotagents/.env. Repeatable; later files override earlier ones on duplicate keys.
     #[clap(long)]
     pub env: Vec<std::path::PathBuf>,
->>>>>>> main
 }
 
 /// Scaffolding template to use when running `dotagents init`.
