@@ -136,6 +136,10 @@ pub(crate) struct DeployOptions {
     /// Errors if a required template has not been cached by a previous online deploy.
     #[clap(long)]
     pub offline: bool,
+
+    /// Preview what would be deployed without writing any files, saving cache, or updating .gitignore.
+    #[clap(long)]
+    pub dry_run: bool,
 }
 
 /// Scaffolding template to use when running `dotagents init`.
@@ -276,6 +280,10 @@ pub(crate) struct UndeployOptions {
     /// Do not remove entries from .gitignore.
     #[clap(long)]
     pub no_gitignore: bool,
+
+    /// Preview what would be undeployed without deleting any files, clearing cache, or touching .gitignore.
+    #[clap(long)]
+    pub dry_run: bool,
 }
 
 pub fn get_options() -> Options {

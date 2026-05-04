@@ -29,6 +29,8 @@ pub(crate) enum CacheUpdate {
     Skipped,
     /// File was skipped because the user manually edited the target.
     UserEditedSkipped { path: PathBuf },
+    /// Dry-run mode: file was not written; carries path and rendered content for classification.
+    DryRun { target: PathBuf, content: String },
 }
 
 /// In-memory representation of `cache.toml`; keyed by `(provider, feature, item)`.

@@ -8,6 +8,9 @@ use std::sync::{Arc, Mutex};
 
 use crate::cli::options::DeployOptions;
 use crate::cli::ui::deploy::{print_deploy_summary, prompt_gitignore_update, prompt_offline};
+use crate::cli::ui::dry_run::{
+    DeployDryRunStatus, DryRunDeployEntry, print_dry_run_deploy_summary,
+};
 use crate::schema::config::{AppConfig, CACHE_SINGLETON_KEY, CacheConfig, CacheEntry, CacheUpdate};
 use crate::schema::features::{
     Feature, command::CommandFeature, instruction::InstructionFeature, mcp::McpFeature,
@@ -18,6 +21,7 @@ use crate::templates::{
     TemplateCache, Templater, get_templater, registry_url, render_feature_with_settings,
     resolve_provider_defaults,
 };
+use crate::utils::fs::{hash_content, hash_file};
 use crate::utils::gitignore::{
     GitignorePath, gitignore_path_to_pattern, parse_fenced_section, read_gitignore, write_gitignore,
 };
@@ -30,6 +34,8 @@ pub(crate) struct DeployStats {
     pub written: usize,
     pub skipped: usize,
     pub paths: Vec<GitignorePath>,
+    /// Populated only during `--dry-run`; empty in normal deploys.
+    pub dry_run_entries: Vec<DryRunDeployEntry>,
 }
 
 impl DeployStats {
@@ -38,6 +44,7 @@ impl DeployStats {
         self.written += other.written;
         self.skipped += other.skipped;
         self.paths.extend(other.paths);
+        self.dry_run_entries.extend(other.dry_run_entries);
         self
     }
 }
@@ -52,6 +59,7 @@ fn deploy_feature<T>(
     cache: &Arc<Mutex<CacheConfig>>,
     force: bool,
     no_cache: bool,
+    dry_run: bool,
     loader: impl FnOnce() -> Result<Vec<T>>,
 ) -> Result<DeployStats>
 where
@@ -93,6 +101,7 @@ where
                         variables,
                         cached_entry.as_ref(),
                         force,
+                        dry_run,
                     )?;
 
                     match update {
@@ -105,6 +114,28 @@ where
                                 item_key,
                                 CacheEntry { hash, target },
                             );
+                        }
+                        CacheUpdate::DryRun { target, content } => {
+                            // Classify as New, Modified, or unchanged (skip).
+                            let rendered_hash = hash_content(&content);
+                            if !target.exists() {
+                                acc.dry_run_entries.push(DryRunDeployEntry {
+                                    path: target,
+                                    status: DeployDryRunStatus::New,
+                                });
+                            } else {
+                                match hash_file(&target)? {
+                                    Some(disk_hash) if disk_hash == rendered_hash => {
+                                        // Content identical on disk — nothing to show.
+                                    }
+                                    _ => {
+                                        acc.dry_run_entries.push(DryRunDeployEntry {
+                                            path: target,
+                                            status: DeployDryRunStatus::Modified,
+                                        });
+                                    }
+                                }
+                            }
                         }
                         CacheUpdate::Skipped | CacheUpdate::UserEditedSkipped { .. } => {
                             acc.skipped += 1;
@@ -179,6 +210,7 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
         &cache,
         opts.force,
         opts.no_cache,
+        opts.dry_run,
         CommandFeature::from_application,
     )?);
 
@@ -190,6 +222,7 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
         &cache,
         opts.force,
         opts.no_cache,
+        opts.dry_run,
         SkillFeature::from_application,
     )?);
 
@@ -201,6 +234,7 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
         &cache,
         opts.force,
         opts.no_cache,
+        opts.dry_run,
         || McpFeature::from_application().map(|mcp| vec![mcp]),
     )?);
 
@@ -212,8 +246,15 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
         &cache,
         opts.force,
         opts.no_cache,
+        opts.dry_run,
         || InstructionFeature::from_application().map(|inst| vec![inst]),
     )?);
+
+    // Dry-run: print preview and exit — skip cache save and gitignore.
+    if opts.dry_run {
+        print_dry_run_deploy_summary(&stats.dry_run_entries);
+        return Ok(());
+    }
 
     // Always persist cache to disk (--no-cache only skips hash comparison, not persistence).
     cache
