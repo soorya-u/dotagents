@@ -55,12 +55,12 @@ test.describe("undeploy --dry-run – no side effects", () => {
 			run(["deploy", "--offline", "--gitignore"], d);
 
 			const giBefore = readFileSync(join(d, ".gitignore"), "utf8");
-			expect(giBefore).toContain("BEGIN dotagents managed");
+			expect(giBefore).toContain("#region dotagents");
 
 			run(["undeploy", "--dry-run"], d);
 
 			const giAfter = readFileSync(join(d, ".gitignore"), "utf8");
-			expect(giAfter).toContain("BEGIN dotagents managed");
+			expect(giAfter).toContain("#region dotagents");
 		} finally {
 			cleanup(d);
 		}
