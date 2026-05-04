@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@microsoft/tui-test";
 import {
@@ -200,6 +200,102 @@ test.describe("deploy CLI – T15 offline flag suppresses prompt", () => {
 			const { exitCode } = run(["deploy", "--offline", "--no-gitignore"], d);
 			expect(exitCode).toBe(0);
 			expect(existsSync(join(d, ".mycode/commands/hello.md"))).toBe(true);
+		} finally {
+			cleanup(d);
+		}
+	});
+});
+
+// ── --env flag ────────────────────────────────────────────────────────────────
+
+test.describe("deploy CLI – --env flag", () => {
+	// --env replaces the default .dotagents/.env entirely
+	test("single --env file replaces default .env", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			// Write a custom env with a different APP_NAME than the default "dotagents"
+			writeFileSync(join(d, "custom.env"), "APP_NAME=myapp\n");
+			const { exitCode } = run(
+				[
+					"deploy",
+					"--no-cache",
+					"--offline",
+					"--no-gitignore",
+					"--env",
+					"./custom.env",
+				],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			const content = readFileSync(join(d, ".mycode/instructions.md"), "utf8");
+			// custom file value used
+			expect(content).toContain("myapp");
+			// default .env value NOT used
+			expect(content).not.toContain("dotagents");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// later --env file wins on duplicate keys
+	test("multiple --env files merge left-to-right with last file winning", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			writeFileSync(join(d, "base.env"), "APP_NAME=from-base\n");
+			writeFileSync(join(d, "override.env"), "APP_NAME=from-override\n");
+			const { exitCode } = run(
+				[
+					"deploy",
+					"--no-cache",
+					"--offline",
+					"--no-gitignore",
+					"--env",
+					"./base.env",
+					"--env",
+					"./override.env",
+				],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			const content = readFileSync(join(d, ".mycode/instructions.md"), "utf8");
+			expect(content).toContain("from-override");
+			expect(content).not.toContain("from-base");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// missing --env file exits non-zero with the file path in the error message
+	test("missing --env file exits non-zero with file path in error", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			const { exitCode, stderr } = run(
+				["deploy", "--offline", "--no-gitignore", "--env", "./nonexistent.env"],
+				d,
+			);
+			expect(exitCode).not.toBe(0);
+			expect(stderr).toContain("nonexistent.env");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// no --env flag: existing behaviour unchanged (default .env loaded silently)
+	test("no --env flag loads default .env as before", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			const { exitCode } = run(
+				["deploy", "--no-cache", "--offline", "--no-gitignore"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			const content = readFileSync(join(d, ".mycode/instructions.md"), "utf8");
+			// default .env has APP_NAME=dotagents
+			expect(content).toContain("dotagents");
 		} finally {
 			cleanup(d);
 		}
