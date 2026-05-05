@@ -154,7 +154,7 @@ where
 }
 
 pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
-    // Validate env paths before the LazyLock fires so missing files surface as clean errors.
+    // Validate env paths before the OnceLock fires so missing files surface as clean errors.
     for path in &opts.env {
         if !path.exists() {
             return Err(anyhow::anyhow!(
@@ -163,7 +163,7 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
             ));
         }
     }
-    // Must be called before get_templater() so ENV_PATHS is set before the LazyLock fires.
+    // Must be called before get_templater() so ENV_PATHS is set before the OnceLock fires.
     set_env_paths(std::mem::take(&mut opts.env));
 
     // Override workspace root before any path resolution is triggered.
@@ -174,7 +174,7 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
         override_workspace_dir(workspace).context("Failed to set workspace directory")?;
     }
 
-    let templater = get_templater();
+    let templater = get_templater().context("failed to initialise templater")?;
     let mut app_config =
         AppConfig::from_application(templater).context("Failed to load application config")?;
 
