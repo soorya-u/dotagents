@@ -328,7 +328,7 @@ test.describe("deploy CLI – PATH argument", () => {
 	// C-PA05: PATH missing .dotagents exits non-zero with error message
 	test("PATH without .dotagents exits non-zero with error", async () => {
 		const cwd = makeTmpDir();
-		const target = makeTmpDir(); // exists but has no .dotagents-debug
+		const target = makeTmpDir(); // exists but has no .dotagents
 		try {
 			const { exitCode, stderr } = run(
 				["deploy", target, "--offline", "--no-gitignore"],
@@ -368,7 +368,7 @@ test.describe("deploy --dry-run – no side effects", () => {
 		try {
 			initWithLocalProvider(d);
 			run(["deploy", "--dry-run", "--offline"], d);
-			const cachePath = join(d, ".dotagents-debug/cache.toml");
+			const cachePath = join(d, ".dotagents/cache.toml");
 			// cache.toml must not exist (or must be empty if pre-existing)
 			if (existsSync(cachePath)) {
 				const content = readFileSync(cachePath, "utf8");
@@ -421,7 +421,7 @@ test.describe("deploy --dry-run – output format", () => {
 			run(["deploy", "--offline", "--no-gitignore"], d);
 			// Modify the SOURCE command file so rendered output will differ from cached hash
 			writeFileSync(
-				join(d, ".dotagents-debug/commands/hello.md"),
+				join(d, ".dotagents/commands/hello.md"),
 				"---\nname: hello\ndescription: modified\n---\nModified body content",
 			);
 			// Dry-run: rendered_hash != cached_hash → bypasses cache-skip → DryRun path → [~]
@@ -481,7 +481,7 @@ test.describe("deploy --dry-run – error handling", () => {
 		try {
 			initWithLocalProvider(d);
 			// Remove a provider template file so the renderer returns an error
-			unlinkSync(join(d, ".dotagents-debug/templates/mycode/instructions.hbs"));
+			unlinkSync(join(d, ".dotagents/templates/mycode/instructions.hbs"));
 			const { exitCode, stderr } = run(["deploy", "--dry-run", "--offline"], d);
 			expect(exitCode).toBe(1);
 			expect(stderr.length).toBeGreaterThan(0);

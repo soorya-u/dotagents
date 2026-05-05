@@ -12,7 +12,7 @@ test.describe("init CLI – file tree", () => {
 		try {
 			const { exitCode } = run(["init", "--template", "starter"], d);
 			expect(exitCode).toBe(0);
-			const root = join(d, ".dotagents-debug");
+			const root = join(d, ".dotagents");
 			expect(existsSync(join(root, "config.toml"))).toBe(true);
 			expect(existsSync(join(root, ".env"))).toBe(true);
 			expect(existsSync(join(root, ".env.example"))).toBe(true);
@@ -37,7 +37,7 @@ test.describe("init CLI – file tree", () => {
 				d,
 			);
 			expect(exitCode).toBe(0);
-			const root = join(d, ".dotagents-debug");
+			const root = join(d, ".dotagents");
 			expect(existsSync(join(root, "templates/mycode/command.hbs"))).toBe(true);
 			expect(existsSync(join(root, "templates/mycode/instructions.hbs"))).toBe(
 				true,
@@ -56,7 +56,7 @@ test.describe("init CLI – file tree", () => {
 			run(["init", "--template", "starter"], d);
 			const { exitCode } = run(["init", "--force", "--template", "starter"], d);
 			expect(exitCode).toBe(0);
-			expect(existsSync(join(d, ".dotagents-debug/config.toml"))).toBe(true);
+			expect(existsSync(join(d, ".dotagents/config.toml"))).toBe(true);
 		} finally {
 			cleanup(d);
 		}
@@ -77,7 +77,7 @@ test.describe("init CLI – file tree", () => {
 				d,
 			);
 			expect(exitCode).toBe(0);
-			expect(existsSync(join(d, ".dotagents-debug/commands"))).toBe(false);
+			expect(existsSync(join(d, ".dotagents/commands"))).toBe(false);
 		} finally {
 			cleanup(d);
 		}
@@ -98,7 +98,7 @@ test.describe("init CLI – file tree", () => {
 				d,
 			);
 			expect(exitCode).toBe(0);
-			expect(existsSync(join(d, ".dotagents-debug/skills"))).toBe(false);
+			expect(existsSync(join(d, ".dotagents/skills"))).toBe(false);
 		} finally {
 			cleanup(d);
 		}
@@ -119,7 +119,7 @@ test.describe("init CLI – file tree", () => {
 				d,
 			);
 			expect(exitCode).toBe(0);
-			expect(existsSync(join(d, ".dotagents-debug/mcp.jsonc"))).toBe(false);
+			expect(existsSync(join(d, ".dotagents/mcp.jsonc"))).toBe(false);
 		} finally {
 			cleanup(d);
 		}
@@ -134,9 +134,7 @@ test.describe("init CLI – file tree", () => {
 				d,
 			);
 			expect(exitCode).toBe(0);
-			expect(existsSync(join(d, ".dotagents-debug/INSTRUCTIONS.md"))).toBe(
-				false,
-			);
+			expect(existsSync(join(d, ".dotagents/INSTRUCTIONS.md"))).toBe(false);
 		} finally {
 			cleanup(d);
 		}
@@ -148,10 +146,7 @@ test.describe("init CLI – config content", () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
-			const config = readFileSync(
-				join(d, ".dotagents-debug/config.toml"),
-				"utf8",
-			);
+			const config = readFileSync(join(d, ".dotagents/config.toml"), "utf8");
 			expect(config).toContain("features");
 			expect(config).toContain('"commands"');
 			expect(config).toContain('"instructions"');
@@ -171,10 +166,7 @@ test.describe("init CLI – config content", () => {
 				d,
 			);
 			expect(exitCode).toBe(0);
-			const config = readFileSync(
-				join(d, ".dotagents-debug/config.toml"),
-				"utf8",
-			);
+			const config = readFileSync(join(d, ".dotagents/config.toml"), "utf8");
 			expect(config).toContain('"commands"');
 			expect(config).toContain('"mcp"');
 			expect(config).not.toContain('"instructions"');
@@ -193,10 +185,7 @@ test.describe("init CLI – config content", () => {
 				d,
 			);
 			expect(exitCode).toBe(0);
-			const config = readFileSync(
-				join(d, ".dotagents-debug/config.toml"),
-				"utf8",
-			);
+			const config = readFileSync(join(d, ".dotagents/config.toml"), "utf8");
 			expect(config).toContain("features = []");
 		} finally {
 			cleanup(d);
@@ -207,7 +196,7 @@ test.describe("init CLI – config content", () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
-			const gi = readFileSync(join(d, ".dotagents-debug/.gitignore"), "utf8");
+			const gi = readFileSync(join(d, ".dotagents/.gitignore"), "utf8");
 			expect(gi).toContain("local.config.toml");
 			expect(gi).toContain(".env");
 		} finally {
@@ -219,10 +208,7 @@ test.describe("init CLI – config content", () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
-			const cmd = readFileSync(
-				join(d, ".dotagents-debug/commands/hello.md"),
-				"utf8",
-			);
+			const cmd = readFileSync(join(d, ".dotagents/commands/hello.md"), "utf8");
 			expect(cmd).toMatch(/^---/);
 			expect(cmd).toContain("name:");
 			expect(cmd).toContain("description:");
@@ -242,11 +228,9 @@ test.describe("init CLI – PATH argument", () => {
 		try {
 			const { exitCode } = run(["init", target, "--template", "starter"], cwd);
 			expect(exitCode).toBe(0);
-			expect(existsSync(join(target, ".dotagents-debug/config.toml"))).toBe(
-				true,
-			);
+			expect(existsSync(join(target, ".dotagents/config.toml"))).toBe(true);
 			// CWD should NOT have been initialised
-			expect(existsSync(join(cwd, ".dotagents-debug"))).toBe(false);
+			expect(existsSync(join(cwd, ".dotagents"))).toBe(false);
 		} finally {
 			cleanup(cwd);
 			cleanup(target);
@@ -262,9 +246,9 @@ test.describe("init CLI – PATH argument", () => {
 				cwd,
 			);
 			expect(exitCode).toBe(0);
-			expect(
-				existsSync(join(cwd, "subproject/.dotagents-debug/config.toml")),
-			).toBe(true);
+			expect(existsSync(join(cwd, "subproject/.dotagents/config.toml"))).toBe(
+				true,
+			);
 		} finally {
 			cleanup(cwd);
 		}
@@ -277,9 +261,7 @@ test.describe("init CLI – PATH argument", () => {
 		try {
 			const { exitCode } = run(["init", target, "--template", "starter"], cwd);
 			expect(exitCode).toBe(0);
-			expect(existsSync(join(target, ".dotagents-debug/config.toml"))).toBe(
-				true,
-			);
+			expect(existsSync(join(target, ".dotagents/config.toml"))).toBe(true);
 		} finally {
 			cleanup(cwd);
 		}
@@ -322,7 +304,7 @@ test.describe("init TUI – T01 wizard happy path", () => {
 			await expect(terminal.getByText("Done! Run")).toBeVisible();
 
 			// workspace was created
-			expect(existsSync(join(d, ".dotagents-debug/config.toml"))).toBe(true);
+			expect(existsSync(join(d, ".dotagents/config.toml"))).toBe(true);
 		} finally {
 			cleanup(d);
 		}
@@ -356,8 +338,8 @@ test.describe("init TUI – T02 deselect features", () => {
 			terminal.keyPress("Enter");
 			await expect(terminal.getByText("Done! Run")).toBeVisible();
 
-			expect(existsSync(join(d, ".dotagents-debug/mcp.jsonc"))).toBe(false);
-			expect(existsSync(join(d, ".dotagents-debug/skills"))).toBe(false);
+			expect(existsSync(join(d, ".dotagents/mcp.jsonc"))).toBe(false);
+			expect(existsSync(join(d, ".dotagents/skills"))).toBe(false);
 		} finally {
 			cleanup(d);
 		}
@@ -389,7 +371,7 @@ test.describe("init TUI – T03 WithCustomProvider template", () => {
 			await expect(terminal.getByText("Done! Run")).toBeVisible();
 
 			expect(
-				existsSync(join(d, ".dotagents-debug/templates/mycode/command.hbs")),
+				existsSync(join(d, ".dotagents/templates/mycode/command.hbs")),
 			).toBe(true);
 		} finally {
 			cleanup(d);
@@ -423,10 +405,8 @@ test.describe("init TUI – T-PA wizard runs with PATH argument", () => {
 			await expect(terminal.getByText("Done! Run")).toBeVisible();
 
 			// Files must land inside the PATH directory, not CWD
-			expect(existsSync(join(target, ".dotagents-debug/config.toml"))).toBe(
-				true,
-			);
-			expect(existsSync(join(cwd, ".dotagents-debug"))).toBe(false);
+			expect(existsSync(join(target, ".dotagents/config.toml"))).toBe(true);
+			expect(existsSync(join(cwd, ".dotagents"))).toBe(false);
 		} finally {
 			cleanup(cwd);
 			cleanup(target);
@@ -434,22 +414,16 @@ test.describe("init TUI – T-PA wizard runs with PATH argument", () => {
 	});
 });
 
-// T05: overwrite cancel — NOTE: debug binary defaults force=true so the
-//      overwrite prompt is suppressed; mark as skip
-test.describe("init TUI – T05 overwrite cancel (skipped)", () => {
-	// stub program — setup runs inside the (skipped) body so no filesystem
-	// mutations happen at describe evaluation time
-	test.use({ program: { file: "bash", args: ["-c", "true"] } });
+// T05: overwrite cancel
+test.describe("init TUI – T05 overwrite cancel", () => {
+	const d = makeTmpDir();
+	run(["init", "--template", "starter"], d);
+	test.use({ program: shellProgram(d, ["init"]) });
 
-	test.skip("cancel overwrite exits without changes (release binary only)", async ({
-		terminal,
-	}) => {
-		// setup deferred into body — never runs because test is skipped
-		const d = makeTmpDir();
-		run(["init", "--template", "starter"], d);
+	test("cancel overwrite exits without changes", async ({ terminal }) => {
 		try {
 			await expect(terminal.getByText("already exists")).toBeVisible();
-			terminal.keyDown(); // move to No
+			// "No, cancel" is already the first (default) option, just press Enter
 			terminal.keyPress("Enter");
 			await expect(terminal.getByText("Init cancelled.")).toBeVisible();
 		} finally {
