@@ -183,7 +183,7 @@ jobs:
         run: cd tests/e2e && bunx @microsoft/tui-test
 
   publish-cargo:
-    needs: [build-release]
+    needs: [e2e]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -198,7 +198,7 @@ jobs:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
 
   publish-npm:
-    needs: [build-release]
+    needs: [e2e]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -213,9 +213,10 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish-pypi:
-    needs: [build-release]
+    needs: [e2e]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -234,7 +235,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
 
   update-homebrew:
-    needs: [build-release]
+    needs: [e2e]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -261,7 +262,7 @@ jobs:
           SHA_X86: ${{ steps.sha.outputs.x86 }}
 
   update-scoop:
-    needs: [build-release]
+    needs: [e2e]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
