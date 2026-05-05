@@ -3,9 +3,32 @@ set -euo pipefail
 
 # Builds platform-specific wheels and publishes to PyPI using trusted publishing.
 # Required env: TAG, GH_TOKEN
+# Supports pre-release tags (e.g. v0.0.0-nightly, v0.0.0-alpha.1, v0.0.0-rc.1)
+# by converting semver pre-release identifiers to PEP 440 format.
 
 TAG="${TAG:?TAG is required}"
-VERSION=$(echo "$TAG" | sed 's/^v//')
+SEMVER=$(echo "$TAG" | sed 's/^v//')
+
+# Convert semver pre-release to PEP 440
+# e.g. 0.0.0-nightly -> 0.0.0.dev0, 0.0.0-alpha.1 -> 0.0.0a1,
+#      0.0.0-beta.2 -> 0.0.0b2, 0.0.0-rc.1 -> 0.0.0rc1
+if [[ "$SEMVER" == *-* ]]; then
+  BASE_VERSION="${SEMVER%%-*}"
+  PRERELEASE="${SEMVER#*-}"
+
+  if [[ "$PRERELEASE" =~ ^alpha\.?([0-9]*)$ ]]; then
+    VERSION="${BASE_VERSION}a${BASH_REMATCH[1]:-0}"
+  elif [[ "$PRERELEASE" =~ ^beta\.?([0-9]*)$ ]]; then
+    VERSION="${BASE_VERSION}b${BASH_REMATCH[1]:-0}"
+  elif [[ "$PRERELEASE" =~ ^rc\.?([0-9]*)$ ]]; then
+    VERSION="${BASE_VERSION}rc${BASH_REMATCH[1]:-0}"
+  else
+    # Generic pre-release (nightly, test, dev, etc.) -> .dev0
+    VERSION="${BASE_VERSION}.dev0"
+  fi
+else
+  VERSION="$SEMVER"
+fi
 PKG_NAME="py_dotagents"
 DIST_NAME="py-dotagents"
 
