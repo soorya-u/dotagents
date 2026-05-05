@@ -20,8 +20,8 @@ No release automation exists today. The Rust toolchain is pinned to `1.92` in `m
 **Two-stage over single tag-triggered pipeline**
 A single tag-push pipeline (the common pattern) immediately starts building and publishing — there's no window to edit the CHANGELOG before it's attached to a GitHub release. The two-stage model separates "prepare" from "publish": Stage 1 is cheap (just files), Stage 2 only fires after a deliberate merge. Alternative considered: `release-plz` (auto-creates release PRs on every push to main) — rejected because Q4 specified manual dispatch, not automatic.
 
-**Commit title match over a separate `release` branch**
-Stage 2 filters `push` events by checking `startsWith(github.event.head_commit.message, 'chore: release v')`. Alternative: a dedicated `release/*` branch — adds branch management overhead with no benefit since we already have the PR as the review gate.
+**Tag-based trigger for Stage 2**
+Stage 1 pushes an annotated tag (`v$VERSION`) after the release PR is merged. Stage 2 triggers on `on: push: tags: 'v*.*.*'`. Alternative considered: filtering `push` to `main` by `startsWith(github.event.head_commit.message, 'chore: release v')` — rejected because commit message matching is fragile (squash merges can reword the title, and any manual push with a matching prefix fires the pipeline unexpectedly). The tag-based approach is the pattern used by widely-deployed Rust tooling (e.g. t3code, cargo-dist) and is unambiguous: a tag only exists if Stage 1 explicitly created it. Another alternative: a dedicated `release/*` branch — adds branch management overhead with no benefit since we already have the PR as the review gate.
 
 **`cross` crate for linux-arm64-musl**
 `aarch64-unknown-linux-musl` cannot be cross-compiled natively on ubuntu-latest runners without QEMU or a cross-compilation toolchain. `cross` (cargo install cross) provides a Docker-based cross-compilation environment and is the standard approach for this target. Alternative: GitHub's ARM runners — more expensive and overkill for a binary build.

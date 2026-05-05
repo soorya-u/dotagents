@@ -18,6 +18,9 @@ The repo has one existing workflow (`generate-registry.yml`) that runs on pushes
 
 ## Decisions
 
+**This proposal is independent of all other open proposals**
+`add-pr-ci`, `add-release-pipeline`, `fix-mock-files`, `fix-init-dir-timing`, `fix-e2e-release-build`, and `fix-error-handling` have no blocking dependencies on each other and can be implemented in any order. The `implement-skills` proposal is archived at `openspec/changes/archive/2026-04-25-implement-skills/` and is not a dependency.
+
 **`dtolnay/rust-toolchain@1.92` over `rustup update`**
 The reference project uses `rustup update` (latest stable). We pin to `1.92` to match `mise.toml` exactly — using latest stable in CI would mean CI and local could silently diverge. `dtolnay/rust-toolchain` is the standard action for pinning.
 

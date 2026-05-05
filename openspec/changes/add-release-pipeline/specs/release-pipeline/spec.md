@@ -14,16 +14,16 @@ A developer SHALL be able to trigger a release preparation by running the `relea
 - **WHEN** the `release-prep` workflow completes
 - **THEN** no package is published to crates.io, npm, Homebrew, or Scoop
 
-### Requirement: Stage 2 only triggers on release PR merges
-The `release` workflow SHALL trigger on push to `main` but MUST exit early without doing any work if the merge commit title does not match the pattern `"chore: release v*"`.
+### Requirement: Stage 2 only triggers on an explicit version tag push
+The `release` workflow SHALL trigger on `push: tags: 'v*.*.*'`. It MUST NOT trigger on branch pushes. The tag is created and pushed manually by the developer after the release PR is merged.
 
-#### Scenario: Non-release push is ignored
+#### Scenario: Non-tag push does not trigger Stage 2
 - **WHEN** a regular feature commit is pushed to `main`
-- **THEN** the `release` workflow starts but exits in the first step without creating a tag or building any binary
+- **THEN** the `release` workflow is not started at all
 
-#### Scenario: Release PR merge triggers full pipeline
-- **WHEN** the `"chore: release v0.2.0"` PR is merged to `main`
-- **THEN** all Stage 2 jobs run: tag, build-release, e2e, publish-cargo, publish-npm, update-homebrew, update-scoop
+#### Scenario: Tag push triggers full pipeline
+- **WHEN** the developer merges the `"chore: release v0.2.0"` PR and pushes the annotated tag `v0.2.0`
+- **THEN** all Stage 2 jobs run: build-release, e2e, publish-cargo, publish-npm, update-homebrew, update-scoop
 
 ### Requirement: E2E tests must pass before any registry publish
 All publish jobs (crates.io, npm) SHALL declare `needs: e2e` and MUST NOT start if the `e2e` job exits non-zero. The `e2e` job MUST use the actual release binary built in the `build-release` job.
@@ -39,7 +39,7 @@ All publish jobs (crates.io, npm) SHALL declare `needs: e2e` and MUST NOT start 
 - **THEN** `publish-cargo` and `publish-npm` jobs start
 
 ### Requirement: Homebrew and Scoop are updated with correct SHA256 on every release
-The `update-homebrew` and `update-scoop` jobs SHALL compute the SHA256 of the released binaries and push updated formula/manifest files to their respective repos. These jobs SHALL run after `build-release` and MUST NOT require e2e to pass first.
+The `update-homebrew` and `update-scoop` jobs SHALL compute the SHA256 of the released binaries and push updated formula/manifest files to their respective repos. These jobs SHALL declare `needs: [build-release, e2e]` — they MUST NOT start if e2e fails, to avoid pushing a formula that points to a broken binary.
 
 #### Scenario: Homebrew formula is updated
 - **WHEN** `build-release` completes and macOS binaries are available on the GitHub release
@@ -52,7 +52,14 @@ The `update-homebrew` and `update-scoop` jobs SHALL compute the SHA256 of the re
 - **THEN** the commit is pushed directly to `main` of `soorya-u/scoop-dotagents`
 
 ### Requirement: All required secrets must be documented by name
-The pipeline MUST document the four required secrets by exact name so any developer can configure them. The pipeline MUST fail with a clear error (not silently skip) if a required secret is absent.
+The pipeline MUST document the following secrets by exact name so any developer can configure them. The pipeline MUST fail with a clear error (not silently skip) if a required secret is absent.
+
+| Secret | Required by | How to obtain |
+|---|---|---|
+| `GITHUB_TOKEN` | All jobs | Auto-provided by GitHub Actions — no setup needed |
+| `CRATES_IO_TOKEN` | `publish-cargo` | crates.io → Account Settings → API Tokens |
+| `NPM_TOKEN` | `publish-npm` | npmjs.com → Access Tokens → Automation token |
+| `RELEASE_PAT` | `update-homebrew`, `update-scoop` | Fine-grained PAT with Contents read+write on `soorya-u/homebrew-dotagents` and `soorya-u/scoop-dotagents` |
 
 #### Scenario: Missing CRATES_IO_TOKEN fails publish-cargo visibly
 - **WHEN** `CRATES_IO_TOKEN` is not set in repository secrets

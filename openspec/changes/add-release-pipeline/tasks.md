@@ -17,12 +17,12 @@
 - [ ] 3.3 Add step to generate CHANGELOG: `cargo install git-cliff --locked` then `git-cliff --tag v${{ inputs.version }} --prepend CHANGELOG.md`
 - [ ] 3.4 Add step to generate shell completions: build debug binary with `cargo build --locked`, then run `./target/debug/dotagents gen-completions --shell <shell> --to completions/` for each of bash, elvish, fish, powershell, zsh, then `zip -r completions.zip completions/`
 - [ ] 3.5 Add step to open PR using `peter-evans/create-pull-request@v6` with title `"chore: release v${{ inputs.version }}"`, branch `bot/release-v${{ inputs.version }}`, committing `Cargo.toml`, `Cargo.lock`, `CHANGELOG.md`, `completions.zip`
+- [ ] 3.6 After the PR is merged (handled externally), add a step in a post-merge job or document that the developer must run: create annotated tag `v${{ inputs.version }}` and push it (`git tag -a v$VERSION -m "Release v$VERSION" && git push origin v$VERSION`) — this tag push is what triggers Stage 2
 
 ## 4. Stage 2 — release.yml (tag + build)
 
-- [ ] 4.1 Create `.github/workflows/release.yml` with `on: push: branches: [main]` trigger
-- [ ] 4.2 Add early-exit check as first step of the `tag` job: `if: startsWith(github.event.head_commit.message, 'chore: release v')` condition on the entire job
-- [ ] 4.3 Add `tag` job: extract version from `Cargo.toml` via `grep -m1 '^version' Cargo.toml | cut -d'"' -f2`, create annotated tag `v$VERSION`, push tag using `GITHUB_TOKEN`
+- [ ] 4.1 Create `.github/workflows/release.yml` with `on: push: tags: ['v*.*.*']` trigger
+- [ ] 4.2 Add `tag` job (removed — Stage 1 pushes the tag; Stage 2 triggers directly from it): extract version from the tag ref via `echo "${{ github.ref_name }}" | sed 's/^v//'` and verify it matches `Cargo.toml` version
 - [ ] 4.4 Add `build-release` job (`needs: tag`, `strategy.fail-fast: false`) with matrix: `linux-x64-musl/ubuntu-latest/x86_64-unknown-linux-musl`, `linux-arm64-musl/ubuntu-latest/aarch64-unknown-linux-musl`, `macos-arm64/macos-latest/aarch64-apple-darwin`, `macos-x86/macos-latest/x86_64-apple-darwin`, `windows-x64/windows-latest/x86_64-pc-windows-msvc`
 - [ ] 4.5 In `build-release`: add `cargo install cross --locked` step gated on `matrix.build_name == 'linux-arm64-musl'`; use `cross` for that leg and `cargo` for all others
 - [ ] 4.6 In `build-release`: build with `cargo build --release --locked --verbose --target ${{ matrix.target }}`

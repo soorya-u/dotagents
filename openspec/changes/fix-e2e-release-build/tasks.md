@@ -1,6 +1,6 @@
 ## 1. Build Infrastructure
 
-- [ ] 1.1 In `mise.toml`, change the `tests:e2e` task's `depends` entry from `build` to `build-release`
+- [ ] 1.1 In `mise.toml`, change the `tests:e2e` task's `depends` entry from `build` to `build:release`
 - [ ] 1.2 In `tests/e2e/helpers.ts` line 8, change the binary path from `../../target/debug/dotagents` to `../../target/release/dotagents`
 
 ## 2. Root Directory References

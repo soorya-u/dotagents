@@ -1,5 +1,7 @@
 ## ADDED Requirements
 
+> **Note:** This proposal is independent of all other open proposals (`add-release-pipeline`, `fix-mock-files`, `fix-init-dir-timing`, `fix-e2e-release-build`, `fix-error-handling`). The `implement-skills` proposal is archived at `openspec/changes/archive/2026-04-25-implement-skills/` and is not a dependency or prerequisite.
+
 ### Requirement: CI runs on every pull request and push to main
 The CI workflow SHALL trigger automatically on every pull request (any branch) and on every push to the `main` branch.
 
