@@ -175,6 +175,9 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
 
+      - name: Install e2e dependencies
+        run: cd tests/e2e && bun install
+
       - name: Run e2e tests
         run: cd tests/e2e && bunx @microsoft/tui-test
 
@@ -279,3 +282,15 @@ jobs:
           TAG: ${{ github.ref_name }}
           RELEASE_PAT: ${{ secrets.RELEASE_PAT }}
           SHA_HASH: ${{ steps.sha.outputs.hash }}
+
+  cleanup:
+    if: |
+      failure() &&
+      (needs.build-release.result == 'failure' || needs.e2e.result == 'failure')
+    needs: [create-release, build-release, e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete release on pre-publish failure
+        run: gh release delete "${{ github.ref_name }}" --yes --cleanup-tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
