@@ -9,12 +9,11 @@ jobs:
   create-tag:
     if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'bot/release-v')
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.RELEASE_PAT }}
 
       - name: Extract version from branch name
         id: version
