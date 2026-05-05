@@ -3,8 +3,8 @@ set -euo pipefail
 
 # Updates the Homebrew formula with new version and SHA256 hashes.
 # Required env: TAG, RELEASE_PAT, SHA_ARM64, SHA_X86
-# Pre-release tags (e.g. v0.0.0-nightly) update Formula/dotagents-nightly.rb
-# instead of the stable Formula/dotagents.rb.
+# Pre-release tags (e.g. v0.0.0-nightly, v0.0.0-alpha.1, v0.0.0-rc.1) update
+# a channel-specific formula (e.g. Formula/dotagents-nightly.rb) instead of stable.
 
 TAG="${TAG:?TAG is required}"
 VERSION=$(echo "$TAG" | sed 's/^v//')
@@ -12,10 +12,13 @@ RELEASE_PAT="${RELEASE_PAT:?RELEASE_PAT is required}"
 SHA_ARM64="${SHA_ARM64:?SHA_ARM64 is required}"
 SHA_X86="${SHA_X86:?SHA_X86 is required}"
 
-# Determine which formula to update
+# Determine which formula to update based on pre-release channel
 if [[ "$VERSION" == *-* ]]; then
-  FORMULA="Formula/dotagents-nightly.rb"
-  COMMIT_MSG="chore: update dotagents-nightly to v${VERSION}"
+  PRERELEASE="${VERSION#*-}"
+  CHANNEL=$(echo "$PRERELEASE" | sed 's/[^a-zA-Z].*//')
+  CHANNEL="${CHANNEL:-prerelease}"
+  FORMULA="Formula/dotagents-${CHANNEL}.rb"
+  COMMIT_MSG="chore: update dotagents-${CHANNEL} to v${VERSION}"
 else
   FORMULA="Formula/dotagents.rb"
   COMMIT_MSG="chore: update dotagents to v${VERSION}"

@@ -3,18 +3,21 @@ set -euo pipefail
 
 # Updates the Scoop manifest with new version and SHA256 hash.
 # Required env: TAG, RELEASE_PAT, SHA_HASH
-# Pre-release tags (e.g. v0.0.0-nightly) update bucket/dotagents-nightly.json
-# instead of the stable bucket/dotagents.json.
+# Pre-release tags (e.g. v0.0.0-nightly, v0.0.0-alpha.1, v0.0.0-rc.1) update
+# a channel-specific manifest (e.g. bucket/dotagents-nightly.json) instead of stable.
 
 TAG="${TAG:?TAG is required}"
 VERSION=$(echo "$TAG" | sed 's/^v//')
 RELEASE_PAT="${RELEASE_PAT:?RELEASE_PAT is required}"
 SHA_HASH="${SHA_HASH:?SHA_HASH is required}"
 
-# Determine which manifest to update
+# Determine which manifest to update based on pre-release channel
 if [[ "$VERSION" == *-* ]]; then
-  MANIFEST="bucket/dotagents-nightly.json"
-  COMMIT_MSG="chore: update dotagents-nightly to v${VERSION}"
+  PRERELEASE="${VERSION#*-}"
+  CHANNEL=$(echo "$PRERELEASE" | sed 's/[^a-zA-Z].*//')
+  CHANNEL="${CHANNEL:-prerelease}"
+  MANIFEST="bucket/dotagents-${CHANNEL}.json"
+  COMMIT_MSG="chore: update dotagents-${CHANNEL} to v${VERSION}"
 else
   MANIFEST="bucket/dotagents.json"
   COMMIT_MSG="chore: update dotagents to v${VERSION}"
