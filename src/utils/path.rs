@@ -223,6 +223,8 @@ mod tests {
     #[cfg(unix)]
     // returns a path ending in "dotagents" when the directory exists
     fn test_get_config_dir() {
+        let base = dirs::config_dir().expect("should have config dir");
+        std::fs::create_dir_all(base.join("dotagents")).ok();
         let config = get_config_dir().expect("get_config_dir() should succeed");
         assert!(config.ends_with("dotagents"));
         assert!(config.is_dir());
@@ -231,6 +233,8 @@ mod tests {
     #[test]
     // returns a path ending in dotagents/cache/templates and creates the directory
     fn test_get_global_template_cache_dir_ends_with_expected_suffix() {
+        let base = dirs::config_dir().expect("should have config dir");
+        std::fs::create_dir_all(base.join("dotagents")).ok();
         let result = get_global_template_cache_dir();
         assert!(result.is_ok(), "expected Ok, got {:?}", result);
         let path = result.unwrap();
