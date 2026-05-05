@@ -5,6 +5,11 @@
   "description": "Schema for DotAgents MCP server configuration file.",
   "type": "object",
   "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema URI for editor tooling.",
+      "format": "uri"
+    },
     "servers": {
       "type": "object",
       "description": "Map of server names to their configuration.",
