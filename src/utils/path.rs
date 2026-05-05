@@ -75,7 +75,14 @@ pub fn get_config_dir() -> Result<PathBuf> {
     let base =
         dirs::config_dir().ok_or_else(|| anyhow!("failed to locate user config directory"))?;
     let config_dir = base.join("dotagents");
-    get_dir_or_die(config_dir)
+    std::fs::create_dir_all(&config_dir).map_err(|e| {
+        anyhow!(
+            "failed to create config directory {}: {}",
+            config_dir.display(),
+            e
+        )
+    })?;
+    Ok(config_dir)
 }
 
 pub fn get_application_dir() -> Result<PathBuf> {
