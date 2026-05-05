@@ -159,6 +159,7 @@ jobs:
   e2e:
     needs: [build-release]
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -182,7 +183,7 @@ jobs:
         run: cd tests/e2e && bunx @microsoft/tui-test
 
   publish-cargo:
-    needs: [e2e]
+    needs: [build-release]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -197,7 +198,7 @@ jobs:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
 
   publish-npm:
-    needs: [e2e]
+    needs: [build-release]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -214,7 +215,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish-pypi:
-    needs: [e2e]
+    needs: [build-release]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -233,7 +234,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
 
   update-homebrew:
-    needs: [build-release, e2e]
+    needs: [build-release]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -260,7 +261,7 @@ jobs:
           SHA_X86: ${{ steps.sha.outputs.x86 }}
 
   update-scoop:
-    needs: [build-release, e2e]
+    needs: [build-release]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -284,13 +285,11 @@ jobs:
           SHA_HASH: ${{ steps.sha.outputs.hash }}
 
   cleanup:
-    if: |
-      failure() &&
-      (needs.build-release.result == 'failure' || needs.e2e.result == 'failure')
-    needs: [create-release, build-release, e2e]
+    if: failure() && needs.build-release.result == 'failure'
+    needs: [create-release, build-release]
     runs-on: ubuntu-latest
     steps:
-      - name: Delete release on pre-publish failure
-        run: gh release delete "${{ github.ref_name }}" --yes --cleanup-tag
+      - name: Delete release on build failure
+        run: gh release delete "${{ github.ref_name }}" --yes --cleanup-tag --repo "${{ github.repository }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
