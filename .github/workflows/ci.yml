@@ -42,8 +42,6 @@ jobs:
 
   check:
     name: Check
-    # Skip macOS on free tier - enable when macOS runners are available
-    if: ${{ !contains(matrix.os, 'macos') }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
