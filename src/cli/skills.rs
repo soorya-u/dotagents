@@ -59,7 +59,7 @@ fn maybe_prompt_deploy(deploy_flag: bool) -> Result<()> {
 
 /// Install a skill into `.dotagents/skills/` by wrapping the `skills` CLI.
 fn add(opts: SkillsAddOptions) -> Result<bool> {
-    let templater = get_templater();
+    let templater = get_templater()?;
     let app_config = AppConfig::from_application(templater)?;
 
     // Resolve runner: CLI flag > config > silent default (npm)
