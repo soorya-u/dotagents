@@ -2,7 +2,8 @@
 set -euo pipefail
 
 # Publishes platform-specific npm packages and the root dotagents shim package.
-# Required env: TAG, GH_TOKEN, NODE_AUTH_TOKEN
+# Required env: TAG, GH_TOKEN
+# Uses OIDC trusted publishing (--provenance) — no NPM_TOKEN needed.
 
 TAG="${TAG:?TAG is required}"
 VERSION=$(echo "$TAG" | sed 's/^v//')
@@ -61,7 +62,7 @@ for platform in linux-x64-musl linux-arm64-musl macos-arm64 macos-x86 windows-x6
 }
 EOF
   cd "${PKG_DIR}"
-  npm publish --access public
+  npm publish --access public --provenance
   cd -
 done
 
