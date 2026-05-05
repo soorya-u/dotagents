@@ -30,20 +30,6 @@ jobs:
           sed -i "0,/^version = \".*\"/s//version = \"${{ inputs.version }}\"/" Cargo.toml
           cargo update --workspace
 
-      - name: Generate CHANGELOG
-        run: |
-          cargo install git-cliff --locked
-          git-cliff --tag v${{ inputs.version }} --unreleased --prepend CHANGELOG.md
-
-      - name: Generate shell completions
-        run: |
-          cargo build --locked
-          mkdir -p completions
-          for shell in bash elvish fish powershell zsh; do
-            ./target/debug/dotagents gen-completions --shell $shell --to completions/
-          done
-          zip -r completions.zip completions/
-
       - name: Create release PR
         uses: peter-evans/create-pull-request@v6
         with:
@@ -57,13 +43,9 @@ jobs:
 
             ### Changes
             - Bumped version in `Cargo.toml` to `${{ inputs.version }}`
-            - Updated `CHANGELOG.md` with changes since last release
-            - Bundled shell completions in `completions.zip`
 
             ### After merging
             An annotated tag `v${{ inputs.version }}` will be created automatically, triggering the full release pipeline.
           add-paths: |
             Cargo.toml
             Cargo.lock
-            CHANGELOG.md
-            completions.zip
