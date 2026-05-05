@@ -31,12 +31,16 @@ test.describe("error flows – no workspace", () => {
 		}
 	});
 
-	// C31: deploy outside workspace — currently panics; assert non-zero exit
-	test("deploy without workspace exits non-zero", async () => {
+	// C31: deploy outside workspace — surfaces error through display_error()
+	test("deploy without workspace exits non-zero with formatted error (not panic)", async () => {
 		const d = makeTmpDir();
 		try {
-			const { exitCode } = run(["deploy"], d);
+			const { exitCode, stderr } = run(["deploy"], d);
 			expect(exitCode).not.toBe(0);
+			// Assert error passes through display_error (log::error! emits [ERROR] in non-TTY)
+			expect(stderr).toContain("[ERROR]");
+			// Assert no raw panic text
+			expect(stderr).not.toContain("panicked at");
 		} finally {
 			cleanup(d);
 		}

@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use handlebars::Handlebars;
 use serde_json::{Value, json};
 use std::env;
-use std::sync::LazyLock;
+use std::sync::OnceLock;
 
 use crate::templates::variables::get_env_variables;
 use crate::utils::path::{get_application_dir, get_config_dir, get_workspace_dir};
@@ -21,11 +21,17 @@ use crate::{
     utils::{merge_json, merge_many_json},
 };
 
-static TEMPLATER: LazyLock<Templater> =
-    LazyLock::new(|| Templater::new().expect("failed to create templater"));
+static TEMPLATER: OnceLock<Templater> = OnceLock::new();
 
-pub fn get_templater() -> &'static Templater {
-    &TEMPLATER
+pub fn get_templater() -> Result<&'static Templater> {
+    if let Some(t) = TEMPLATER.get() {
+        return Ok(t);
+    }
+    let templater = Templater::new()?;
+    let _ = TEMPLATER.set(templater);
+    TEMPLATER
+        .get()
+        .ok_or_else(|| anyhow::anyhow!("templater unexpectedly not initialised"))
 }
 
 pub enum TemplateSource {
@@ -75,7 +81,7 @@ impl Templater {
     }
 
     pub fn new() -> Result<Self> {
-        let globals = Self::load_default_variables().expect("failed to load global variables");
+        let globals = Self::load_default_variables()?;
         let mut handlebar = Handlebars::new();
         handlebar.register_helper(IF_EQ_HELPER, Box::new(IfEqHelper));
         handlebar.register_helper(JSON_HELPER, Box::new(JsonHelper));

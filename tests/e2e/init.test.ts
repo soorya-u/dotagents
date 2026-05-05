@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { expect, test } from "@microsoft/tui-test";
+import { expect, Key, test } from "@microsoft/tui-test";
 import { cleanup, makeTmpDir, run, shellProgram } from "./helpers.js";
 
 // ── CLI flows (non-interactive) ──────────────────────────────────────────────
@@ -411,6 +411,40 @@ test.describe("init TUI – T-PA wizard runs with PATH argument", () => {
 			cleanup(cwd);
 			cleanup(target);
 		}
+	});
+});
+
+// T04: wizard cancellation — no directory created on disk
+// Pressing Escape during the multiselect prompt cancels it and returns
+// an error (cliclack raw mode prevents Ctrl-C from generating SIGINT).
+// The important invariant: no directory is created regardless of exit code.
+test.describe("init TUI – T04 cancel wizard leaves no directory", () => {
+	const d = makeTmpDir();
+	test.use({ program: shellProgram(d, ["init"]) });
+
+	test("cancel at first prompt leaves no directory on disk", async ({
+		terminal,
+	}) => {
+		await expect(
+			terminal.getByText("Which features do you want to enable?"),
+		).toBeVisible();
+
+		// Press Escape to cancel the multiselect prompt.
+		terminal.keyPress(Key.Escape);
+
+		// The process should exit (with error output) once the prompt is cancelled.
+		// Wait for the error message chain to appear.
+		await expect(
+			terminal.getByText("Failed to get feature selection"),
+		).toBeVisible();
+
+		// No directory of any kind should exist — `create_dir_all` runs after
+		// the TUI wizard block, so cancellation prevents any filesystem writes.
+		expect(existsSync(join(d, ".dotagents"))).toBe(false);
+	});
+
+	test.afterEach(() => {
+		cleanup(d);
 	});
 });
 
