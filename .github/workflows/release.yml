@@ -119,6 +119,10 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      - name: Install musl toolchain (linux-x64 only)
+        if: matrix.build_name == 'linux-x64-musl'
+        run: sudo apt-get install -y musl-tools
+
       - name: Install cross (linux-arm64 only)
         if: matrix.build_name == 'linux-arm64-musl'
         run: cargo install cross --locked
