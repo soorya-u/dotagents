@@ -1,0 +1,71 @@
+name: Release Prep
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release e.g. 0.2.0"
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: dtolnay/rust-toolchain@1.92
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Bump version in Cargo.toml
+        run: |
+          sed -i "0,/^version = \".*\"/s//version = \"${{ inputs.version }}\"/" Cargo.toml
+          cargo update --workspace
+
+      - name: Generate CHANGELOG
+        run: |
+          cargo install git-cliff --locked
+          git-cliff --tag v${{ inputs.version }} --prepend CHANGELOG.md
+
+      - name: Generate shell completions
+        run: |
+          cargo build --locked
+          mkdir -p completions
+          for shell in bash elvish fish powershell zsh; do
+            ./target/debug/dotagents gen-completions --shell $shell --to completions/
+          done
+          zip -r completions.zip completions/
+
+      - name: Create release PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: "chore: release v${{ inputs.version }}"
+          branch: bot/release-v${{ inputs.version }}
+          commit-message: "chore: release v${{ inputs.version }}"
+          body: |
+            ## Release v${{ inputs.version }}
+
+            This PR was automatically created by the release-prep workflow.
+
+            ### Changes
+            - Bumped version in `Cargo.toml` to `${{ inputs.version }}`
+            - Updated `CHANGELOG.md` with changes since last release
+            - Bundled shell completions in `completions.zip`
+
+            ### After merging
+            Create and push an annotated tag to trigger the release pipeline:
+            ```bash
+            git tag -a v${{ inputs.version }} -m "Release v${{ inputs.version }}"
+            git push origin v${{ inputs.version }}
+            ```
+          add-paths: |
+            Cargo.toml
+            Cargo.lock
+            CHANGELOG.md
+            completions.zip
