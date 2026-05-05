@@ -19,7 +19,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: dtolnay/rust-toolchain@1.92
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.92"
 
       - uses: Swatinem/rust-cache@v2
 
@@ -59,11 +61,7 @@ jobs:
             - Bundled shell completions in `completions.zip`
 
             ### After merging
-            Create and push an annotated tag to trigger the release pipeline:
-            ```bash
-            git tag -a v${{ inputs.version }} -m "Release v${{ inputs.version }}"
-            git push origin v${{ inputs.version }}
-            ```
+            An annotated tag `v${{ inputs.version }}` will be created automatically, triggering the full release pipeline.
           add-paths: |
             Cargo.toml
             Cargo.lock

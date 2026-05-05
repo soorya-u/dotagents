@@ -17,7 +17,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: dtolnay/rust-toolchain@1.92
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.92"
 
       - uses: Swatinem/rust-cache@v2
 
@@ -60,8 +62,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: dtolnay/rust-toolchain@1.92
+      - uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: "1.92"
           targets: ${{ matrix.target }}
 
       - uses: Swatinem/rust-cache@v2
@@ -78,19 +81,26 @@ jobs:
         if: matrix.build_name != 'linux-arm64-musl'
         run: cargo build --release --locked --verbose --target ${{ matrix.target }}
 
+      - name: Rename binary for release
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            cp target/${{ matrix.target }}/release/dotagents.exe dotagents-${{ matrix.build_name }}.exe
+          else
+            cp target/${{ matrix.target }}/release/dotagents dotagents-${{ matrix.build_name }}
+          fi
+
       - name: Upload binary to release (unix)
         if: matrix.os != 'windows-latest'
         uses: softprops/action-gh-release@v2
         with:
-          files: target/${{ matrix.target }}/release/dotagents
-          asset_name: dotagents-${{ matrix.build_name }}
+          files: dotagents-${{ matrix.build_name }}
 
       - name: Upload binary to release (windows)
         if: matrix.os == 'windows-latest'
         uses: softprops/action-gh-release@v2
         with:
-          files: target/${{ matrix.target }}/release/dotagents.exe
-          asset_name: dotagents-${{ matrix.build_name }}.exe
+          files: dotagents-${{ matrix.build_name }}.exe
 
   e2e:
     needs: [build-release]
@@ -123,7 +133,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: dtolnay/rust-toolchain@1.92
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.92"
 
       - name: Publish to crates.io
         run: cargo publish --locked
@@ -141,149 +153,19 @@ jobs:
           node-version: "20"
           registry-url: "https://registry.npmjs.org"
 
-      - name: Download all release binaries
-        run: |
-          VERSION=$(echo "${{ github.ref_name }}" | sed 's/^v//')
-          for platform in linux-x64-musl linux-arm64-musl macos-arm64 windows-x64; do
-            if [ "$platform" = "windows-x64" ]; then
-              gh release download ${{ github.ref_name }} -p "dotagents-${platform}.exe" -D ./npm-packages/${platform}/
-            else
-              gh release download ${{ github.ref_name }} -p "dotagents-${platform}" -D ./npm-packages/${platform}/
-            fi
-          done
+      - name: Publish npm packages
+        run: ./scripts/ci/publish_npm.sh
         env:
+          TAG: ${{ github.ref_name }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create and publish platform packages
-        run: |
-          VERSION=$(echo "${{ github.ref_name }}" | sed 's/^v//')
-
-          declare -A PLATFORM_MAP
-          PLATFORM_MAP[linux-x64-musl]="linux-x64"
-          PLATFORM_MAP[linux-arm64-musl]="linux-arm64"
-          PLATFORM_MAP[macos-arm64]="darwin-arm64"
-          PLATFORM_MAP[windows-x64]="win32-x64"
-
-          declare -A OS_MAP
-          OS_MAP[linux-x64-musl]="linux"
-          OS_MAP[linux-arm64-musl]="linux"
-          OS_MAP[macos-arm64]="darwin"
-          OS_MAP[windows-x64]="win32"
-
-          declare -A CPU_MAP
-          CPU_MAP[linux-x64-musl]="x64"
-          CPU_MAP[linux-arm64-musl]="arm64"
-          CPU_MAP[macos-arm64]="arm64"
-          CPU_MAP[windows-x64]="x64"
-
-          for platform in linux-x64-musl linux-arm64-musl macos-arm64 windows-x64; do
-            PKG_NAME="@dotagents/${PLATFORM_MAP[$platform]}"
-            PKG_DIR="./npm-packages/${platform}"
-
-            if [ "$platform" = "windows-x64" ]; then
-              BIN_NAME="dotagents-${platform}.exe"
-            else
-              BIN_NAME="dotagents-${platform}"
-              chmod +x "${PKG_DIR}/${BIN_NAME}"
-            fi
-
-            cat > "${PKG_DIR}/package.json" <<EOF
-          {
-            "name": "${PKG_NAME}",
-            "version": "${VERSION}",
-            "description": "Platform-specific binary for dotagents (${PLATFORM_MAP[$platform]})",
-            "os": ["${OS_MAP[$platform]}"],
-            "cpu": ["${CPU_MAP[$platform]}"],
-            "main": "${BIN_NAME}",
-            "files": ["${BIN_NAME}"]
-          }
-          EOF
-            cd "${PKG_DIR}"
-            npm publish --access public
-            cd -
-          done
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Create and publish root package
-        run: |
-          VERSION=$(echo "${{ github.ref_name }}" | sed 's/^v//')
-          mkdir -p ./npm-root
-
-          cat > ./npm-root/package.json <<EOF
-          {
-            "name": "dotagents",
-            "version": "${VERSION}",
-            "description": "An agent configuration manager and templater",
-            "bin": {
-              "dotagents": "./bin/dotagents"
-            },
-            "scripts": {
-              "postinstall": "node ./postinstall.js"
-            },
-            "optionalDependencies": {
-              "@dotagents/linux-x64": "${VERSION}",
-              "@dotagents/linux-arm64": "${VERSION}",
-              "@dotagents/darwin-arm64": "${VERSION}",
-              "@dotagents/win32-x64": "${VERSION}"
-            },
-            "files": ["bin/", "postinstall.js"]
-          }
-          EOF
-
-          mkdir -p ./npm-root/bin
-
-          cat > ./npm-root/postinstall.js <<'EOF'
-          const { execSync } = require("child_process");
-          const fs = require("fs");
-          const path = require("path");
-
-          const PLATFORMS = {
-            "linux-x64": "@dotagents/linux-x64",
-            "linux-arm64": "@dotagents/linux-arm64",
-            "darwin-arm64": "@dotagents/darwin-arm64",
-            "win32-x64": "@dotagents/win32-x64",
-          };
-
-          const platform = process.platform;
-          const arch = process.arch;
-          const key = `${platform}-${arch}`;
-          const pkg = PLATFORMS[key];
-
-          if (!pkg) {
-            console.error(`Unsupported platform: ${key}`);
-            process.exit(1);
-          }
-
-          try {
-            const pkgDir = path.dirname(require.resolve(`${pkg}/package.json`));
-            const files = fs.readdirSync(pkgDir).filter(f => f.startsWith("dotagents"));
-            if (files.length === 0) {
-              console.error(`No binary found in ${pkg}`);
-              process.exit(1);
-            }
-            const src = path.join(pkgDir, files[0]);
-            const ext = process.platform === "win32" ? ".exe" : "";
-            const dest = path.join(__dirname, "bin", `dotagents${ext}`);
-            fs.copyFileSync(src, dest);
-            if (process.platform !== "win32") {
-              fs.chmodSync(dest, 0o755);
-            }
-          } catch (e) {
-            console.error(`Failed to install dotagents binary: ${e.message}`);
-            process.exit(1);
-          }
-          EOF
-
-          cd ./npm-root
-          npm publish --access public
-        env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   update-homebrew:
     needs: [build-release, e2e]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download macOS binaries
         run: |
           gh release download ${{ github.ref_name }} -p "dotagents-macos-arm64" -D ./
@@ -298,25 +180,19 @@ jobs:
           echo "x86=$(sha256sum dotagents-macos-x86 | cut -d ' ' -f1)" >> "$GITHUB_OUTPUT"
 
       - name: Update Homebrew formula
-        run: |
-          VERSION=$(echo "${{ github.ref_name }}" | sed 's/^v//')
-          git clone https://x-access-token:${{ secrets.RELEASE_PAT }}@github.com/soorya-u/homebrew-dotagents.git
-          cd homebrew-dotagents
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          sed -i "s/version \".*\"/version \"${VERSION}\"/" Formula/dotagents.rb
-          sed -i "0,/sha256 \".*\"/s//sha256 \"${{ steps.sha.outputs.arm64 }}\"/" Formula/dotagents.rb
-          sed -i "0,/sha256 \".*\"/!{0,/sha256 \".*\"/s//sha256 \"${{ steps.sha.outputs.x86 }}\"/}" Formula/dotagents.rb
-
-          git add -A
-          git commit -m "chore: update dotagents to v${VERSION}"
-          git push origin main
+        run: ./scripts/ci/update_homebrew.sh
+        env:
+          TAG: ${{ github.ref_name }}
+          RELEASE_PAT: ${{ secrets.RELEASE_PAT }}
+          SHA_ARM64: ${{ steps.sha.outputs.arm64 }}
+          SHA_X86: ${{ steps.sha.outputs.x86 }}
 
   update-scoop:
     needs: [build-release, e2e]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download Windows binary
         run: |
           gh release download ${{ github.ref_name }} -p "dotagents-windows-x64.exe" -D ./
@@ -329,18 +205,8 @@ jobs:
           echo "hash=$(sha256sum dotagents-windows-x64.exe | cut -d ' ' -f1)" >> "$GITHUB_OUTPUT"
 
       - name: Update Scoop manifest
-        run: |
-          VERSION=$(echo "${{ github.ref_name }}" | sed 's/^v//')
-          git clone https://x-access-token:${{ secrets.RELEASE_PAT }}@github.com/soorya-u/scoop-dotagents.git
-          cd scoop-dotagents
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          jq --arg version "$VERSION" --arg hash "${{ steps.sha.outputs.hash }}" \
-            '.version = $version | .architecture."64bit".hash = $hash | .architecture."64bit".url = "https://github.com/soorya-u/dotagents/releases/download/v\($version)/dotagents-windows-x64.exe"' \
-            bucket/dotagents.json > bucket/dotagents.json.tmp
-          mv bucket/dotagents.json.tmp bucket/dotagents.json
-
-          git add -A
-          git commit -m "chore: update dotagents to v${VERSION}"
-          git push origin main
+        run: ./scripts/ci/update_scoop.sh
+        env:
+          TAG: ${{ github.ref_name }}
+          RELEASE_PAT: ${{ secrets.RELEASE_PAT }}
+          SHA_HASH: ${{ steps.sha.outputs.hash }}
