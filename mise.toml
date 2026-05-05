@@ -66,7 +66,7 @@ run = "cargo test --test integration"
 
 [tasks."tests:e2e"]
 description = "Run the full end-to-end test suite (tests/e2e/) via tui-test"
-depends = ["build"]
+depends = ["build:release"]
 run = "cd tests/e2e && bunx tui-test"
 
 [tasks.tests]

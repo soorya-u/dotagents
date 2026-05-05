@@ -38,7 +38,7 @@ test.describe("undeploy CLI – basic lifecycle", () => {
 			run(["deploy", "--offline", "--no-gitignore"], d);
 			run(["undeploy", "--no-gitignore"], d);
 
-			const cachePath = join(d, ".dotagents-debug/cache.toml");
+			const cachePath = join(d, ".dotagents/cache.toml");
 			if (existsSync(cachePath)) {
 				const content = readFileSync(cachePath, "utf8");
 				expect(content).not.toContain("[providers.");
@@ -140,7 +140,7 @@ test.describe("undeploy CLI – --no-cache integration", () => {
 			initWithLocalProvider(d);
 			run(["deploy", "--no-cache", "--offline", "--no-gitignore"], d);
 
-			const cachePath = join(d, ".dotagents-debug/cache.toml");
+			const cachePath = join(d, ".dotagents/cache.toml");
 			expect(existsSync(cachePath)).toBe(true);
 			const content = readFileSync(cachePath, "utf8");
 			expect(content).toContain("[providers.");
@@ -306,7 +306,7 @@ test.describe("undeploy CLI – PATH argument", () => {
 	// C-PA07: PATH without .dotagents exits non-zero with error message
 	test("PATH without .dotagents exits non-zero with error", async () => {
 		const cwd = makeTmpDir();
-		const target = makeTmpDir(); // exists but has no .dotagents-debug
+		const target = makeTmpDir(); // exists but has no .dotagents
 		try {
 			const { exitCode, stderr } = run(
 				["undeploy", target, "--force", "--no-gitignore"],
@@ -348,17 +348,14 @@ test.describe("undeploy --dry-run – no side effects", () => {
 			initWithLocalProvider(d);
 			run(["deploy", "--offline", "--no-gitignore"], d);
 			const cacheBefore = readFileSync(
-				join(d, ".dotagents-debug/cache.toml"),
+				join(d, ".dotagents/cache.toml"),
 				"utf8",
 			);
 			expect(cacheBefore).toContain("[providers.");
 
 			run(["undeploy", "--dry-run"], d);
 
-			const cacheAfter = readFileSync(
-				join(d, ".dotagents-debug/cache.toml"),
-				"utf8",
-			);
+			const cacheAfter = readFileSync(join(d, ".dotagents/cache.toml"), "utf8");
 			expect(cacheAfter).toBe(cacheBefore);
 		} finally {
 			cleanup(d);

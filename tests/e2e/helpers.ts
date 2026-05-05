@@ -3,9 +3,9 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
-/// Absolute path to the debug binary built by `cargo build`.
-/// Tests are run with cwd=tests/e2e; the binary sits two levels up at <repo>/target/debug/.
-export const BIN = resolve(process.cwd(), "../../target/debug/dotagents");
+/// Absolute path to the release binary built by `cargo build --release`.
+/// Tests are run with cwd=tests/e2e; the binary sits two levels up at <repo>/target/release/.
+export const BIN = resolve(process.cwd(), "../../target/release/dotagents");
 
 /// Create a fresh isolated temp directory for a single test
 export function makeTmpDir(): string {
@@ -34,9 +34,11 @@ export function run(
 	};
 }
 
-/// Initialise a workspace in dir using `init --template with-custom-provider`.
-/// The generated local.config.toml already has `targets = []` and the mycode
-/// provider sections, so deploy works fully offline with only the local templates.
+/// Canonical setup for deploy tests: initializes a workspace with only the local provider.
+/// Uses `init --template with-custom-provider`, which configures local.config.toml to
+/// set `targets = []` and define only the mycode provider templates. This avoids
+/// CI-unsafe external providers such as gemini (which requires a local cache file).
+/// All deploy tests should use this helper unless they explicitly patch out unsafe providers.
 export function initWithLocalProvider(dir: string): void {
 	run(["init", "--template", "with-custom-provider"], dir);
 }

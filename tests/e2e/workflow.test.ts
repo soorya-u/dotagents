@@ -75,9 +75,7 @@ test.describe("J03-J04: CRUD – add, list, remove", () => {
 
 			// rm it
 			run(["commands", "rm", "greet", "--force"], d);
-			expect(existsSync(join(d, ".dotagents-debug/commands/greet.md"))).toBe(
-				false,
-			);
+			expect(existsSync(join(d, ".dotagents/commands/greet.md"))).toBe(false);
 
 			// ls no longer shows greet as a command name (hello's description contains "greet" so use stricter pattern)
 			const { stderr: afterStderr } = run(["commands", "ls"], d);
@@ -93,14 +91,10 @@ test.describe("J03-J04: CRUD – add, list, remove", () => {
 		try {
 			run(["init", "--template", "starter"], d);
 			run(["skills", "new", "my-skill", "--description", "test"], d);
-			expect(existsSync(join(d, ".dotagents-debug/skills/my-skill"))).toBe(
-				true,
-			);
+			expect(existsSync(join(d, ".dotagents/skills/my-skill"))).toBe(true);
 
 			run(["skills", "rm", "my-skill", "--force"], d);
-			expect(existsSync(join(d, ".dotagents-debug/skills/my-skill"))).toBe(
-				false,
-			);
+			expect(existsSync(join(d, ".dotagents/skills/my-skill"))).toBe(false);
 		} finally {
 			cleanup(d);
 		}
@@ -116,7 +110,7 @@ test.describe("J05-J06: redeploy and idempotency", () => {
 			run(["deploy", "--no-cache", "--offline", "--no-gitignore"], d);
 
 			// edit INSTRUCTIONS.md
-			const src = join(d, ".dotagents-debug/INSTRUCTIONS.md");
+			const src = join(d, ".dotagents/INSTRUCTIONS.md");
 			writeFileSync(src, `${readFileSync(src, "utf8")}\n\nCustom addition.`);
 			run(["deploy", "--no-cache", "--offline", "--no-gitignore"], d);
 
@@ -176,7 +170,7 @@ test.describe("J07: full interactive journey", () => {
 			terminal.kill();
 
 			// patch out gemini target
-			const lcPath = join(d, ".dotagents-debug/local.config.toml");
+			const lcPath = join(d, ".dotagents/local.config.toml");
 			writeFileSync(
 				lcPath,
 				readFileSync(lcPath, "utf8").replace(

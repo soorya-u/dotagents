@@ -33,7 +33,7 @@ test.describe("commands new CLI", () => {
 			);
 			expect(exitCode).toBe(0);
 			const content = readFileSync(
-				join(d, ".dotagents-debug/commands/greet.md"),
+				join(d, ".dotagents/commands/greet.md"),
 				"utf8",
 			);
 			expect(content).toContain("name: greet");
@@ -52,7 +52,7 @@ test.describe("commands new CLI", () => {
 			run(["init", "--template", "starter"], d);
 			run(["commands", "new", "greet", "--description", "Say hello"], d);
 			const content = readFileSync(
-				join(d, ".dotagents-debug/commands/greet.md"),
+				join(d, ".dotagents/commands/greet.md"),
 				"utf8",
 			);
 			expect(content).toContain("## When to use");
@@ -74,7 +74,7 @@ test.describe("commands new CLI", () => {
 			);
 			expect(exitCode).toBe(0);
 			const content = readFileSync(
-				join(d, ".dotagents-debug/commands/greet.md"),
+				join(d, ".dotagents/commands/greet.md"),
 				"utf8",
 			);
 			expect(content).toContain("second");
@@ -151,14 +151,10 @@ test.describe("commands rm CLI", () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
-			expect(existsSync(join(d, ".dotagents-debug/commands/hello.md"))).toBe(
-				true,
-			);
+			expect(existsSync(join(d, ".dotagents/commands/hello.md"))).toBe(true);
 			const { exitCode } = run(["commands", "rm", "hello", "--force"], d);
 			expect(exitCode).toBe(0);
-			expect(existsSync(join(d, ".dotagents-debug/commands/hello.md"))).toBe(
-				false,
-			);
+			expect(existsSync(join(d, ".dotagents/commands/hello.md"))).toBe(false);
 		} finally {
 			cleanup(d);
 		}
@@ -194,16 +190,10 @@ test.describe("commands rm CLI", () => {
 		try {
 			run(["init", "--template", "starter"], d);
 			run(["commands", "new", "greet", "--description", "test"], d);
-			expect(existsSync(join(d, ".dotagents-debug/commands/greet.md"))).toBe(
-				true,
-			);
+			expect(existsSync(join(d, ".dotagents/commands/greet.md"))).toBe(true);
 			run(["commands", "rm", "greet", "--force"], d);
-			expect(existsSync(join(d, ".dotagents-debug/commands/hello.md"))).toBe(
-				true,
-			);
-			expect(existsSync(join(d, ".dotagents-debug/commands/greet.md"))).toBe(
-				false,
-			);
+			expect(existsSync(join(d, ".dotagents/commands/hello.md"))).toBe(true);
+			expect(existsSync(join(d, ".dotagents/commands/greet.md"))).toBe(false);
 		} finally {
 			cleanup(d);
 		}
@@ -244,11 +234,9 @@ test.describe("commands new TUI – T06 interactive prompts", () => {
 			await expect(terminal.getByText("Deploy now?")).toBeVisible();
 			terminal.keyPress("Enter"); // accept default No
 
-			expect(existsSync(join(d, ".dotagents-debug/commands/greet.md"))).toBe(
-				true,
-			);
+			expect(existsSync(join(d, ".dotagents/commands/greet.md"))).toBe(true);
 			const content = readFileSync(
-				join(d, ".dotagents-debug/commands/greet.md"),
+				join(d, ".dotagents/commands/greet.md"),
 				"utf8",
 			);
 			expect(content).toContain("A greeting command");
@@ -275,7 +263,7 @@ test.describe("commands new TUI – T07 deploy on Yes (skipped)", () => {
 		// setup deferred into body — never runs because test is skipped
 		const d = makeTmpDir();
 		run(["init", "--template", "with-custom-provider"], d);
-		const lcPath = join(d, ".dotagents-debug/local.config.toml");
+		const lcPath = join(d, ".dotagents/local.config.toml");
 		writeFileSync(
 			lcPath,
 			readFileSync(lcPath, "utf8").replace(
@@ -318,9 +306,7 @@ test.describe("commands rm TUI – T10 confirm Yes", () => {
 
 			await expect(terminal.getByText("Removed")).toBeVisible();
 
-			expect(existsSync(join(d, ".dotagents-debug/commands/hello.md"))).toBe(
-				false,
-			);
+			expect(existsSync(join(d, ".dotagents/commands/hello.md"))).toBe(false);
 		} finally {
 			cleanup(d);
 		}
@@ -339,9 +325,7 @@ test.describe("commands rm TUI – T11 confirm No", () => {
 			terminal.keyPress("Enter"); // accept default No
 			await expect(terminal.getByText("Cancelled")).toBeVisible();
 
-			expect(existsSync(join(d, ".dotagents-debug/commands/hello.md"))).toBe(
-				true,
-			);
+			expect(existsSync(join(d, ".dotagents/commands/hello.md"))).toBe(true);
 		} finally {
 			cleanup(d);
 		}

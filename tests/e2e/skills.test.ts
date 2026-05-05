@@ -33,7 +33,7 @@ test.describe("skills new CLI", () => {
 			);
 			expect(exitCode).toBe(0);
 			const content = readFileSync(
-				join(d, ".dotagents-debug/skills/my-skill/SKILL.md"),
+				join(d, ".dotagents/skills/my-skill/SKILL.md"),
 				"utf8",
 			);
 			expect(content).toContain("name: my-skill");
@@ -53,7 +53,7 @@ test.describe("skills new CLI", () => {
 			run(["init", "--template", "starter"], d);
 			run(["skills", "new", "my-skill", "--description", "Greet users"], d);
 			const content = readFileSync(
-				join(d, ".dotagents-debug/skills/my-skill/SKILL.md"),
+				join(d, ".dotagents/skills/my-skill/SKILL.md"),
 				"utf8",
 			);
 			expect(content).toContain("## When to use");
@@ -75,7 +75,7 @@ test.describe("skills new CLI", () => {
 			);
 			expect(exitCode).toBe(0);
 			const content = readFileSync(
-				join(d, ".dotagents-debug/skills/my-skill/SKILL.md"),
+				join(d, ".dotagents/skills/my-skill/SKILL.md"),
 				"utf8",
 			);
 			expect(content).toContain("second");
@@ -135,14 +135,10 @@ test.describe("skills rm CLI", () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
-			expect(existsSync(join(d, ".dotagents-debug/skills/hello-skill"))).toBe(
-				true,
-			);
+			expect(existsSync(join(d, ".dotagents/skills/hello-skill"))).toBe(true);
 			const { exitCode } = run(["skills", "rm", "hello-skill", "--force"], d);
 			expect(exitCode).toBe(0);
-			expect(existsSync(join(d, ".dotagents-debug/skills/hello-skill"))).toBe(
-				false,
-			);
+			expect(existsSync(join(d, ".dotagents/skills/hello-skill"))).toBe(false);
 		} finally {
 			cleanup(d);
 		}
@@ -224,9 +220,9 @@ test.describe("skills new TUI – T08 interactive prompts", () => {
 			await expect(terminal.getByText("Deploy now?")).toBeVisible();
 			terminal.keyPress("Enter"); // accept default No
 
-			expect(
-				existsSync(join(d, ".dotagents-debug/skills/my-skill/SKILL.md")),
-			).toBe(true);
+			expect(existsSync(join(d, ".dotagents/skills/my-skill/SKILL.md"))).toBe(
+				true,
+			);
 		} finally {
 			cleanup(d);
 		}
@@ -251,9 +247,7 @@ test.describe("skills rm TUI – T12 confirm Yes", () => {
 
 			await expect(terminal.getByText("Removed")).toBeVisible();
 
-			expect(existsSync(join(d, ".dotagents-debug/skills/hello-skill"))).toBe(
-				false,
-			);
+			expect(existsSync(join(d, ".dotagents/skills/hello-skill"))).toBe(false);
 		} finally {
 			cleanup(d);
 		}
@@ -274,9 +268,7 @@ test.describe("skills rm TUI – T13 confirm No", () => {
 			terminal.keyPress("Enter"); // accept default No
 			await expect(terminal.getByText("Cancelled")).toBeVisible();
 
-			expect(existsSync(join(d, ".dotagents-debug/skills/hello-skill"))).toBe(
-				true,
-			);
+			expect(existsSync(join(d, ".dotagents/skills/hello-skill"))).toBe(true);
 		} finally {
 			cleanup(d);
 		}
