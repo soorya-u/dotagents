@@ -460,7 +460,7 @@ test.describe("init TUI – T04 cancel wizard leaves no directory", () => {
 
 		// No directory of any kind should exist — `create_dir_all` runs after
 		// the TUI wizard block, so cancellation prevents any filesystem writes.
-		expect(existsSync(join(d, ".dotagents-debug"))).toBe(false);
+		expect(existsSync(join(d, ".dotagents"))).toBe(false);
 	});
 
 	test.afterEach(() => {
