@@ -109,9 +109,6 @@ pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
     };
     let main_dir = workspace.join(ROOT_DIR);
 
-    // Ensure the workspace root exists before checking for .dotagents inside it.
-    fs::create_dir_all(&workspace).context("failed to create workspace directory")?;
-
     let dir_exists = main_dir
         .try_exists()
         .context("failed to check if .dotagents directory exists")?;
@@ -124,6 +121,9 @@ pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
             return Ok(());
         }
     }
+
+    // Ensure the workspace root exists before creating .dotagents inside it.
+    fs::create_dir_all(&workspace).context("failed to create workspace directory")?;
 
     if dir_exists {
         if !opts.force {
