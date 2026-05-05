@@ -285,11 +285,13 @@ jobs:
           SHA_HASH: ${{ steps.sha.outputs.hash }}
 
   cleanup:
-    if: failure() && needs.build-release.result == 'failure'
-    needs: [create-release, build-release]
+    if: |
+      failure() &&
+      (needs.build-release.result == 'failure' || needs.e2e.result == 'failure')
+    needs: [create-release, build-release, e2e]
     runs-on: ubuntu-latest
     steps:
-      - name: Delete release on build failure
+      - name: Delete release on pre-publish failure
         run: gh release delete "${{ github.ref_name }}" --yes --cleanup-tag --repo "${{ github.repository }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
