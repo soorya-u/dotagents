@@ -12,6 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.92
+        with:
+          components: rustfmt
       - uses: oven-sh/setup-bun@v2
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --all -- --check
@@ -40,27 +42,21 @@ jobs:
 
   check:
     name: Check
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-musl
-          - os: macos-latest
-            target: x86_64-apple-darwin
-          - os: macos-latest
-            target: aarch64-apple-darwin
+        os: [windows-latest, ubuntu-latest, macos-13, macos-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.92
       - uses: Swatinem/rust-cache@v2
-      - run: rustup target add ${{ matrix.target }}
-      - if: matrix.target == 'x86_64-unknown-linux-musl'
+      - if: runner.os == 'Linux'
         run: sudo apt-get install -y musl-tools
-      - run: cargo check --verbose --locked --target ${{ matrix.target }}
+      - if: runner.os == 'Linux'
+        run: cargo check --verbose --locked --target x86_64-unknown-linux-musl
+      - if: runner.os != 'Linux'
+        run: cargo check --verbose --locked
 
   check-publish:
     name: Check Publish
