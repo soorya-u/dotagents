@@ -176,7 +176,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
 
       - name: Run e2e tests
-        run: cd tests/e2e && bunx tui-test
+        run: cd tests/e2e && bunx @microsoft/tui-test
 
   publish-cargo:
     needs: [e2e]
