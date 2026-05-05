@@ -1,0 +1,234 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+  id-token: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.92"
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Verify tag matches Cargo.toml version
+        run: |
+          VERSION=$(echo "${{ github.ref_name }}" | sed 's/^v//')
+          grep -q "^version = \"$VERSION\"" Cargo.toml
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --locked -- -D warnings
+
+      - name: Run tests
+        run: cargo test --locked
+
+  build-release:
+    needs: [preflight]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - build_name: linux-x64-musl
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+          - build_name: linux-arm64-musl
+            os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+          - build_name: macos-arm64
+            os: macos-latest
+            target: aarch64-apple-darwin
+          - build_name: macos-x86
+            os: macos-latest
+            target: x86_64-apple-darwin
+          - build_name: windows-x64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.92"
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install cross (linux-arm64 only)
+        if: matrix.build_name == 'linux-arm64-musl'
+        run: cargo install cross --locked
+
+      - name: Build with cross (linux-arm64)
+        if: matrix.build_name == 'linux-arm64-musl'
+        run: cross build --release --locked --verbose --target ${{ matrix.target }}
+
+      - name: Build with cargo
+        if: matrix.build_name != 'linux-arm64-musl'
+        run: cargo build --release --locked --verbose --target ${{ matrix.target }}
+
+      - name: Rename binary for release
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            cp target/${{ matrix.target }}/release/dotagents.exe dotagents-${{ matrix.build_name }}.exe
+          else
+            cp target/${{ matrix.target }}/release/dotagents dotagents-${{ matrix.build_name }}
+          fi
+
+      - name: Upload binary to release (unix)
+        if: matrix.os != 'windows-latest'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dotagents-${{ matrix.build_name }}
+
+      - name: Upload binary to release (windows)
+        if: matrix.os == 'windows-latest'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dotagents-${{ matrix.build_name }}.exe
+
+  e2e:
+    needs: [build-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download release binary
+        uses: robinrber/setup-release-asset@v1
+        with:
+          repo: ${{ github.repository }}
+          tag: ${{ github.ref_name }}
+          asset: dotagents-linux-x64-musl
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup binary
+        run: |
+          mkdir -p target/release
+          mv dotagents-linux-x64-musl target/release/dotagents
+          chmod +x target/release/dotagents
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Run e2e tests
+        run: cd tests/e2e && bunx tui-test
+
+  publish-cargo:
+    needs: [e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.92"
+
+      - name: Publish to crates.io
+        run: cargo publish --locked
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+
+  publish-npm:
+    needs: [e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Publish npm packages
+        run: ./scripts/ci/publish_npm.sh
+        env:
+          TAG: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-pypi:
+    needs: [e2e]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/py-dotagents
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Build wheels
+        run: ./scripts/ci/publish_pypi.sh
+        env:
+          TAG: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  update-homebrew:
+    needs: [build-release, e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download macOS binaries
+        run: |
+          gh release download ${{ github.ref_name }} -p "dotagents-macos-arm64" -D ./
+          gh release download ${{ github.ref_name }} -p "dotagents-macos-x86" -D ./
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute SHA256
+        id: sha
+        run: |
+          echo "arm64=$(sha256sum dotagents-macos-arm64 | cut -d ' ' -f1)" >> "$GITHUB_OUTPUT"
+          echo "x86=$(sha256sum dotagents-macos-x86 | cut -d ' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Update Homebrew formula
+        run: ./scripts/ci/update_homebrew.sh
+        env:
+          TAG: ${{ github.ref_name }}
+          RELEASE_PAT: ${{ secrets.RELEASE_PAT }}
+          SHA_ARM64: ${{ steps.sha.outputs.arm64 }}
+          SHA_X86: ${{ steps.sha.outputs.x86 }}
+
+  update-scoop:
+    needs: [build-release, e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Windows binary
+        run: |
+          gh release download ${{ github.ref_name }} -p "dotagents-windows-x64.exe" -D ./
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute SHA256
+        id: sha
+        run: |
+          echo "hash=$(sha256sum dotagents-windows-x64.exe | cut -d ' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Update Scoop manifest
+        run: ./scripts/ci/update_scoop.sh
+        env:
+          TAG: ${{ github.ref_name }}
+          RELEASE_PAT: ${{ secrets.RELEASE_PAT }}
+          SHA_HASH: ${{ steps.sha.outputs.hash }}
