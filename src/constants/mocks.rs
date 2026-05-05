@@ -59,7 +59,7 @@ pub(crate) const MCP_MOCK: &str = r#"{
       "args": [],
       "cwd": "{{ dir.workspace }}",
       "env": {},
-      "env_file": null
+      "envFile": ".env.local"
     },
     "server-mcp": {
       "type": "http",
@@ -76,7 +76,7 @@ pub(crate) const MCP_MOCK: &str = r#"{
 pub(crate) const ENV_EXAMPLE: &str = "APP_NAME=dotagents\n";
 
 /// Default .gitignore content.
-pub(crate) const GITIGNORE: &str = "cache/\ncache.toml\nlocal.config.toml\n.env\n";
+pub(crate) const GITIGNORE: &str = "cache.toml\nlocal.config.toml\n.env\n";
 
 /// Mycode custom-provider command template.
 pub(crate) const TEMPLATE_MYCODE_COMMAND: &str = "{{command.content}}";
