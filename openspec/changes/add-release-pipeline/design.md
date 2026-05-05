@@ -23,6 +23,12 @@ A single tag-push pipeline (the common pattern) immediately starts building and 
 **Tag-based trigger for Stage 2**
 Stage 1 pushes an annotated tag (`v$VERSION`) after the release PR is merged. Stage 2 triggers on `on: push: tags: 'v*.*.*'`. Alternative considered: filtering `push` to `main` by `startsWith(github.event.head_commit.message, 'chore: release v')` — rejected because commit message matching is fragile (squash merges can reword the title, and any manual push with a matching prefix fires the pipeline unexpectedly). The tag-based approach is the pattern used by widely-deployed Rust tooling (e.g. t3code, cargo-dist) and is unambiguous: a tag only exists if Stage 1 explicitly created it. Another alternative: a dedicated `release/*` branch — adds branch management overhead with no benefit since we already have the PR as the review gate.
 
+**Preflight job gates all build jobs**
+A `preflight` job runs `cargo fmt --check`, `cargo clippy -- -D warnings`, and `cargo test --locked` on `ubuntu-latest` before any `build-release` matrix leg starts. `build-release` declares `needs: [preflight]`. This prevents burning 5 build runners (including macOS and Windows which consume more minutes) on a commit that fails basic checks. Alternative: skip preflight and let the CI workflow catch it — cheaper in the happy path but wasteful on failures.
+
+**Commits to Homebrew/Scoop repos attributed to `github-actions[bot]`**
+The `update-homebrew` and `update-scoop` jobs set `git config user.name "github-actions[bot]"` and `git config user.email "41898282+github-actions[bot]@users.noreply.github.com"` before committing. GitHub recognizes that email and renders commits with the bot avatar. Authentication uses `RELEASE_PAT` (owned by the repo author) — authorship and auth are separate in git. Alternative: a GitHub App with auto-rotating tokens — more secure, no expiry concern, but requires one-time org-level setup. Current choice: `RELEASE_PAT` with documented expiry reminder, upgrade to GitHub App if PAT rotation becomes painful.
+
 **`cross` crate for linux-arm64-musl**
 `aarch64-unknown-linux-musl` cannot be cross-compiled natively on ubuntu-latest runners without QEMU or a cross-compilation toolchain. `cross` (cargo install cross) provides a Docker-based cross-compilation environment and is the standard approach for this target. Alternative: GitHub's ARM runners — more expensive and overkill for a binary build.
 
@@ -37,7 +43,6 @@ Platform-specific packages (`@dotagents/linux-x64` etc.) each contain only the b
 
 ## Risks / Trade-offs
 
-- [Stage 2 commit title match is fragile] → PR title is set by Stage 1 script exactly as `"chore: release v$VERSION"`; if a developer manually pushes a commit with that prefix, Stage 2 fires unexpectedly → Mitigation: add a version-format check (`grep -E '^[0-9]+\.[0-9]+\.[0-9]+$'`) to abort if the version in `Cargo.toml` doesn't match a semver pattern
 - [cross crate install adds ~60s to linux-arm64 build job] → Acceptable; `Swatinem/rust-cache@v2` caches the `cross` binary after first install
 - [RELEASE_PAT expiry breaks Homebrew/Scoop updates silently] → Document PAT expiry date in repo secrets description; the release job will fail visibly if the PAT is expired
 - [npm publish order matters — platform packages must exist before root shim] → Publish platform packages sequentially before the root package in the publish-npm job script
@@ -49,6 +54,7 @@ Platform-specific packages (`@dotagents/linux-x64` etc.) each contain only the b
 3. Add `.github/workflows/release-prep.yml` and `.github/workflows/release.yml`
 4. Trigger Stage 1 via `workflow_dispatch` with version `0.1.0` for the first release
 5. Review and merge the generated PR
-6. Verify Stage 2 completes all 7 jobs successfully
+6. Push annotated tag `v0.1.0` to trigger Stage 2
+7. Verify Stage 2 completes all jobs successfully (preflight → build-release → e2e → publish-cargo, publish-npm, update-homebrew, update-scoop)
 
-Rollback: if Stage 2 partially fails after tag creation, delete the tag (`git push --delete origin v{version}`), fix the issue, and re-trigger by pushing a new commit that matches the title pattern.
+Rollback: if Stage 2 partially fails after tag creation, delete the tag (`git push --delete origin v{version}`), fix the issue, and re-trigger by pushing the tag again.

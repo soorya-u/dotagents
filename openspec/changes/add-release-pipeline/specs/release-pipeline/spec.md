@@ -25,6 +25,18 @@ The `release` workflow SHALL trigger on `push: tags: 'v*.*.*'`. It MUST NOT trig
 - **WHEN** the developer merges the `"chore: release v0.2.0"` PR and pushes the annotated tag `v0.2.0`
 - **THEN** all Stage 2 jobs run: build-release, e2e, publish-cargo, publish-npm, update-homebrew, update-scoop
 
+### Requirement: A preflight job gates all build and publish work
+Stage 2 SHALL run a `preflight` job as the first job. All `build-release` matrix legs SHALL declare `needs: [preflight]` and MUST NOT start if `preflight` fails. `preflight` MUST run `cargo fmt --check`, `cargo clippy -- -D warnings`, and `cargo test --locked`.
+
+#### Scenario: Fmt violation aborts release
+- **WHEN** the tagged commit contains unformatted Rust code
+- **THEN** the `preflight` job exits non-zero
+- **THEN** all `build-release` legs, `e2e`, and all publish jobs are skipped
+
+#### Scenario: Clean commit proceeds to build
+- **WHEN** `preflight` passes fmt, clippy, and tests
+- **THEN** all five `build-release` matrix legs start in parallel
+
 ### Requirement: E2E tests must pass before any registry publish
 All publish jobs (crates.io, npm) SHALL declare `needs: e2e` and MUST NOT start if the `e2e` job exits non-zero. The `e2e` job MUST use the actual release binary built in the `build-release` job.
 
