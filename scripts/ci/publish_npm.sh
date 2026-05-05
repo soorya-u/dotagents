@@ -4,9 +4,21 @@ set -euo pipefail
 # Publishes platform-specific npm packages and the root dotagents shim package.
 # Required env: TAG, GH_TOKEN
 # Uses OIDC trusted publishing (--provenance) — no NPM_TOKEN needed.
+# Pre-release tags (e.g. v0.0.0-nightly) are published under a dist-tag
+# instead of "latest" so stable users are unaffected.
 
 TAG="${TAG:?TAG is required}"
 VERSION=$(echo "$TAG" | sed 's/^v//')
+
+# Determine npm dist-tag: pre-release versions get a named tag, stable gets "latest"
+if [[ "$VERSION" == *-* ]]; then
+  PRERELEASE="${VERSION#*-}"
+  # Extract the identifier before any dot/number (e.g. "nightly", "alpha", "rc")
+  NPM_TAG=$(echo "$PRERELEASE" | sed 's/[^a-zA-Z].*//')
+  NPM_TAG="${NPM_TAG:-next}"
+else
+  NPM_TAG="latest"
+fi
 
 declare -A PLATFORM_MAP
 PLATFORM_MAP[linux-x64-musl]="linux-x64"
@@ -62,7 +74,7 @@ for platform in linux-x64-musl linux-arm64-musl macos-arm64 macos-x86 windows-x6
 }
 EOF
   cd "${PKG_DIR}"
-  npm publish --access public --provenance
+  npm publish --access public --provenance --tag "$NPM_TAG"
   cd -
 done
 
@@ -95,4 +107,4 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cp "${SCRIPT_DIR}/npm_postinstall.js" ./npm-root/postinstall.js
 
 cd ./npm-root
-npm publish --access public
+npm publish --access public --tag "$NPM_TAG"

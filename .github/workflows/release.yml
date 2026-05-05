@@ -96,12 +96,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: dotagents-${{ matrix.build_name }}
+          prerelease: ${{ contains(github.ref_name, '-') }}
 
       - name: Upload binary to release (windows)
         if: matrix.os == 'windows-latest'
         uses: softprops/action-gh-release@v2
         with:
           files: dotagents-${{ matrix.build_name }}.exe
+          prerelease: ${{ contains(github.ref_name, '-') }}
 
   e2e:
     needs: [build-release]
