@@ -33,7 +33,7 @@ jobs:
       - name: Generate CHANGELOG
         run: |
           cargo install git-cliff --locked
-          git-cliff --tag v${{ inputs.version }} --prepend CHANGELOG.md
+          git-cliff --tag v${{ inputs.version }} --unreleased --prepend CHANGELOG.md
 
       - name: Generate shell completions
         run: |
