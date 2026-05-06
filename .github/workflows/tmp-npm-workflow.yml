@@ -34,7 +34,12 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: "22"
-          registry-url: "https://registry.npmjs.org"
+
+      - name: Clear .npmrc and upgrade npm
+        run: |
+          rm -f "$NPM_CONFIG_USERCONFIG"
+          rm -f ~/.npmrc
+          npm install -g npm@latest
 
       - name: Create package
         run: |
@@ -55,11 +60,11 @@ jobs:
 
       - name: Debug auth
         run: |
+          echo "=== npm version ==="
+          npm --version
           echo "=== .npmrc ==="
           cat "$NPM_CONFIG_USERCONFIG" 2>/dev/null || echo "no NPM_CONFIG_USERCONFIG"
           cat ~/.npmrc 2>/dev/null || echo "no ~/.npmrc"
-          echo "=== npm whoami ==="
-          npm whoami 2>&1 || true
           echo "=== NODE_AUTH_TOKEN set? ==="
           if [ -z "${NODE_AUTH_TOKEN}" ]; then echo "NOT SET"; else echo "SET (length: ${#NODE_AUTH_TOKEN})"; fi
 
@@ -67,3 +72,6 @@ jobs:
         run: |
           cd ./pkg
           npm publish --access public --provenance --tag nightly
+        env:
+          NODE_AUTH_TOKEN: ""
+          NPM_TOKEN: ""
