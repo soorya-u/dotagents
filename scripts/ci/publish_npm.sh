@@ -70,7 +70,8 @@ for platform in linux-x64-musl linux-arm64-musl macos-arm64 macos-x86 windows-x6
   "os": ["${OS_MAP[$platform]}"],
   "cpu": ["${CPU_MAP[$platform]}"],
   "main": "${BIN_NAME}",
-  "files": ["${BIN_NAME}"]
+  "files": ["${BIN_NAME}"],
+  "repository": { "type": "git", "url": "https://github.com/soorya-u/dotagents" }
 }
 EOF
   cd "${PKG_DIR}"
@@ -99,7 +100,8 @@ cat > ./npm-root/package.json <<EOF
     "@soorya-u/dotagents-darwin-x64": "${VERSION}",
     "@soorya-u/dotagents-win32-x64": "${VERSION}"
   },
-  "files": ["bin/", "postinstall.js"]
+  "files": ["bin/", "postinstall.js"],
+  "repository": { "type": "git", "url": "https://github.com/soorya-u/dotagents" }
 }
 EOF
 

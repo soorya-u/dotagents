@@ -51,7 +51,8 @@ jobs:
             "os": ["linux"],
             "cpu": ["x64"],
             "main": "dotagents-linux-x64-musl",
-            "files": ["dotagents-linux-x64-musl"]
+            "files": ["dotagents-linux-x64-musl"],
+            "repository": { "type": "git", "url": "https://github.com/soorya-u/dotagents" }
           }
           EOF
 
