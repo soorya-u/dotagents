@@ -74,7 +74,7 @@ for platform in linux-x64-musl linux-arm64-musl macos-arm64 macos-x86 windows-x6
 }
 EOF
   cd "${PKG_DIR}"
-  npm publish --access public --tag "$NPM_TAG"
+  npm publish --access public --provenance --tag "$NPM_TAG"
   cd -
 done
 
@@ -107,4 +107,4 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cp "${SCRIPT_DIR}/npm_postinstall.js" ./npm-root/postinstall.js
 
 cd ./npm-root
-npm publish --access public --tag "$NPM_TAG"
+npm publish --access public --provenance --tag "$NPM_TAG"
