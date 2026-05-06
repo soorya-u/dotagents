@@ -35,11 +35,10 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Clear .npmrc and upgrade npm
+      - name: Clear .npmrc
         run: |
           rm -f "$NPM_CONFIG_USERCONFIG"
           rm -f ~/.npmrc
-          npm install -g npm@latest
 
       - name: Create package
         run: |
