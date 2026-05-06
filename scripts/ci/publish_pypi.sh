@@ -43,7 +43,7 @@ mkdir -p dist
 
 for platform in linux-x64-musl linux-arm64-musl macos-arm64 macos-x86 windows-x64; do
   PLAT_TAG="${WHEEL_PLATFORM[$platform]}"
-  WHEEL_NAME="${DIST_NAME}-${VERSION}-py3-none-${PLAT_TAG}.whl"
+  WHEEL_NAME="${PKG_NAME}-${VERSION}-py3-none-${PLAT_TAG}.whl"
   WORK_DIR=$(mktemp -d)
 
   # Download binary
@@ -59,8 +59,8 @@ for platform in linux-x64-musl linux-arm64-musl macos-arm64 macos-x86 windows-x6
   fi
 
   # Create wheel structure
-  DATA_DIR="${WORK_DIR}/${DIST_NAME}-${VERSION}.data/scripts"
-  DIST_INFO="${WORK_DIR}/${DIST_NAME}-${VERSION}.dist-info"
+  DATA_DIR="${WORK_DIR}/${PKG_NAME}-${VERSION}.data/scripts"
+  DIST_INFO="${WORK_DIR}/${PKG_NAME}-${VERSION}.dist-info"
   mkdir -p "${DATA_DIR}" "${DIST_INFO}"
 
   mv "${WORK_DIR}/${BIN_NAME}" "${DATA_DIR}/${BIN_NAME}"
@@ -96,7 +96,7 @@ EOF
 
   # Build the wheel (zip with .whl extension)
   cd "${WORK_DIR}"
-  zip -r "${WHEEL_NAME}" "${DIST_NAME}-${VERSION}.data/" "${DIST_NAME}-${VERSION}.dist-info/"
+  zip -r "${WHEEL_NAME}" "${PKG_NAME}-${VERSION}.data/" "${PKG_NAME}-${VERSION}.dist-info/"
   mv "${WHEEL_NAME}" "${OLDPWD}/dist/"
   cd "${OLDPWD}"
 
