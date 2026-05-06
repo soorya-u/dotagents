@@ -34,11 +34,17 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: "22"
+          registry-url: "https://registry.npmjs.org"
 
-      - name: Clear .npmrc
+      - name: Strip auth token from .npmrc
         run: |
-          rm -f "$NPM_CONFIG_USERCONFIG"
-          rm -f ~/.npmrc
+          echo "=== .npmrc before ==="
+          cat "$NPM_CONFIG_USERCONFIG" 2>/dev/null || echo "no NPM_CONFIG_USERCONFIG"
+          if [ -n "$NPM_CONFIG_USERCONFIG" ] && [ -f "$NPM_CONFIG_USERCONFIG" ]; then
+            sed -i '/_authToken/d' "$NPM_CONFIG_USERCONFIG"
+          fi
+          echo "=== .npmrc after ==="
+          cat "$NPM_CONFIG_USERCONFIG" 2>/dev/null || echo "no NPM_CONFIG_USERCONFIG"
 
       - name: Create package
         run: |
@@ -57,10 +63,12 @@ jobs:
           }
           EOF
 
-      - name: Debug auth
+      - name: Debug info
         run: |
           echo "=== npm version ==="
           npm --version
+          echo "=== node version ==="
+          node --version
           echo "=== .npmrc ==="
           cat "$NPM_CONFIG_USERCONFIG" 2>/dev/null || echo "no NPM_CONFIG_USERCONFIG"
           cat ~/.npmrc 2>/dev/null || echo "no ~/.npmrc"
