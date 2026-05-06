@@ -1,0 +1,59 @@
+name: Tmp npm publish test
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish e.g. 0.0.0-nightly"
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish-npm:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Download linux-x64 binary
+        run: gh release download "v${{ inputs.version }}" -p "dotagents-linux-x64-musl" -D ./pkg/
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create package
+        run: |
+          chmod +x ./pkg/dotagents-linux-x64-musl
+          cat > ./pkg/package.json <<EOF
+          {
+            "name": "@soorya-u/dotagents-linux-x64",
+            "version": "${{ inputs.version }}",
+            "description": "Platform-specific binary for dotagents (linux-x64)",
+            "os": ["linux"],
+            "cpu": ["x64"],
+            "main": "dotagents-linux-x64-musl",
+            "files": ["dotagents-linux-x64-musl"]
+          }
+          EOF
+
+      - name: Debug auth
+        run: |
+          echo "=== .npmrc ==="
+          cat "$NPM_CONFIG_USERCONFIG" 2>/dev/null || echo "no NPM_CONFIG_USERCONFIG"
+          cat ~/.npmrc 2>/dev/null || echo "no ~/.npmrc"
+          echo "=== npm whoami ==="
+          npm whoami 2>&1 || true
+          echo "=== NODE_AUTH_TOKEN set? ==="
+          if [ -z "${NODE_AUTH_TOKEN}" ]; then echo "NOT SET"; else echo "SET (length: ${#NODE_AUTH_TOKEN})"; fi
+
+      - name: Publish
+        run: |
+          cd ./pkg
+          npm publish --access public --tag nightly
