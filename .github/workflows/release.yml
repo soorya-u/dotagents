@@ -207,14 +207,18 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: "22"
-          registry-url: "https://registry.npmjs.org"
+          node-version: "24"
+
+      - name: Clear .npmrc
+        run: rm -f "$NPM_CONFIG_USERCONFIG" ~/.npmrc
 
       - name: Publish npm packages
         run: ./scripts/ci/publish_npm.sh
         env:
           TAG: ${{ github.ref_name }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ""
+          NPM_TOKEN: ""
 
   publish-pypi:
     needs: [e2e]
