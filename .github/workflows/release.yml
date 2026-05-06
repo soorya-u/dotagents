@@ -185,7 +185,7 @@ jobs:
   publish-cargo:
     needs: [e2e]
     runs-on: ubuntu-latest
-    environment: Production
+    environment: production
     steps:
       - uses: actions/checkout@v4
 
@@ -201,7 +201,7 @@ jobs:
   publish-npm:
     needs: [e2e]
     runs-on: ubuntu-latest
-    environment: Production
+    environment: production
     steps:
       - uses: actions/checkout@v4
 
@@ -219,7 +219,7 @@ jobs:
   publish-pypi:
     needs: [e2e]
     runs-on: ubuntu-latest
-    environment: Production
+    environment: production
     steps:
       - uses: actions/checkout@v4
 
