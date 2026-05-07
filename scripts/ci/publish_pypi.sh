@@ -91,8 +91,18 @@ Root-Is-Purelib: false
 Tag: py3-none-${PLAT_TAG}
 EOF
 
-  # RECORD (empty — pip doesn't strictly require hashes for install)
-  touch "${DIST_INFO}/RECORD"
+  # RECORD — list every file in the wheel with sha256 hash and size
+  RECORD_FILE="${DIST_INFO}/RECORD"
+  : > "${RECORD_FILE}"
+  cd "${WORK_DIR}"
+  for f in $(find "${PKG_NAME}-${VERSION}.data" "${PKG_NAME}-${VERSION}.dist-info" -type f ! -name RECORD); do
+    HASH=$(sha256sum "$f" | cut -d' ' -f1)
+    HASH_B64=$(echo -n "$HASH" | xxd -r -p | base64 | tr -d '=\n' | tr '+/' '-_')
+    SIZE=$(wc -c < "$f")
+    echo "${f},sha256=${HASH_B64},${SIZE}" >> "${RECORD_FILE}"
+  done
+  echo "${PKG_NAME}-${VERSION}.dist-info/RECORD,," >> "${RECORD_FILE}"
+  cd "${OLDPWD}"
 
   # Build the wheel (zip with .whl extension)
   cd "${WORK_DIR}"
