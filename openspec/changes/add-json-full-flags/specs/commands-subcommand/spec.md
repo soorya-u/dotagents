@@ -3,9 +3,9 @@
 ### Requirement: commands ls lists command source files
 `dotagents commands ls` SHALL read commands from `.dotagents/commands/*.md`, parse frontmatter for `name`, `description`, `category`, and `tags`, and display them using cliclack output. Descriptions SHALL be truncated to fit terminal width by default.
 
-When `--json` is passed, the command SHALL output a JSON array of command objects using each command's `to_value()` representation (includes name, frontmatter fields, and body content). All log/warning output SHALL go to stderr.
+When `--json` is passed, the command SHALL output a JSON array of command objects containing frontmatter fields (name, description, category, tags). Body content SHALL NOT be included in JSON output unless `--full` is also passed. All log/warning output SHALL go to stderr.
 
-When `--full` is passed, the command SHALL include the full markdown body content of each command after the frontmatter fields. Without `--full`, only name and frontmatter fields are shown. When both `--json` and `--full` are passed, the `--json` flag takes precedence: JSON output is produced using `to_value()` which already includes body content natively, and `--full` is effectively a no-op in JSON mode.
+When `--full` is passed, the command SHALL include the full markdown body content of each command after the frontmatter fields. Without `--full`, only name and frontmatter fields are shown. When both `--json` and `--full` are passed, each JSON object SHALL include a `content` key with the raw markdown body string in addition to the frontmatter fields.
 
 #### Scenario: Commands listed
 - **WHEN** user runs `dotagents commands ls`
@@ -25,7 +25,7 @@ When `--full` is passed, the command SHALL include the full markdown body conten
 
 #### Scenario: --json outputs commands as JSON array
 - **WHEN** user runs `dotagents commands ls --json`
-- **THEN** stdout contains a JSON array of command objects with name, frontmatter fields, and body content; stderr contains any log messages
+- **THEN** stdout contains a JSON array of command objects with frontmatter fields (name, description, category, tags); body content is absent; stderr contains any log messages
 
 #### Scenario: --json with empty workspace outputs empty array
 - **WHEN** user runs `dotagents commands ls --json` with no commands present

@@ -22,8 +22,8 @@ Each feature type (Command, Skill) already implements `to_value()` which returns
 ### `--full` extends existing flag, includes body content
 The `--full` flag already exists in both `commands ls` and `skills ls` specs for showing full descriptions. This change extends it to also include the full markdown body content (`content` / `body`). When `--full` is absent, only name + frontmatter fields (description, category, tags, etc.) are shown.
 
-### JSON output includes body content unconditionally; `--full` is a no-op in JSON mode
-When `--json` is active, the full `to_value()` representation is serialized, which naturally includes body content. When both `--json` and `--full` are passed, `--json` takes precedence: JSON output is produced, and `--full` has no additional effect on the JSON structure since body content is already included by `to_value()`. `--full` only affects human-readable CLI text output when `--json` is absent.
+### `--json` alone outputs frontmatter only; `--full` adds body content when combined
+When `--json` is active without `--full`, the output includes frontmatter fields only (name, description, category, tags). Body content is omitted. When both `--json` and `--full` are passed, each JSON object gains a `content` key containing the raw markdown body string. When `--json` is absent, `--full` only affects the human-readable CLI text output by including body content after frontmatter.
 
 ### CLI-only; TUI output unchanged
 These flags affect CLI text/JSON output. The existing TUI list display (if any) is not modified. In non-TTY mode, text output includes the formatted content; in JSON mode, JSON is emitted.
