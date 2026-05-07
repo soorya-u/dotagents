@@ -10,7 +10,7 @@ TAG="${TAG:?TAG is required}"
 SEMVER=$(echo "$TAG" | sed 's/^v//')
 
 # Convert semver pre-release to PEP 440
-# e.g. 0.0.0-nightly -> 0.0.0.dev0, 0.0.0-alpha.1 -> 0.0.0a1,
+# e.g. 0.0.0-nightly.20250507 -> 0.0.0.dev20250507, 0.0.0-alpha.1 -> 0.0.0a1,
 #      0.0.0-beta.2 -> 0.0.0b2, 0.0.0-rc.1 -> 0.0.0rc1
 if [[ "$SEMVER" == *-* ]]; then
   BASE_VERSION="${SEMVER%%-*}"
@@ -22,8 +22,10 @@ if [[ "$SEMVER" == *-* ]]; then
     VERSION="${BASE_VERSION}b${BASH_REMATCH[1]:-0}"
   elif [[ "$PRERELEASE" =~ ^rc\.?([0-9]*)$ ]]; then
     VERSION="${BASE_VERSION}rc${BASH_REMATCH[1]:-0}"
+  elif [[ "$PRERELEASE" =~ ^nightly\.?([0-9]*)$ ]]; then
+    VERSION="${BASE_VERSION}.dev${BASH_REMATCH[1]:-0}"
   else
-    # Generic pre-release (nightly, test, dev, etc.) -> .dev0
+    # Generic pre-release (test, dev, etc.) -> .dev0
     VERSION="${BASE_VERSION}.dev0"
   fi
 else
