@@ -8,7 +8,7 @@ use crate::core::features::Feature;
 use crate::schema::registry::Registry;
 use crate::templates::TemplateCache;
 use crate::utils::fs::hash_content;
-use crate::utils::http::do_get;
+use crate::utils::http::fetch_template;
 
 pub(crate) use crate::constants::domain::registry_url;
 
@@ -45,7 +45,7 @@ pub(crate) fn fetch_or_cache_file(
         }
     }
 
-    let content = do_get(url).map_err(|e| {
+    let content = fetch_template(url).map_err(|e| {
         anyhow!(
             "Failed to fetch {} for provider '{}': {}",
             filename,
