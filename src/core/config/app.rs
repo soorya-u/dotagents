@@ -7,9 +7,9 @@ use super::global::GlobalConfig;
 use super::local::LocalConfig;
 use crate::constants::file::{GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE};
 use crate::constants::schema::CONFIG_SCHEMA;
-use crate::schema::config::{FeatureSettings, TomlConfig};
-use crate::schema::features::Feature;
-use crate::templates::{RenderType, Templater, get_templater};
+use crate::core::config::{FeatureSettings, TomlConfig};
+use crate::core::features::Feature;
+use crate::templates::{RenderType, Templater};
 use crate::utils::merge::merge_optional;
 use serde::{Deserialize, Serialize};
 
@@ -152,7 +152,7 @@ impl TomlConfig for AppConfig {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::schema::config::common::PackageRunner;
+    use crate::core::config::common::PackageRunner;
 
     fn make_global(runner: Option<PackageRunner>) -> GlobalConfig {
         GlobalConfig {

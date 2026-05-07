@@ -1,21 +1,7 @@
-use anyhow::{Context, Result, anyhow};
-use log::warn;
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, to_value};
-use std::{
-    collections::{HashMap, HashSet},
-    path::{Path, PathBuf},
-};
+use std::collections::{HashMap, HashSet};
 
-use crate::{
-    schema::features::{Feature, traits::FeatureTrait},
-    templates::{RenderType, Templater, variables::get_user_defined_variables},
-    utils::{
-        fs::{read_file, write_file},
-        merge::merge_optional,
-        merge_json,
-    },
-};
+use crate::{core::features::Feature, utils::merge::merge_optional};
 
 /// Package runner used to invoke the `skills` CLI.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, clap::ValueEnum)]
@@ -125,10 +111,7 @@ pub struct FeatureSettings {
 }
 
 impl Targets {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
+    #[allow(dead_code)]
     pub fn merge(&self, other: &Targets) -> Targets {
         Targets {
             providers: other.providers.clone().or_else(|| self.providers.clone()),
@@ -170,10 +153,6 @@ impl Providers {
 }
 
 impl Features {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
     pub fn merge(&self, other: &Features) -> Features {
         Features {
             mcp: Self::merge_settings(self.mcp.as_ref(), other.mcp.as_ref()),
@@ -209,10 +188,6 @@ impl Features {
 }
 
 impl FeatureSettings {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
     pub fn merge(&self, other: &FeatureSettings) -> FeatureSettings {
         FeatureSettings {
             template: other.template.clone().or_else(|| self.template.clone()),
@@ -281,7 +256,7 @@ mod tests {
 
     #[test]
     fn test_config_agent_ability_settings_get_config() {
-        use crate::schema::features::Feature;
+        use crate::core::features::Feature;
 
         let settings = Features {
             mcp: Some(FeatureSettings {

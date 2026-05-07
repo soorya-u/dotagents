@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use anyhow::{Result, anyhow};
 use serde::Deserialize;
 
-use crate::templates::do_get;
+use crate::utils::http::do_get;
 
 /// The full provider registry, deserialised from `registry.json`.
 #[derive(Debug, Clone, Deserialize)]

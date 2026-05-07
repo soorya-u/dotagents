@@ -14,10 +14,10 @@ use crate::cli::options::{
 };
 use crate::cli::ui::ls::{ListItem, render_skills};
 use crate::constants::templates::{SKILL_STARTER, render_starter};
+use crate::core::config::CacheConfig;
+use crate::core::config::app::AppConfig;
+use crate::core::config::common::PackageRunner;
 use crate::prelude::*;
-use crate::schema::config::CacheConfig;
-use crate::schema::config::app::AppConfig;
-use crate::schema::config::common::PackageRunner;
 use crate::templates::get_templater;
 use crate::utils::fs::write_file;
 use crate::utils::path::{get_application_dir, get_skills_dir, get_workspace_dir};

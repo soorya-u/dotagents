@@ -1,11 +1,10 @@
 use anyhow::{Context, Result};
 use handlebars::Handlebars;
-use serde_json::{Value, json};
-use std::env;
+use serde_json::Value;
 use std::sync::OnceLock;
 
 use crate::templates::variables::get_env_variables;
-use crate::utils::path::{get_application_dir, get_config_dir, get_workspace_dir};
+use crate::utils::path::get_application_dir;
 use crate::{
     constants::helpers::JSON_HELPER,
     templates::{
@@ -36,6 +35,7 @@ pub fn get_templater() -> Result<&'static Templater> {
 
 pub enum TemplateSource {
     File(String),
+    #[allow(dead_code)]
     Text(String),
 }
 

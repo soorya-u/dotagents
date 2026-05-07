@@ -209,7 +209,7 @@ mod tests {
     // CommandFeature::mock() returns non-empty string with YAML frontmatter containing name:
     #[test]
     fn command_mock_has_frontmatter() {
-        use crate::schema::features::command::CommandFeature;
+        use crate::core::features::command::CommandFeature;
         let mock = CommandFeature::mock();
         assert!(!mock.is_empty());
         assert!(mock.starts_with("---"));
@@ -219,7 +219,7 @@ mod tests {
     // SkillFeature::mock() returns non-empty string with YAML frontmatter containing name:
     #[test]
     fn skill_mock_has_frontmatter() {
-        use crate::schema::features::skill::SkillFeature;
+        use crate::core::features::skill::SkillFeature;
         let mock = SkillFeature::mock();
         assert!(!mock.is_empty());
         assert!(mock.starts_with("---"));

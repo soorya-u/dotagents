@@ -7,9 +7,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
 use crate::{
-    schema::features::traits::FeatureTrait,
-    templates::variables::get_command_name_variable,
-    utils::{gitignore::GitignoreScope, path::get_commands_dir},
+    core::features::traits::FeatureTrait, templates::variables::get_command_name_variable,
+    utils::path::get_commands_dir,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -93,10 +92,6 @@ impl FeatureTrait for CommandFeature {
 
     fn get_name_variable(&self, filename: &str) -> Result<Option<Value>> {
         Ok(Some(get_command_name_variable(filename)?))
-    }
-
-    fn gitignore_scope(&self) -> GitignoreScope {
-        GitignoreScope::File
     }
 }
 
@@ -188,19 +183,6 @@ Command content here"#;
         };
 
         assert_eq!(command.get_file_name(), Some("file-name-test".to_string()));
-    }
-
-    #[test]
-    fn test_gitignore_scope_is_file() {
-        // commands use File scope — individual file paths in .gitignore
-        let command = CommandFeature {
-            metadata: CommandMetadata {
-                name: "scope-test".to_string(),
-                description: "Test".to_string(),
-            },
-            content: "Content".to_string(),
-        };
-        assert!(matches!(command.gitignore_scope(), GitignoreScope::File));
     }
 
     #[test]

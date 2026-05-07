@@ -8,10 +8,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
 use crate::{
-    constants::file::SKILL_FILE,
-    schema::features::traits::FeatureTrait,
-    templates::variables::get_skill_name_variable,
-    utils::{gitignore::GitignoreScope, path::get_skills_dir},
+    constants::file::SKILL_FILE, core::features::traits::FeatureTrait,
+    templates::variables::get_skill_name_variable, utils::path::get_skills_dir,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -128,10 +126,6 @@ impl FeatureTrait for SkillFeature {
 
     fn get_name_variable(&self, filename: &str) -> Result<Option<Value>> {
         Ok(Some(get_skill_name_variable(filename)?))
-    }
-
-    fn gitignore_scope(&self) -> GitignoreScope {
-        GitignoreScope::File
     }
 }
 
@@ -320,23 +314,6 @@ Minimal body"#;
         };
 
         assert_eq!(skill.get_file_name(), Some("file-name".to_string()));
-    }
-
-    #[test]
-    fn test_gitignore_scope_is_file() {
-        // skills use File scope — individual file paths in .gitignore
-        let skill = SkillFeature {
-            metadata: SkillMetadata {
-                name: "scope-test".to_string(),
-                description: "Test".to_string(),
-                license: None,
-                compatibility: None,
-                metadata: None,
-                allowed_tools: None,
-            },
-            content: "Body".to_string(),
-        };
-        assert!(matches!(skill.gitignore_scope(), GitignoreScope::File));
     }
 
     #[test]

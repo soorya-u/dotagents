@@ -10,7 +10,7 @@ use crate::cli::ui::dry_run::{
 use crate::cli::ui::undeploy::{
     print_undeploy_summary, prompt_confirm_undeploy, prompt_delete_edited,
 };
-use crate::schema::config::CacheConfig;
+use crate::core::config::CacheConfig;
 use crate::utils::fs::{delete_file, hash_file, prune_empty_dir};
 use crate::utils::gitignore::{
     GitignorePath, clear_gitignore_fence, gitignore_path_to_pattern, remove_paths_from_fence,
@@ -195,7 +195,7 @@ mod tests {
     // file exists and cache entry exists → file deleted, cache entry removed
     #[test]
     fn undeploy_item_deletes_deployed_file_and_clears_cache() {
-        use crate::schema::config::CacheEntry;
+        use crate::core::config::CacheEntry;
         let mut cache = CacheConfig::default();
         let tmp = tempfile::TempDir::new().unwrap();
         let file = tmp.path().join("deployed.md");
@@ -218,7 +218,7 @@ mod tests {
     // file is missing but cache entry exists → Ok, cache entry removed, no panic
     #[test]
     fn undeploy_item_continues_when_file_already_deleted() {
-        use crate::schema::config::CacheEntry;
+        use crate::core::config::CacheEntry;
         let mut cache = CacheConfig::default();
         let tmp = tempfile::TempDir::new().unwrap();
         let file_str = tmp

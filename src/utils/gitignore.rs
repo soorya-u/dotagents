@@ -6,13 +6,6 @@ use anyhow::Result;
 use crate::constants::file::{FENCE_END, FENCE_START};
 use crate::utils::fs::{read_file, write_file};
 use crate::utils::path::make_workspace_relative;
-use crate::utils::tty::is_tty;
-
-/// Controls how a feature's deployed paths are represented in .gitignore.
-pub(crate) enum GitignoreScope {
-    /// Write the exact deployed file path into .gitignore.
-    File,
-}
 
 /// Represents how a deployed path should appear in .gitignore.
 #[derive(Debug)]
@@ -364,12 +357,6 @@ mod tests {
         assert!(result.contains(".DS_Store"));
         assert!(result.contains("CLAUDE.md"));
         assert!(result.contains("AGENTS.md"));
-    }
-
-    #[test]
-    fn test_is_tty_returns_bool() {
-        // helper returns a bool without panicking
-        let _result: bool = is_tty();
     }
 
     #[test]

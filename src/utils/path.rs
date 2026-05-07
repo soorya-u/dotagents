@@ -1,6 +1,5 @@
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Result, anyhow};
 use std::env;
-use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
@@ -65,10 +64,6 @@ pub fn get_workspace_dir() -> Result<PathBuf> {
         })
         .clone()
         .map_err(|e| anyhow!(e.clone()))
-}
-
-pub fn get_home_dir() -> Result<PathBuf> {
-    home::home_dir().ok_or_else(|| anyhow!("failed to get user home directory"))
 }
 
 pub fn get_config_dir() -> Result<PathBuf> {
@@ -214,16 +209,6 @@ mod tests {
         let workspace = PathBuf::from("/home/user/project");
         let path = PathBuf::from("/home/other/file.md");
         assert!(make_workspace_relative(&path, &workspace).is_none());
-    }
-
-    #[test]
-    fn test_get_home_dir() {
-        let result = get_home_dir();
-        // Home directory should exist on all systems
-        assert!(result.is_ok());
-        let home = result.unwrap();
-        assert!(home.exists());
-        assert!(home.is_dir());
     }
 
     #[test]
