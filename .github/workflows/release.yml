@@ -241,6 +241,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
 
   update-homebrew:
+    if: ${{ !contains(github.ref_name, 'nightly') }}
     needs: [e2e]
     runs-on: ubuntu-latest
     steps:
@@ -268,6 +269,7 @@ jobs:
           SHA_X86: ${{ steps.sha.outputs.x86 }}
 
   update-scoop:
+    if: ${{ !contains(github.ref_name, 'nightly') }}
     needs: [e2e]
     runs-on: ubuntu-latest
     steps:
