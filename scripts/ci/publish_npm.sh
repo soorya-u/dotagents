@@ -81,6 +81,9 @@ done
 
 # Publish root shim package
 mkdir -p ./npm-root/bin
+# Placeholder so npm creates the bin symlink before postinstall runs
+echo '#!/usr/bin/env node' > ./npm-root/bin/dotagents
+chmod +x ./npm-root/bin/dotagents
 
 cat > ./npm-root/package.json <<EOF
 {
