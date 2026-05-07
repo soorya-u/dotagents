@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::OnceLock;
 
@@ -7,7 +6,7 @@ use serde_json::{Value, json};
 
 use crate::{
     constants::file::ENV_FILE,
-    utils::path::{get_application_dir, get_config_dir, get_home_dir, get_workspace_dir},
+    utils::path::{get_application_dir, get_workspace_dir},
 };
 
 /// Custom env file paths supplied via `--env`; set before the templater initialises.
@@ -43,9 +42,6 @@ pub(crate) fn get_dir_variables() -> Result<Value> {
         "dir": {
             "workspace": get_workspace_dir()?,
             "application": get_application_dir()?,
-            // TODO(soorya): Not Supported in v1.
-            // "config": get_config_dir()?,
-            // "home": get_home_dir()?,
         }
     }))
 }

@@ -69,7 +69,7 @@ pub(crate) fn run_init_wizard(opts: &mut InitOptions, dir_exists: bool) -> Resul
 /// Returns the selected provider names sorted alphabetically.
 /// On registry fetch failure, warns and returns an empty vec.
 pub(crate) fn prompt_targets() -> Result<Vec<String>> {
-    let mut sp = spinner();
+    let sp = spinner();
     sp.start("Fetching provider registry…");
 
     let registry = match Registry::fetch(registry_url()) {

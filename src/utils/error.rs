@@ -19,7 +19,7 @@ pub(crate) fn display_error(error: Error) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use anyhow::{Context, anyhow};
+    use anyhow::anyhow;
 
     #[test]
     fn test_display_error_single_error() {

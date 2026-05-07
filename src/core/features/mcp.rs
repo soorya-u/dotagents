@@ -1,13 +1,11 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
-use serde_json5::from_str;
 use std::{collections::HashMap, fs};
 
 use crate::{
-    constants::file::MCP_FILE,
-    schema::features::traits::FeatureTrait,
-    utils::{gitignore::GitignoreScope, path::get_application_dir},
+    constants::file::MCP_FILE, core::features::traits::FeatureTrait,
+    utils::path::get_application_dir,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -282,13 +280,5 @@ mod tests {
             }
             _ => panic!("Expected Stdio server config"),
         }
-    }
-
-    #[test]
-    fn test_gitignore_scope_is_file() {
-        // mcp config is a single file per provider → File scope (default)
-        let json = r#"{"$schema":"","servers":{"s":{"type":"stdio","command":"x","args":[]}}}"#;
-        let mcp = McpFeature::from_json(json).unwrap();
-        assert!(matches!(mcp.gitignore_scope(), GitignoreScope::File));
     }
 }

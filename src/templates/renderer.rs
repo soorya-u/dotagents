@@ -4,11 +4,12 @@ use crate::prelude::*;
 use serde_json::{Value, to_value};
 
 use crate::{
-    schema::{
+    core::{
         config::{CacheEntry, CacheUpdate, FeatureSettings},
         features::traits::FeatureTrait,
     },
-    templates::{RenderType, Templater, fetch_template, variables::get_user_defined_variables},
+    templates::{RenderType, Templater, variables::get_user_defined_variables},
+    utils::http::fetch_template,
     utils::{
         fs::{hash_content, hash_file, read_file, write_file},
         merge_json,

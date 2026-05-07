@@ -1,13 +1,12 @@
-mod remote;
+pub(crate) mod cache;
+pub(crate) mod helpers;
+pub(crate) mod remote;
+pub(crate) mod variables;
+
 mod renderer;
 mod templater;
 
-pub(crate) mod helpers;
-pub(crate) mod registry_resolver;
-pub(crate) mod template_cache;
-pub(crate) mod variables;
-pub(crate) use registry_resolver::{registry_url, resolve_provider_defaults};
-pub(crate) use remote::{do_get, fetch_template};
+pub(crate) use cache::TemplateCache;
+pub(crate) use remote::{registry_url, resolve_provider_defaults};
 pub(crate) use renderer::render_feature_with_settings;
-pub(crate) use template_cache::TemplateCache;
-pub(crate) use templater::{RenderType, TemplateSource, Templater, get_templater};
+pub(crate) use templater::{RenderType, Templater, get_templater};

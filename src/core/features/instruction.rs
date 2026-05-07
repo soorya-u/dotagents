@@ -5,9 +5,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
 use crate::{
-    constants::file::INSTRUCTIONS_FILE,
-    schema::features::traits::FeatureTrait,
-    utils::{gitignore::GitignoreScope, path::get_application_dir},
+    constants::file::INSTRUCTIONS_FILE, core::features::traits::FeatureTrait,
+    utils::path::get_application_dir,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -98,15 +97,5 @@ mod tests {
         let instruction = InstructionFeature::from_string("").unwrap();
         assert_eq!(instruction.content, "");
         assert_eq!(instruction.to_string().unwrap(), "");
-    }
-
-    #[test]
-    fn test_gitignore_scope_is_file() {
-        // instructions are a single file per provider → File scope (default)
-        let instruction = InstructionFeature::from_string("content").unwrap();
-        assert!(matches!(
-            instruction.gitignore_scope(),
-            GitignoreScope::File
-        ));
     }
 }

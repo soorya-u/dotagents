@@ -14,6 +14,7 @@ where
     }
 }
 
+#[allow(dead_code)]
 pub fn merge_optional_or_default<T>(
     base: Option<&T>,
     override_val: Option<&T>,

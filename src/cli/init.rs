@@ -16,7 +16,7 @@ use crate::constants::{
     },
     mocks,
 };
-use crate::schema::features::{
+use crate::core::features::{
     command::CommandFeature, instruction::InstructionFeature, mcp::McpFeature, skill::SkillFeature,
 };
 use crate::utils::fs::write_file;

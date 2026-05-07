@@ -11,8 +11,8 @@ use crate::cli::ui::deploy::{print_deploy_summary, prompt_gitignore_update, prom
 use crate::cli::ui::dry_run::{
     DeployDryRunStatus, DryRunDeployEntry, print_dry_run_deploy_summary,
 };
-use crate::schema::config::{AppConfig, CACHE_SINGLETON_KEY, CacheConfig, CacheEntry, CacheUpdate};
-use crate::schema::features::{
+use crate::core::config::{AppConfig, CACHE_SINGLETON_KEY, CacheConfig, CacheEntry, CacheUpdate};
+use crate::core::features::{
     Feature, command::CommandFeature, instruction::InstructionFeature, mcp::McpFeature,
     skill::SkillFeature, traits::FeatureTrait,
 };

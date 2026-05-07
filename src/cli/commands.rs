@@ -14,8 +14,8 @@ use crate::cli::options::{
 };
 use crate::cli::ui::ls::{ListItem, render_commands};
 use crate::constants::templates::{COMMAND_STARTER, render_starter};
+use crate::core::config::CacheConfig;
 use crate::prelude::*;
-use crate::schema::config::CacheConfig;
 use crate::utils::fs::write_file;
 use crate::utils::path::{get_application_dir, get_commands_dir, get_workspace_dir};
 use crate::utils::tty::is_tty;

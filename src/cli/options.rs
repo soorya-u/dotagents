@@ -2,7 +2,7 @@ use clap::{Args, Parser, Subcommand, ValueEnum};
 use clap_complete::Shell;
 use std::path::PathBuf;
 
-use crate::schema::config::common::PackageRunner;
+use crate::core::config::common::PackageRunner;
 
 #[derive(Parser, Default)]
 #[clap(author, version, about, long_about=None)]

@@ -1,6 +1,7 @@
 mod error;
 pub(crate) mod fs;
 pub(crate) mod gitignore;
+pub(crate) mod http;
 mod json;
 pub(crate) mod logs;
 pub(crate) mod merge;

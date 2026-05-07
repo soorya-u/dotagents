@@ -28,7 +28,10 @@ pub(crate) enum CacheUpdate {
     /// File was skipped because rendered content is identical to the last deploy.
     Skipped,
     /// File was skipped because the user manually edited the target.
-    UserEditedSkipped { path: PathBuf },
+    UserEditedSkipped {
+        #[allow(dead_code)]
+        path: PathBuf,
+    },
     /// Dry-run mode: file was not written; carries path and rendered content for classification.
     DryRun { target: PathBuf, content: String },
 }
