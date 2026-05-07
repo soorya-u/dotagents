@@ -1,11 +1,11 @@
 ## MODIFIED Requirements
 
 ### Requirement: skills ls lists local skill source directories
-`dotagents skills ls` SHALL read skills from `.dotagents/skills/*/SKILL.md`, parse frontmatter for `name` and `description`, and display them using cliclack output. Descriptions SHALL be truncated to fit terminal width by default.
+`dotagents skills ls` SHALL read skills from `.dotagents/skills/*/SKILL.md`, parse frontmatter for `name`, `description`, `license`, and `compatibility`, and display them using cliclack output. Descriptions SHALL be truncated to fit terminal width by default.
 
 When `--json` is passed, the command SHALL output a JSON array of skill objects using each skill's `to_value()` representation (includes name, frontmatter fields, and body content). All log/warning output SHALL go to stderr.
 
-When `--full` is passed, the command SHALL include the full markdown body content of each skill after the frontmatter fields. Without `--full`, only name and frontmatter fields are shown.
+When `--full` is passed, the command SHALL include the full markdown body content of each skill after the frontmatter fields. Without `--full`, only name and frontmatter fields are shown. When both `--json` and `--full` are passed, the `--json` flag takes precedence: JSON output is produced using `to_value()` which already includes body content natively, and `--full` is effectively a no-op in JSON mode.
 
 #### Scenario: Skills listed
 - **WHEN** user runs `dotagents skills ls`

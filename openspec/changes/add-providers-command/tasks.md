@@ -2,9 +2,8 @@
 
 - [ ] 1.1 Add `name: Option<String>` and `url: Option<String>` fields to `ProviderEntry` in `src/schema/registry.rs`
 - [ ] 1.2 Update `Registry` and `ProviderEntry` serde derives for new fields (optional = skip if absent)
-- [ ] 1.3 Add `name` and `url` to `public/v1/templates/registry.json` for each provider entry
-- [ ] 1.4 Add `name` and `url` fields to each provider's `public/v1/templates/<provider>/provider.toml`
-- [ ] 1.5 Update `scripts/ci/generate_registry.sh` to extract and include `name`/`url` from provider.toml
+- [ ] 1.3 Add `name` and `url` fields to each provider's `public/v1/templates/<provider>/provider.toml`
+- [ ] 1.4 Update `scripts/ci/generate_registry.sh` to extract and include `name`/`url` from provider.toml into the generated `registry.json`
 
 ## 2. CLI plumbing
 

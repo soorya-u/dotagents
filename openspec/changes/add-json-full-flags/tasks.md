@@ -12,6 +12,7 @@
 - [ ] 2.4 Implement `--full` body content rendering for `skills ls` CLI mode (include body after frontmatter)
 - [ ] 2.5 Ensure `--json` output uses stdout only, all logs/warnings go to stderr
 - [ ] 2.6 Ensure `--full` without `--json` shows body in text output
+- [ ] 2.7 Define `--json --full` combined behavior: `--json` always includes body content via `to_value()`, so `--full` is effectively a no-op when `--json` is present
 
 ## 3. Unit tests
 

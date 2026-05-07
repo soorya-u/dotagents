@@ -42,7 +42,7 @@ The `--json` and `--full` flags SHALL be independent and combinable. When both a
 - **THEN** the text output includes the full body content of each command after the frontmatter
 
 ### Requirement: JSON output is valid and parseable
-JSON output from `--json` SHALL be valid JSON that can be piped to tools like `jq`. Each object SHALL include at least `name` and `content` (body) fields, with optional frontmatter-extracted fields. The output SHALL NOT include any non-JSON text (e.g., status messages, warnings) on stdout.
+JSON output from `--json` SHALL be valid JSON that can be piped to tools like `jq`. Each object SHALL include at least a stable identifier field (e.g., `name` or `slug`). The `content` field (body) is included when the feature type has body content (e.g., commands, skills), as returned by `to_value()`. For commands that have no body (e.g., `providers ls`), `content` may be absent. The output SHALL NOT include any non-JSON text (e.g., status messages, warnings) on stdout.
 
 #### Scenario: JSON output is pipeable to jq
 - **WHEN** `dotagents commands ls --json | jq '.[0].name'` is run

@@ -5,7 +5,7 @@
 
 #### Scenario: Successful listing of all providers
 - **WHEN** `dotagents providers ls` is run and the registry is accessible
-- **THEN** each provider is displayed on its own line as `{slug}  ({name})` and the command exits 0
+- **THEN** each provider is displayed on its own line as `{slug}  ({name})` (or just `{slug}` when `name` is absent) and the command exits 0
 
 #### Scenario: Empty registry handled gracefully
 - **WHEN** the registry is fetched but contains no provider entries
@@ -20,7 +20,7 @@
 - **THEN** the command exits 1 with an error indicating the registry is unavailable
 
 ### Requirement: --url flag appends documentation URLs to provider listing
-When `--url` is passed to `dotagents providers ls`, each provider line SHALL include the documentation URL extracted from the registry entry's `url` field. Providers without a `url` field SHALL show "N/A" or be omitted in place of the URL.
+When `--url` is passed to `dotagents providers ls`, each provider line SHALL include the documentation URL extracted from the registry entry's `url` field. Providers without a `url` field SHALL show "N/A" in place of the URL.
 
 #### Scenario: Provider with URL shows the URL
 - **WHEN** `dotagents providers ls --url` is run and a provider has `url = "https://example.com/docs"`
@@ -50,7 +50,7 @@ When stdin is a TTY and `--json` is not passed, `dotagents providers ls` SHALL d
 
 #### Scenario: TUI shows provider detail on selection
 - **WHEN** user selects a provider from the TUI list and presses Enter
-- **THEN** a detail view is shown with the provider's slug, name, and URL (if available)
+- **THEN** a detail view is shown with the provider's slug, name, and URL (if available). Pressing any key returns to the provider list; pressing Esc exits the command.
 
 ### Requirement: --offline flag reads registry from cache only
 When `--offline` is passed, `dotagents providers ls` SHALL NOT make any network request. It SHALL read `registry.json` from the template-source cache. If no cached registry exists, the command SHALL error with a clear message instructing the user to run without `--offline` first.

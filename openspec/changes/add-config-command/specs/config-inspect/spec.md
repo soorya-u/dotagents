@@ -86,4 +86,4 @@ Without `--edit`, the config command SHALL NOT modify any files. It SHALL only r
 
 #### Scenario: Config display does not modify files
 - **WHEN** `dotagents config` completes successfully without `--edit`
-- **THEN** no files in `.dotagents/` or workspace are modified compared to before the command ran
+- **THEN** no files in `.dotagents/`, workspace, or any global config paths read by the command are modified compared to before the command ran
