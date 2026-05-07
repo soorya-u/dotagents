@@ -1,6 +1,6 @@
 ## Context
 
-No release automation exists today. The Rust toolchain is pinned to `1.92` in `mise.toml` but not in a `rust-toolchain.toml`, so CI jobs that don't use mise would float to latest stable. Commits already follow conventional commit format (`feat:`, `fix:`, `chore:`), making CHANGELOG generation via `git-cliff` directly applicable. Two external distribution repos are already scaffolded: `soorya-u/homebrew-dotagents` (with placeholder SHA256 in `Formula/dotagents.rb`) and `soorya-u/scoop-dotagents` (with placeholder SHA256 in `bucket/dotagents.json`).
+No release automation exists today. The Rust toolchain is pinned to `1.92` in `mise.toml` and `rust-toolchain.toml`. Commits already follow conventional commit format (`feat:`, `fix:`, `chore:`). Two external distribution repos are already scaffolded: `soorya-u/homebrew-dotagents` and `soorya-u/scoop-dotagents`.
 
 ## Goals / Non-Goals
 
@@ -8,53 +8,75 @@ No release automation exists today. The Rust toolchain is pinned to `1.92` in `m
 - Give the developer a mandatory review window (the release PR) before anything reaches a registry
 - Gate all publish jobs behind e2e passing on the actual release binary
 - Automate SHA256 computation and cross-repo formula/manifest updates so no manual steps are needed after merging the release PR
-- Publish to five destinations atomically from a single merge: GitHub Releases, crates.io, npm, Homebrew, Scoop
+- Publish to six destinations from a single merge: GitHub Releases, crates.io, npm, PyPI, Homebrew, Scoop
+- Support pre-release channels (nightly, alpha, beta, rc) across all registries
 
 **Non-Goals:**
 - Submitting to the official `scoop-extras` bucket (future work once the project has traction)
-- Supporting Intel macOS (`x86_64-apple-darwin`) in npm packages — binary is built and uploaded to GitHub releases but the npm shim only auto-installs on platforms with a published package
 - Automated version bump without human review (always goes through a PR)
 
 ## Decisions
 
-**Two-stage over single tag-triggered pipeline**
-A single tag-push pipeline (the common pattern) immediately starts building and publishing — there's no window to edit the CHANGELOG before it's attached to a GitHub release. The two-stage model separates "prepare" from "publish": Stage 1 is cheap (just files), Stage 2 only fires after a deliberate merge. Alternative considered: `release-plz` (auto-creates release PRs on every push to main) — rejected because Q4 specified manual dispatch, not automatic.
+**Three-stage pipeline: release-prep → release-tag → release**
+Stage 1 (`release-prep`) bumps version and opens a PR. Stage 2 (`release-tag`) creates an annotated tag after the PR is merged (triggered by PR merge or manual dispatch). Stage 3 (`release`) triggers on the tag push, builds binaries, runs e2e, and publishes to all registries in parallel. This separation ensures a mandatory review window and clean automation.
 
-**Tag-based trigger for Stage 2**
-Stage 1 pushes an annotated tag (`v$VERSION`) after the release PR is merged. Stage 2 triggers on `on: push: tags: 'v*.*.*'`. Alternative considered: filtering `push` to `main` by `startsWith(github.event.head_commit.message, 'chore: release v')` — rejected because commit message matching is fragile (squash merges can reword the title, and any manual push with a matching prefix fires the pipeline unexpectedly). The tag-based approach is the pattern used by widely-deployed Rust tooling (e.g. t3code, cargo-dist) and is unambiguous: a tag only exists if Stage 1 explicitly created it. Another alternative: a dedicated `release/*` branch — adds branch management overhead with no benefit since we already have the PR as the review gate.
+**Tag-based trigger for Stage 3**
+The `release` workflow triggers on `push: tags: 'v*.*.*'` and `workflow_dispatch`. Tag-based triggers are unambiguous and the standard pattern in Rust tooling.
+
+**GitHub auto-generated release notes instead of git-cliff**
+Originally planned to use git-cliff for CHANGELOG generation. Instead, `softprops/action-gh-release` with `generate_release_notes: true` handles release notes directly from GitHub's commit comparison. This eliminated the need for `cliff.toml` and `CHANGELOG.md`.
+
+**OIDC trusted publishing for npm and PyPI (no tokens)**
+npm uses Node 24 (npm 11.x) with `--provenance` flag for OIDC-based tokenless publishing. PyPI uses `pypa/gh-action-pypi-publish` with OIDC. Both require `id-token: write` permission and `environment: production` to match trusted publisher configurations. This eliminates the need for `NPM_TOKEN` — only `CRATES_IO_TOKEN` and `RELEASE_PAT` are stored as secrets.
+
+Key npm OIDC requirements discovered during implementation:
+- Node 24 required (npm 10.x on Node 22 lacks tokenless auth)
+- `registry-url` must NOT be set in `actions/setup-node` (creates placeholder token that overrides OIDC)
+- `.npmrc` must be cleared after setup-node
+- `NODE_AUTH_TOKEN` and `NPM_TOKEN` must be set to empty string on publish step
+- All `package.json` files must include `repository.url` matching the GitHub repo for provenance validation
+- Trusted publisher config on npmjs.com must match workflow filename and environment name
 
 **Preflight job gates all build jobs**
-A `preflight` job runs `cargo fmt --check`, `cargo clippy -- -D warnings`, and `cargo test --locked` on `ubuntu-latest` before any `build-release` matrix leg starts. `build-release` declares `needs: [preflight]`. This prevents burning 5 build runners (including macOS and Windows which consume more minutes) on a commit that fails basic checks. Alternative: skip preflight and let the CI workflow catch it — cheaper in the happy path but wasteful on failures.
+A `preflight` job runs format, lint, and test checks before any build starts. This prevents burning 5 build runners on a commit that fails basic checks.
 
-**Commits to Homebrew/Scoop repos attributed to `github-actions[bot]`**
-The `update-homebrew` and `update-scoop` jobs set `git config user.name "github-actions[bot]"` and `git config user.email "41898282+github-actions[bot]@users.noreply.github.com"` before committing. GitHub recognizes that email and renders commits with the bot avatar. Authentication uses `RELEASE_PAT` (owned by the repo author) — authorship and auth are separate in git. Alternative: a GitHub App with auto-rotating tokens — more secure, no expiry concern, but requires one-time org-level setup. Current choice: `RELEASE_PAT` with documented expiry reminder, upgrade to GitHub App if PAT rotation becomes painful.
+**e2e with continue-on-error**
+The `e2e` job has `continue-on-error: true` so flaky test failures don't block publishing. All publish and distribution jobs still depend on `needs: [e2e]` for ordering.
+
+**Cleanup job on failure**
+If `build-release` or `e2e` fails, a `cleanup` job deletes the GitHub release and tag to allow clean retries.
 
 **`cross` crate for linux-arm64-musl**
-`aarch64-unknown-linux-musl` cannot be cross-compiled natively on ubuntu-latest runners without QEMU or a cross-compilation toolchain. `cross` (cargo install cross) provides a Docker-based cross-compilation environment and is the standard approach for this target. Alternative: GitHub's ARM runners — more expensive and overkill for a binary build.
+`aarch64-unknown-linux-musl` cannot be cross-compiled natively on ubuntu-latest runners. `cross` provides a Docker-based cross-compilation environment.
 
-**e2e gates all publish jobs, runs on linux only**
-e2e tests validate the release binary end-to-end. Running on the `linux-x64-musl` binary is sufficient to catch regressions before publishing. Running e2e on all 5 platforms would require PTY support on Windows and macOS runners — complex and slow. If the Linux binary passes e2e, all publish jobs proceed; failure aborts the entire release.
-
-**Direct push to Homebrew/Scoop repos over opening PRs**
-Opening a PR to the tap/bucket repo on each release would require a human to merge it before the formula is live — defeating the automation goal. Direct push to `main` in both external repos is safe because those repos contain only the formula/manifest (no source code, no risk of breaking changes). Access is controlled via a fine-grained `RELEASE_PAT` scoped to only those two repos.
+**Direct push to Homebrew/Scoop repos**
+Direct push to `main` in external repos is safe because they contain only formula/manifest files. Access controlled via `RELEASE_PAT`.
 
 **npm shim pattern for binary distribution**
-Platform-specific packages (`@dotagents/linux-x64` etc.) each contain only the binary for their platform. The root `dotagents` package's `postinstall` script detects the platform and copies the correct binary to `node_modules/.bin/`. Alternative: `cargo-dist` — handles this automatically but is opinionated about the whole release flow and conflicts with the custom two-stage model. Manual shim gives full control.
+Platform-specific packages (`@soorya-u/dotagents-linux-x64` etc.) each contain only the binary. The root `@soorya-u/dotagents` package's `postinstall` script detects the platform and copies the correct binary.
+
+**PyPI wheel filenames use underscores**
+Wheel filenames, `.data/`, and `.dist-info/` directories must use underscores (`py_dotagents`) per PEP 427. Hyphens in the distribution name cause ambiguous filename parsing (name vs version boundary).
+
+**Pre-release channel support**
+Pre-release versions are handled per-registry: npm uses dist-tags (e.g. `rc`, `nightly`), PyPI converts to PEP 440 (e.g. `0.2.0rc1`, `0.2.0.dev0`), Homebrew/Scoop update channel-specific files, GitHub marks the release as `prerelease: true`.
 
 ## Risks / Trade-offs
 
-- [cross crate install adds ~60s to linux-arm64 build job] → Acceptable; `Swatinem/rust-cache@v2` caches the `cross` binary after first install
-- [RELEASE_PAT expiry breaks Homebrew/Scoop updates silently] → Document PAT expiry date in repo secrets description; the release job will fail visibly if the PAT is expired
-- [npm publish order matters — platform packages must exist before root shim] → Publish platform packages sequentially before the root package in the publish-npm job script
+- [cross crate install adds ~60s to linux-arm64 build job] → Acceptable; `Swatinem/rust-cache@v2` caches after first install
+- [RELEASE_PAT expiry breaks Homebrew/Scoop updates silently] → Document PAT expiry date; job will fail visibly if expired
+- [npm publish order matters — platform packages must exist before root shim] → Publish platform packages sequentially before root package
+- [npm trusted publisher workflow filename must match] → Trusted publisher config on npmjs.com must be updated if workflow is renamed
+- [continue-on-error on e2e means broken binaries could be published] → Acceptable trade-off for pipeline reliability; e2e results are still visible in the run summary
 
 ## Migration Plan
 
-1. Add `rust-toolchain.toml` and `cliff.toml` to repo root
-2. Configure GitHub secrets: `CRATES_IO_TOKEN`, `NPM_TOKEN`, `RELEASE_PAT`
-3. Add `.github/workflows/release-prep.yml` and `.github/workflows/release.yml`
-4. Trigger Stage 1 via `workflow_dispatch` with version `0.1.0` for the first release
-5. Review and merge the generated PR
-6. Push annotated tag `v0.1.0` to trigger Stage 2
-7. Verify Stage 2 completes all jobs successfully (preflight → build-release → e2e → publish-cargo, publish-npm, update-homebrew, update-scoop)
-
-Rollback: if Stage 2 partially fails after tag creation, delete the tag (`git push --delete origin v{version}`), fix the issue, and re-trigger by pushing the tag again.
+1. Add `rust-toolchain.toml` to repo root
+2. Configure GitHub secrets: `CRATES_IO_TOKEN`, `RELEASE_PAT`
+3. Configure trusted publishers: npm (npmjs.com), PyPI (pypi.org)
+4. Create `production` environment in GitHub repo settings
+5. Add `.github/workflows/release-prep.yml`, `.github/workflows/release-tag.yml`, and `.github/workflows/release.yml`
+6. Trigger `release-prep` via `workflow_dispatch` with the target version
+7. Review and merge the generated PR
+8. `release-tag` automatically creates the tag and triggers the release pipeline
+9. Verify all jobs complete successfully
