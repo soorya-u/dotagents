@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@microsoft/tui-test";
 import {
@@ -137,6 +137,111 @@ test.describe("commands ls CLI", () => {
 			run(["init", "--template", "starter"], d);
 			const { exitCode } = run(["commands", "ls", "--full"], d);
 			expect(exitCode).toBe(0);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --json outputs valid JSON array with frontmatter fields
+	test("--json outputs valid JSON array with name and description", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			const { exitCode, stdout } = run(["commands", "ls", "--json"], d);
+			expect(exitCode).toBe(0);
+			const parsed = JSON.parse(stdout);
+			expect(Array.isArray(parsed)).toBe(true);
+			expect(parsed.length).toBeGreaterThanOrEqual(1);
+			expect(parsed[0]).toHaveProperty("name");
+			expect(parsed[0]).toHaveProperty("description");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --json does not include content key without --full
+	test("--json without --full does not include content key", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			const { exitCode, stdout } = run(["commands", "ls", "--json"], d);
+			expect(exitCode).toBe(0);
+			const parsed = JSON.parse(stdout);
+			expect(parsed[0]).not.toHaveProperty("content");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --json --full includes content key with body
+	test("--json --full includes content key with body", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			const { exitCode, stdout } = run(
+				["commands", "ls", "--json", "--full"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			const parsed = JSON.parse(stdout);
+			expect(parsed[0]).toHaveProperty("content");
+			expect(typeof parsed[0].content).toBe("string");
+			expect(parsed[0].content.length).toBeGreaterThan(0);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --full shows body content in text output
+	test("--full shows body content in text output", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			const { exitCode, stderr } = run(["commands", "ls", "--full"], d);
+			expect(exitCode).toBe(0);
+			expect(stderr).toMatch(/var\.agent_name/);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// default (no --full) does NOT show body content
+	test("default output does not show body content", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			const { exitCode, stderr } = run(["commands", "ls"], d);
+			expect(exitCode).toBe(0);
+			expect(stderr).not.toMatch(/var\.agent_name/);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --json with empty workspace outputs []
+	test("--json with no commands outputs []", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			// Remove the scaffolded hello command to make it empty
+			rmSync(join(d, ".dotagents/commands/hello.md"), { force: true });
+			const { exitCode, stdout } = run(["commands", "ls", "--json"], d);
+			expect(exitCode).toBe(0);
+			expect(stdout.trim()).toBe("[]");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --json is pipeable (basic validity check)
+	test("--json output is valid JSON array (pipeable)", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			const { exitCode, stdout } = run(["commands", "ls", "--json"], d);
+			expect(exitCode).toBe(0);
+			const parsed = JSON.parse(stdout);
+			expect(Array.isArray(parsed)).toBe(true);
 		} finally {
 			cleanup(d);
 		}

@@ -101,6 +101,10 @@ pub(crate) struct SubLsOptions {
     /// Show full descriptions (word-wrapped) instead of truncating.
     #[clap(long = "full")]
     pub full: bool,
+
+    /// Output as JSON array.
+    #[clap(long = "json")]
+    pub json: bool,
 }
 
 #[derive(Args)]

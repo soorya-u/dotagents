@@ -1,12 +1,15 @@
 use cliclack::{intro, outro};
 use crossterm::terminal;
+use serde_json::Value;
 
 use crate::prelude::*;
 
-/// A name+description pair for display.
+/// A name+description pair for display, optionally with full frontmatter + body.
 pub(crate) struct ListItem {
     pub name: String,
     pub description: String,
+    pub frontmatter: Value,
+    pub body: Option<String>,
 }
 
 /// Detect terminal column count, falling back to 80 on error.
@@ -69,6 +72,16 @@ fn render_section(title: &str, items: &[ListItem], full: bool, name_col: usize, 
 
         let padded_name = format!("{:<width$}", item.name, width = name_col);
         info!("  {}   {}", padded_name, desc);
+
+        if full
+            && let Some(body) = &item.body
+            && !body.is_empty()
+        {
+            let body_indent = " ".repeat(name_col + 3);
+            for line in body.lines() {
+                info!("{}{}", body_indent, line);
+            }
+        }
     }
 }
 

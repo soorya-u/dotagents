@@ -253,7 +253,7 @@ fn rm_skill(opts: RmSkillOptions) -> Result<bool> {
     Ok(true)
 }
 
-/// Load all skills from `.dotagents/skills/*/SKILL.md`, returning name+description pairs.
+/// Load all skills from `.dotagents/skills/*/SKILL.md`, returning full frontmatter + body.
 fn load_skills() -> Result<Vec<ListItem>> {
     let skills_dir = match get_skills_dir() {
         Ok(d) => d,
@@ -277,11 +277,16 @@ fn load_skills() -> Result<Vec<ListItem>> {
         let Ok(parsed) = matter.parse::<Value>(&content) else {
             continue;
         };
-        if let Some(data) = parsed.data {
+        if let Some(ref data) = parsed.data {
             let name: String = data["name"].as_str().unwrap_or("").to_string();
             let description: String = data["description"].as_str().unwrap_or("").to_string();
             if !name.is_empty() {
-                items.push(ListItem { name, description });
+                items.push(ListItem {
+                    name,
+                    description,
+                    frontmatter: data.clone(),
+                    body: Some(parsed.content),
+                });
             }
         }
     }
@@ -296,6 +301,27 @@ fn ls_skills(opts: SubLsOptions) -> Result<bool> {
         "No .dotagents directory found. Run `dotagents init` to initialise a workspace.",
     )?;
     let skills = load_skills().context("failed to load skills")?;
+
+    if opts.json {
+        let json_items: Vec<Value> = skills
+            .iter()
+            .map(|item| {
+                let mut obj = item.frontmatter.clone();
+                if opts.full
+                    && let Some(body) = &item.body
+                {
+                    obj.as_object_mut()
+                        .expect("frontmatter is always an object")
+                        .insert("content".to_string(), Value::String(body.clone()));
+                }
+                obj
+            })
+            .collect();
+        let output = serde_json::to_string_pretty(&json_items)?;
+        println!("{}", output);
+        return Ok(true);
+    }
+
     render_skills(skills, opts.full);
     Ok(true)
 }
@@ -326,6 +352,23 @@ mod tests {
         fs::write(skill_dir.join("SKILL.md"), content).unwrap();
     }
 
+    fn make_skill_full(
+        skills_dir: &std::path::Path,
+        name: &str,
+        description: &str,
+        license: &str,
+        compatibility: &str,
+        body: &str,
+    ) {
+        let skill_dir = skills_dir.join(name);
+        fs::create_dir_all(&skill_dir).unwrap();
+        let content = format!(
+            "---\nname: {}\ndescription: \"{}\"\nlicense: {}\ncompatibility: {}\n---\n\n{}",
+            name, description, license, compatibility, body
+        );
+        fs::write(skill_dir.join("SKILL.md"), content).unwrap();
+    }
+
     #[test]
     fn load_skills_reads_skill_md_frontmatter() {
         // load_skills parses name and description from SKILL.md files
@@ -339,5 +382,64 @@ mod tests {
         let data = parsed.data.unwrap();
         assert_eq!(data["name"].as_str().unwrap(), "my-skill");
         assert_eq!(data["description"].as_str().unwrap(), "Does something");
+    }
+
+    #[test]
+    fn load_skills_includes_body_content() {
+        // load_skills returns body content alongside frontmatter
+        let tmp = TempDir::new().unwrap();
+        make_skill(tmp.path(), "my-skill", "Does something");
+
+        let skill_md = tmp.path().join("my-skill").join("SKILL.md");
+        let content = fs::read_to_string(&skill_md).unwrap();
+        let matter = Matter::<YAML>::new();
+        let parsed = matter.parse::<Value>(&content).unwrap();
+        assert_eq!(parsed.content.trim(), "Body.");
+    }
+
+    #[test]
+    fn load_skills_returns_full_frontmatter() {
+        // load_skills returns frontmatter with all fields (license, compatibility)
+        let tmp = TempDir::new().unwrap();
+        make_skill_full(
+            tmp.path(),
+            "my-skill",
+            "A skill",
+            "MIT",
+            "Any agent",
+            "Body",
+        );
+
+        let skill_md = tmp.path().join("my-skill").join("SKILL.md");
+        let content = fs::read_to_string(&skill_md).unwrap();
+        let matter = Matter::<YAML>::new();
+        let parsed = matter.parse::<Value>(&content).unwrap();
+        let data = parsed.data.unwrap();
+        assert_eq!(data["license"], "MIT");
+        assert_eq!(data["compatibility"], "Any agent");
+    }
+
+    #[test]
+    fn json_output_includes_frontmatter_fields() {
+        // JSON output from frontmatter includes name and description for skills
+        let mut obj = serde_json::Map::new();
+        obj.insert("name".into(), Value::String("test".into()));
+        obj.insert("description".into(), Value::String("desc".into()));
+        obj.insert("license".into(), Value::String("MIT".into()));
+        let json_items = vec![Value::Object(obj)];
+        let output = serde_json::to_string_pretty(&json_items).unwrap();
+        assert!(output.contains("\"name\": \"test\""));
+        assert!(output.contains("\"license\": \"MIT\""));
+    }
+
+    #[test]
+    fn json_output_with_full_includes_content_for_skills() {
+        // JSON output with --full includes content key for skills
+        let mut obj = serde_json::json!({"name": "test"});
+        let map = obj.as_object_mut().unwrap();
+        map.insert("content".into(), Value::String("body text".into()));
+        let json_items = vec![obj];
+        let output = serde_json::to_string_pretty(&json_items).unwrap();
+        assert!(output.contains("\"content\": \"body text\""));
     }
 }

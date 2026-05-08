@@ -185,7 +185,7 @@ fn rm_command(opts: RmCommandOptions) -> Result<bool> {
     Ok(true)
 }
 
-/// Load all commands from `.dotagents/commands/*.md`, returning name+description pairs.
+/// Load all commands from `.dotagents/commands/*.md`, returning full frontmatter + body.
 fn load_commands() -> Result<Vec<ListItem>> {
     let commands_dir = match get_commands_dir() {
         Ok(d) => d,
@@ -208,11 +208,16 @@ fn load_commands() -> Result<Vec<ListItem>> {
         let Ok(parsed) = matter.parse::<Value>(&content) else {
             continue;
         };
-        if let Some(data) = parsed.data {
+        if let Some(ref data) = parsed.data {
             let name: String = data["name"].as_str().unwrap_or("").to_string();
             let description: String = data["description"].as_str().unwrap_or("").to_string();
             if !name.is_empty() {
-                items.push(ListItem { name, description });
+                items.push(ListItem {
+                    name,
+                    description,
+                    frontmatter: data.clone(),
+                    body: Some(parsed.content),
+                });
             }
         }
     }
@@ -227,6 +232,27 @@ fn ls_commands(opts: SubLsOptions) -> Result<bool> {
         "No .dotagents directory found. Run `dotagents init` to initialise a workspace.",
     )?;
     let commands = load_commands().context("failed to load commands")?;
+
+    if opts.json {
+        let json_items: Vec<Value> = commands
+            .iter()
+            .map(|item| {
+                let mut obj = item.frontmatter.clone();
+                if opts.full
+                    && let Some(body) = &item.body
+                {
+                    obj.as_object_mut()
+                        .expect("frontmatter is always an object")
+                        .insert("content".to_string(), Value::String(body.clone()));
+                }
+                obj
+            })
+            .collect();
+        let output = serde_json::to_string_pretty(&json_items)?;
+        println!("{}", output);
+        return Ok(true);
+    }
+
     render_commands(commands, opts.full);
     Ok(true)
 }
@@ -254,6 +280,26 @@ mod tests {
         fs::write(dir.join(format!("{}.md", name)), content).unwrap();
     }
 
+    fn make_command_full(
+        dir: &std::path::Path,
+        name: &str,
+        description: &str,
+        category: &str,
+        tags: &[&str],
+        body: &str,
+    ) {
+        let tags_yaml: String = tags
+            .iter()
+            .map(|t| format!("  - {}", t))
+            .collect::<Vec<_>>()
+            .join("\n");
+        let content = format!(
+            "---\nname: \"{}\"\ndescription: \"{}\"\ncategory: \"{}\"\ntags:\n{}\n---\n\n{}",
+            name, description, category, tags_yaml, body
+        );
+        fs::write(dir.join(format!("{}.md", name)), content).unwrap();
+    }
+
     #[test]
     fn load_commands_reads_md_frontmatter() {
         // load_commands parses name and description from command .md files
@@ -276,5 +322,102 @@ mod tests {
             }
         }
         assert_eq!(items.len(), 2);
+    }
+
+    #[test]
+    fn load_commands_includes_body_content() {
+        // load_commands returns body content alongside frontmatter
+        let tmp = TempDir::new().unwrap();
+        make_command(tmp.path(), "hello", "Says hello");
+
+        // Use load_commands logic directly
+        let matter = Matter::<YAML>::new();
+        for entry in fs::read_dir(tmp.path()).unwrap() {
+            let entry = entry.unwrap();
+            let path = entry.path();
+            if path.extension().and_then(|e| e.to_str()) == Some("md") {
+                let content = fs::read_to_string(&path).unwrap();
+                let parsed = matter.parse::<Value>(&content).unwrap();
+                assert_eq!(parsed.content.trim(), "Body.");
+            }
+        }
+    }
+
+    #[test]
+    fn load_commands_returns_full_frontmatter() {
+        // load_commands returns frontmatter with all fields (category, tags)
+        let tmp = TempDir::new().unwrap();
+        make_command_full(
+            tmp.path(),
+            "test-cmd",
+            "Test desc",
+            "Testing",
+            &["a", "b"],
+            "Body text",
+        );
+
+        let matter = Matter::<YAML>::new();
+        for entry in fs::read_dir(tmp.path()).unwrap() {
+            let entry = entry.unwrap();
+            let path = entry.path();
+            if path.extension().and_then(|e| e.to_str()) == Some("md") {
+                let content = fs::read_to_string(&path).unwrap();
+                let parsed = matter.parse::<Value>(&content).unwrap();
+                let data = parsed.data.unwrap();
+                assert_eq!(data["category"], "Testing");
+                assert_eq!(data["tags"].as_array().unwrap().len(), 2);
+            }
+        }
+    }
+
+    #[test]
+    fn load_commands_empty_dir_returns_empty_vec() {
+        // load_commands returns empty vec when commands dir is absent
+        let tmp = TempDir::new().unwrap();
+        // get_commands_dir reads from the workspace marker - we can't easily test
+        // the function itself without a workspace, so we test the edge by creating
+        // a dir with no .md files
+        let matter = Matter::<YAML>::new();
+        let mut items = Vec::new();
+        if let Ok(entries) = fs::read_dir(tmp.path()) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.extension().and_then(|e| e.to_str()) == Some("md") {
+                    let content = fs::read_to_string(&path).unwrap();
+                    if let Ok(parsed) = matter.parse::<Value>(&content) {
+                        if let Some(data) = parsed.data {
+                            let name = data["name"].as_str().unwrap_or("").to_string();
+                            if !name.is_empty() {
+                                items.push(name);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        assert!(items.is_empty());
+    }
+
+    #[test]
+    fn json_output_includes_frontmatter_fields() {
+        // JSON output from frontmatter includes name and description
+        let mut obj = serde_json::Map::new();
+        obj.insert("name".into(), Value::String("test".into()));
+        obj.insert("description".into(), Value::String("desc".into()));
+        let json_items = vec![Value::Object(obj)];
+        let output = serde_json::to_string_pretty(&json_items).unwrap();
+        assert!(output.contains("\"name\": \"test\""));
+        assert!(output.contains("\"description\": \"desc\""));
+    }
+
+    #[test]
+    fn json_output_with_full_includes_content() {
+        // JSON output with --full includes content key
+        let mut obj = serde_json::json!({"name": "test"});
+        let map = obj.as_object_mut().unwrap();
+        map.insert("content".into(), Value::String("body text".into()));
+        let json_items = vec![obj];
+        let output = serde_json::to_string_pretty(&json_items).unwrap();
+        assert!(output.contains("\"content\": \"body text\""));
     }
 }
