@@ -508,3 +508,91 @@ test.describe("deploy --dry-run – flag interactions", () => {
 		}
 	});
 });
+
+// ── Deploy --gitignore flag (CLI) ────────────────────────────────────────────
+
+test.describe("deploy CLI – --gitignore flag", () => {
+	// C-GI01: --gitignore writes fence to .gitignore
+	test("--gitignore writes managed fence to .gitignore", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			const { exitCode } = run(["deploy", "--offline", "--gitignore"], d);
+			expect(exitCode).toBe(0);
+			const gi = readFileSync(join(d, ".gitignore"), "utf8");
+			expect(gi).toContain("region dotagents");
+			expect(gi).toContain(".mycode/commands/hello.md");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// C-GI02: --gitignore is idempotent — second run does not duplicate entries
+	test("--gitignore is idempotent on second run", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			run(["deploy", "--offline", "--gitignore"], d);
+			const firstGi = readFileSync(join(d, ".gitignore"), "utf8");
+			const countBefore = (firstGi.match(/region dotagents/g) || []).length;
+
+			run(["deploy", "--offline", "--gitignore"], d);
+			const secondGi = readFileSync(join(d, ".gitignore"), "utf8");
+			const countAfter = (secondGi.match(/region dotagents/g) || []).length;
+			expect(countAfter).toBe(countBefore);
+		} finally {
+			cleanup(d);
+		}
+	});
+});
+
+// ── Deploy gitignore prompt (TUI) ───────────────────────────────────────────
+
+// T-GP01: gitignore prompt shows with default No, pressing Enter skips
+test.describe("deploy TUI – T-GP01 gitignore prompt No", () => {
+	const d = makeTmpDir();
+	initWithLocalProvider(d);
+	test.use({ program: shellProgram(d, ["deploy", "--offline"]) });
+
+	test("pressing Enter on default No skips gitignore update", async ({
+		terminal,
+	}) => {
+		try {
+			await expect(
+				terminal.getByText("deployed path(s) to .gitignore?"),
+			).toBeVisible();
+			terminal.keyPress("Enter"); // accept default No
+			await expect(terminal.getByText("Done.")).toBeVisible();
+			// .gitignore should NOT contain the dotagents fence
+			const giPath = join(d, ".gitignore");
+			if (existsSync(giPath)) {
+				const content = readFileSync(giPath, "utf8");
+				expect(content).not.toContain("region dotagents");
+			}
+		} finally {
+			cleanup(d);
+		}
+	});
+});
+
+// T-GP02: selecting Yes on gitignore prompt adds fence
+test.describe("deploy TUI – T-GP02 gitignore prompt Yes", () => {
+	const d = makeTmpDir();
+	initWithLocalProvider(d);
+	test.use({ program: shellProgram(d, ["deploy", "--offline"]) });
+
+	test("selecting Yes adds paths to .gitignore fence", async ({ terminal }) => {
+		try {
+			await expect(
+				terminal.getByText("deployed path(s) to .gitignore?"),
+			).toBeVisible();
+			terminal.keyDown(); // navigate to Yes
+			terminal.keyPress("Enter");
+			await expect(terminal.getByText("Done.")).toBeVisible();
+			const gi = readFileSync(join(d, ".gitignore"), "utf8");
+			expect(gi).toContain("region dotagents");
+		} finally {
+			cleanup(d);
+		}
+	});
+});

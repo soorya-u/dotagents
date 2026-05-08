@@ -459,3 +459,69 @@ test.describe("undeploy --dry-run – empty cache", () => {
 		}
 	});
 });
+
+// ── Undeploy edited-file prompt (TUI) ────────────────────────────────────────
+// The prompt for user-edited files only fires when the on-disk hash differs from
+// the cached hash and --force is NOT passed.
+
+// T-U3: edited-file prompt — selecting No (default) keeps the file
+test.describe("undeploy TUI – T-U3 edited file No", () => {
+	const d = makeTmpDir();
+	initWithLocalProvider(d);
+	run(["deploy", "--offline", "--no-gitignore"], d);
+	// Simulate user editing a deployed file after deploy
+	writeFileSync(join(d, ".mycode/instructions.md"), "User edited this.");
+	test.use({ program: shellProgram(d, ["undeploy", "--no-gitignore"]) });
+
+	test("default No on edited-file prompt keeps the file", async ({
+		terminal,
+	}) => {
+		try {
+			// First prompt: confirm undeploy — navigate to Yes
+			await expect(
+				terminal.getByText("Remove 4 deployed file(s)?"),
+			).toBeVisible();
+			terminal.keyDown(); // navigate from No to Yes
+			terminal.keyPress("Enter");
+			// Second prompt: edited file warning — "No, keep it" is default
+			await expect(terminal.getByText("was manually edited")).toBeVisible();
+			terminal.keyPress("Enter"); // accept default No, keep it
+			// Wait for summary to appear before checking filesystem
+			await expect(terminal.getByText("removed")).toBeVisible();
+			// File was skipped and not deleted
+			expect(existsSync(join(d, ".mycode/instructions.md"))).toBe(true);
+		} finally {
+			cleanup(d);
+		}
+	});
+});
+
+// T-U4: edited-file prompt — selecting Yes deletes it
+test.describe("undeploy TUI – T-U4 edited file Yes", () => {
+	const d = makeTmpDir();
+	initWithLocalProvider(d);
+	run(["deploy", "--offline", "--no-gitignore"], d);
+	writeFileSync(join(d, ".mycode/instructions.md"), "User edited this.");
+	test.use({ program: shellProgram(d, ["undeploy", "--no-gitignore"]) });
+
+	test("selecting Yes on edited-file prompt deletes the file", async ({
+		terminal,
+	}) => {
+		try {
+			await expect(
+				terminal.getByText("Remove 4 deployed file(s)?"),
+			).toBeVisible();
+			terminal.keyDown(); // Yes for undeploy
+			terminal.keyPress("Enter");
+			await expect(terminal.getByText("was manually edited")).toBeVisible();
+			terminal.keyDown(); // navigate to "Yes, delete it"
+			terminal.keyPress("Enter");
+			// Wait for summary text before checking filesystem
+			await expect(terminal.getByText("removed")).toBeVisible();
+			// File should now be deleted
+			expect(existsSync(join(d, ".mycode/instructions.md"))).toBe(false);
+		} finally {
+			cleanup(d);
+		}
+	});
+});
