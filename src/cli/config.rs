@@ -4,7 +4,7 @@ use std::io::IsTerminal;
 use std::path::Path;
 
 use anyhow::{Context, Result, bail};
-use cliclack::{intro, multiselect, outro, select, spinner};
+use cliclack::{intro, multiselect, note, outro, spinner};
 use serde::Serialize;
 
 use crate::cli::options::ConfigTarget;
@@ -142,6 +142,8 @@ fn handle_global_tui(path: &Path) -> Result<()> {
 }
 
 fn handle_global_edit(path: &Path) -> Result<()> {
+    intro("dotagents config: Global (edit mode)")?;
+
     let spin = spinner();
     spin.start("Reading global config...");
     let existing_content = if path.exists() {
@@ -163,6 +165,8 @@ fn handle_global_edit(path: &Path) -> Result<()> {
     let content = config.to_toml()?;
     write_file(&path.to_path_buf(), &content).context("Failed to write global config")?;
     spin.stop("Global config updated.");
+
+    outro("Done.")?;
     Ok(())
 }
 
@@ -203,6 +207,8 @@ fn handle_local_tui(path: &Path) -> Result<()> {
 }
 
 fn handle_local_edit(path: &Path) -> Result<()> {
+    intro("dotagents config: Local (edit mode)")?;
+
     let spin = spinner();
     spin.start("Reading local config...");
     let existing_content = if path.exists() {
@@ -224,6 +230,8 @@ fn handle_local_edit(path: &Path) -> Result<()> {
     let content = config.to_toml()?;
     write_file(&path.to_path_buf(), &content).context("Failed to write local config")?;
     spin.stop("Local config updated.");
+
+    outro("Done.")?;
     Ok(())
 }
 
@@ -322,14 +330,14 @@ fn display_tui_config(config: &AppConfig) -> Result<()> {
     sorted_features.sort();
 
     if !sorted_features.is_empty() {
-        select("Active Features")
-            .items(
-                &sorted_features
-                    .iter()
-                    .map(|f| (*f as &str, *f as &str, ""))
-                    .collect::<Vec<_>>(),
-            )
-            .interact()?;
+        note(
+            "Active Features",
+            sorted_features
+                .iter()
+                .map(|f| f.as_str())
+                .collect::<Vec<_>>()
+                .join("\n"),
+        )?;
     }
 
     if let Some(providers) = &config.providers
@@ -338,35 +346,35 @@ fn display_tui_config(config: &AppConfig) -> Result<()> {
         let mut sorted_providers: Vec<&String> = map.keys().collect();
         sorted_providers.sort();
         if !sorted_providers.is_empty() {
-            let provider_names: Vec<&str> = sorted_providers.iter().map(|s| *s as &str).collect();
-            select("Providers")
-                .items(
-                    &provider_names
-                        .iter()
-                        .map(|f| (*f, *f, ""))
-                        .collect::<Vec<_>>(),
-                )
-                .interact()?;
+            note(
+                "Providers",
+                sorted_providers
+                    .iter()
+                    .map(|s| s.as_str())
+                    .collect::<Vec<_>>()
+                    .join("\n"),
+            )?;
         }
     }
 
-    outro("")?;
+    outro("Done.")?;
     Ok(())
 }
 
 fn display_tui_global(config: &GlobalConfig) -> Result<()> {
     intro("dotagents config: Global")?;
 
-    let features: Vec<&String> = config.features.iter().collect();
+    let mut features: Vec<&String> = config.features.iter().collect();
+    features.sort();
     if !features.is_empty() {
-        select("Features")
-            .items(
-                &features
-                    .iter()
-                    .map(|f| (f.as_str(), f.as_str(), ""))
-                    .collect::<Vec<_>>(),
-            )
-            .interact()?;
+        note(
+            "Features",
+            features
+                .iter()
+                .map(|f| f.as_str())
+                .collect::<Vec<_>>()
+                .join("\n"),
+        )?;
     }
 
     if let Some(providers) = &config.providers
@@ -375,14 +383,18 @@ fn display_tui_global(config: &GlobalConfig) -> Result<()> {
         let mut sorted: Vec<&String> = map.keys().collect();
         sorted.sort();
         if !sorted.is_empty() {
-            let names: Vec<&str> = sorted.iter().map(|s| *s as &str).collect();
-            select("Providers")
-                .items(&names.iter().map(|f| (*f, *f, "")).collect::<Vec<_>>())
-                .interact()?;
+            note(
+                "Providers",
+                sorted
+                    .iter()
+                    .map(|s| s.as_str())
+                    .collect::<Vec<_>>()
+                    .join("\n"),
+            )?;
         }
     }
 
-    outro("")?;
+    outro("Done.")?;
     Ok(())
 }
 
@@ -393,10 +405,14 @@ fn display_tui_local(config: &LocalConfig) -> Result<()> {
         let mut sorted: Vec<&String> = features.iter().collect();
         sorted.sort();
         if !sorted.is_empty() {
-            let names: Vec<&str> = sorted.iter().map(|s| *s as &str).collect();
-            select("Override Features")
-                .items(&names.iter().map(|f| (*f, *f, "")).collect::<Vec<_>>())
-                .interact()?;
+            note(
+                "Override Features",
+                sorted
+                    .iter()
+                    .map(|s| s.as_str())
+                    .collect::<Vec<_>>()
+                    .join("\n"),
+            )?;
         }
     }
 
@@ -406,14 +422,18 @@ fn display_tui_local(config: &LocalConfig) -> Result<()> {
         let mut sorted: Vec<&String> = map.keys().collect();
         sorted.sort();
         if !sorted.is_empty() {
-            let names: Vec<&str> = sorted.iter().map(|s| *s as &str).collect();
-            select("Override Providers")
-                .items(&names.iter().map(|f| (*f, *f, "")).collect::<Vec<_>>())
-                .interact()?;
+            note(
+                "Override Providers",
+                sorted
+                    .iter()
+                    .map(|s| s.as_str())
+                    .collect::<Vec<_>>()
+                    .join("\n"),
+            )?;
         }
     }
 
-    outro("")?;
+    outro("Done.")?;
     Ok(())
 }
 
@@ -463,9 +483,7 @@ fn edit_global_config(config: &mut GlobalConfig) -> Result<()> {
             providers_map.entry(p_name).or_default();
         }
 
-        config.targets = Some(crate::core::config::common::Targets {
-            providers: Some(targets_set),
-        });
+        config.targets = Some(targets_set);
         config.providers = Some(Providers(Some(providers_map)));
     }
 
@@ -523,9 +541,7 @@ fn edit_local_config(config: &mut LocalConfig) -> Result<()> {
             providers_map.entry(p_name).or_default();
         }
 
-        config.targets = Some(crate::core::config::common::Targets {
-            providers: Some(targets_set),
-        });
+        config.targets = Some(targets_set);
         config.providers = Some(Providers(Some(providers_map)));
     }
 

@@ -103,9 +103,8 @@ impl From<(&GlobalConfig, &LocalConfig)> for AppConfig {
 
         let targets = local
             .targets
-            .as_ref()
-            .and_then(|t| t.providers.clone())
-            .or_else(|| global.targets.as_ref().and_then(|t| t.providers.clone()))
+            .clone()
+            .or(global.targets.clone())
             .unwrap_or_default();
 
         let providers = merge_optional(

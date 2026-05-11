@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use super::common::{PackageRunner, Providers, Targets};
+use super::common::{PackageRunner, Providers};
 use super::traits::TomlConfig;
 use crate::constants::schema::CONFIG_SCHEMA;
 use crate::core::features::Feature;
@@ -14,7 +14,7 @@ pub struct GlobalConfig {
     #[serde(default)]
     pub features: HashSet<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub targets: Option<Targets>,
+    pub targets: Option<HashSet<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub providers: Option<Providers>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -36,7 +36,7 @@ impl GlobalConfig {
     }
 
     #[allow(dead_code)]
-    pub fn with_features(features: HashSet<String>, targets: Targets) -> Self {
+    pub fn with_features(features: HashSet<String>, targets: HashSet<String>) -> Self {
         Self {
             schema: Some(CONFIG_SCHEMA.into()),
             features,

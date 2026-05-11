@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use crate::{core::features::Feature, utils::merge::merge_optional};
 
@@ -67,12 +67,6 @@ impl PackageRunner {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(transparent)]
-pub struct Targets {
-    pub providers: Option<HashSet<String>>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-#[serde(transparent)]
 pub struct Providers(pub Option<HashMap<String, Features>>);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
@@ -108,15 +102,6 @@ pub struct FeatureSettings {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hash: Option<String>,
-}
-
-impl Targets {
-    #[allow(dead_code)]
-    pub fn merge(&self, other: &Targets) -> Targets {
-        Targets {
-            providers: other.providers.clone().or_else(|| self.providers.clone()),
-        }
-    }
 }
 
 impl Providers {
@@ -204,26 +189,6 @@ impl FeatureSettings {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_targets_merge() {
-        let base = Targets {
-            providers: Some(HashSet::from([
-                "vscode".to_string(),
-                "windsurf".to_string(),
-            ])),
-        };
-
-        let override_targets = Targets {
-            providers: Some(HashSet::from(["cursor".to_string(), "claude".to_string()])),
-        };
-
-        let merged = base.merge(&override_targets);
-        assert_eq!(
-            merged.providers,
-            Some(HashSet::from(["cursor".to_string(), "claude".to_string()]))
-        );
-    }
 
     #[test]
     fn test_config_agent_settings_merge() {
