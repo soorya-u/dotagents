@@ -1,11 +1,11 @@
 ## Purpose
 
-Specifies the `--json` and `--full` output format flags available on read-only list commands (`commands ls`, `skills ls`, and future list commands). These flags provide machine-readable JSON output and verbose human-readable output respectively.
+Specifies the `--json` and `--content` output format flags available on read-only list commands (`commands ls`, `skills ls`, and future list commands), along with the standard text rendering behaviour for those commands.
 
 ## Requirements
 
 ### Requirement: --json flag outputs list as structured JSON
-When `--json` is passed to a read-only list command (`commands ls`, `skills ls`), the command SHALL serialize each item's frontmatter fields and output the collection as a JSON array on stdout. Body content SHALL NOT be included unless `--full` is also passed. All log/warning output SHALL go to stderr.
+When `--json` is passed to a read-only list command (`commands ls`, `skills ls`), the command SHALL serialize each item's frontmatter fields and output the collection as a JSON array on stdout. Body content SHALL NOT be included unless `--content` is also passed. All log/warning output SHALL go to stderr.
 
 #### Scenario: commands ls --json outputs frontmatter data
 - **WHEN** `dotagents commands ls --json` is run in a workspace with two commands
@@ -19,46 +19,68 @@ When `--json` is passed to a read-only list command (`commands ls`, `skills ls`)
 - **WHEN** `dotagents commands ls --json` is run with no commands present
 - **THEN** stdout contains `[]` and the command exits 0
 
-### Requirement: --full flag includes body content in output
-When `--full` is passed to `commands ls` or `skills ls`, the command SHALL include the full markdown body content of each item in the output, in addition to the frontmatter fields already shown. Without `--full`, only the name and frontmatter fields SHALL be shown (current behavior).
+### Requirement: --content flag includes body content in output
+When `--content` is passed to `commands ls` or `skills ls`, the command SHALL include the full markdown body content of each item in the output, in addition to the frontmatter fields already shown. Without `--content`, only the name and frontmatter fields SHALL be shown.
 
-#### Scenario: --full shows command body content in CLI mode
-- **WHEN** `dotagents commands ls --full` is run in non-TTY mode
-- **THEN** each command's full markdown body content is displayed after its name and frontmatter fields
+In TTY mode, `--content` renders each item using a `cliclack::note` block: the note header shows the item name (styled green+bold) followed by ` — ` and the description; the note body contains the raw markdown content. No separate `info!` line is printed for items that have body content.
 
-#### Scenario: --full shows skill body content in CLI mode
-- **WHEN** `dotagents skills ls --full` is run in non-TTY mode
-- **THEN** each skill's full markdown body content is displayed after its name and frontmatter fields
+In non-TTY mode, `--content` appends body lines indented below the name-description row.
 
-#### Scenario: Without --full, body content is omitted
-- **WHEN** `dotagents commands ls` is run without `--full`
-- **THEN** only name and frontmatter fields (description, category, tags) are displayed; body content is not shown
+#### Scenario: --content shows command body content in TTY mode
+- **WHEN** `dotagents commands ls --content` is run in a TTY
+- **THEN** each command is rendered as a `cliclack::note` block with `name — description` as the note header and the full markdown body inside the note box
 
-### Requirement: --json and --full are independent and can be combined
-The `--json` and `--full` flags SHALL be independent and combinable. When both are passed, the JSON output SHALL include frontmatter fields plus a `content` key containing the raw markdown body string. When `--json` is not passed but `--full` is, body content SHALL be included in the human-readable text output.
+#### Scenario: --content shows skill body content in non-TTY mode
+- **WHEN** `dotagents skills ls --content` is run in non-TTY mode
+- **THEN** each skill's name and description are printed followed by the full markdown body content indented below
 
-#### Scenario: --json --full outputs JSON with body content
-- **WHEN** `dotagents commands ls --json --full` is run
+#### Scenario: Without --content, body content is omitted
+- **WHEN** `dotagents commands ls` is run without `--content`
+- **THEN** only name and description (truncated to fit terminal width) are displayed; body content is not shown
+
+### Requirement: --json and --content are independent and can be combined
+The `--json` and `--content` flags SHALL be independent and combinable. When both are passed, the JSON output SHALL include frontmatter fields plus a `content` key containing the raw markdown body string. When `--json` is not passed but `--content` is, body content SHALL be included in the human-readable text output.
+
+#### Scenario: --json --content outputs JSON with body content
+- **WHEN** `dotagents commands ls --json --content` is run
 - **THEN** stdout contains a JSON array where each object includes frontmatter fields and a `content` key with the raw markdown body string
 
-#### Scenario: --json alone without --full omits body content
-- **WHEN** `dotagents commands ls --json` is run without `--full`
+#### Scenario: --json alone without --content omits body content
+- **WHEN** `dotagents commands ls --json` is run without `--content`
 - **THEN** stdout contains a JSON array where each object includes frontmatter fields only; the `content` key is absent
 
-#### Scenario: --full without --json shows body in text output
-- **WHEN** `dotagents commands ls --full` is run without `--json`
-- **THEN** the text output includes the full body content of each command after the frontmatter
+#### Scenario: --content without --json shows body in text output
+- **WHEN** `dotagents commands ls --content` is run without `--json`
+- **THEN** the text output includes the full body content of each command
+
+### Requirement: Text listing uses styled name and separator
+In TTY mode, the item name in text output SHALL be rendered in cyan+bold using `console::style`. The name and description SHALL be separated by ` — `. Column width SHALL match the actual longest name in the result set with no artificial minimum padding.
+
+#### Scenario: Name is styled and separated from description
+- **WHEN** `dotagents commands ls` is run in a TTY
+- **THEN** each row renders as `{cyan+bold name} — {description}` with no leading indent and no section header
+
+#### Scenario: Column width fits the actual longest name
+- **WHEN** the longest command name is shorter than 10 characters
+- **THEN** there is no extra padding between the name and ` — `
+
+### Requirement: No intro header and no section count header
+List commands SHALL NOT print a `cliclack::intro` header or a `Commands (N)` / `Skills (N)` section header. The count SHALL appear only in the `outro` footer line.
+
+#### Scenario: No intro or section header in output
+- **WHEN** `dotagents skills ls` is run
+- **THEN** the output does not contain an intro line or a `Skills (N)` header; the count appears only in the outro
 
 ### Requirement: JSON output is valid and parseable
-JSON output from `--json` SHALL be valid JSON that can be piped to tools like `jq`. Each object SHALL include at least a stable identifier field (e.g., `name` or `slug`). The `content` field (raw body string) SHALL be included only when `--full` is also passed. For commands that have no body (e.g., `providers ls`), `content` is never present regardless of `--full`. The output SHALL NOT include any non-JSON text (e.g., status messages, warnings) on stdout.
+JSON output from `--json` SHALL be valid JSON that can be piped to tools like `jq`. Each object SHALL include at least a stable identifier field (e.g., `name`). The `content` field (raw body string) SHALL be included only when `--content` is also passed. The output SHALL NOT include any non-JSON text on stdout.
 
 #### Scenario: JSON output is pipeable to jq
 - **WHEN** `dotagents commands ls --json | jq '.[0].name'` is run
 - **THEN** `jq` successfully parses the output and extracts the first command's name
 
 ### Requirement: Flag convention applies to future read-only list commands
-Any future read-only list command (e.g., `providers ls`) SHALL also support `--json` and `--full` flags with the same semantics: `--json` for machine-readable JSON output via `to_value()`, and `--full` for verbose human-readable output including full content.
+Any future read-only list command (e.g., `providers ls`) SHALL also support `--json` and `--content` flags with the same semantics.
 
-#### Scenario: Future read-only command supports --json and --full
+#### Scenario: Future read-only command supports --json and --content
 - **WHEN** a new read-only list command is added (e.g., `providers ls`)
-- **THEN** it accepts `--json` and `--full` flags consistent with the pattern established here
+- **THEN** it accepts `--json` and `--content` flags consistent with the pattern established here

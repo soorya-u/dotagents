@@ -21,7 +21,7 @@ The official registry at `public/v1/templates/registry.json` lists 24 providers 
 `ProviderEntry` gains `name: Option<String>` and `url: Option<String>`. This keeps backward compatibility — existing registries without these fields still parse correctly. The CI registry generation script reads `name` and `url` from each provider's `provider.toml` and writes them into `registry.json`.
 
 ### Providers command is read-only
-No mutation of config, registry, or deployed files. This mirrors the read-only nature of `--json`/`--full` flags established in the `add-json-full-flags` proposal. The command fetches the registry (or reads from cache) and displays it.
+No mutation of config, registry, or deployed files. This mirrors the read-only nature of `--json`/`--content` flags established in the `add-json-full-flags` proposal. The command fetches the registry (or reads from cache) and displays it.
 
 ### TUI fuzzy search via cliclack
 Cliclack's `Select` prompt with `filter` enabled provides fuzzy search out of the box. No new dependency needed. Each option shows `{name} [{slug}]` with optional URL on a second line when `--url` is active.
