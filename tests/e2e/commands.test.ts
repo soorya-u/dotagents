@@ -130,12 +130,12 @@ test.describe("commands ls CLI", () => {
 		}
 	});
 
-	// C24: --full flag succeeds
-	test("--full exits zero", async () => {
+	// C24: --content flag succeeds
+	test("--content exits zero", async () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
-			const { exitCode } = run(["commands", "ls", "--full"], d);
+			const { exitCode } = run(["commands", "ls", "--content"], d);
 			expect(exitCode).toBe(0);
 		} finally {
 			cleanup(d);
@@ -159,8 +159,8 @@ test.describe("commands ls CLI", () => {
 		}
 	});
 
-	// --json does not include content key without --full
-	test("--json without --full does not include content key", async () => {
+	// --json does not include content key without --content
+	test("--json without --content does not include content key", async () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
@@ -173,13 +173,13 @@ test.describe("commands ls CLI", () => {
 		}
 	});
 
-	// --json --full includes content key with body
-	test("--json --full includes content key with body", async () => {
+	// --json --content includes content key with body
+	test("--json --content includes content key with body", async () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
 			const { exitCode, stdout } = run(
-				["commands", "ls", "--json", "--full"],
+				["commands", "ls", "--json", "--content"],
 				d,
 			);
 			expect(exitCode).toBe(0);
@@ -192,12 +192,12 @@ test.describe("commands ls CLI", () => {
 		}
 	});
 
-	// --full shows body content in text output
-	test("--full shows body content in text output", async () => {
+	// --content shows body content in text output
+	test("--content shows body content in text output", async () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
-			const { exitCode, stderr } = run(["commands", "ls", "--full"], d);
+			const { exitCode, stderr } = run(["commands", "ls", "--content"], d);
 			expect(exitCode).toBe(0);
 			expect(stderr).toMatch(/var\.agent_name/);
 		} finally {
@@ -205,7 +205,7 @@ test.describe("commands ls CLI", () => {
 		}
 	});
 
-	// default (no --full) does NOT show body content
+	// default (no --content) does NOT show body content
 	test("default output does not show body content", async () => {
 		const d = makeTmpDir();
 		try {
@@ -242,6 +242,58 @@ test.describe("commands ls CLI", () => {
 			expect(exitCode).toBe(0);
 			const parsed = JSON.parse(stdout);
 			expect(Array.isArray(parsed)).toBe(true);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --command filters by command name
+	test("--command filters to matching command", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			run(["commands", "new", "greet", "--description", "test"], d);
+			const { exitCode, stderr } = run(
+				["commands", "ls", "--command", "greet"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			expect(stderr).toMatch(/greet/);
+			expect(stderr).not.toMatch(/hello/);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --command with no match shows "No commands found"
+	test("--command with unmatched name shows no commands found", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			const { exitCode, stderr } = run(
+				["commands", "ls", "--command", "nonexistent"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			expect(stderr).toMatch(/No commands found/);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --command with --json filters JSON output
+	test("--command --json filters JSON output", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			const { exitCode, stdout } = run(
+				["commands", "ls", "--json", "--command", "hello"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			const parsed = JSON.parse(stdout);
+			expect(parsed).toHaveLength(1);
+			expect(parsed[0].name).toBe("hello");
 		} finally {
 			cleanup(d);
 		}

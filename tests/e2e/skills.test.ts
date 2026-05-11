@@ -114,12 +114,12 @@ test.describe("skills ls CLI", () => {
 		}
 	});
 
-	// --full flag succeeds
-	test("--full exits zero", async () => {
+	// --content flag succeeds
+	test("--content exits zero", async () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
-			const { exitCode } = run(["skills", "ls", "--full"], d);
+			const { exitCode } = run(["skills", "ls", "--content"], d);
 			expect(exitCode).toBe(0);
 		} finally {
 			cleanup(d);
@@ -143,8 +143,8 @@ test.describe("skills ls CLI", () => {
 		}
 	});
 
-	// --json does not include content key without --full
-	test("--json without --full does not include content key", async () => {
+	// --json does not include content key without --content
+	test("--json without --content does not include content key", async () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
@@ -157,12 +157,15 @@ test.describe("skills ls CLI", () => {
 		}
 	});
 
-	// --json --full includes content key with body
-	test("--json --full includes content key with body", async () => {
+	// --json --content includes content key with body
+	test("--json --content includes content key with body", async () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
-			const { exitCode, stdout } = run(["skills", "ls", "--json", "--full"], d);
+			const { exitCode, stdout } = run(
+				["skills", "ls", "--json", "--content"],
+				d,
+			);
 			expect(exitCode).toBe(0);
 			const parsed = JSON.parse(stdout);
 			expect(parsed[0]).toHaveProperty("content");
@@ -173,12 +176,12 @@ test.describe("skills ls CLI", () => {
 		}
 	});
 
-	// --full shows body content in text output
-	test("--full shows body content in text output", async () => {
+	// --content shows body content in text output
+	test("--content shows body content in text output", async () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
-			const { exitCode, stderr } = run(["skills", "ls", "--full"], d);
+			const { exitCode, stderr } = run(["skills", "ls", "--content"], d);
 			expect(exitCode).toBe(0);
 			expect(stderr).toMatch(/var\.agent_name/);
 		} finally {
@@ -186,7 +189,7 @@ test.describe("skills ls CLI", () => {
 		}
 	});
 
-	// default (no --full) does NOT show body content
+	// default (no --content) does NOT show body content
 	test("default output does not show body content", async () => {
 		const d = makeTmpDir();
 		try {
@@ -194,6 +197,52 @@ test.describe("skills ls CLI", () => {
 			const { exitCode, stderr } = run(["skills", "ls"], d);
 			expect(exitCode).toBe(0);
 			expect(stderr).not.toMatch(/var\.agent_name/);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --json outputs pipeable JSON (no extra output)
+	test("--json outputs pipeable JSON", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			const { exitCode, stdout } = run(["skills", "ls", "--json"], d);
+			expect(exitCode).toBe(0);
+			const parsed = JSON.parse(stdout);
+			expect(Array.isArray(parsed)).toBe(true);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --skill filters by skill name
+	test("--skill filters to matching skill", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			const { exitCode, stderr } = run(
+				["skills", "ls", "--skill", "hello-skill"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			expect(stderr).toMatch(/hello-skill/);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --skill with no match shows "No skills found"
+	test("--skill with unmatched name shows no skills found", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			const { exitCode, stderr } = run(
+				["skills", "ls", "--skill", "nonexistent"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			expect(stderr).toMatch(/No skills found/);
 		} finally {
 			cleanup(d);
 		}

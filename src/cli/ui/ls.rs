@@ -1,8 +1,10 @@
-use cliclack::{intro, outro};
+use cliclack::outro;
+use console::style;
 use crossterm::terminal;
 use serde_json::Value;
 
 use crate::prelude::*;
+use crate::utils::tty::is_tty;
 
 /// A name+description pair for display, optionally with full frontmatter + body.
 pub(crate) struct ListItem {
@@ -55,79 +57,101 @@ pub(crate) fn wrap_at_width(text: &str, width: usize, indent: &str) -> String {
     lines.join("\n")
 }
 
+/// Build a JSON array of frontmatter values, optionally including body content.
+pub(crate) fn to_json_array(items: &[ListItem], content: bool) -> Vec<Value> {
+    items
+        .iter()
+        .map(|item| {
+            let mut obj = item.frontmatter.clone();
+            if content
+                && let Some(body) = &item.body
+                && let Some(map) = obj.as_object_mut()
+            {
+                map.insert("content".to_string(), Value::String(body.clone()));
+            }
+            obj
+        })
+        .collect()
+}
+
+/// Apply cyan+bold styling to a name when colors are enabled (console handles detection).
+fn styled_name(name: &str) -> String {
+    style(name).cyan().bold().to_string()
+}
+
 /// Render one section of items with cliclack log output.
-fn render_section(title: &str, items: &[ListItem], full: bool, name_col: usize, cols: usize) {
-    info!("{}", title);
+fn render_section(items: &[ListItem], content: bool, name_col: usize, cols: usize) {
     for item in items {
-        let desc = if full {
-            let indent_width = name_col + 3; // "  name   " prefix width
-            let avail = cols.saturating_sub(indent_width);
-            let indent = " ".repeat(indent_width);
-            wrap_at_width(&item.description, avail.max(10), &indent)
+        if content && is_tty() {
+            let body = item.body.as_deref().unwrap_or("").trim().to_string();
+            if !body.is_empty() {
+                let header = format!(
+                    "{} — {}",
+                    style(&item.name).green().bold(),
+                    item.description
+                );
+                let _ = cliclack::note(header, &body);
+            } else {
+                let padded = format!("{:<width$}", item.name, width = name_col);
+                info!("{} — {}", styled_name(&padded), item.description);
+            }
         } else {
-            // available width = cols - indent(2) - name_col - gap(3)
-            let avail = cols.saturating_sub(2 + name_col + 3);
-            truncate_to_width(&item.description, avail.max(10))
-        };
+            let desc = if content {
+                let avail = cols.saturating_sub(name_col + 3);
+                let indent = " ".repeat(name_col + 3);
+                wrap_at_width(&item.description, avail.max(10), &indent)
+            } else {
+                let avail = cols.saturating_sub(name_col + 3);
+                truncate_to_width(&item.description, avail.max(10))
+            };
 
-        let padded_name = format!("{:<width$}", item.name, width = name_col);
-        info!("  {}   {}", padded_name, desc);
+            let padded = format!("{:<width$}", item.name, width = name_col);
+            info!("{} — {}", styled_name(&padded), desc);
 
-        if full
-            && let Some(body) = &item.body
-            && !body.is_empty()
-        {
-            let body_indent = " ".repeat(name_col + 3);
-            for line in body.lines() {
-                info!("{}{}", body_indent, line);
+            if content
+                && let Some(body) = &item.body
+                && !body.trim().is_empty()
+            {
+                let body_indent = " ".repeat(name_col + 3);
+                let body_avail = cols.saturating_sub(name_col + 3);
+                for line in body.lines() {
+                    let wrapped = wrap_at_width(line, body_avail.max(10), " ");
+                    for sub_line in wrapped.lines() {
+                        info!("{}{}", body_indent, sub_line);
+                    }
+                }
             }
         }
     }
 }
 
 /// Render the commands listing for `dotagents commands ls`.
-pub(crate) fn render_commands(items: Vec<ListItem>, full: bool) {
+pub(crate) fn render_commands(items: Vec<ListItem>, content: bool) {
     if items.is_empty() {
-        intro("dotagents commands ls").ok();
         info!("No commands found.");
         outro("").ok();
         return;
     }
 
-    let name_col = items
-        .iter()
-        .map(|i| i.name.len())
-        .max()
-        .unwrap_or(10)
-        .max(10);
+    let name_col = items.iter().map(|i| i.name.len()).max().unwrap_or(0);
     let cols = terminal_cols();
 
-    intro("dotagents commands ls").ok();
-    let header = format!("Commands ({})", items.len());
-    render_section(&header, &items, full, name_col, cols);
+    render_section(&items, content, name_col, cols);
     outro(format!("{} command(s)", items.len())).ok();
 }
 
 /// Render the skills listing for `dotagents skills ls`.
-pub(crate) fn render_skills(items: Vec<ListItem>, full: bool) {
+pub(crate) fn render_skills(items: Vec<ListItem>, content: bool) {
     if items.is_empty() {
-        intro("dotagents skills ls").ok();
         info!("No skills found.");
         outro("").ok();
         return;
     }
 
-    let name_col = items
-        .iter()
-        .map(|i| i.name.len())
-        .max()
-        .unwrap_or(10)
-        .max(10);
+    let name_col = items.iter().map(|i| i.name.len()).max().unwrap_or(0);
     let cols = terminal_cols();
 
-    intro("dotagents skills ls").ok();
-    let header = format!("Skills ({})", items.len());
-    render_section(&header, &items, full, name_col, cols);
+    render_section(&items, content, name_col, cols);
     outro(format!("{} skill(s)", items.len())).ok();
 }
 
@@ -162,5 +186,57 @@ mod tests {
     fn wrap_long_text_breaks_at_width() {
         let result = wrap_at_width("one two three four five", 12, "  ");
         assert!(result.contains('\n'));
+    }
+
+    #[test]
+    fn to_json_array_with_content_returns_content_field() {
+        // to_json_array with content=true includes body as content key
+        let items = vec![ListItem {
+            name: "test".into(),
+            description: "desc".into(),
+            frontmatter: serde_json::json!({"name": "test"}),
+            body: Some("body".into()),
+        }];
+        let result = to_json_array(&items, true);
+        assert_eq!(result[0]["content"], "body");
+    }
+
+    #[test]
+    fn to_json_array_without_content_omits_content() {
+        // to_json_array with content=false omits content key
+        let items = vec![ListItem {
+            name: "test".into(),
+            description: "desc".into(),
+            frontmatter: serde_json::json!({"name": "test"}),
+            body: Some("body".into()),
+        }];
+        let result = to_json_array(&items, false);
+        assert!(result[0].get("content").is_none());
+    }
+
+    #[test]
+    fn to_json_array_no_body_ok() {
+        // to_json_array works when body is None
+        let items = vec![ListItem {
+            name: "test".into(),
+            description: "desc".into(),
+            frontmatter: serde_json::json!({"name": "test"}),
+            body: None,
+        }];
+        let result = to_json_array(&items, true);
+        assert!(result[0].get("content").is_none());
+    }
+
+    #[test]
+    fn to_json_array_non_object_frontmatter_handled() {
+        // to_json_array does not panic on non-object frontmatter
+        let items = vec![ListItem {
+            name: "test".into(),
+            description: "desc".into(),
+            frontmatter: Value::String("plain".into()),
+            body: Some("body".into()),
+        }];
+        let result = to_json_array(&items, true);
+        assert_eq!(result[0], Value::String("plain".into()));
     }
 }
