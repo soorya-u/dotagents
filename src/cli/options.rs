@@ -98,7 +98,7 @@ pub(crate) enum CommandsAction {
 /// Options shared by `commands ls` and `skills ls`.
 #[derive(Args, Default)]
 pub(crate) struct SubLsOptions {
-    /// Show full descriptions (word-wrapped) instead of truncating.
+    /// Show full word-wrapped descriptions and include the markdown body content of each item.
     #[clap(long = "content")]
     pub content: bool,
 

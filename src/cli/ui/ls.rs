@@ -65,6 +65,7 @@ pub(crate) fn to_json_array(items: &[ListItem], content: bool) -> Vec<Value> {
             let mut obj = item.frontmatter.clone();
             if content
                 && let Some(body) = &item.body
+                && !body.trim().is_empty()
                 && let Some(map) = obj.as_object_mut()
             {
                 map.insert("content".to_string(), Value::String(body.clone()));
