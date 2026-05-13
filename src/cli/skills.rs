@@ -16,7 +16,7 @@ use crate::prelude::*;
 use crate::schema::list_item::ListItem;
 use crate::templates::get_templater;
 use crate::utils::fs::write_file;
-use crate::utils::path::{get_application_dir, get_workspace_dir};
+use crate::utils::path::{get_application_dir, get_skills_dir, get_workspace_dir};
 use crate::utils::tty::is_tty;
 
 /// Collect a string field: use provided value, prompt in TTY mode, or default to empty.
@@ -244,10 +244,11 @@ fn skill_to_list_item(skill: SkillFeature) -> ListItem {
 
 /// Load all skills from `.dotagents/skills/*/SKILL.md`, returning full frontmatter + body.
 fn load_skills() -> Result<Vec<ListItem>> {
-    let skills = match SkillFeature::from_application() {
-        Ok(s) => s,
-        Err(_) => return Ok(vec![]), // skills dir absent or unreadable → empty
-    };
+    // skills dir absent means the feature is not enabled; any other error propagates
+    if get_skills_dir().is_err() {
+        return Ok(vec![]);
+    }
+    let skills = SkillFeature::from_application().context("failed to load skills")?;
     let mut items: Vec<ListItem> = skills.into_iter().map(skill_to_list_item).collect();
     items.sort_by(|a, b| a.name.cmp(&b.name));
     Ok(items)

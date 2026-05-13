@@ -13,7 +13,7 @@ use crate::core::features::command::CommandFeature;
 use crate::prelude::*;
 use crate::schema::list_item::ListItem;
 use crate::utils::fs::write_file;
-use crate::utils::path::{get_application_dir, get_workspace_dir};
+use crate::utils::path::{get_application_dir, get_commands_dir, get_workspace_dir};
 use crate::utils::tty::is_tty;
 
 /// Collect a string field: use provided value, prompt in TTY mode, or default to empty.
@@ -186,10 +186,11 @@ fn command_to_list_item(cmd: CommandFeature) -> ListItem {
 
 /// Load all commands from `.dotagents/commands/*.md`, returning full frontmatter + body.
 fn load_commands() -> Result<Vec<ListItem>> {
-    let commands = match CommandFeature::from_application() {
-        Ok(cmds) => cmds,
-        Err(_) => return Ok(vec![]), // commands dir absent or unreadable → empty
-    };
+    // commands dir absent means the feature is not enabled; any other error propagates
+    if get_commands_dir().is_err() {
+        return Ok(vec![]);
+    }
+    let commands = CommandFeature::from_application().context("failed to load commands")?;
     let mut items: Vec<ListItem> = commands.into_iter().map(command_to_list_item).collect();
     items.sort_by(|a, b| a.name.cmp(&b.name));
     Ok(items)

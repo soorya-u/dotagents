@@ -40,7 +40,7 @@ pub(crate) fn wrap_at_width(text: &str, width: usize, indent: &str) -> String {
     for word in text.split_whitespace() {
         if current.is_empty() {
             current.push_str(word);
-        } else if current.len() + 1 + word.len() <= width {
+        } else if current.chars().count() + 1 + word.chars().count() <= width {
             current.push(' ');
             current.push_str(word);
         } else {
@@ -60,11 +60,13 @@ mod tests {
 
     #[test]
     fn truncate_short_string_unchanged() {
+        // short text is returned as-is when within width
         assert_eq!(truncate_to_width("hello", 10), "hello");
     }
 
     #[test]
     fn truncate_long_string_appends_ellipsis() {
+        // long text is cut and terminated with … within the char limit
         let result = truncate_to_width("hello world", 8);
         assert!(result.ends_with('…'));
         assert!(result.chars().count() <= 8);
@@ -72,17 +74,20 @@ mod tests {
 
     #[test]
     fn truncate_zero_width_returns_empty() {
+        // zero width always returns an empty string
         assert_eq!(truncate_to_width("hello", 0), "");
     }
 
     #[test]
     fn wrap_short_text_unchanged() {
+        // text that fits in one line is returned without any line break
         let result = wrap_at_width("hello world", 80, "  ");
         assert_eq!(result, "hello world");
     }
 
     #[test]
     fn wrap_long_text_breaks_at_width() {
+        // text exceeding width is split across multiple lines
         let result = wrap_at_width("one two three four five", 12, "  ");
         assert!(result.contains('\n'));
     }

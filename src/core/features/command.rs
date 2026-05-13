@@ -79,6 +79,13 @@ impl CommandFeature {
         category: &str,
         tags: &[String],
     ) -> Result<String> {
+        let category = category.trim();
+        let tags: Vec<String> = tags
+            .iter()
+            .map(|t| t.trim().to_string())
+            .filter(|t| !t.is_empty())
+            .collect();
+
         let feature = CommandFeature {
             metadata: CommandMetadata {
                 name: name.to_string(),
@@ -88,11 +95,7 @@ impl CommandFeature {
                 } else {
                     Some(category.to_string())
                 },
-                tags: if tags.is_empty() {
-                    None
-                } else {
-                    Some(tags.to_vec())
-                },
+                tags: if tags.is_empty() { None } else { Some(tags) },
             },
             content: render_starter(COMMAND_STARTER, name),
         };

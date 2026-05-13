@@ -76,15 +76,15 @@ impl SkillFeature {
             metadata: SkillMetadata {
                 name: name.to_string(),
                 description: description.to_string(),
-                license: if license.is_empty() {
+                license: if license.trim().is_empty() {
                     None
                 } else {
-                    Some(license.to_string())
+                    Some(license.trim().to_string())
                 },
-                compatibility: if compatibility.is_empty() {
+                compatibility: if compatibility.trim().is_empty() {
                     None
                 } else {
-                    Some(compatibility.to_string())
+                    Some(compatibility.trim().to_string())
                 },
                 metadata: Some(metadata_map),
                 allowed_tools: None,

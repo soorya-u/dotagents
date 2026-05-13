@@ -22,9 +22,9 @@ When `--json` is passed to a read-only list command (`commands ls`, `skills ls`)
 ### Requirement: --content flag includes body content in output
 When `--content` is passed to `commands ls` or `skills ls`, the command SHALL include the full markdown body content of each item in the output, in addition to the frontmatter fields already shown. Without `--content`, only the name and frontmatter fields SHALL be shown.
 
-In TTY mode, `--content` renders each item using a `cliclack::note` block: the note header shows the item name (styled green+bold) followed by ` — ` and the description; the note body contains the raw markdown content. No separate `info!` line is printed for items that have body content.
+In TTY mode, `--content` renders each item that has body content using a `cliclack::note` block: the note header shows the item name styled **green+bold** (via `console::style`) followed by ` — ` and the description; the note body contains the raw markdown content. No separate `info!` row is printed for items rendered as a note. Items with no body content fall back to the standard `info!` row with the name in **cyan+bold**.
 
-In non-TTY mode, `--content` appends body lines indented below the name-description row.
+In non-TTY mode, `--content` appends body lines indented below the name-description row; the name is not styled (no ANSI output in non-TTY).
 
 #### Scenario: --content shows command body content in TTY mode
 - **WHEN** `dotagents commands ls --content` is run in a TTY
@@ -54,7 +54,7 @@ The `--json` and `--content` flags SHALL be independent and combinable. When bot
 - **THEN** the text output includes the full body content of each command
 
 ### Requirement: Text listing uses styled name and separator
-In TTY mode, the item name in text output SHALL be rendered in cyan+bold using `console::style`. The name and description SHALL be separated by ` — `. Column width SHALL match the actual longest name in the result set with no artificial minimum padding.
+In TTY mode, the item name in standard `info!` rows (i.e. not rendered as a `cliclack::note`) SHALL be rendered in **cyan+bold** using `console::style`. Note headers (TTY + `--content` + non-empty body) use **green+bold** instead, as described in the `--content` requirement above. The name and description SHALL be separated by ` — `. Column width SHALL match the actual longest name in the result set with no artificial minimum padding.
 
 #### Scenario: Name is styled and separated from description
 - **WHEN** `dotagents commands ls` is run in a TTY
