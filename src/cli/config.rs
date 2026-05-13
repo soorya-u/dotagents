@@ -117,9 +117,10 @@ fn handle_global_json(path: &Path) -> Result<()> {
     }
     let content = fs::read_to_string(path).context("Failed to read global config")?;
     let config: GlobalConfig = GlobalConfig::from_toml(&content)?;
-    let json = serde_json::to_string_pretty(&config)
-        .context("Failed to serialize global config to JSON")?;
-    println!("{json}");
+    let mut value =
+        serde_json::to_value(&config).context("Failed to serialize global config to JSON")?;
+    value.as_object_mut().map(|m| m.remove("schema"));
+    println!("{}", serde_json::to_string_pretty(&value)?);
     Ok(())
 }
 
@@ -180,9 +181,10 @@ fn handle_local_json(path: &Path) -> Result<()> {
     }
     let content = fs::read_to_string(path).context("Failed to read local config")?;
     let config: LocalConfig = LocalConfig::from_toml(&content)?;
-    let json = serde_json::to_string_pretty(&config)
-        .context("Failed to serialize local config to JSON")?;
-    println!("{json}");
+    let mut value =
+        serde_json::to_value(&config).context("Failed to serialize local config to JSON")?;
+    value.as_object_mut().map(|m| m.remove("schema"));
+    println!("{}", serde_json::to_string_pretty(&value)?);
     Ok(())
 }
 
@@ -373,6 +375,20 @@ fn display_tui_config(config: &AppConfig) -> Result<()> {
         }
     }
 
+    if let Some(vars) = &config.variables
+        && !vars.is_empty()
+    {
+        let mut keys: Vec<&String> = vars.keys().collect();
+        keys.sort();
+        note(
+            "Variables",
+            keys.iter()
+                .map(|k| format!("{k} = {}", vars[*k]))
+                .collect::<Vec<_>>()
+                .join("\n"),
+        )?;
+    }
+
     outro("Done.")?;
     Ok(())
 }
@@ -424,6 +440,20 @@ fn display_tui_global(config: &GlobalConfig) -> Result<()> {
                     .join("\n"),
             )?;
         }
+    }
+
+    if let Some(vars) = &config.variables
+        && !vars.is_empty()
+    {
+        let mut keys: Vec<&String> = vars.keys().collect();
+        keys.sort();
+        note(
+            "Variables",
+            keys.iter()
+                .map(|k| format!("{k} = {}", vars[*k]))
+                .collect::<Vec<_>>()
+                .join("\n"),
+        )?;
     }
 
     outro("Done.")?;
@@ -479,6 +509,20 @@ fn display_tui_local(config: &LocalConfig) -> Result<()> {
                     .join("\n"),
             )?;
         }
+    }
+
+    if let Some(vars) = &config.variables
+        && !vars.is_empty()
+    {
+        let mut keys: Vec<&String> = vars.keys().collect();
+        keys.sort();
+        note(
+            "Override Variables",
+            keys.iter()
+                .map(|k| format!("{k} = {}", vars[*k]))
+                .collect::<Vec<_>>()
+                .join("\n"),
+        )?;
     }
 
     outro("Done.")?;
@@ -633,7 +677,10 @@ fn edit_local_config(config: &mut LocalConfig) -> Result<()> {
 struct AppDisplay {
     features: Vec<String>,
     targets: Vec<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     providers: Vec<ProviderDisplay>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    variables: Option<HashMap<String, String>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -674,10 +721,13 @@ impl AppDisplay {
         let mut targets: Vec<String> = config.targets.iter().cloned().collect();
         targets.sort();
 
+        let variables = config.variables.clone();
+
         AppDisplay {
             features,
             targets,
             providers,
+            variables,
         }
     }
 }
@@ -773,13 +823,13 @@ mod tests {
 
     #[test]
     fn app_display_json_serializes() {
-        // AppDisplay round-trips through JSON without error
+        // AppDisplay serializes correctly; empty providers are omitted
         let mut config = AppConfig::new();
         config.features = ["commands"].iter().map(|s| s.to_string()).collect();
         let display = AppDisplay::from_app_config(&config);
         let json = serde_json::to_string(&display).unwrap();
         assert!(json.contains("commands"));
-        assert!(json.contains("providers"));
+        assert!(!json.contains("providers")); // omitted when empty
         assert!(json.contains("targets"));
     }
 
