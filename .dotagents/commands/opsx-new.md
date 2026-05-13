@@ -1,4 +1,5 @@
 ---
+name: opsx-new
 description: Start a new change using the experimental artifact workflow (OPSX)
 ---
 

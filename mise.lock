@@ -48,6 +48,10 @@ url = "https://github.com/oven-sh/bun/releases/download/bun-v1.3.6/bun-windows-x
 checksum = "sha256:2ab7cb878041529617dcb86f9e8cb59539779ecb5ebe115a9eba2fa8361736b6"
 url = "https://github.com/oven-sh/bun/releases/download/bun-v1.3.6/bun-windows-x64-baseline.zip"
 
+[[tools."cargo:dotagents"]]
+version = "0.0.0-rc.1"
+backend = "cargo:dotagents"
+
 [[tools."npm:tui-devtools"]]
 version = "0.1.0"
 backend = "npm:tui-devtools"

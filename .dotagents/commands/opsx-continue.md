@@ -1,4 +1,5 @@
 ---
+name: opsx-continue
 description: Continue working on a change - create the next artifact (Experimental)
 ---
 
