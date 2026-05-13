@@ -28,7 +28,7 @@ use crate::utils::gitignore::{
 };
 use crate::utils::path::{get_workspace_dir, override_workspace_dir};
 use crate::utils::tty::is_tty;
-use cliclack::outro;
+use cliclack::{outro, spinner};
 
 /// Aggregated result of deploying one feature across all providers.
 #[derive(Debug, Default)]
@@ -189,9 +189,24 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
     let registry: Option<Registry> = if opts.offline {
         None // --offline: skip fetch entirely, resolve from cache only
     } else {
+        let sp = if is_tty() {
+            let s = spinner();
+            s.start("Fetching provider registry…");
+            Some(s)
+        } else {
+            None
+        };
         match Registry::fetch(registry_url()) {
-            Ok(r) => Some(r),
+            Ok(r) => {
+                if let Some(s) = sp {
+                    s.clear();
+                }
+                Some(r)
+            }
             Err(e) => {
+                if let Some(s) = sp {
+                    s.error(format!("Could not reach registry: {}", e));
+                }
                 warn!(
                     "Failed to fetch provider registry: {} — falling back to local cache",
                     e

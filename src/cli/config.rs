@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::fs;
 use std::io::IsTerminal;
 use std::path::Path;
@@ -8,6 +8,7 @@ use cliclack::{intro, multiselect, note, outro, spinner};
 use serde::Serialize;
 
 use crate::cli::options::ConfigTarget;
+use crate::cli::ui::init::prompt_targets;
 use crate::constants::dir::ROOT_DIR;
 use crate::constants::file::{GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE};
 use crate::core::config::common::{FeatureSettings, Features, Providers};
@@ -142,7 +143,7 @@ fn handle_global_tui(path: &Path) -> Result<()> {
 }
 
 fn handle_global_edit(path: &Path) -> Result<()> {
-    intro("dotagents config: Global (edit mode)")?;
+    intro("Edit Global Configuration")?;
 
     let spin = spinner();
     spin.start("Reading global config...");
@@ -156,7 +157,7 @@ fn handle_global_edit(path: &Path) -> Result<()> {
     } else {
         GlobalConfig::from_toml(&existing_content)?
     };
-    spin.stop("Config loaded.");
+    spin.clear();
 
     edit_global_config(&mut config)?;
 
@@ -207,7 +208,7 @@ fn handle_local_tui(path: &Path) -> Result<()> {
 }
 
 fn handle_local_edit(path: &Path) -> Result<()> {
-    intro("dotagents config: Local (edit mode)")?;
+    intro("Edit Local Configuration")?;
 
     let spin = spinner();
     spin.start("Reading local config...");
@@ -221,7 +222,7 @@ fn handle_local_edit(path: &Path) -> Result<()> {
     } else {
         LocalConfig::from_toml(&existing_content)?
     };
-    spin.stop("Config loaded.");
+    spin.clear();
 
     edit_local_config(&mut config)?;
 
@@ -324,7 +325,7 @@ fn print_feature_settings(label: &str, settings: &Option<FeatureSettings>) {
 // ── TUI display ─────────────────────────────────────────────────────
 
 fn display_tui_config(config: &AppConfig) -> Result<()> {
-    intro("dotagents config: App")?;
+    intro("Effective Configuration")?;
 
     let mut sorted_features: Vec<&String> = config.features.iter().collect();
     sorted_features.sort();
@@ -338,6 +339,21 @@ fn display_tui_config(config: &AppConfig) -> Result<()> {
                 .collect::<Vec<_>>()
                 .join("\n"),
         )?;
+    }
+
+    {
+        let mut sorted_targets: Vec<&String> = config.targets.iter().collect();
+        sorted_targets.sort();
+        let targets_body = if sorted_targets.is_empty() {
+            "(none configured)".to_string()
+        } else {
+            sorted_targets
+                .iter()
+                .map(|t| t.as_str())
+                .collect::<Vec<_>>()
+                .join("\n")
+        };
+        note("Targets", &targets_body)?;
     }
 
     if let Some(providers) = &config.providers
@@ -362,7 +378,7 @@ fn display_tui_config(config: &AppConfig) -> Result<()> {
 }
 
 fn display_tui_global(config: &GlobalConfig) -> Result<()> {
-    intro("dotagents config: Global")?;
+    intro("Global Configuration")?;
 
     let mut features: Vec<&String> = config.features.iter().collect();
     features.sort();
@@ -375,6 +391,22 @@ fn display_tui_global(config: &GlobalConfig) -> Result<()> {
                 .collect::<Vec<_>>()
                 .join("\n"),
         )?;
+    }
+
+    {
+        let targets = config.targets.as_ref();
+        let mut sorted: Vec<&String> = targets.iter().flat_map(|s| s.iter()).collect();
+        sorted.sort();
+        let targets_body = if sorted.is_empty() {
+            "(none configured)".to_string()
+        } else {
+            sorted
+                .iter()
+                .map(|t| t.as_str())
+                .collect::<Vec<_>>()
+                .join("\n")
+        };
+        note("Targets", &targets_body)?;
     }
 
     if let Some(providers) = &config.providers
@@ -399,7 +431,7 @@ fn display_tui_global(config: &GlobalConfig) -> Result<()> {
 }
 
 fn display_tui_local(config: &LocalConfig) -> Result<()> {
-    intro("dotagents config: Local")?;
+    intro("Local Configuration")?;
 
     if let Some(features) = &config.features {
         let mut sorted: Vec<&String> = features.iter().collect();
@@ -414,6 +446,22 @@ fn display_tui_local(config: &LocalConfig) -> Result<()> {
                     .join("\n"),
             )?;
         }
+    }
+
+    {
+        let targets = config.targets.as_ref();
+        let mut sorted: Vec<&String> = targets.iter().flat_map(|s| s.iter()).collect();
+        sorted.sort();
+        let targets_body = if sorted.is_empty() {
+            "(none configured)".to_string()
+        } else {
+            sorted
+                .iter()
+                .map(|t| t.as_str())
+                .collect::<Vec<_>>()
+                .join("\n")
+        };
+        note("Override Targets", &targets_body)?;
     }
 
     if let Some(providers) = &config.providers
@@ -439,8 +487,22 @@ fn display_tui_local(config: &LocalConfig) -> Result<()> {
 
 // ── TUI editor ──────────────────────────────────────────────────────
 
+/// Returns true when a provider has at least one feature override worth preserving.
+fn features_has_overrides(feats: &Features) -> bool {
+    feats.commands.is_some()
+        || feats.instructions.is_some()
+        || feats.mcp.is_some()
+        || feats.skills.is_some()
+}
+
 fn edit_global_config(config: &mut GlobalConfig) -> Result<()> {
     let all_features = Feature::all_names();
+
+    let current_features: Vec<&str> = all_features
+        .iter()
+        .copied()
+        .filter(|f| config.features.contains(*f))
+        .collect();
 
     let selected = multiselect("Select active features")
         .items(
@@ -449,42 +511,49 @@ fn edit_global_config(config: &mut GlobalConfig) -> Result<()> {
                 .map(|f| (*f, *f, ""))
                 .collect::<Vec<_>>(),
         )
+        .initial_values(current_features)
+        .required(false)
         .interact()
         .context("Failed to select features")?;
 
     config.features = selected.into_iter().map(|s| s.to_string()).collect();
 
-    let provider_input: String = cliclack::input("Provider names (comma-separated)")
-        .placeholder("e.g. claude, cursor, codex")
-        .interact()
-        .context("Failed to read provider names")?;
+    // Pre-select from targets (the canonical "who to deploy to" list).
+    let existing_provider_names: Vec<String> = config
+        .targets
+        .as_ref()
+        .map(|set| set.iter().cloned().collect())
+        .unwrap_or_default();
 
-    let providers: Vec<&str> = provider_input
-        .split(',')
-        .map(|s| s.trim())
-        .filter(|s| !s.is_empty())
-        .collect();
+    if let Some(selected_providers) = prompt_targets(&existing_provider_names)? {
+        if selected_providers.is_empty() {
+            config.targets = None;
+            config.providers = None;
+        } else {
+            config.targets = Some(selected_providers.iter().cloned().collect());
 
-    if !providers.is_empty() {
-        let mut targets_set: HashSet<String> = HashSet::new();
-        let mut providers_map: HashMap<String, Features> = HashMap::new();
+            // Retain only overrides for selected providers that have real config.
+            // New registry-backed providers need no [providers.X] entry.
+            let retained: HashMap<String, Features> = config
+                .providers
+                .as_ref()
+                .and_then(|p| p.0.as_ref())
+                .map(|map| {
+                    map.iter()
+                        .filter(|(name, feats)| {
+                            selected_providers.contains(*name) && features_has_overrides(feats)
+                        })
+                        .map(|(k, v)| (k.clone(), v.clone()))
+                        .collect()
+                })
+                .unwrap_or_default();
 
-        if let Some(existing_providers) = &config.providers
-            && let Some(map) = &existing_providers.0
-        {
-            for (name, feats) in map {
-                providers_map.insert(name.clone(), feats.clone());
-            }
+            config.providers = if retained.is_empty() {
+                None
+            } else {
+                Some(Providers(Some(retained)))
+            };
         }
-
-        for p in &providers {
-            let p_name = p.to_string();
-            targets_set.insert(p_name.clone());
-            providers_map.entry(p_name).or_default();
-        }
-
-        config.targets = Some(targets_set);
-        config.providers = Some(Providers(Some(providers_map)));
     }
 
     Ok(())
@@ -493,6 +562,12 @@ fn edit_global_config(config: &mut GlobalConfig) -> Result<()> {
 fn edit_local_config(config: &mut LocalConfig) -> Result<()> {
     let all_features = Feature::all_names();
 
+    let current_features: Vec<&str> = all_features
+        .iter()
+        .copied()
+        .filter(|f| config.features.as_ref().is_some_and(|set| set.contains(*f)))
+        .collect();
+
     let selected = multiselect("Select override features")
         .items(
             &all_features
@@ -500,6 +575,8 @@ fn edit_local_config(config: &mut LocalConfig) -> Result<()> {
                 .map(|f| (*f, *f, ""))
                 .collect::<Vec<_>>(),
         )
+        .initial_values(current_features)
+        .required(false)
         .interact()
         .context("Failed to select features")?;
 
@@ -509,40 +586,42 @@ fn edit_local_config(config: &mut LocalConfig) -> Result<()> {
         config.features = Some(selected.into_iter().map(|s| s.to_string()).collect());
     }
 
-    let provider_input: String = cliclack::input("Override provider names (comma-separated)")
-        .placeholder("e.g. claude, cursor")
-        .interact()
-        .context("Failed to read provider names")?;
+    // Pre-select from targets (the canonical "who to deploy to" list).
+    let existing_provider_names: Vec<String> = config
+        .targets
+        .as_ref()
+        .map(|set| set.iter().cloned().collect())
+        .unwrap_or_default();
 
-    let providers: Vec<&str> = provider_input
-        .split(',')
-        .map(|s| s.trim())
-        .filter(|s| !s.is_empty())
-        .collect();
+    if let Some(selected_providers) = prompt_targets(&existing_provider_names)? {
+        if selected_providers.is_empty() {
+            config.targets = None;
+            config.providers = None;
+        } else {
+            config.targets = Some(selected_providers.iter().cloned().collect());
 
-    if providers.is_empty() {
-        config.targets = None;
-        config.providers = None;
-    } else {
-        let mut targets_set: HashSet<String> = HashSet::new();
-        let mut providers_map: HashMap<String, Features> = HashMap::new();
+            // Retain only overrides for selected providers that have real config.
+            // New registry-backed providers need no [providers.X] entry.
+            let retained: HashMap<String, Features> = config
+                .providers
+                .as_ref()
+                .and_then(|p| p.0.as_ref())
+                .map(|map| {
+                    map.iter()
+                        .filter(|(name, feats)| {
+                            selected_providers.contains(*name) && features_has_overrides(feats)
+                        })
+                        .map(|(k, v)| (k.clone(), v.clone()))
+                        .collect()
+                })
+                .unwrap_or_default();
 
-        if let Some(existing_providers) = &config.providers
-            && let Some(map) = &existing_providers.0
-        {
-            for (name, feats) in map {
-                providers_map.insert(name.clone(), feats.clone());
-            }
+            config.providers = if retained.is_empty() {
+                None
+            } else {
+                Some(Providers(Some(retained)))
+            };
         }
-
-        for p in &providers {
-            let p_name = p.to_string();
-            targets_set.insert(p_name.clone());
-            providers_map.entry(p_name).or_default();
-        }
-
-        config.targets = Some(targets_set);
-        config.providers = Some(Providers(Some(providers_map)));
     }
 
     Ok(())
@@ -553,6 +632,7 @@ fn edit_local_config(config: &mut LocalConfig) -> Result<()> {
 #[derive(Debug, Serialize)]
 struct AppDisplay {
     features: Vec<String>,
+    targets: Vec<String>,
     providers: Vec<ProviderDisplay>,
 }
 
@@ -591,8 +671,12 @@ impl AppDisplay {
             None => vec![],
         };
 
+        let mut targets: Vec<String> = config.targets.iter().cloned().collect();
+        targets.sort();
+
         AppDisplay {
             features,
+            targets,
             providers,
         }
     }
@@ -645,6 +729,7 @@ mod tests {
         let config = AppConfig::new();
         let display = AppDisplay::from_app_config(&config);
         assert!(display.features.is_empty());
+        assert!(display.targets.is_empty());
         assert!(display.providers.is_empty());
     }
 
@@ -695,6 +780,7 @@ mod tests {
         let json = serde_json::to_string(&display).unwrap();
         assert!(json.contains("commands"));
         assert!(json.contains("providers"));
+        assert!(json.contains("targets"));
     }
 
     #[test]

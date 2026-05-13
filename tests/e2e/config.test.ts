@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@microsoft/tui-test";
 import {
@@ -75,6 +75,7 @@ test.describe("config CLI – app target", () => {
 			expect(exitCode).toBe(0);
 			const parsed = JSON.parse(stdout);
 			expect(parsed).toHaveProperty("features");
+			expect(parsed).toHaveProperty("targets");
 			expect(parsed).toHaveProperty("providers");
 		} finally {
 			cleanup(d);
@@ -198,60 +199,49 @@ test.describe("config CLI – empty config", () => {
 
 // ── Config --edit TUI ──────────────────────────────────────────────────────────
 
-// T-CG01: global --edit — select features and enter providers
+// T-CG01: global --edit — select features then provider multiselect (registry-backed)
 test.describe("config TUI – T-CG01 global --edit", () => {
 	const d = makeTmpDir();
 	initWithLocalProvider(d);
 	test.use({ program: shellProgram(d, ["config", "global", "--edit"]) });
 
-	test("selects features and enters providers", async ({ terminal }) => {
+	test("selects features and completes edit flow", async ({ terminal }) => {
 		try {
 			await expect(terminal.getByText("Select active features")).toBeVisible();
-			// Multiselect starts with no items checked and is required.
-			// Press Space on each item to select it, then Enter to confirm.
-			terminal.keyPress("Space");
-			terminal.keyDown();
-			terminal.keyPress("Space");
-			terminal.keyDown();
-			terminal.keyPress("Space");
-			terminal.keyDown();
-			terminal.keyPress("Space");
+			// All features are pre-selected from the existing config; confirm as-is.
 			terminal.keyPress("Enter");
+			// Provider selection is a registry-backed multiselect; skip with Enter.
 			await expect(
-				terminal.getByText("Provider names (comma-separated)"),
+				terminal.getByText("Which providers would you like to target?"),
 			).toBeVisible();
-			terminal.write("mycode");
 			terminal.keyPress("Enter");
-			// Wait for completion before checking filesystem
 			await expect(terminal.getByText("Global config updated")).toBeVisible();
-			// Check config.toml now references mycode in targets
-			const config = readFileSync(join(d, ".dotagents/config.toml"), "utf8");
-			expect(config).toContain("mycode");
 		} finally {
 			cleanup(d);
 		}
 	});
 });
 
-// T-CL01: local --edit — input provider name
+// T-CL01: local --edit — select override features then provider multiselect
 test.describe("config TUI – T-CL01 local --edit", () => {
 	const d = makeTmpDir();
 	initWithLocalProvider(d);
 	test.use({ program: shellProgram(d, ["config", "local", "--edit"]) });
 
-	test("selects a feature and enters a provider name", async ({ terminal }) => {
+	test("selects a feature and completes edit flow", async ({ terminal }) => {
 		try {
 			await expect(
 				terminal.getByText("Select override features"),
 			).toBeVisible();
-			// Multiselect requires at least one selection; press Space on first item then Enter
+			// Select first item then confirm.
 			terminal.keyPress("Space");
 			terminal.keyPress("Enter");
+			// Provider selection is a registry-backed multiselect; skip with Enter.
 			await expect(
-				terminal.getByText("Override provider names (comma-separated)"),
+				terminal.getByText("Which providers would you like to target?"),
 			).toBeVisible();
-			terminal.write("mycode");
 			terminal.keyPress("Enter");
+			await expect(terminal.getByText("Local config updated")).toBeVisible();
 			// local config should still exist
 			expect(existsSync(join(d, ".dotagents/local.config.toml"))).toBe(true);
 		} finally {
@@ -270,9 +260,10 @@ test.describe("config TUI – T-CA01 app display", () => {
 
 	test("shows Active Features then Providers selects", async ({ terminal }) => {
 		try {
-			await expect(terminal.getByText("dotagents config: App")).toBeVisible();
+			await expect(terminal.getByText("Effective Configuration")).toBeVisible();
 			await expect(terminal.getByText("Active Features")).toBeVisible();
-			// Press Enter to advance past features select
+			terminal.keyPress("Enter");
+			await expect(terminal.getByText("Targets")).toBeVisible();
 			terminal.keyPress("Enter");
 			await expect(terminal.getByText("Providers")).toBeVisible();
 			terminal.keyPress("Enter");
@@ -288,12 +279,14 @@ test.describe("config TUI – T-CG02 global display", () => {
 	initWithLocalProvider(d);
 	test.use({ program: shellProgram(d, ["config", "global"]) });
 
-	test("shows Features select and completes", async ({ terminal }) => {
+	test("shows Features then Targets selects and completes", async ({
+		terminal,
+	}) => {
 		try {
-			await expect(
-				terminal.getByText("dotagents config: Global"),
-			).toBeVisible();
+			await expect(terminal.getByText("Global Configuration")).toBeVisible();
 			await expect(terminal.getByText("Features")).toBeVisible();
+			terminal.keyPress("Enter");
+			await expect(terminal.getByText("Targets")).toBeVisible();
 			terminal.keyPress("Enter");
 		} finally {
 			cleanup(d);
@@ -311,8 +304,10 @@ test.describe("config TUI – T-CL02 local display", () => {
 		terminal,
 	}) => {
 		try {
-			await expect(terminal.getByText("dotagents config: Local")).toBeVisible();
+			await expect(terminal.getByText("Local Configuration")).toBeVisible();
 			await expect(terminal.getByText("Override Features")).toBeVisible();
+			terminal.keyPress("Enter");
+			await expect(terminal.getByText("Override Targets")).toBeVisible();
 			terminal.keyPress("Enter");
 			await expect(terminal.getByText("Override Providers")).toBeVisible();
 			terminal.keyPress("Enter");
