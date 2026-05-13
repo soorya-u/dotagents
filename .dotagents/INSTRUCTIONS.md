@@ -108,6 +108,7 @@ A planned `SkillFeature` is described in `openspec/changes/implement-skills/` â€
 
 ### Template engine (`src/templates/`)
 
+{{{{raw}}}}
 - `Templater` is a `LazyLock` global wrapping a `handlebars::Handlebars`. Get it via `get_templater()`.
 - Two custom helpers, registered in `Templater::new`:
   - `{{#ifEq a b}}â€¦{{else}}â€¦{{/ifEq}}` (`IfEqHelper`)
@@ -122,6 +123,7 @@ A planned `SkillFeature` is described in `openspec/changes/implement-skills/` â€
 Rendering is **two-phase** in `templates/renderer.rs::render_feature_with_settings`:
 1. The feature's serialized form is rendered against `var.*` (so users can use `{{ var.foo }}` inside `INSTRUCTIONS.md`, MCP env values, command bodies). Result is parsed back into the same feature type via `from_string`.
 2. The provider's template file is rendered with the populated feature's `to_value()` merged in, then written to the target path (parent dirs auto-created in `utils/fs.rs::write_file`).
+{{{{/raw}}}}
 
 ### CLI shape (`src/cli/`)
 
