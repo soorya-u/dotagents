@@ -8,8 +8,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
 use crate::{
-    constants::file::SKILL_FILE, core::features::traits::FeatureTrait,
-    templates::variables::get_skill_name_variable, utils::path::get_skills_dir,
+    constants::file::SKILL_FILE,
+    constants::templates::{SKILL_STARTER, render_starter},
+    core::features::traits::FeatureTrait,
+    templates::variables::get_skill_name_variable,
+    utils::path::get_skills_dir,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -57,6 +60,38 @@ impl SkillFeature {
             metadata,
             content: parsed.content,
         })
+    }
+
+    /// Build the file content for a new skill from the given fields.
+    pub fn scaffold(
+        name: &str,
+        description: &str,
+        license: &str,
+        compatibility: &str,
+    ) -> Result<String> {
+        let mut metadata_map = HashMap::new();
+        metadata_map.insert("version".to_string(), "1.0".to_string());
+
+        let feature = SkillFeature {
+            metadata: SkillMetadata {
+                name: name.to_string(),
+                description: description.to_string(),
+                license: if license.is_empty() {
+                    None
+                } else {
+                    Some(license.to_string())
+                },
+                compatibility: if compatibility.is_empty() {
+                    None
+                } else {
+                    Some(compatibility.to_string())
+                },
+                metadata: Some(metadata_map),
+                allowed_tools: None,
+            },
+            content: render_starter(SKILL_STARTER, name),
+        };
+        feature.to_markdown()
     }
 
     pub fn from_application() -> Result<Vec<Self>> {
@@ -367,6 +402,26 @@ Body"#;
         let serialized = skill.to_markdown().unwrap();
         assert!(serialized.contains("allowed-tools: Read Grep"));
         assert!(!serialized.contains("allowed_tools"));
+    }
+
+    #[test]
+    fn test_scaffold_produces_valid_markdown() {
+        // scaffold returns markdown with all provided fields
+        let content = SkillFeature::scaffold("my-skill", "Does stuff", "MIT", "Claude").unwrap();
+        assert!(content.starts_with("---"));
+        assert!(content.contains("name: my-skill"));
+        assert!(content.contains("description: Does stuff"));
+        assert!(content.contains("license: MIT"));
+        assert!(content.contains("compatibility: Claude"));
+        assert!(content.contains("version: '1.0'"));
+    }
+
+    #[test]
+    fn test_scaffold_empty_optional_fields_omitted() {
+        // scaffold omits license and compatibility when empty
+        let content = SkillFeature::scaffold("sk", "desc", "", "").unwrap();
+        assert!(!content.contains("license:"));
+        assert!(!content.contains("compatibility:"));
     }
 
     #[test]

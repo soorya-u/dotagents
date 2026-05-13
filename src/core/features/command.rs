@@ -7,7 +7,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
 use crate::{
-    core::features::traits::FeatureTrait, templates::variables::get_command_name_variable,
+    constants::templates::{COMMAND_STARTER, render_starter},
+    core::features::traits::FeatureTrait,
+    templates::variables::get_command_name_variable,
     utils::path::get_commands_dir,
 };
 
@@ -15,6 +17,10 @@ use crate::{
 pub(crate) struct CommandMetadata {
     pub name: String,
     pub description: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub category: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tags: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -65,6 +71,33 @@ impl CommandFeature {
 
         Ok(commands)
     }
+
+    /// Build the file content for a new command from the given fields.
+    pub fn scaffold(
+        name: &str,
+        description: &str,
+        category: &str,
+        tags: &[String],
+    ) -> Result<String> {
+        let feature = CommandFeature {
+            metadata: CommandMetadata {
+                name: name.to_string(),
+                description: description.to_string(),
+                category: if category.is_empty() {
+                    None
+                } else {
+                    Some(category.to_string())
+                },
+                tags: if tags.is_empty() {
+                    None
+                } else {
+                    Some(tags.to_vec())
+                },
+            },
+            content: render_starter(COMMAND_STARTER, name),
+        };
+        feature.to_markdown()
+    }
 }
 
 impl FeatureTrait for CommandFeature {
@@ -77,13 +110,11 @@ impl FeatureTrait for CommandFeature {
     }
 
     fn to_value(&self) -> Value {
-        json!({
-            "command": {
-                "name": self.metadata.name,
-                "description": self.metadata.description,
-                "content": self.content
-            }
-        })
+        let mut meta = serde_json::to_value(&self.metadata).unwrap_or_default();
+        if let Value::Object(ref mut map) = meta {
+            map.insert("content".to_string(), json!(self.content));
+        }
+        json!({ "command": meta })
     }
 
     fn get_file_name(&self) -> Option<String> {
@@ -105,6 +136,8 @@ mod tests {
             metadata: CommandMetadata {
                 name: "test-command".to_string(),
                 description: "A test command".to_string(),
+                category: None,
+                tags: None,
             },
             content: "Command content here".to_string(),
         };
@@ -137,6 +170,8 @@ Command content here"#;
             metadata: CommandMetadata {
                 name: "roundtrip-test".to_string(),
                 description: "Testing roundtrip conversion".to_string(),
+                category: None,
+                tags: None,
             },
             content: "Content with\nmultiple lines".to_string(),
         };
@@ -155,6 +190,8 @@ Command content here"#;
             metadata: CommandMetadata {
                 name: "value-test".to_string(),
                 description: "Testing value conversion".to_string(),
+                category: None,
+                tags: None,
             },
             content: "Value content".to_string(),
         };
@@ -173,11 +210,31 @@ Command content here"#;
     }
 
     #[test]
+    fn test_to_value_with_category_and_tags() {
+        // to_value includes category and tags when set
+        let command = CommandFeature {
+            metadata: CommandMetadata {
+                name: "cmd".to_string(),
+                description: "desc".to_string(),
+                category: Some("Workflow".to_string()),
+                tags: Some(vec!["a".to_string(), "b".to_string()]),
+            },
+            content: "body".to_string(),
+        };
+
+        let value = command.to_value();
+        assert_eq!(value["command"]["category"], "Workflow");
+        assert_eq!(value["command"]["tags"][0], "a");
+    }
+
+    #[test]
     fn test_get_file_name() {
         let command = CommandFeature {
             metadata: CommandMetadata {
                 name: "file-name-test".to_string(),
                 description: "Test".to_string(),
+                category: None,
+                tags: None,
             },
             content: "Content".to_string(),
         };
@@ -206,6 +263,8 @@ String content"#;
             metadata: CommandMetadata {
                 name: "to-string-test".to_string(),
                 description: "To string test".to_string(),
+                category: None,
+                tags: None,
             },
             content: "Content".to_string(),
         };
@@ -214,5 +273,26 @@ String content"#;
         assert!(result.contains("name: to-string-test"));
         assert!(result.contains("description: To string test"));
         assert!(result.contains("Content"));
+    }
+
+    #[test]
+    fn test_scaffold_returns_markdown_with_body() {
+        // scaffold produces valid markdown with name, description, and starter body
+        let content =
+            CommandFeature::scaffold("my-cmd", "Does things", "Workflow", &["tag1".to_string()])
+                .unwrap();
+        assert!(content.starts_with("---"));
+        assert!(content.contains("name: my-cmd"));
+        assert!(content.contains("description: Does things"));
+        assert!(content.contains("category: Workflow"));
+        assert!(content.contains("tag1"));
+    }
+
+    #[test]
+    fn test_scaffold_empty_optional_fields_omitted() {
+        // scaffold omits category and tags when empty
+        let content = CommandFeature::scaffold("cmd", "desc", "", &[]).unwrap();
+        assert!(!content.contains("category"));
+        assert!(!content.contains("tags"));
     }
 }
