@@ -60,11 +60,11 @@ When stdin is not a TTY and `--json` is not passed, the config command SHALL out
 - **THEN** a plain-text listing of features and providers is output and the command exits 0
 
 ### Requirement: TUI mode provides interactive config viewer
-When stdin is a TTY and `--json` is not passed, the config command SHALL display an interactive TUI that allows navigating the config details. The TUI SHALL show features with their enabled/disabled status and providers with their per-feature settings.
+When stdin is a TTY and `--json` is not passed, the config command SHALL display an interactive TUI that shows the config details as read-only panels. The TUI SHALL show features, targets, providers, and variables as `note()` panels that the user steps through by pressing Enter.
 
 #### Scenario: TUI shows config in interactive view
 - **WHEN** `dotagents config` is run in a TTY
-- **THEN** a cliclack-based interactive view displays the config with navigable sections for features and providers
+- **THEN** a cliclack-based view displays read-only note panels for features, targets, providers, and variables; the user advances through each panel by pressing Enter
 
 ### Requirement: --edit flag enables TUI editing for global and local configs
 When `--edit` is passed with `global` or `local`, the command SHALL open an interactive TUI editor that allows the user to add or remove features and providers. Changes SHALL be persisted to the respective config file. When `--edit` is passed with `app`, the command SHALL error.

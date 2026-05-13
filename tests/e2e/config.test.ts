@@ -49,6 +49,7 @@ test.describe("config CLI – app target", () => {
 			expect(stdout).toMatch(/features/i);
 			// Should mention providers or targets
 			expect(stdout).toMatch(/mycode/i);
+			expect(stdout).toMatch(/providers/i);
 		} finally {
 			cleanup(d);
 		}
@@ -133,8 +134,9 @@ test.describe("config CLI – local target", () => {
 			initWithLocalProvider(d);
 			const { exitCode, stdout } = run(["config", "local", "--json"], d);
 			expect(exitCode).toBe(0);
-			// Should be parseable JSON
-			JSON.parse(stdout);
+			const parsed = JSON.parse(stdout);
+			// with-custom-provider template writes features to local config
+			expect(parsed).toHaveProperty("features");
 		} finally {
 			cleanup(d);
 		}
@@ -267,6 +269,9 @@ test.describe("config TUI – T-CA01 app display", () => {
 			terminal.keyPress("Enter");
 			await expect(terminal.getByText("Providers")).toBeVisible();
 			terminal.keyPress("Enter");
+			await expect(terminal.getByText("Variables")).toBeVisible();
+			terminal.keyPress("Enter");
+			await expect(terminal.getByText("Done.")).toBeVisible();
 		} finally {
 			cleanup(d);
 		}
@@ -288,6 +293,9 @@ test.describe("config TUI – T-CG02 global display", () => {
 			terminal.keyPress("Enter");
 			await expect(terminal.getByText("Targets")).toBeVisible();
 			terminal.keyPress("Enter");
+			await expect(terminal.getByText("Variables")).toBeVisible();
+			terminal.keyPress("Enter");
+			await expect(terminal.getByText("Done.")).toBeVisible();
 		} finally {
 			cleanup(d);
 		}
@@ -311,6 +319,9 @@ test.describe("config TUI – T-CL02 local display", () => {
 			terminal.keyPress("Enter");
 			await expect(terminal.getByText("Override Providers")).toBeVisible();
 			terminal.keyPress("Enter");
+			await expect(terminal.getByText("Override Variables")).toBeVisible();
+			terminal.keyPress("Enter");
+			await expect(terminal.getByText("Done.")).toBeVisible();
 		} finally {
 			cleanup(d);
 		}

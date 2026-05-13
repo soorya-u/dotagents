@@ -201,4 +201,53 @@ mod tests {
         let app = AppConfig::from((&global, &local));
         assert_eq!(app.package_runner, None);
     }
+
+    fn make_global_with_targets(targets: Option<HashSet<String>>) -> GlobalConfig {
+        GlobalConfig {
+            schema: None,
+            features: HashSet::new(),
+            targets,
+            providers: None,
+            variables: None,
+            package_runner: None,
+        }
+    }
+
+    fn make_local_with_targets(targets: Option<HashSet<String>>) -> LocalConfig {
+        LocalConfig {
+            schema: None,
+            features: None,
+            targets,
+            providers: None,
+            variables: None,
+            package_runner: None,
+        }
+    }
+
+    #[test]
+    fn local_targets_win_over_global() {
+        // local targets override global targets when both are present
+        let global = make_global_with_targets(Some(["codex".into()].into_iter().collect()));
+        let local = make_local_with_targets(Some(["claude".into()].into_iter().collect()));
+        let app = AppConfig::from((&global, &local));
+        assert_eq!(app.targets, ["claude".to_string()].into_iter().collect());
+    }
+
+    #[test]
+    fn global_targets_used_when_local_absent() {
+        // global targets are used when local specifies none
+        let global = make_global_with_targets(Some(["codex".into()].into_iter().collect()));
+        let local = make_local_with_targets(None);
+        let app = AppConfig::from((&global, &local));
+        assert_eq!(app.targets, ["codex".to_string()].into_iter().collect());
+    }
+
+    #[test]
+    fn both_targets_absent_yields_empty() {
+        // no targets in either config → AppConfig.targets is empty
+        let global = make_global_with_targets(None);
+        let local = make_local_with_targets(None);
+        let app = AppConfig::from((&global, &local));
+        assert!(app.targets.is_empty());
+    }
 }
