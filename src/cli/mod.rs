@@ -1,5 +1,6 @@
 mod commands;
 mod completions;
+mod config;
 mod deploy;
 mod init;
 mod options;

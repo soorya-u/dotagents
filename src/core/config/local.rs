@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use super::common::{PackageRunner, Providers, Targets};
+use super::common::{PackageRunner, Providers};
 use super::traits::TomlConfig;
 use crate::constants::schema::CONFIG_SCHEMA;
 use crate::core::features::Feature;
@@ -14,7 +14,7 @@ pub struct LocalConfig {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub features: Option<HashSet<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub targets: Option<Targets>,
+    pub targets: Option<HashSet<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub providers: Option<Providers>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

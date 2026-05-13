@@ -60,15 +60,16 @@ pub(crate) fn run_init_wizard(opts: &mut InitOptions, dir_exists: bool) -> Resul
     opts.template = Some(template);
 
     // Provider selection — runs before files are written so targets are known upfront.
-    opts.targets = prompt_targets()?;
+    opts.targets = prompt_targets(&[])?.unwrap_or_default();
 
     Ok(true)
 }
 
 /// Fetches the provider registry and prompts the user to select deployment targets.
-/// Returns the selected provider names sorted alphabetically.
-/// On registry fetch failure, warns and returns an empty vec.
-pub(crate) fn prompt_targets() -> Result<Vec<String>> {
+/// Returns `Some(selected)` with the chosen provider names, or `None` if the registry
+/// could not be reached (so callers can distinguish failure from an empty selection).
+/// `initial` lists provider names that should be pre-checked in the multiselect.
+pub(crate) fn prompt_targets(initial: &[String]) -> Result<Option<Vec<String>>> {
     let sp = spinner();
     sp.start("Fetching provider registry…");
 
@@ -80,10 +81,10 @@ pub(crate) fn prompt_targets() -> Result<Vec<String>> {
         Err(e) => {
             sp.error(format!("Could not reach registry: {}", e));
             cliclack::log::warning(
-                "Skipping provider selection — run `dotagents init` again with a network connection to set targets.",
+                "Skipping provider selection — retry with a network connection to set targets.",
             )
             .ok();
-            return Ok(vec![]);
+            return Ok(None);
         }
     };
 
@@ -91,18 +92,25 @@ pub(crate) fn prompt_targets() -> Result<Vec<String>> {
     providers.sort();
 
     if providers.is_empty() {
-        return Ok(vec![]);
+        return Ok(Some(vec![]));
     }
+
+    let initial_values: Vec<String> = initial
+        .iter()
+        .filter(|p| providers.contains(p))
+        .cloned()
+        .collect();
 
     let mut ms = multiselect::<String>("Which providers would you like to target?")
         .required(false)
-        .max_rows(12);
+        .max_rows(12)
+        .initial_values(initial_values);
     for provider in &providers {
         ms = ms.item(provider.clone(), provider.as_str(), "");
     }
     let selected = ms.interact().context("Failed to get provider selection")?;
 
-    Ok(selected)
+    Ok(Some(selected))
 }
 
 /// Shows the closing outro message after init completes successfully.

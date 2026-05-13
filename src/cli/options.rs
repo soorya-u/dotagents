@@ -54,6 +54,9 @@ pub(crate) enum Action {
 
     /// Remove all files deployed by the last `dotagents deploy` run
     Undeploy(UndeployOptions),
+
+    /// Inspect or edit the workspace configuration
+    Config(ConfigOptions),
 }
 
 /// Features that can be scaffolded by `dotagents init`.
@@ -302,6 +305,34 @@ pub(crate) struct UndeployOptions {
     pub dry_run: bool,
 }
 
+/// Target config layer to inspect/edit.
+#[derive(Clone, Debug, Default, PartialEq, Eq, ValueEnum)]
+pub(crate) enum ConfigTarget {
+    /// Merged runtime configuration (default).
+    #[default]
+    App,
+    /// Global config.toml.
+    Global,
+    /// Local local.config.toml.
+    Local,
+}
+
+/// Options for `dotagents config`.
+#[derive(Args, Default)]
+pub(crate) struct ConfigOptions {
+    /// Config target: app (default), global, local
+    #[clap(default_value = "app", value_enum)]
+    pub target: ConfigTarget,
+
+    /// Output as JSON
+    #[clap(long)]
+    pub json: bool,
+
+    /// Edit config interactively (only for global/local targets)
+    #[clap(long)]
+    pub edit: bool,
+}
+
 pub fn get_options() -> Options {
     let mut opt = Options::parse();
 
@@ -408,5 +439,37 @@ mod tests {
         assert!(!opts.has_feature(Feature::Instructions));
         assert!(!opts.has_feature(Feature::Mcp));
         assert!(!opts.has_feature(Feature::Skills));
+    }
+
+    #[test]
+    fn config_target_default_is_app() {
+        // ConfigTarget::default() is App
+        assert_eq!(ConfigTarget::default(), ConfigTarget::App);
+    }
+
+    #[test]
+    fn config_target_value_enum_variants() {
+        // ConfigTarget parses from string variants
+        assert_eq!(
+            ConfigTarget::from_str("app", true).unwrap(),
+            ConfigTarget::App
+        );
+        assert_eq!(
+            ConfigTarget::from_str("global", true).unwrap(),
+            ConfigTarget::Global
+        );
+        assert_eq!(
+            ConfigTarget::from_str("local", true).unwrap(),
+            ConfigTarget::Local
+        );
+    }
+
+    #[test]
+    fn config_options_default() {
+        // ConfigOptions::default() has app target, json=false, edit=false
+        let opts = ConfigOptions::default();
+        assert_eq!(opts.target, ConfigTarget::App);
+        assert!(!opts.json);
+        assert!(!opts.edit);
     }
 }

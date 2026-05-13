@@ -1,5 +1,6 @@
 use super::commands;
 use super::completions::generate_cli_completions;
+use super::config;
 use super::deploy::deploy;
 use super::init::initialize_agents_dir;
 use super::options::{Action, Options};
@@ -37,6 +38,8 @@ pub(crate) fn run(opts: Options) -> Result<bool> {
             undeploy(opts)?;
             true
         }
+        Action::Config(opts) => config::handle(opts.target, opts.json, opts.edit)
+            .context("failed to run `config` subcommand")?,
     };
 
     Ok(success)
