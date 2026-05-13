@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@microsoft/tui-test";
 import {
@@ -114,13 +114,153 @@ test.describe("skills ls CLI", () => {
 		}
 	});
 
-	// --full flag succeeds
-	test("--full exits zero", async () => {
+	// --content flag succeeds
+	test("--content exits zero", async () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
-			const { exitCode } = run(["skills", "ls", "--full"], d);
+			const { exitCode } = run(["skills", "ls", "--content"], d);
 			expect(exitCode).toBe(0);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --json outputs valid JSON array with frontmatter fields
+	test("--json outputs valid JSON array with name and description", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			const { exitCode, stdout } = run(["skills", "ls", "--json"], d);
+			expect(exitCode).toBe(0);
+			const parsed = JSON.parse(stdout);
+			expect(Array.isArray(parsed)).toBe(true);
+			expect(parsed.length).toBeGreaterThanOrEqual(1);
+			expect(parsed[0]).toHaveProperty("name");
+			expect(parsed[0]).toHaveProperty("description");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --json does not include content key without --content
+	test("--json without --content does not include content key", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			const { exitCode, stdout } = run(["skills", "ls", "--json"], d);
+			expect(exitCode).toBe(0);
+			const parsed = JSON.parse(stdout);
+			expect(parsed[0]).not.toHaveProperty("content");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --json --content includes content key with body
+	test("--json --content includes content key with body", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			const { exitCode, stdout } = run(
+				["skills", "ls", "--json", "--content"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			const parsed = JSON.parse(stdout);
+			expect(parsed[0]).toHaveProperty("content");
+			expect(typeof parsed[0].content).toBe("string");
+			expect(parsed[0].content.length).toBeGreaterThan(0);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --content shows body content in text output
+	test("--content shows body content in text output", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			const { exitCode, stderr } = run(["skills", "ls", "--content"], d);
+			expect(exitCode).toBe(0);
+			expect(stderr).toMatch(/var\.agent_name/);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// default (no --content) does NOT show body content
+	test("default output does not show body content", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			const { exitCode, stderr } = run(["skills", "ls"], d);
+			expect(exitCode).toBe(0);
+			expect(stderr).not.toMatch(/var\.agent_name/);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --json outputs pipeable JSON (no extra output)
+	test("--json outputs pipeable JSON", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			const { exitCode, stdout } = run(["skills", "ls", "--json"], d);
+			expect(exitCode).toBe(0);
+			const parsed = JSON.parse(stdout);
+			expect(Array.isArray(parsed)).toBe(true);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --skill filters by skill name
+	test("--skill filters to matching skill", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			const { exitCode, stderr } = run(
+				["skills", "ls", "--skill", "hello-skill"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			expect(stderr).toMatch(/hello-skill/);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --skill with no match shows "No skills found"
+	test("--skill with unmatched name shows no skills found", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			const { exitCode, stderr } = run(
+				["skills", "ls", "--skill", "nonexistent"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			expect(stderr).toMatch(/No skills found/);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --json with empty workspace outputs []
+	test("--json with no skills outputs []", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			// Remove the scaffolded hello-skill to make it empty
+			rmSync(join(d, ".dotagents/skills/hello-skill"), {
+				recursive: true,
+				force: true,
+			});
+			const { exitCode, stdout } = run(["skills", "ls", "--json"], d);
+			expect(exitCode).toBe(0);
+			expect(stdout.trim()).toBe("[]");
 		} finally {
 			cleanup(d);
 		}

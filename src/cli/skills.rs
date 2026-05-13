@@ -1,10 +1,5 @@
 use anyhow::{Context, Result, bail};
 use cliclack::{confirm, input, outro};
-use gray_matter::Matter;
-use gray_matter::engine::YAML;
-use serde_json::Value;
-use serde_yaml::Value as YamlValue;
-use std::collections::BTreeMap;
 use std::fs;
 use std::io::ErrorKind;
 
@@ -12,12 +7,13 @@ use crate::cli::deploy::deploy;
 use crate::cli::options::{
     AddSkillOptions, DeployOptions, RmSkillOptions, SkillsAction, SkillsAddOptions, SubLsOptions,
 };
-use crate::cli::ui::ls::{ListItem, render_skills};
-use crate::constants::templates::{SKILL_STARTER, render_starter};
+use crate::cli::ui::ls::render_skills;
 use crate::core::config::CacheConfig;
 use crate::core::config::app::AppConfig;
 use crate::core::config::common::PackageRunner;
+use crate::core::features::skill::SkillFeature;
 use crate::prelude::*;
+use crate::schema::list_item::ListItem;
 use crate::templates::get_templater;
 use crate::utils::fs::write_file;
 use crate::utils::path::{get_application_dir, get_skills_dir, get_workspace_dir};
@@ -143,28 +139,8 @@ fn new_skill(opts: AddSkillOptions) -> Result<bool> {
         "e.g. Requires openspec CLI.",
     )?;
 
-    // Build frontmatter via serde_yaml to properly escape all values.
-    let mut metadata: BTreeMap<&str, YamlValue> = BTreeMap::new();
-    metadata.insert("version", YamlValue::String("1.0".to_string()));
-
-    let mut fm: BTreeMap<&str, YamlValue> = BTreeMap::new();
-    fm.insert("name", YamlValue::String(opts.name.clone()));
-    fm.insert("description", YamlValue::String(description));
-    fm.insert("license", YamlValue::String(license));
-    fm.insert("compatibility", YamlValue::String(compatibility));
-    fm.insert(
-        "metadata",
-        YamlValue::Mapping(
-            metadata
-                .into_iter()
-                .map(|(k, v)| (YamlValue::String(k.to_string()), v))
-                .collect(),
-        ),
-    );
-    let frontmatter = serde_yaml::to_string(&fm).context("failed to serialize frontmatter")?;
-
-    let body = render_starter(SKILL_STARTER, &opts.name);
-    let content = format!("---\n{}---\n\n{}", frontmatter, body);
+    let content = SkillFeature::scaffold(&opts.name, &description, &license, &compatibility)
+        .context("failed to scaffold skill")?;
 
     write_file(&target, &content).context("failed to write SKILL.md")?;
 
@@ -253,39 +229,27 @@ fn rm_skill(opts: RmSkillOptions) -> Result<bool> {
     Ok(true)
 }
 
-/// Load all skills from `.dotagents/skills/*/SKILL.md`, returning name+description pairs.
-fn load_skills() -> Result<Vec<ListItem>> {
-    let skills_dir = match get_skills_dir() {
-        Ok(d) => d,
-        Err(_) => return Ok(vec![]), // skills dir absent → empty
-    };
-
-    let matter = Matter::<YAML>::new();
-    let mut items = Vec::new();
-
-    for entry in fs::read_dir(&skills_dir).context("failed to read skills directory")? {
-        let entry = entry?;
-        let path = entry.path();
-        if !path.is_dir() {
-            continue;
-        }
-        let skill_md = path.join("SKILL.md");
-        if !skill_md.is_file() {
-            continue;
-        }
-        let content = fs::read_to_string(&skill_md).context("failed to read SKILL.md")?;
-        let Ok(parsed) = matter.parse::<Value>(&content) else {
-            continue;
-        };
-        if let Some(data) = parsed.data {
-            let name: String = data["name"].as_str().unwrap_or("").to_string();
-            let description: String = data["description"].as_str().unwrap_or("").to_string();
-            if !name.is_empty() {
-                items.push(ListItem { name, description });
-            }
-        }
+/// Convert a `SkillFeature` into a `ListItem` for display.
+fn skill_to_list_item(skill: SkillFeature) -> ListItem {
+    let name = skill.metadata.name.clone();
+    let description = skill.metadata.description.clone();
+    let frontmatter = serde_json::to_value(&skill.metadata).unwrap_or_default();
+    ListItem {
+        name,
+        description,
+        frontmatter,
+        body: Some(skill.content),
     }
+}
 
+/// Load all skills from `.dotagents/skills/*/SKILL.md`, returning full frontmatter + body.
+fn load_skills() -> Result<Vec<ListItem>> {
+    // skills dir absent means the feature is not enabled; any other error propagates
+    if get_skills_dir().is_err() {
+        return Ok(vec![]);
+    }
+    let skills = SkillFeature::from_application().context("failed to load skills")?;
+    let mut items: Vec<ListItem> = skills.into_iter().map(skill_to_list_item).collect();
     items.sort_by(|a, b| a.name.cmp(&b.name));
     Ok(items)
 }
@@ -295,8 +259,20 @@ fn ls_skills(opts: SubLsOptions) -> Result<bool> {
     get_application_dir().context(
         "No .dotagents directory found. Run `dotagents init` to initialise a workspace.",
     )?;
-    let skills = load_skills().context("failed to load skills")?;
-    render_skills(skills, opts.full);
+    let mut skills = load_skills().context("failed to load skills")?;
+
+    if let Some(ref filter) = opts.skill {
+        skills.retain(|item| item.name == *filter);
+    }
+
+    if opts.json {
+        let json_items = ListItem::to_json_array(&skills, opts.content);
+        let output = serde_json::to_string_pretty(&json_items)?;
+        println!("{}", output);
+        return Ok(true);
+    }
+
+    render_skills(skills, opts.content);
     Ok(true)
 }
 
@@ -326,18 +302,110 @@ mod tests {
         fs::write(skill_dir.join("SKILL.md"), content).unwrap();
     }
 
+    fn make_skill_full(
+        skills_dir: &std::path::Path,
+        name: &str,
+        description: &str,
+        license: &str,
+        compatibility: &str,
+        body: &str,
+    ) {
+        let skill_dir = skills_dir.join(name);
+        fs::create_dir_all(&skill_dir).unwrap();
+        let content = format!(
+            "---\nname: {}\ndescription: \"{}\"\nlicense: {}\ncompatibility: {}\n---\n\n{}",
+            name, description, license, compatibility, body
+        );
+        fs::write(skill_dir.join("SKILL.md"), content).unwrap();
+    }
+
+    fn load_skills_from_dir(dir: &std::path::Path) -> Result<Vec<ListItem>> {
+        let mut items = Vec::new();
+        for entry in fs::read_dir(dir)? {
+            let entry = entry?;
+            let path = entry.path();
+            if !path.is_dir() {
+                continue;
+            }
+            let skill_md = path.join("SKILL.md");
+            if !skill_md.is_file() {
+                continue;
+            }
+            let content = fs::read_to_string(&skill_md)?;
+            let Ok(skill) = SkillFeature::from_markdown(&content) else {
+                continue;
+            };
+            items.push(skill_to_list_item(skill));
+        }
+        items.sort_by(|a, b| a.name.cmp(&b.name));
+        Ok(items)
+    }
+
     #[test]
     fn load_skills_reads_skill_md_frontmatter() {
-        // load_skills parses name and description from SKILL.md files
+        // load_skills_from parses name and description from SKILL.md files
         let tmp = TempDir::new().unwrap();
         make_skill(tmp.path(), "my-skill", "Does something");
 
-        let matter = Matter::<YAML>::new();
-        let skill_md = tmp.path().join("my-skill").join("SKILL.md");
-        let content = fs::read_to_string(&skill_md).unwrap();
-        let parsed = matter.parse::<Value>(&content).unwrap();
-        let data = parsed.data.unwrap();
-        assert_eq!(data["name"].as_str().unwrap(), "my-skill");
-        assert_eq!(data["description"].as_str().unwrap(), "Does something");
+        let items = load_skills_from_dir(tmp.path()).unwrap();
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].name, "my-skill");
+        assert_eq!(items[0].description, "Does something");
+    }
+
+    #[test]
+    fn load_skills_includes_body_content() {
+        // load_skills_from returns body content alongside frontmatter
+        let tmp = TempDir::new().unwrap();
+        make_skill(tmp.path(), "my-skill", "Does something");
+
+        let items = load_skills_from_dir(tmp.path()).unwrap();
+        assert_eq!(items.len(), 1);
+        assert!(items[0].body.as_deref().unwrap().contains("Body."));
+    }
+
+    #[test]
+    fn load_skills_returns_full_frontmatter() {
+        // load_skills_from returns frontmatter with all fields (license, compatibility)
+        let tmp = TempDir::new().unwrap();
+        make_skill_full(
+            tmp.path(),
+            "my-skill",
+            "A skill",
+            "MIT",
+            "Any agent",
+            "Body",
+        );
+
+        let items = load_skills_from_dir(tmp.path()).unwrap();
+        assert_eq!(items[0].frontmatter["license"], "MIT");
+        assert_eq!(items[0].frontmatter["compatibility"], "Any agent");
+    }
+
+    #[test]
+    fn to_json_array_includes_frontmatter_fields() {
+        // to_json_array includes frontmatter fields like license
+        let items = vec![ListItem {
+            name: "test".into(),
+            description: "desc".into(),
+            frontmatter: serde_json::json!({"name": "test", "license": "MIT"}),
+            body: None,
+        }];
+        let result = ListItem::to_json_array(&items, false);
+        assert_eq!(result[0]["name"], "test");
+        assert_eq!(result[0]["license"], "MIT");
+    }
+
+    #[test]
+    fn to_json_array_with_content_includes_body_for_skills() {
+        // to_json_array with content=true includes body key for skills
+        let items = vec![ListItem {
+            name: "test".into(),
+            description: "desc".into(),
+            frontmatter: serde_json::json!({"name": "test"}),
+            body: Some("body text".into()),
+        }];
+        let result = ListItem::to_json_array(&items, true);
+        assert_eq!(result[0]["content"], "body text");
     }
 }

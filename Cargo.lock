@@ -511,6 +511,7 @@ dependencies = [
  "clap",
  "clap_complete",
  "cliclack",
+ "console",
  "crossterm",
  "dirs",
  "dotenvy",
