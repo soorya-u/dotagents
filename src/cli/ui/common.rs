@@ -1,4 +1,15 @@
+use console::style;
 use crossterm::terminal;
+
+/// Apply cyan+bold styling to a name for regular list rows.
+pub(crate) fn styled_name(name: &str) -> String {
+    style(name).cyan().bold().to_string()
+}
+
+/// Apply green+bold styling to a name for note headers (used with --content in TTY).
+pub(crate) fn styled_note_name(name: &str) -> String {
+    style(name).green().bold().to_string()
+}
 
 /// Detect terminal column count, falling back to 80 on error.
 pub(crate) fn terminal_cols() -> usize {

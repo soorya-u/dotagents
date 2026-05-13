@@ -1,15 +1,11 @@
 use cliclack::outro;
-use console::style;
 
-use crate::cli::ui::common::{terminal_cols, truncate_to_width, wrap_at_width};
+use crate::cli::ui::common::{
+    styled_name, styled_note_name, terminal_cols, truncate_to_width, wrap_at_width,
+};
 use crate::prelude::*;
 use crate::schema::list_item::ListItem;
 use crate::utils::tty::is_tty;
-
-/// Apply cyan+bold styling to a name when colors are enabled (console handles detection).
-fn styled_name(name: &str) -> String {
-    style(name).cyan().bold().to_string()
-}
 
 /// Render one section of items with cliclack log output.
 fn render_section(items: &[ListItem], content: bool, name_col: usize, cols: usize) {
@@ -17,11 +13,7 @@ fn render_section(items: &[ListItem], content: bool, name_col: usize, cols: usiz
         if content && is_tty() {
             let body = item.body.as_deref().unwrap_or("").trim().to_string();
             if !body.is_empty() {
-                let header = format!(
-                    "{} — {}",
-                    style(&item.name).green().bold(),
-                    item.description
-                );
+                let header = format!("{} — {}", styled_note_name(&item.name), item.description);
                 let _ = cliclack::note(header, &body);
             } else {
                 let padded = format!("{:<width$}", item.name, width = name_col);
