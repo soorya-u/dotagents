@@ -1,0 +1,20 @@
+{
+  "$schema": "https://dotagents.soorya-u.dev/v1/schemas/mcp.schema.json",
+  "servers": {
+    "server-stdio": {
+      "type": "stdio",
+      "command": "python",
+      "args": [],
+      "cwd": "{{ dir.workspace }}",
+      "env": {},
+      "envFile": ".env.local"
+    },
+    "server-mcp": {
+      "type": "http",
+      "url": "http://localhost:9000",
+      "headers": {
+        "Authorization": "Bearer ${API_KEY}"
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+schema = "https://dotagents.soorya-u.dev/schemas/config.schema.json"
+features = [
+    "commands",
+    "instructions",
+    "mcp",
+    "skills",
+]
+
+targets = ["gemini"]
+variables = { "agent_name" = "my agent" }
