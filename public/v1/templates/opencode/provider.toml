@@ -1,3 +1,6 @@
+name = "OpenCode"
+url = "https://opencode.ai"
+
 # OpenCode Instructions
 [providers.opencode.instructions]
 template = "https://dotagents.soorya-u.dev/v1/templates/opencode/instruction.hbs"

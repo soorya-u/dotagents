@@ -4,6 +4,7 @@ mod config;
 mod deploy;
 mod init;
 mod options;
+mod providers;
 mod runner;
 mod skills;
 pub(crate) mod ui;

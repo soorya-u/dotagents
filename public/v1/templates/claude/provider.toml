@@ -1,3 +1,6 @@
+name = "Claude Code"
+url = "https://docs.anthropic.com/en/docs/claude-code"
+
 # Claude Commands
 [providers.claude.commands]
 template = "https://dotagents.soorya-u.dev/v1/templates/claude/command.hbs"

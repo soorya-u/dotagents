@@ -56,6 +56,12 @@ pub(crate) enum Action {
         action: CommandsAction,
     },
 
+    /// List providers from the registry
+    Providers {
+        #[clap(subcommand)]
+        action: ProvidersAction,
+    },
+
     /// Remove all files deployed by the last `dotagents deploy` run
     Undeploy(UndeployOptions),
 
@@ -100,6 +106,29 @@ pub(crate) enum CommandsAction {
     Rm(RmCommandOptions),
     /// List commands in .dotagents/commands/
     Ls(SubLsOptions),
+}
+
+/// Subcommands for `dotagents providers`.
+#[derive(Subcommand)]
+pub(crate) enum ProvidersAction {
+    /// List providers from the registry
+    Ls(ProvidersLsOptions),
+}
+
+/// Options for `dotagents providers ls`.
+#[derive(Args, Default)]
+pub(crate) struct ProvidersLsOptions {
+    /// Show documentation URLs for each provider.
+    #[clap(long)]
+    pub url: bool,
+
+    /// Output as JSON array instead of text.
+    #[clap(long)]
+    pub json: bool,
+
+    /// Read registry from cache only; error if cache is cold.
+    #[clap(long)]
+    pub offline: bool,
 }
 
 /// Shared workspace path argument for `--cwd`.

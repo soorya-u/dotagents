@@ -1,3 +1,5 @@
+name = "Codex CLI"
+
 # Codex Commands
 [providers.codex.commands]
 template = "https://dotagents.soorya-u.dev/v1/templates/codex/command.hbs"
