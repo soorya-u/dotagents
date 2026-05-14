@@ -1,4 +1,0 @@
-# Augment Commands
-[providers.roo.commands]
-template = "https://dotagents.soorya-u.dev/v1/templates/roo/command.hbs"
-target = "{{dir.workspace}}/.roo/commands/{{command.name}}.md"

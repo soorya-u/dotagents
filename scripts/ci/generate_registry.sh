@@ -33,11 +33,19 @@ for d in "$ROOT"/*; do
       checksums=$(echo "$checksums" | jq --arg file "$f" --arg sum "$checksum" '.[$file] = $sum')
     done
 
+    # Extract optional display name and URL from provider.toml.
+    display_name=$(sed -n 's/^name = "\(.*\)"$/\1/p' "$d/provider.toml" | head -1)
+    provider_url=$(sed -n 's/^url = "\(.*\)"$/\1/p' "$d/provider.toml" | head -1)
+
     jq \
       --arg name "$name" \
       --arg path "/v1/templates/$name/provider.toml" \
       --argjson checksums "$checksums" \
-      '.providers[$name] = { "path": $path, "checksums": $checksums }' \
+      --arg display_name "$display_name" \
+      --arg provider_url "$provider_url" \
+      '.providers[$name] = { "path": $path, "checksums": $checksums }
+       | if $display_name != "" then .providers[$name].name = $display_name else . end
+       | if $provider_url != "" then .providers[$name].url = $provider_url else . end' \
       "$TMP_FILE" > "${TMP_FILE}.new"
     mv "${TMP_FILE}.new" "$TMP_FILE"
   fi

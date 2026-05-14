@@ -1,3 +1,6 @@
+name = "Junie CLI"
+url = "https://junie.jetbrains.com/docs/junie-cli.html"
+
 # Junie Instructions (requires "guidelines-location": "./guidelines.md" in .junie/config.json)
 [providers.junie.instructions]
 template = "https://dotagents.soorya-u.dev/v1/templates/junie/instruction.hbs"

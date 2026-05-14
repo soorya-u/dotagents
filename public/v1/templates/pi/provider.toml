@@ -1,3 +1,6 @@
+name = "Pi"
+url = "https://pi.dev/docs/latest"
+
 # Pi Commands (Prompt Templates)
 [providers.pi.commands]
 template = "https://dotagents.soorya-u.dev/v1/templates/pi/command.hbs"

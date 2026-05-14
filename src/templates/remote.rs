@@ -394,6 +394,8 @@ mod tests {
             crate::schema::registry::ProviderRegistryEntry {
                 path: path.to_string(),
                 checksums,
+                name: None,
+                url: None,
             },
         );
         Registry { providers }

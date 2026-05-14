@@ -1,3 +1,6 @@
+name = "Kimi Code"
+url = "https://www.kimi.com/code/docs/en/"
+
 # Kimi Instructions
 [providers.kimi.instructions]
 template = "https://dotagents.soorya-u.dev/v1/templates/kimi/instruction.hbs"

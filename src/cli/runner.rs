@@ -4,6 +4,7 @@ use super::config;
 use super::deploy::deploy;
 use super::init::initialize_agents_dir;
 use super::options::{Action, Options};
+use super::providers;
 use super::skills;
 use super::undeploy::undeploy;
 use anyhow::{Context, Result};
@@ -33,6 +34,9 @@ pub(crate) fn run(opts: Options) -> Result<bool> {
         }
         Action::Commands { action } => {
             commands::run_commands(action).context("failed to run `commands` subcommand")?
+        }
+        Action::Providers(opts) => {
+            providers::run_providers(opts).context("failed to run `providers` subcommand")?
         }
         Action::Undeploy(opts) => {
             undeploy(opts)?;

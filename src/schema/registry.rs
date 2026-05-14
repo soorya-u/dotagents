@@ -19,6 +19,12 @@ pub(crate) struct ProviderRegistryEntry {
 
     /// SHA-256 checksums keyed by filename, used for template-source cache invalidation.
     pub checksums: Option<HashMap<String, String>>,
+
+    /// Human-readable display name (e.g. "Claude Code").
+    pub name: Option<String>,
+
+    /// Documentation URL for the provider.
+    pub url: Option<String>,
 }
 
 impl Registry {
@@ -70,6 +76,72 @@ mod tests {
         let registry: Registry = serde_json::from_str(json).unwrap();
         let entry = registry.providers.get("cursor").unwrap();
         assert!(entry.checksums.is_none());
+    }
+
+    // entry with name and url deserialises correctly
+    #[test]
+    fn deserialise_entry_with_name_and_url() {
+        let json = r#"{
+            "providers": {
+                "gemini": {
+                    "path": "/v1/templates/gemini/provider.toml",
+                    "checksums": {},
+                    "name": "Gemini CLI",
+                    "url": "https://google-gemini.github.io/cli"
+                }
+            }
+        }"#;
+        let registry: Registry = serde_json::from_str(json).unwrap();
+        let entry = registry.providers.get("gemini").unwrap();
+        assert_eq!(entry.name.as_deref(), Some("Gemini CLI"));
+        assert_eq!(
+            entry.url.as_deref(),
+            Some("https://google-gemini.github.io/cli")
+        );
+    }
+
+    // entry without name and url fields deserialises with None
+    #[test]
+    fn deserialise_entry_without_name_and_url() {
+        let json = r#"{
+            "providers": {
+                "claude": {
+                    "path": "/v1/templates/claude/provider.toml"
+                }
+            }
+        }"#;
+        let registry: Registry = serde_json::from_str(json).unwrap();
+        let entry = registry.providers.get("claude").unwrap();
+        assert!(entry.name.is_none());
+        assert!(entry.url.is_none());
+    }
+
+    // registry with mixed entries (some with name/url, some without) parses correctly
+    #[test]
+    fn deserialise_mixed_entries() {
+        let json = r#"{
+            "providers": {
+                "claude": {
+                    "path": "/v1/templates/claude/provider.toml"
+                },
+                "gemini": {
+                    "path": "/v1/templates/gemini/provider.toml",
+                    "checksums": {},
+                    "name": "Gemini CLI",
+                    "url": "https://google-gemini.github.io/cli"
+                }
+            }
+        }"#;
+        let registry: Registry = serde_json::from_str(json).unwrap();
+        let claude = registry.providers.get("claude").unwrap();
+        assert!(claude.name.is_none());
+        assert!(claude.url.is_none());
+        let gemini = registry.providers.get("gemini").unwrap();
+        assert_eq!(gemini.name.as_deref(), Some("Gemini CLI"));
+        assert_eq!(
+            gemini.url.as_deref(),
+            Some("https://google-gemini.github.io/cli")
+        );
     }
 
     // unknown extra fields in entry are ignored (forward compatibility)

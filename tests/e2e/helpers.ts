@@ -1,5 +1,11 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import {
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -35,6 +41,25 @@ export function run(
 		stderr: result.stderr?.toString() ?? "",
 		exitCode: result.status ?? 1,
 	};
+}
+
+/// Path to the local registry.json used for offline test fixtures.
+const REGISTRY_JSON_PATH = resolve(
+	process.cwd(),
+	"../../public/v1/templates/registry.json",
+);
+
+/// Create a temp XDG config dir pre-seeded with the local registry.json.
+/// Returns the XDG_CONFIG_HOME path; caller is responsible for cleanup().
+export function seedRegistryCache(): string {
+	const configDir = makeTmpDir();
+	const cacheDir = join(configDir, "dotagents", "cache", "templates");
+	mkdirSync(cacheDir, { recursive: true });
+	writeFileSync(
+		join(cacheDir, "registry.json"),
+		readFileSync(REGISTRY_JSON_PATH, "utf8"),
+	);
+	return configDir;
 }
 
 /// Canonical setup for deploy tests: initializes a workspace with only the local provider.

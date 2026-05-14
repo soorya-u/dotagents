@@ -1,3 +1,6 @@
+name = "Cursor CLI"
+url = "https://cursor.com/docs/cli/overview"
+
 # Cursor Commands
 [providers.cursor.commands]
 template = "https://dotagents.soorya-u.dev/v1/templates/cursor/command.hbs"

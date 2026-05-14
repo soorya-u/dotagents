@@ -1,3 +1,6 @@
+name = "Codex CLI"
+url = "https://developers.openai.com/codex/cli"
+
 # Codex Commands
 [providers.codex.commands]
 template = "https://dotagents.soorya-u.dev/v1/templates/codex/command.hbs"

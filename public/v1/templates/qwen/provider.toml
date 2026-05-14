@@ -1,3 +1,6 @@
+name = "Qwen CLI"
+url = "https://qwenlm.github.io/qwen-code-docs/en/users/overview/"
+
 # Qwen Code Commands
 [providers.qwen.commands]
 template = "https://dotagents.soorya-u.dev/v1/templates/qwen/command.hbs"

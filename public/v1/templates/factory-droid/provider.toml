@@ -1,3 +1,6 @@
+name = "Factory CLI"
+url = "https://docs.factory.ai/cli/getting-started/overview"
+
 # Factory Droid Commands
 [providers.factory-droid.commands]
 template = "https://dotagents.soorya-u.dev/v1/templates/factory-droid/command.hbs"
