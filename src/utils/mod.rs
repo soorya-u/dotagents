@@ -6,7 +6,7 @@ mod json;
 pub(crate) mod logs;
 pub(crate) mod merge;
 pub(crate) mod path;
-pub(crate) mod tty;
+pub(crate) mod tui;
 
 pub(crate) use error::display_error;
 pub(crate) use json::merge_json;

@@ -5,12 +5,12 @@ use crate::cli::ui::common::{
 };
 use crate::prelude::*;
 use crate::schema::list_item::ListItem;
-use crate::utils::tty::is_tty;
+use crate::utils::tui::is_tui_enabled;
 
 /// Render one section of items with cliclack log output.
 fn render_section(items: &[ListItem], content: bool, name_col: usize, cols: usize) {
     for item in items {
-        if content && is_tty() {
+        if content && is_tui_enabled() {
             let body = item.body.as_deref().unwrap_or("").trim().to_string();
             if !body.is_empty() {
                 let header = format!("{} — {}", styled_note_name(&item.name), item.description);

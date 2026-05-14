@@ -16,14 +16,14 @@ use crate::utils::fs::write_file;
 use crate::utils::path::{
     get_application_dir, get_commands_dir, get_workspace_dir, resolve_and_override_workspace,
 };
-use crate::utils::tty::is_tty;
+use crate::utils::tui::is_tui_enabled;
 
 /// Collect a string field: use provided value, prompt in TTY mode, or default to empty.
 fn collect_field(value: Option<String>, prompt: &str, placeholder: &str) -> Result<String> {
     if let Some(v) = value {
         return Ok(v);
     }
-    if is_tty() {
+    if is_tui_enabled() {
         let v: String = input(prompt)
             .placeholder(placeholder)
             .default_input("")
@@ -40,7 +40,7 @@ fn maybe_prompt_deploy(deploy_flag: bool) -> Result<()> {
         deploy(DeployOptions::default()).context("deploy failed")?;
         return Ok(());
     }
-    if is_tty() {
+    if is_tui_enabled() {
         let should_deploy = confirm("Deploy now?")
             .initial_value(false)
             .interact()
@@ -72,7 +72,7 @@ fn new_command(opts: AddCommandOptions) -> Result<bool> {
     }
 
     let use_interactive =
-        is_tty() && opts.description.is_none() && opts.category.is_none() && opts.tags.is_none();
+        is_tui_enabled() && opts.description.is_none() && opts.category.is_none() && opts.tags.is_none();
 
     let description = collect_field(
         opts.description,
@@ -120,7 +120,7 @@ fn rm_command(opts: RmCommandOptions) -> Result<bool> {
     }
 
     // Confirm in TTY unless --force.
-    if is_tty() && !opts.force {
+    if is_tui_enabled() && !opts.force {
         let confirmed = confirm(format!(
             "Remove command '{}'? This cannot be undone.",
             opts.name

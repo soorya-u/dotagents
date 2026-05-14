@@ -27,7 +27,7 @@ use crate::utils::gitignore::{
     GitignorePath, gitignore_path_to_pattern, parse_fenced_section, read_gitignore, write_gitignore,
 };
 use crate::utils::path::{get_workspace_dir, override_workspace_dir};
-use crate::utils::tty::is_tty;
+use crate::utils::tui::is_tui_enabled;
 use cliclack::{outro, spinner};
 
 /// Aggregated result of deploying one feature across all providers.
@@ -179,7 +179,7 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
         AppConfig::from_application(templater).context("Failed to load application config")?;
 
     // In interactive sessions, ask whether to run offline before the registry fetch.
-    if !opts.offline && is_tty() {
+    if !opts.offline && is_tui_enabled() {
         opts.offline = prompt_offline();
     }
 
@@ -189,7 +189,7 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
     let registry: Option<Registry> = if opts.offline {
         None // --offline: skip fetch entirely, resolve from cache only
     } else {
-        let sp = if is_tty() {
+        let sp = if is_tui_enabled() {
             let s = spinner();
             s.start("Fetching provider registry…");
             Some(s)
@@ -305,7 +305,7 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
 
     // Skip gitignore update when no files were written or the user opted out.
     if stats.paths.is_empty() || opts.no_gitignore {
-        if is_tty() {
+        if is_tui_enabled() {
             outro("Done.").ok();
         }
         return Ok(());
@@ -329,7 +329,7 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
             .len();
 
         if new_count == 0 {
-            if is_tty() {
+            if is_tui_enabled() {
                 outro("Done.").ok();
             }
             return Ok(());
@@ -342,7 +342,7 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
         warn!("Failed to update .gitignore: {}", e);
     }
 
-    if is_tty() {
+    if is_tui_enabled() {
         outro("Done.").ok();
     }
 

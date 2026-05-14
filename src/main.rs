@@ -8,6 +8,11 @@ pub(crate) mod utils;
 
 fn main() {
     let opts = cli::get_options();
+    let ci_from_env = std::env::var("DOTAGENTS_CI")
+        .ok()
+        .map(|v| matches!(v.to_lowercase().as_str(), "true" | "1" | "yes"))
+        .unwrap_or(false);
+    utils::tui::set_ci_mode(opts.ci || ci_from_env);
     utils::set_log_config(opts.quiet, opts.verbosity);
 
     match cli::run(opts) {

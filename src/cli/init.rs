@@ -1,5 +1,3 @@
-use std::io::IsTerminal;
-
 use crate::prelude::*;
 use std::{
     fs,
@@ -20,6 +18,7 @@ use crate::core::features::{
     command::CommandFeature, instruction::InstructionFeature, mcp::McpFeature, skill::SkillFeature,
 };
 use crate::utils::fs::write_file;
+use crate::utils::tui::is_tui_enabled;
 use anyhow::{Context, Result};
 
 /// Represents a file to write during init, with an optional condition to skip it.
@@ -50,7 +49,7 @@ impl InitFile {
 
 /// Returns true when init should run in interactive TUI mode.
 fn is_tui_mode(opts: &InitOptions) -> bool {
-    opts.features.is_none() && opts.template.is_none() && std::io::stdin().is_terminal()
+    opts.features.is_none() && opts.template.is_none() && is_tui_enabled()
 }
 
 /// Validates the `--features` flag: errors on empty value or `none` combined with others.
@@ -221,6 +220,15 @@ mod tests {
             template: None,
             targets: vec![],
         }
+    }
+
+    // is_tui_mode returns false when CI mode is active
+    #[test]
+    fn is_tui_mode_false_when_ci_mode_set() {
+        use crate::utils::tui::set_ci_mode;
+        set_ci_mode(true);
+        assert!(!is_tui_mode(&default_opts()));
+        set_ci_mode(false); // reset for other tests
     }
 
     // is_tui_mode returns false when --features is set

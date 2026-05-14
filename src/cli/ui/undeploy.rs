@@ -2,12 +2,12 @@ use std::path::Path;
 
 use cliclack::select;
 
-use crate::utils::tty::is_tty;
+use crate::utils::tui::is_tui_enabled;
 
 /// Prompts the user to confirm deletion of `count` deployed files.
 /// Returns false immediately in non-TTY environments.
 pub(crate) fn prompt_confirm_undeploy(count: usize) -> bool {
-    if !is_tty() {
+    if !is_tui_enabled() {
         return true; // non-TTY: proceed without prompting
     }
     let msg = format!("Remove {} deployed file(s)?", count);
@@ -21,7 +21,7 @@ pub(crate) fn prompt_confirm_undeploy(count: usize) -> bool {
 /// Prompts the user to confirm deletion of a single user-edited file.
 /// Returns false immediately in non-TTY environments.
 pub(crate) fn prompt_delete_edited(path: &Path) -> bool {
-    if !is_tty() {
+    if !is_tui_enabled() {
         return false; // non-TTY: skip without prompting
     }
     let msg = format!("{} was manually edited. Delete it anyway?", path.display());
@@ -33,7 +33,7 @@ pub(crate) fn prompt_delete_edited(path: &Path) -> bool {
 
 /// Prints undeploy completion summary to stdout; no-op in non-TTY environments.
 pub(crate) fn print_undeploy_summary(removed: usize, skipped: usize) {
-    if !is_tty() {
+    if !is_tui_enabled() {
         return;
     }
     if skipped > 0 {
