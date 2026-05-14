@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 mise trust
-dotagents deploy < /dev/null
+mise exec -- dotagents deploy < /dev/null
 bun i --cwd tests/e2e
