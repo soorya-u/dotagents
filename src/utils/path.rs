@@ -325,12 +325,14 @@ mod tests {
     #[test]
     // resolve_and_override_workspace resolves relative paths against CWD
     fn resolve_and_override_workspace_resolves_relative_path() {
-        let original_dir = std::env::current_dir().unwrap();
+        let original_dir = env::current_dir().unwrap();
         let temp = TempDir::new().unwrap();
         fs::create_dir(temp.path().join(ROOT_DIR)).unwrap();
         let _ = std::env::set_current_dir(temp.path());
         let result = resolve_and_override_workspace(Some(PathBuf::from("./")));
-        let _ = std::env::set_current_dir(&original_dir); // restore before temp drops
+        // Restore CWD before temp drops — if temp is deleted first, restoring becomes a no-op
+        // and other tests calling env::current_dir() see a deleted directory.
+        let _ = std::env::set_current_dir(&original_dir);
         if let Err(ref e) = result {
             let msg = e.to_string();
             assert!(
