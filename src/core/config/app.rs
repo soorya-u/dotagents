@@ -11,6 +11,7 @@ use crate::core::config::{FeatureSettings, TomlConfig};
 use crate::core::features::Feature;
 use crate::templates::{RenderType, Templater};
 use crate::utils::merge::merge_optional;
+use crate::utils::path::get_application_dir;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -74,13 +75,22 @@ impl AppConfig {
     pub fn from_application(templater: &Templater) -> Result<Self> {
         let global_config_content =
             templater.render_template(RenderType::Name(GLOBAL_CONFIG_FILE.into()), None)?;
-        let local_config_content =
-            templater.render_template(RenderType::Name(LOCAL_CONFIG_FILE.into()), None)?;
 
-        let local_config = LocalConfig::from_toml(&local_config_content)?;
-        local_config.validate().context("invalid local config")?;
+        let local_config = {
+            let local_config_path = get_application_dir()?.join(LOCAL_CONFIG_FILE);
+            if local_config_path.exists() {
+                let content =
+                    templater.render_template(RenderType::Name(LOCAL_CONFIG_FILE.into()), None)?;
+                let config = LocalConfig::from_toml(&content)?;
+                config.validate().context("invalid local config")?;
+                config
+            } else {
+                LocalConfig::default()
+            }
+        };
+
         let global_config = GlobalConfig::from_toml(&global_config_content)?;
-        global_config.validate().context("invalid local config")?;
+        global_config.validate().context("invalid global config")?;
 
         let app_config = AppConfig::from((&global_config, &local_config));
 

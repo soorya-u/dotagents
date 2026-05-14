@@ -69,13 +69,18 @@ impl Templater {
             .join(GLOBAL_CONFIG_FILE)
             .to_string_lossy()
             .to_string();
-        let local_config_file = application_dir
-            .join(LOCAL_CONFIG_FILE)
-            .to_string_lossy()
-            .to_string();
+        let local_config_path = application_dir.join(LOCAL_CONFIG_FILE);
 
         self.register_template(GLOBAL_CONFIG_FILE, TemplateSource::File(global_config_file))?;
-        self.register_template(LOCAL_CONFIG_FILE, TemplateSource::File(local_config_file))?;
+
+        if local_config_path.exists() {
+            self.register_template(
+                LOCAL_CONFIG_FILE,
+                TemplateSource::File(local_config_path.to_string_lossy().to_string()),
+            )?;
+        } else {
+            self.register_template(LOCAL_CONFIG_FILE, TemplateSource::Text(String::new()))?;
+        }
 
         Ok(())
     }
