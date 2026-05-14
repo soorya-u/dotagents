@@ -231,9 +231,13 @@ fn rewrite_fence(content: &str, patterns: &[String]) -> String {
     match (fence_start_idx, fence_end_idx) {
         (Some(start), Some(end)) => {
             let before = &content[..start];
+            let before = before
+                .strip_suffix("\n\n")
+                .or_else(|| before.strip_suffix('\n'))
+                .unwrap_or(before);
             let after_end = end + FENCE_END.len();
             let after = &content[after_end..];
-            format!("{}\n{}{}", before.trim_end(), fence_body, after)
+            format!("{before}\n{fence_body}{after}")
         }
         _ => {
             let mut result = content.to_string();

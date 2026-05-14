@@ -295,8 +295,8 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
     // Print deploy summary before the gitignore step.
     print_deploy_summary(&stats);
 
-    // Skip gitignore update when no files were written or the user opted out.
-    if stats.written == 0 || opts.no_gitignore {
+    // Skip gitignore update only when the user opted out.
+    if opts.no_gitignore {
         if is_tui_enabled() {
             outro("Done.").ok();
         }
@@ -306,17 +306,17 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
     let workspace_root = get_workspace_dir().context("Failed to get workspace directory")?;
     let cache_targets = cache.lock().unwrap().all_targets();
 
+    if cache_targets.is_empty() {
+        if is_tui_enabled() {
+            outro("Done.").ok();
+        }
+        return Ok(());
+    }
+
     let should_update = if opts.gitignore {
         true
     } else {
-        if cache_targets.is_empty() {
-            if is_tui_enabled() {
-                outro("Done.").ok();
-            }
-            return Ok(());
-        }
-
-        prompt_gitignore_update(cache_targets.len())
+        stats.written > 0 && prompt_gitignore_update(cache_targets.len())
     };
 
     if should_update && let Err(e) = rebuild_fence_from_cache(&cache_targets, &workspace_root) {
