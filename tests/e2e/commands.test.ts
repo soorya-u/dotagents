@@ -328,7 +328,7 @@ test.describe("commands rm CLI", () => {
 			expect(existsSync(join(d, ".mycode/commands/hello.md"))).toBe(true);
 
 			const giBefore = readFileSync(join(d, ".gitignore"), "utf8");
-			expect(giBefore).toContain(".mycode/commands/hello.md");
+			expect(giBefore).toContain(".mycode/");
 
 			const { exitCode } = run(["commands", "rm", "hello", "--force"], d);
 			expect(exitCode).toBe(0);
@@ -336,7 +336,7 @@ test.describe("commands rm CLI", () => {
 			expect(existsSync(join(d, ".mycode/commands/hello.md"))).toBe(false);
 
 			const giAfter = readFileSync(join(d, ".gitignore"), "utf8");
-			expect(giAfter).not.toContain(".mycode/commands/hello.md");
+			expect(giAfter).toContain(".mycode/");
 		} finally {
 			cleanup(d);
 		}

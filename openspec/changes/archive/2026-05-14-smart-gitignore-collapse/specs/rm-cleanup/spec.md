@@ -1,8 +1,4 @@
-## Purpose
-
-Specifies the cleanup behaviour that runs when `dotagents skills rm` or `dotagents commands rm` removes a source item. Cleanup removes all deployed files and cache entries for the item across every provider, then rebuilds the `.gitignore` fence from remaining cached targets using the collapse algorithm.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Removing a skill or command cleans up all deployed output
 When `dotagents skills rm` or `dotagents commands rm` removes a source item, the system SHALL also remove all deployed files and cache entries for that item across every provider. After cache entries are removed, the system SHALL rebuild the `.gitignore` fence from the remaining cached targets using the collapse algorithm. If no cache entries remain after removal, the system SHALL clear the entire fence. Cleanup SHALL run unconditionally — it does not depend on the `--deploy` flag.
@@ -26,18 +22,3 @@ When `dotagents skills rm` or `dotagents commands rm` removes a source item, the
 #### Scenario: Fence remains correctly collapsed after single item removal
 - **WHEN** `.claude/commands/` is collapsed in the fence, and `dotagents commands rm opsx-apply` removes one of 8 commands
 - **THEN** the fence is rebuilt; `.claude/commands/` remains collapsed because the remaining 7 files still fully occupy the directory
-
-### Requirement: Cleanup failures are non-fatal warnings
-If deleting a deployed file fails for reasons other than the file not existing (e.g. permission error), the system SHALL log a warning and continue. The overall `rm` command SHALL exit 0.
-
-#### Scenario: Permission error on deployed file
-- **WHEN** a deployed file exists but cannot be deleted due to permissions
-- **THEN** a warning is logged, the cache entry is still removed, and the command exits 0
-
-### Requirement: Warning shown when item was never deployed
-If no cache entries are found for the removed item, the system SHALL log a warning indicating the item may not have been deployed.
-
-#### Scenario: Skill removed that was never deployed
-- **WHEN** `dotagents skills rm my-skill` is run and no cache entries exist for `my-skill`
-- **THEN** a warning message is logged: `"No deployed files found for 'my-skill' — was it ever deployed?"`
-- **THEN** the source directory is still removed and the command exits 0

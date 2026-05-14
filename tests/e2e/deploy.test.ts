@@ -521,7 +521,7 @@ test.describe("deploy CLI – --gitignore flag", () => {
 			expect(exitCode).toBe(0);
 			const gi = readFileSync(join(d, ".gitignore"), "utf8");
 			expect(gi).toContain("region dotagents");
-			expect(gi).toContain(".mycode/commands/hello.md");
+			expect(gi).toContain(".mycode/");
 		} finally {
 			cleanup(d);
 		}

@@ -1,6 +1,3 @@
-use std::collections::HashSet;
-use std::path::PathBuf;
-
 use crate::prelude::*;
 use rayon::prelude::*;
 use serde_json::{Value, to_value};
@@ -23,9 +20,7 @@ use crate::templates::{
     resolve_provider_defaults,
 };
 use crate::utils::fs::{hash_content, hash_file};
-use crate::utils::gitignore::{
-    GitignorePath, gitignore_path_to_pattern, parse_fenced_section, read_gitignore, write_gitignore,
-};
+use crate::utils::gitignore::rebuild_fence_from_cache;
 use crate::utils::path::{get_workspace_dir, override_workspace_dir};
 use crate::utils::tui::is_tui_enabled;
 use cliclack::{outro, spinner};
@@ -35,7 +30,6 @@ use cliclack::{outro, spinner};
 pub(crate) struct DeployStats {
     pub written: usize,
     pub skipped: usize,
-    pub paths: Vec<GitignorePath>,
     /// Populated only during `--dry-run`; empty in normal deploys.
     pub dry_run_entries: Vec<DryRunDeployEntry>,
 }
@@ -45,7 +39,6 @@ impl DeployStats {
     fn merge(mut self, other: Self) -> Self {
         self.written += other.written;
         self.skipped += other.skipped;
-        self.paths.extend(other.paths);
         self.dry_run_entries.extend(other.dry_run_entries);
         self
     }
@@ -108,7 +101,6 @@ where
 
                     match update {
                         CacheUpdate::Written { hash, target } => {
-                            acc.paths.push(GitignorePath::File(PathBuf::from(&target)));
                             acc.written += 1;
                             cache.lock().unwrap().set(
                                 provider_name,
@@ -303,8 +295,8 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
     // Print deploy summary before the gitignore step.
     print_deploy_summary(&stats);
 
-    // Skip gitignore update when no files were written or the user opted out.
-    if stats.paths.is_empty() || opts.no_gitignore {
+    // Skip gitignore update only when the user opted out.
+    if opts.no_gitignore {
         if is_tui_enabled() {
             outro("Done.").ok();
         }
@@ -312,33 +304,22 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
     }
 
     let workspace_root = get_workspace_dir().context("Failed to get workspace directory")?;
+    let cache_targets = cache.lock().unwrap().all_targets();
+
+    if cache_targets.is_empty() {
+        if is_tui_enabled() {
+            outro("Done.").ok();
+        }
+        return Ok(());
+    }
 
     let should_update = if opts.gitignore {
         true
     } else {
-        // Compute how many patterns would be added to decide whether to prompt.
-        let gitignore_path = workspace_root.join(".gitignore");
-        let current_content = read_gitignore(&gitignore_path)?;
-        let existing = parse_fenced_section(&current_content);
-        let new_count = stats
-            .paths
-            .iter()
-            .filter_map(|entry| gitignore_path_to_pattern(entry, &workspace_root))
-            .filter(|s| !existing.contains(s.as_str()))
-            .collect::<HashSet<_>>()
-            .len();
-
-        if new_count == 0 {
-            if is_tui_enabled() {
-                outro("Done.").ok();
-            }
-            return Ok(());
-        }
-
-        prompt_gitignore_update(new_count)
+        stats.written > 0 && prompt_gitignore_update(cache_targets.len())
     };
 
-    if should_update && let Err(e) = write_gitignore(&workspace_root, &stats.paths) {
+    if should_update && let Err(e) = rebuild_fence_from_cache(&cache_targets, &workspace_root) {
         warn!("Failed to update .gitignore: {}", e);
     }
 

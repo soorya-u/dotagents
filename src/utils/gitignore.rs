@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
 use anyhow::Result;
@@ -7,15 +7,7 @@ use crate::constants::file::{FENCE_END, FENCE_START};
 use crate::utils::fs::{read_file, write_file};
 use crate::utils::path::make_workspace_relative;
 
-/// Represents how a deployed path should appear in .gitignore.
-#[derive(Debug)]
-pub(crate) enum GitignorePath {
-    /// Write the exact file path (e.g. `.kilo/mcp.json`).
-    File(PathBuf),
-}
-
-/// Read .gitignore content, returning empty string if file doesn't exist.
-pub(crate) fn read_gitignore(path: &PathBuf) -> Result<String> {
+fn read_gitignore(path: &PathBuf) -> Result<String> {
     if path.exists() {
         read_file(path)
     } else {
@@ -23,67 +15,229 @@ pub(crate) fn read_gitignore(path: &PathBuf) -> Result<String> {
     }
 }
 
-/// Extract paths currently inside the dotagents fenced section.
-pub(crate) fn parse_fenced_section(content: &str) -> HashSet<String> {
-    let mut paths = HashSet::new();
-    let mut in_fence = false;
+/// Collapse generated paths into directory patterns where possible.
+///
+/// Walks the directory tree bottom-up: if every entry in a directory on disk is
+/// a generated path (or a recursively collapsible subdirectory), the directory
+/// is collapsed to a single trailing-slash pattern (e.g. `.claude/commands/`).
+pub(crate) fn collapse_paths(paths: &[String], workspace_root: &Path) -> Vec<String> {
+    if paths.is_empty() {
+        return vec![];
+    }
 
-    for line in content.lines() {
-        if line == FENCE_START {
-            in_fence = true;
-            continue;
-        }
-        if line == FENCE_END {
-            in_fence = false;
-            continue;
-        }
-        if in_fence && !line.is_empty() && !line.starts_with('#') {
-            paths.insert(line.to_string());
+    let generated: HashSet<PathBuf> = paths.iter().map(PathBuf::from).collect();
+
+    let mut root_files: Vec<String> = Vec::new();
+    let mut dir_files: HashMap<PathBuf, Vec<PathBuf>> = HashMap::new();
+
+    for p in &generated {
+        if let Some(parent) = p.parent() {
+            if parent.as_os_str().is_empty() {
+                root_files.push(p.to_string_lossy().to_string());
+            } else {
+                dir_files
+                    .entry(parent.to_path_buf())
+                    .or_default()
+                    .push(p.clone());
+            }
+        } else {
+            root_files.push(p.to_string_lossy().to_string());
         }
     }
 
-    paths
+    let mut collapsible: HashMap<PathBuf, bool> = HashMap::new();
+    let mut collapsed_dirs: HashSet<PathBuf> = HashSet::new();
+
+    is_collapsible_dir_cached(workspace_root, &generated, &mut collapsible, &dir_files);
+
+    for dir in dir_files.keys() {
+        find_highest_collapsible(
+            dir,
+            workspace_root,
+            &generated,
+            &mut collapsible,
+            &dir_files,
+            &mut collapsed_dirs,
+        );
+    }
+
+    let mut result: Vec<String> = root_files;
+
+    let covered: HashSet<&PathBuf> = collapsed_dirs.iter().collect();
+    for dir in &collapsed_dirs {
+        let mut dominated = false;
+        let mut ancestor = dir.parent();
+        while let Some(a) = ancestor {
+            if a.as_os_str().is_empty() {
+                break;
+            }
+            if covered.contains(&a.to_path_buf()) {
+                dominated = true;
+                break;
+            }
+            ancestor = a.parent();
+        }
+        if !dominated {
+            let mut s = dir.to_string_lossy().to_string();
+            if !s.ends_with('/') {
+                s.push('/');
+            }
+            result.push(s);
+        }
+    }
+
+    for p in &generated {
+        if let Some(parent) = p.parent() {
+            if parent.as_os_str().is_empty() {
+                continue;
+            }
+            let mut is_covered = false;
+            let mut ancestor = Some(parent.to_path_buf());
+            while let Some(a) = ancestor {
+                if a.as_os_str().is_empty() {
+                    break;
+                }
+                if collapsed_dirs.contains(&a) {
+                    is_covered = true;
+                    break;
+                }
+                ancestor = a.parent().map(|p| p.to_path_buf());
+            }
+            if !is_covered {
+                result.push(p.to_string_lossy().to_string());
+            }
+        }
+    }
+
+    result.sort();
+    result
 }
 
-/// Update .gitignore content with new paths, creating/updating the fenced section.
-pub(crate) fn update_gitignore(content: &str, new_paths: &[String]) -> String {
-    let existing_paths = parse_fenced_section(content);
-    let mut to_add: Vec<String> = new_paths
-        .iter()
-        .filter(|p| !existing_paths.contains(*p))
-        .cloned()
-        .collect();
+fn is_collapsible_dir_cached(
+    workspace_root: &Path,
+    generated: &HashSet<PathBuf>,
+    cache: &mut HashMap<PathBuf, bool>,
+    dir_files: &HashMap<PathBuf, Vec<PathBuf>>,
+) {
+    for dir in dir_files.keys() {
+        check_collapsible(dir, workspace_root, generated, cache, dir_files);
+    }
+}
 
-    if to_add.is_empty() {
-        return content.to_string();
+fn check_collapsible(
+    rel_dir: &Path,
+    workspace_root: &Path,
+    generated: &HashSet<PathBuf>,
+    cache: &mut HashMap<PathBuf, bool>,
+    dir_files: &HashMap<PathBuf, Vec<PathBuf>>,
+) -> bool {
+    if let Some(&result) = cache.get(rel_dir) {
+        return result;
     }
 
-    to_add.sort();
+    let abs_dir = workspace_root.join(rel_dir);
+    let entries = match std::fs::read_dir(&abs_dir) {
+        Ok(e) => e,
+        Err(_) => {
+            cache.insert(rel_dir.to_path_buf(), false);
+            return false;
+        }
+    };
+
+    let mut collapsible = true;
+    for entry in entries {
+        let entry = match entry {
+            Ok(e) => e,
+            Err(_) => {
+                collapsible = false;
+                break;
+            }
+        };
+        let name = entry.file_name();
+        let child_rel = rel_dir.join(&name);
+
+        let is_dir = entry.file_type().map(|t| t.is_dir()).unwrap_or(false);
+        if is_dir {
+            if dir_files.contains_key(&child_rel)
+                || has_generated_descendants(&child_rel, generated)
+            {
+                if !check_collapsible(&child_rel, workspace_root, generated, cache, dir_files) {
+                    collapsible = false;
+                    break;
+                }
+            } else {
+                collapsible = false;
+                break;
+            }
+        } else if !generated.contains(&child_rel) {
+            collapsible = false;
+            break;
+        }
+    }
+
+    cache.insert(rel_dir.to_path_buf(), collapsible);
+    collapsible
+}
+
+fn has_generated_descendants(dir: &Path, generated: &HashSet<PathBuf>) -> bool {
+    generated.iter().any(|p| p.starts_with(dir))
+}
+
+fn find_highest_collapsible(
+    dir: &Path,
+    workspace_root: &Path,
+    generated: &HashSet<PathBuf>,
+    cache: &mut HashMap<PathBuf, bool>,
+    dir_files: &HashMap<PathBuf, Vec<PathBuf>>,
+    collapsed: &mut HashSet<PathBuf>,
+) {
+    if !cache.get(dir).copied().unwrap_or(false) {
+        return;
+    }
+
+    let mut highest = dir.to_path_buf();
+    let mut ancestor = dir.parent();
+    while let Some(a) = ancestor {
+        if a.as_os_str().is_empty() {
+            break;
+        }
+        if check_collapsible(a, workspace_root, generated, cache, dir_files) {
+            highest = a.to_path_buf();
+        } else {
+            break;
+        }
+        ancestor = a.parent();
+    }
+
+    collapsed.insert(highest);
+}
+
+/// Rewrite the fenced section with the given patterns, replacing any existing fence content.
+fn rewrite_fence(content: &str, patterns: &[String]) -> String {
+    let mut sorted = patterns.to_vec();
+    sorted.sort();
 
     let fence_start_idx = content.find(FENCE_START);
     let fence_end_idx = content.find(FENCE_END);
 
+    let mut fence_body = String::from(FENCE_START);
+    fence_body.push('\n');
+    for p in &sorted {
+        fence_body.push_str(p);
+        fence_body.push('\n');
+    }
+    fence_body.push_str(FENCE_END);
+
     match (fence_start_idx, fence_end_idx) {
         (Some(start), Some(end)) => {
             let before = &content[..start];
+            let before = before
+                .strip_suffix("\n\n")
+                .or_else(|| before.strip_suffix('\n'))
+                .unwrap_or(before);
             let after_end = end + FENCE_END.len();
             let after = &content[after_end..];
-
-            let mut new_fence = String::from(FENCE_START);
-            new_fence.push('\n');
-
-            for path in existing_paths.iter() {
-                new_fence.push_str(path);
-                new_fence.push('\n');
-            }
-            for path in to_add {
-                new_fence.push_str(&path);
-                new_fence.push('\n');
-            }
-
-            new_fence.push_str(FENCE_END);
-
-            format!("{}{}{}", before.trim_end(), "\n", new_fence) + after
+            format!("{before}\n{fence_body}{after}")
         }
         _ => {
             let mut result = content.to_string();
@@ -91,118 +245,39 @@ pub(crate) fn update_gitignore(content: &str, new_paths: &[String]) -> String {
                 result.push('\n');
             }
             result.push('\n');
-            result.push_str(FENCE_START);
-            result.push('\n');
-
-            for path in existing_paths.iter() {
-                result.push_str(path);
-                result.push('\n');
-            }
-            for path in to_add {
-                result.push_str(&path);
-                result.push('\n');
-            }
-
-            result.push_str(FENCE_END);
+            result.push_str(&fence_body);
             result.push('\n');
             result
         }
     }
 }
 
-/// Convert a `GitignorePath` to its workspace-relative gitignore pattern string.
-pub(crate) fn gitignore_path_to_pattern(
-    entry: &GitignorePath,
+/// Rebuild the `.gitignore` fence from all cached target paths, using the collapse algorithm.
+pub(crate) fn rebuild_fence_from_cache(
+    cache_targets: &[PathBuf],
     workspace_root: &Path,
-) -> Option<String> {
-    match entry {
-        GitignorePath::File(p) => make_workspace_relative(p, workspace_root),
-    }
-}
-
-/// Orchestrate read → update → write; skips write if nothing changed.
-pub(crate) fn write_gitignore(workspace_root: &Path, new_paths: &[GitignorePath]) -> Result<()> {
-    let gitignore_path = workspace_root.join(".gitignore");
-    let relative_paths: Vec<String> = new_paths
+) -> Result<()> {
+    let relative_paths: Vec<String> = cache_targets
         .iter()
-        .filter_map(|entry| gitignore_path_to_pattern(entry, workspace_root))
+        .filter_map(|p| make_workspace_relative(p, workspace_root))
         .collect::<HashSet<_>>()
         .into_iter()
         .collect();
 
     if relative_paths.is_empty() {
-        return Ok(());
+        return clear_gitignore_fence(workspace_root);
     }
 
+    let patterns = collapse_paths(&relative_paths, workspace_root);
+
+    let gitignore_path = workspace_root.join(".gitignore");
     let current_content = read_gitignore(&gitignore_path)?;
-    let new_content = update_gitignore(&current_content, &relative_paths);
+    let new_content = rewrite_fence(&current_content, &patterns);
 
     if current_content != new_content {
         write_file(&gitignore_path, &new_content)?;
     }
 
-    Ok(())
-}
-
-/// Remove specific paths from inside the fenced section; strip fence markers if the fence becomes empty.
-fn remove_paths_from_content(content: &str, paths: &[String]) -> String {
-    if !content.contains(FENCE_START) {
-        return content.to_string();
-    }
-
-    let path_set: HashSet<&str> = paths.iter().map(|s| s.as_str()).collect();
-    let mut result_lines: Vec<&str> = Vec::new();
-    let mut in_fence = false;
-    let mut fence_has_content = false;
-
-    for line in content.lines() {
-        if line == FENCE_START {
-            in_fence = true;
-            result_lines.push(line);
-        } else if line == FENCE_END {
-            in_fence = false;
-            result_lines.push(line);
-        } else if in_fence {
-            if !path_set.contains(line) {
-                result_lines.push(line);
-                if !line.is_empty() && !line.starts_with('#') {
-                    fence_has_content = true;
-                }
-            }
-        } else {
-            result_lines.push(line);
-        }
-    }
-
-    let intermediate = if result_lines.is_empty() {
-        String::new()
-    } else {
-        let mut s = result_lines.join("\n");
-        s.push('\n');
-        s
-    };
-
-    if !fence_has_content {
-        remove_fence(&intermediate)
-    } else {
-        intermediate
-    }
-}
-
-/// Remove specific paths from the `.gitignore` fenced section; strips markers if the fence becomes empty.
-pub(crate) fn remove_paths_from_fence(paths: &[String], workspace_root: &Path) -> Result<()> {
-    if paths.is_empty() {
-        return Ok(());
-    }
-    let gitignore_path = workspace_root.join(".gitignore");
-    let content = read_gitignore(&gitignore_path)?;
-    if content.is_empty() || !content.contains(FENCE_START) {
-        return Ok(());
-    }
-    let new_content = remove_paths_from_content(&content, paths);
-    if content != new_content {
-        write_file(&gitignore_path, &new_content)?;
-    }
     Ok(())
 }
 
@@ -267,55 +342,18 @@ mod tests {
     use crate::constants::file::{FENCE_END, FENCE_START};
 
     #[test]
-    fn test_parse_fenced_section_empty() {
-        // empty content yields no paths
-        let content = "";
-        let paths = parse_fenced_section(content);
-        assert!(paths.is_empty());
-    }
-
-    #[test]
-    fn test_parse_fenced_section_with_fence() {
-        // paths inside the fence are extracted
-        let content =
-            "#region dotagents\n.claude/commands/hello.md\nAGENTS.md\n#endregion dotagents";
-        let paths = parse_fenced_section(content);
-        assert_eq!(paths.len(), 2);
-        assert!(paths.contains(".claude/commands/hello.md"));
-        assert!(paths.contains("AGENTS.md"));
-    }
-
-    #[test]
-    fn test_parse_fenced_section_no_fence() {
-        // content without fence yields no paths
-        let content = "node_modules/\n.env";
-        let paths = parse_fenced_section(content);
-        assert!(paths.is_empty());
-    }
-
-    #[test]
-    fn test_update_gitignore_new_file() {
-        // creates fenced section when none exists
-        let content = "";
-        let new_paths = vec![
-            ".claude/commands/hello.md".to_string(),
-            "CLAUDE.md".to_string(),
-        ];
-        let result = update_gitignore(content, &new_paths);
-
+    fn rewrite_fence_creates_fence_in_empty_content() {
+        let patterns = vec!["CLAUDE.md".to_string(), ".claude/commands/".to_string()];
+        let result = rewrite_fence("", &patterns);
         assert!(result.contains(FENCE_START));
         assert!(result.contains(FENCE_END));
-        assert!(result.contains(".claude/commands/hello.md"));
+        assert!(result.contains(".claude/commands/"));
         assert!(result.contains("CLAUDE.md"));
     }
 
     #[test]
-    fn test_update_gitignore_existing_no_fence() {
-        // appends fence when user content exists without one
-        let content = "node_modules/\n.env";
-        let new_paths = vec!["CLAUDE.md".to_string()];
-        let result = update_gitignore(content, &new_paths);
-
+    fn rewrite_fence_appends_to_existing_content() {
+        let result = rewrite_fence("node_modules/\n.env", &["CLAUDE.md".to_string()]);
         assert!(result.contains("node_modules/"));
         assert!(result.contains(".env"));
         assert!(result.contains(FENCE_START));
@@ -323,63 +361,136 @@ mod tests {
     }
 
     #[test]
-    fn test_update_gitignore_existing_with_fence() {
-        // adds new path to existing fence without touching others
+    fn rewrite_fence_replaces_existing_fence() {
         let content =
             "node_modules/\n#region dotagents\n.claude/commands/hello.md\n#endregion dotagents";
-        let new_paths = vec!["CLAUDE.md".to_string()];
-        let result = update_gitignore(content, &new_paths);
-
+        let result = rewrite_fence(content, &["CLAUDE.md".to_string()]);
         assert!(result.contains("node_modules/"));
-        assert!(result.contains(".claude/commands/hello.md"));
         assert!(result.contains("CLAUDE.md"));
+        assert!(!result.contains(".claude/commands/hello.md"));
     }
 
     #[test]
-    fn test_update_gitignore_no_duplicates() {
-        // already-present path is not written twice
-        let content = "#region dotagents\nCLAUDE.md\n#endregion dotagents";
-        let new_paths = vec!["CLAUDE.md".to_string()];
-        let result = update_gitignore(content, &new_paths);
-
-        let fence_count = result.matches("CLAUDE.md").count();
-        assert_eq!(fence_count, 1, "CLAUDE.md should appear only once");
-    }
-
-    #[test]
-    fn test_update_gitignore_user_content_preserved() {
-        // user content before and after fence is preserved verbatim
+    fn rewrite_fence_preserves_user_content_around_fence() {
         let content = "*.log\n\n#region dotagents\nCLAUDE.md\n#endregion dotagents\n\n.DS_Store\n";
-        let new_paths = vec!["AGENTS.md".to_string()];
-        let result = update_gitignore(content, &new_paths);
-
+        let result = rewrite_fence(content, &["AGENTS.md".to_string()]);
         assert!(result.contains("*.log"));
         assert!(result.contains(".DS_Store"));
-        assert!(result.contains("CLAUDE.md"));
         assert!(result.contains("AGENTS.md"));
+        assert!(!result.contains("CLAUDE.md"));
     }
 
     #[test]
-    fn test_gitignore_path_to_pattern_file() {
-        // File variant produces exact workspace-relative path
-        let root = PathBuf::from("/workspace");
-        let entry = GitignorePath::File(PathBuf::from("/workspace/.kilo/mcp.json"));
-        let pattern = gitignore_path_to_pattern(&entry, &root).unwrap();
-        assert_eq!(pattern, ".kilo/mcp.json");
+    fn rebuild_fence_creates_fence_for_new_gitignore() {
+        use tempfile::TempDir;
+        let tmp = TempDir::new().unwrap();
+        let cmd_dir = tmp.path().join(".claude").join("commands");
+        std::fs::create_dir_all(&cmd_dir).unwrap();
+        std::fs::write(cmd_dir.join("a.md"), "").unwrap();
+
+        let targets = vec![tmp.path().join(".claude/commands/a.md")];
+        rebuild_fence_from_cache(&targets, tmp.path()).unwrap();
+
+        let content = std::fs::read_to_string(tmp.path().join(".gitignore")).unwrap();
+        assert!(content.contains(FENCE_START));
+        assert!(content.contains(FENCE_END));
+        assert!(content.contains(".claude/"));
     }
 
     #[test]
-    fn test_gitignore_path_to_pattern_out_of_workspace() {
-        // path outside workspace root returns None
-        let root = PathBuf::from("/workspace");
-        let entry = GitignorePath::File(PathBuf::from("/other/.kilo/mcp.json"));
-        let pattern = gitignore_path_to_pattern(&entry, &root);
-        assert!(pattern.is_none());
+    fn rebuild_fence_rewrites_existing_fence_with_collapsed_patterns() {
+        use tempfile::TempDir;
+        let tmp = TempDir::new().unwrap();
+        let cmd_dir = tmp.path().join(".mycode").join("commands");
+        std::fs::create_dir_all(&cmd_dir).unwrap();
+        std::fs::write(cmd_dir.join("a.md"), "").unwrap();
+        std::fs::write(cmd_dir.join("b.md"), "").unwrap();
+        std::fs::write(
+            tmp.path().join(".gitignore"),
+            "#region dotagents\n.mycode/commands/a.md\n.mycode/commands/b.md\n#endregion dotagents\n",
+        ).unwrap();
+
+        let targets = vec![
+            tmp.path().join(".mycode/commands/a.md"),
+            tmp.path().join(".mycode/commands/b.md"),
+        ];
+        rebuild_fence_from_cache(&targets, tmp.path()).unwrap();
+
+        let content = std::fs::read_to_string(tmp.path().join(".gitignore")).unwrap();
+        assert!(
+            content.contains(".mycode/"),
+            "should collapse to directory pattern; got:\n{content}"
+        );
+        assert!(
+            !content.contains(".mycode/commands/a.md"),
+            "individual paths should not appear; got:\n{content}"
+        );
+    }
+
+    #[test]
+    fn rebuild_fence_preserves_user_content() {
+        use tempfile::TempDir;
+        let tmp = TempDir::new().unwrap();
+        std::fs::write(tmp.path().join("CLAUDE.md"), "").unwrap();
+        std::fs::write(tmp.path().join(".gitignore"), "*.log\n.DS_Store\n").unwrap();
+
+        let targets = vec![tmp.path().join("CLAUDE.md")];
+        rebuild_fence_from_cache(&targets, tmp.path()).unwrap();
+
+        let content = std::fs::read_to_string(tmp.path().join(".gitignore")).unwrap();
+        assert!(content.contains("*.log"));
+        assert!(content.contains(".DS_Store"));
+        assert!(content.contains("CLAUDE.md"));
+    }
+
+    #[test]
+    fn rebuild_fence_skips_write_when_unchanged() {
+        use tempfile::TempDir;
+        let tmp = TempDir::new().unwrap();
+        std::fs::write(tmp.path().join("CLAUDE.md"), "").unwrap();
+        let initial = "\n#region dotagents\nCLAUDE.md\n#endregion dotagents\n";
+        std::fs::write(tmp.path().join(".gitignore"), initial).unwrap();
+
+        let targets = vec![tmp.path().join("CLAUDE.md")];
+        rebuild_fence_from_cache(&targets, tmp.path()).unwrap();
+
+        let content = std::fs::read_to_string(tmp.path().join(".gitignore")).unwrap();
+        assert_eq!(content, initial);
+    }
+
+    #[test]
+    fn rebuild_fence_clears_fence_when_no_targets() {
+        use tempfile::TempDir;
+        let tmp = TempDir::new().unwrap();
+        std::fs::write(
+            tmp.path().join(".gitignore"),
+            "*.log\n\n#region dotagents\nCLAUDE.md\n#endregion dotagents\n",
+        )
+        .unwrap();
+
+        rebuild_fence_from_cache(&[], tmp.path()).unwrap();
+
+        let content = std::fs::read_to_string(tmp.path().join(".gitignore")).unwrap();
+        assert!(!content.contains(FENCE_START));
+        assert!(content.contains("*.log"));
+    }
+
+    #[test]
+    fn rebuild_fence_handles_missing_gitignore() {
+        use tempfile::TempDir;
+        let tmp = TempDir::new().unwrap();
+        std::fs::write(tmp.path().join("CLAUDE.md"), "").unwrap();
+
+        let targets = vec![tmp.path().join("CLAUDE.md")];
+        rebuild_fence_from_cache(&targets, tmp.path()).unwrap();
+
+        assert!(tmp.path().join(".gitignore").exists());
+        let content = std::fs::read_to_string(tmp.path().join(".gitignore")).unwrap();
+        assert!(content.contains("CLAUDE.md"));
     }
 
     #[test]
     fn test_remove_fence_only_fence() {
-        // content consisting only of a fence returns empty string
         let content = "#region dotagents\n.claude/mcp.json\n#endregion dotagents\n";
         let result = remove_fence(content);
         assert_eq!(result, "");
@@ -387,7 +498,6 @@ mod tests {
 
     #[test]
     fn test_remove_fence_with_preceding_content() {
-        // blank line before fence is removed along with the fence
         let content =
             "node_modules/\n.env\n\n#region dotagents\n.claude/mcp.json\n#endregion dotagents\n";
         let result = remove_fence(content);
@@ -396,7 +506,6 @@ mod tests {
 
     #[test]
     fn test_remove_fence_no_fence_unchanged() {
-        // content without a fence is returned unchanged
         let content = "node_modules/\n.env\n";
         let result = remove_fence(content);
         assert_eq!(result, content);
@@ -404,62 +513,9 @@ mod tests {
 
     #[test]
     fn test_remove_fence_preserves_content_after_fence() {
-        // user content after the fence is preserved
         let content = "#region dotagents\n.claude/mcp.json\n#endregion dotagents\n.DS_Store\n";
         let result = remove_fence(content);
         assert_eq!(result, ".DS_Store\n");
-    }
-
-    #[test]
-    fn remove_paths_from_fence_removes_specified_paths() {
-        // specified paths are removed from inside the fence, others remain
-        use std::fs;
-        use tempfile::TempDir;
-        let tmp = TempDir::new().unwrap();
-        let gi = tmp.path().join(".gitignore");
-        fs::write(
-            &gi,
-            "#region dotagents\n.mycode/commands/hello.md\n.mycode/commands/bye.md\n#endregion dotagents\n",
-        )
-        .unwrap();
-        remove_paths_from_fence(&[".mycode/commands/hello.md".to_string()], tmp.path()).unwrap();
-        let after = fs::read_to_string(&gi).unwrap();
-        assert!(!after.contains(".mycode/commands/hello.md"));
-        assert!(after.contains(".mycode/commands/bye.md"));
-        assert!(after.contains(FENCE_START));
-    }
-
-    #[test]
-    fn remove_paths_from_fence_removes_fence_markers_when_empty() {
-        // when all paths are removed the fence markers are stripped too
-        use std::fs;
-        use tempfile::TempDir;
-        let tmp = TempDir::new().unwrap();
-        let gi = tmp.path().join(".gitignore");
-        fs::write(
-            &gi,
-            "node_modules/\n\n#region dotagents\n.mycode/mcp.json\n#endregion dotagents\n",
-        )
-        .unwrap();
-        remove_paths_from_fence(&[".mycode/mcp.json".to_string()], tmp.path()).unwrap();
-        let after = fs::read_to_string(&gi).unwrap();
-        assert!(!after.contains(FENCE_START));
-        assert!(!after.contains(".mycode/mcp.json"));
-        assert!(after.contains("node_modules/"));
-    }
-
-    #[test]
-    fn remove_paths_from_fence_is_noop_when_path_not_present() {
-        // content is unchanged when the path is not in the fence
-        use std::fs;
-        use tempfile::TempDir;
-        let tmp = TempDir::new().unwrap();
-        let gi = tmp.path().join(".gitignore");
-        let original = "#region dotagents\n.mycode/commands/hello.md\n#endregion dotagents\n";
-        fs::write(&gi, original).unwrap();
-        remove_paths_from_fence(&[".mycode/commands/bye.md".to_string()], tmp.path()).unwrap();
-        let after = fs::read_to_string(&gi).unwrap();
-        assert_eq!(after, original);
     }
 
     #[test]
@@ -516,5 +572,100 @@ mod tests {
         clear_gitignore_fence(tmp.path()).unwrap();
         let after = fs::read_to_string(&gi).unwrap();
         assert_eq!(after, "");
+    }
+
+    #[test]
+    fn collapse_paths_empty_input() {
+        use tempfile::TempDir;
+        let tmp = TempDir::new().unwrap();
+        let result = collapse_paths(&[], tmp.path());
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn collapse_paths_root_files_stay_individual() {
+        use tempfile::TempDir;
+        let tmp = TempDir::new().unwrap();
+        std::fs::write(tmp.path().join("CLAUDE.md"), "").unwrap();
+        std::fs::write(tmp.path().join("AGENTS.md"), "").unwrap();
+        let paths = vec!["CLAUDE.md".to_string(), "AGENTS.md".to_string()];
+        let result = collapse_paths(&paths, tmp.path());
+        assert_eq!(result, vec!["AGENTS.md", "CLAUDE.md"]);
+    }
+
+    #[test]
+    fn collapse_paths_all_files_in_dir_collapses() {
+        use tempfile::TempDir;
+        let tmp = TempDir::new().unwrap();
+        let cmd_dir = tmp.path().join(".claude").join("commands");
+        std::fs::create_dir_all(&cmd_dir).unwrap();
+        std::fs::write(cmd_dir.join("a.md"), "").unwrap();
+        std::fs::write(cmd_dir.join("b.md"), "").unwrap();
+        let paths = vec![
+            ".claude/commands/a.md".to_string(),
+            ".claude/commands/b.md".to_string(),
+        ];
+        let result = collapse_paths(&paths, tmp.path());
+        // .claude/ only contains commands/ (all generated), so it collapses to .claude/
+        assert_eq!(result, vec![".claude/"]);
+    }
+
+    #[test]
+    fn collapse_paths_non_generated_file_prevents_collapse() {
+        use tempfile::TempDir;
+        let tmp = TempDir::new().unwrap();
+        let cmd_dir = tmp.path().join(".claude").join("commands");
+        std::fs::create_dir_all(&cmd_dir).unwrap();
+        std::fs::write(cmd_dir.join("a.md"), "").unwrap();
+        std::fs::write(cmd_dir.join("b.md"), "").unwrap();
+        std::fs::write(cmd_dir.join("custom.md"), "").unwrap();
+        let paths = vec![
+            ".claude/commands/a.md".to_string(),
+            ".claude/commands/b.md".to_string(),
+        ];
+        let result = collapse_paths(&paths, tmp.path());
+        assert!(result.contains(&".claude/commands/a.md".to_string()));
+        assert!(result.contains(&".claude/commands/b.md".to_string()));
+        assert!(!result.contains(&".claude/commands/".to_string()));
+    }
+
+    #[test]
+    fn collapse_paths_nested_collapse() {
+        use tempfile::TempDir;
+        let tmp = TempDir::new().unwrap();
+        let cmd_dir = tmp.path().join(".opencode").join("commands");
+        let skill_dir = tmp.path().join(".opencode").join("skills").join("my-skill");
+        std::fs::create_dir_all(&cmd_dir).unwrap();
+        std::fs::create_dir_all(&skill_dir).unwrap();
+        std::fs::write(cmd_dir.join("a.md"), "").unwrap();
+        std::fs::write(skill_dir.join("SKILL.md"), "").unwrap();
+        let paths = vec![
+            ".opencode/commands/a.md".to_string(),
+            ".opencode/skills/my-skill/SKILL.md".to_string(),
+        ];
+        let result = collapse_paths(&paths, tmp.path());
+        assert_eq!(result, vec![".opencode/"]);
+    }
+
+    #[test]
+    fn collapse_paths_mixed_collapsible_and_non_generated() {
+        use tempfile::TempDir;
+        let tmp = TempDir::new().unwrap();
+        let cmd_dir = tmp.path().join(".claude").join("commands");
+        let skill_dir = tmp.path().join(".claude").join("skills").join("s1");
+        std::fs::create_dir_all(&cmd_dir).unwrap();
+        std::fs::create_dir_all(&skill_dir).unwrap();
+        std::fs::write(cmd_dir.join("a.md"), "").unwrap();
+        std::fs::write(skill_dir.join("SKILL.md"), "").unwrap();
+        // non-generated file in .claude/ prevents full collapse
+        std::fs::write(tmp.path().join(".claude").join("settings.json"), "").unwrap();
+        let paths = vec![
+            ".claude/commands/a.md".to_string(),
+            ".claude/skills/s1/SKILL.md".to_string(),
+        ];
+        let result = collapse_paths(&paths, tmp.path());
+        assert!(result.contains(&".claude/commands/".to_string()));
+        assert!(result.contains(&".claude/skills/".to_string()));
+        assert!(!result.contains(&".claude/".to_string()));
     }
 }

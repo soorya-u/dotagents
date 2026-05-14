@@ -83,6 +83,13 @@ impl CacheConfig {
             .remove(item)
     }
 
+    /// Returns all target paths from the cache.
+    pub fn all_targets(&self) -> Vec<PathBuf> {
+        self.iter_entries()
+            .map(|(_, _, _, entry)| PathBuf::from(&entry.target))
+            .collect()
+    }
+
     /// Removes all entries from the cache.
     pub fn clear(&mut self) {
         self.providers.clear();

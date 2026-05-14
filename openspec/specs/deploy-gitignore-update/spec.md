@@ -10,45 +10,42 @@
 - **THEN** the collected target path list is empty and the gitignore update step is skipped entirely
 
 ### Requirement: Update workspace root .gitignore with fenced section
-When the gitignore update step runs, it SHALL write workspace-relative target paths into a dotagents-managed fenced section in the workspace root `.gitignore`. Lines outside the fenced section SHALL NOT be modified. The fenced section SHALL use `#region dotagents` as the opening marker and `#endregion dotagents` as the closing marker.
+When the gitignore update step runs, it SHALL rebuild the fenced section from all cached target paths using the collapse algorithm. The fence is rewritten from scratch each time — not appended to. Lines outside the fenced section SHALL NOT be modified. The fenced section SHALL use `#region dotagents` as the opening marker and `#endregion dotagents` as the closing marker.
 
 #### Scenario: .gitignore does not exist — create it
 - **WHEN** no `.gitignore` exists at the workspace root
-- **THEN** a new `.gitignore` is created containing only the dotagents fenced section with the collected paths, opened with `#region dotagents` and closed with `#endregion dotagents`
+- **THEN** a new `.gitignore` is created containing only the dotagents fenced section with collapsed patterns
 
 #### Scenario: .gitignore exists without fenced section — append section
 - **WHEN** `.gitignore` exists with user content but no dotagents fence
 - **THEN** the fenced section is appended at the end with `#region dotagents` / `#endregion dotagents` markers; existing content is preserved verbatim
 
-#### Scenario: .gitignore exists with fenced section — add new paths only
-- **WHEN** the `#region dotagents` / `#endregion dotagents` section already contains some paths and deploy wrote additional new paths
-- **THEN** only the new paths are appended inside the fence; existing entries and user content outside the fence are unchanged
+#### Scenario: .gitignore exists with fenced section — rebuild fence
+- **WHEN** the `#region dotagents` / `#endregion dotagents` section already exists
+- **THEN** the fenced section is completely rewritten with the current collapsed patterns; existing user content outside the fence is unchanged
 
-#### Scenario: All paths already present — no write
-- **WHEN** every collected target path is already listed inside the `#region dotagents` section
+#### Scenario: All patterns unchanged — no write
+- **WHEN** the rebuilt fence content is identical to the existing fence content
 - **THEN** `.gitignore` is not modified
 
 #### Scenario: User content outside fence is preserved
 - **WHEN** `.gitignore` contains user entries before and after the dotagents fenced section
-- **THEN** after update, those entries remain exactly as they were
+- **THEN** after rebuild, those entries remain exactly as they were
 
 ### Requirement: Entries are specific workspace-relative file paths
-Each entry written to the fenced section SHALL be the workspace-relative path of the deployed file (e.g. `.claude/commands/hello.md`). Directory patterns and wildcards SHALL NOT be used.
-
-#### Scenario: Specific path for file in subdirectory
-- **WHEN** deploy writes `.github/copilot-instructions.md`
-- **THEN** the gitignore entry is `.github/copilot-instructions.md`, not `.github/` or `.github/*`
+Each entry written to the fenced section SHALL be either a workspace-relative file path (e.g. `.claude/commands/hello.md`) or a workspace-relative directory pattern with trailing slash (e.g. `.claude/commands/`) when the directory's entire contents are generated. The collapse algorithm SHALL determine which format to use for each entry.
 
 #### Scenario: Specific path for root-level file
 - **WHEN** deploy writes `CLAUDE.md` at the workspace root
 - **THEN** the gitignore entry is `CLAUDE.md`
 
-### Requirement: Stale entries accumulate harmlessly
-The gitignore update step SHALL only add paths — it SHALL NOT remove entries from the fenced section, including entries for targets that are no longer configured.
+#### Scenario: Directory pattern for fully-generated directory
+- **WHEN** deploy writes 8 files into `.claude/commands/` and no other files exist in that directory
+- **THEN** the gitignore entry is `.claude/commands/` (single directory pattern)
 
-#### Scenario: Removed target path stays in fence
-- **WHEN** a provider is removed from config and deploy no longer writes `AGENTS.md`
-- **THEN** the `AGENTS.md` entry remains in the fenced section after the next deploy
+#### Scenario: Mixed directory gets individual entries
+- **WHEN** deploy writes files into `.claude/commands/` but the directory also contains a user-created file
+- **THEN** each generated file gets its own gitignore entry
 
 ### Requirement: --gitignore flag updates without prompting
 When `--gitignore` is passed to `dotagents deploy`, the gitignore update step SHALL run automatically after deploy without any interactive prompt.

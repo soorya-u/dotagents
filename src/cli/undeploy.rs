@@ -12,9 +12,7 @@ use crate::cli::ui::undeploy::{
 };
 use crate::core::config::CacheConfig;
 use crate::utils::fs::{delete_file, hash_file, prune_empty_dir};
-use crate::utils::gitignore::{
-    GitignorePath, clear_gitignore_fence, gitignore_path_to_pattern, remove_paths_from_fence,
-};
+use crate::utils::gitignore::{clear_gitignore_fence, rebuild_fence_from_cache};
 use crate::utils::path::{get_workspace_dir, override_workspace_dir};
 use crate::utils::tui::is_tui_enabled;
 
@@ -152,8 +150,6 @@ pub(crate) fn undeploy_item(
         return Ok(());
     }
 
-    let mut gitignore_paths: Vec<String> = Vec::new();
-
     for (provider, target_path) in &entries {
         match std::fs::remove_file(target_path) {
             Ok(()) => {}
@@ -162,17 +158,15 @@ pub(crate) fn undeploy_item(
                 warn!("Failed to delete deployed file {}: {}", target_path, e);
             }
         }
-        // Convert the absolute cache path to a workspace-relative gitignore pattern.
-        if let Some(rel) = gitignore_path_to_pattern(
-            &GitignorePath::File(PathBuf::from(target_path)),
-            workspace_dir,
-        ) {
-            gitignore_paths.push(rel);
-        }
         cache.remove(provider, feature, item_key);
     }
 
-    if let Err(e) = remove_paths_from_fence(&gitignore_paths, workspace_dir) {
+    let remaining_targets = cache.all_targets();
+    if remaining_targets.is_empty() {
+        if let Err(e) = clear_gitignore_fence(workspace_dir) {
+            warn!("Failed to update .gitignore: {}", e);
+        }
+    } else if let Err(e) = rebuild_fence_from_cache(&remaining_targets, workspace_dir) {
         warn!("Failed to update .gitignore: {}", e);
     }
 
