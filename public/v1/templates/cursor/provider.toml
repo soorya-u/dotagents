@@ -1,5 +1,5 @@
-name = "Cursor"
-url = "https://docs.cursor.com"
+name = "Cursor CLI"
+url = "https://cursor.com/docs/cli/overview"
 
 # Cursor Commands
 [providers.cursor.commands]

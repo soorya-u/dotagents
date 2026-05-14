@@ -1,4 +1,5 @@
 name = "Qoder CLI"
+url = "https://docs.qoder.com/cli/quick-start"
 
 # Qoder CLI Instructions
 [providers.qoder-cli.instructions]

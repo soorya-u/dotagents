@@ -1,4 +1,5 @@
-name = "DeepAgents"
+name = "Deep Agents CLI"
+url = "https://docs.langchain.com/oss/python/deepagents/cli/overview"
 
 # Deep Agents Skills
 [providers.deepagents.skills]

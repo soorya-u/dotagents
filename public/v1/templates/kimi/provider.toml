@@ -1,4 +1,5 @@
-name = "Kimi"
+name = "Kimi Code"
+url = "https://www.kimi.com/code/docs/en/"
 
 # Kimi Instructions
 [providers.kimi.instructions]

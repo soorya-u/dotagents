@@ -1,5 +1,5 @@
 name = "Gemini CLI"
-url = "https://google-gemini.github.io/cli"
+url = "https://geminicli.com/docs/"
 
 # Gemini Commands
 [providers.gemini.commands]

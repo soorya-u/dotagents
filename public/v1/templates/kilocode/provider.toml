@@ -1,4 +1,5 @@
 name = "Kilo Code"
+url = "https://kilo.ai/docs/getting-started"
 
 # KiloCode Instructions
 [providers.kilocode.instructions]

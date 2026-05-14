@@ -1,4 +1,5 @@
-name = "Auggie"
+name = "Auggie CLI"
+url = "https://docs.augmentcode.com/cli/overview"
 
 # Augment Commands
 [providers.auggie.commands]

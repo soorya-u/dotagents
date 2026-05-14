@@ -1,4 +1,5 @@
-name = "Junie"
+name = "Junie CLI"
+url = "https://junie.jetbrains.com/docs/junie-cli.html"
 
 # Junie Instructions (requires "guidelines-location": "./guidelines.md" in .junie/config.json)
 [providers.junie.instructions]

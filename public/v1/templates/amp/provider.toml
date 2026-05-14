@@ -1,4 +1,5 @@
-name = "AMP"
+name = "Amp Code"
+url = "https://ampcode.com/manual"
 
 [providers.amp.commands]
 template = "https://dotagents.soorya-u.dev/v1/templates/amp/command.hbs"

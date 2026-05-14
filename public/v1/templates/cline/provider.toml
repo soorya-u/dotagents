@@ -1,4 +1,5 @@
-name = "Cline"
+name = "Cline CLI"
+url = "https://docs.cline.bot/usage/cli-overview"
 
 [providers.cline.commands]
 template = "https://dotagents.soorya-u.dev/v1/templates/cline/command.hbs"

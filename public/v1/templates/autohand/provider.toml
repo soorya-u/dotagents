@@ -1,4 +1,5 @@
-name = "AutoHand"
+name = "AutoHand Code"
+url = "https://autohand.ai/docs"
 
 [providers.autohand.skills]
 template = "https://dotagents.soorya-u.dev/v1/templates/autohand/skill.hbs"
