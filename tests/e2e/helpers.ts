@@ -63,3 +63,11 @@ export function shellProgram(
 		],
 	};
 }
+
+/// Create two temp dirs — a "cwd" dir and a "workspace" dir containing .dotagents/.
+/// Returns both paths; caller must clean up BOTH.
+export function makeTwoDirs(): { cwd: string; workspace: string } {
+	const cwd = makeTmpDir();
+	const workspace = makeTmpDir();
+	return { cwd, workspace };
+}

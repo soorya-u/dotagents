@@ -13,7 +13,9 @@ use crate::core::features::command::CommandFeature;
 use crate::prelude::*;
 use crate::schema::list_item::ListItem;
 use crate::utils::fs::write_file;
-use crate::utils::path::{get_application_dir, get_commands_dir, get_workspace_dir};
+use crate::utils::path::{
+    get_application_dir, get_commands_dir, get_workspace_dir, resolve_and_override_workspace,
+};
 use crate::utils::tty::is_tty;
 
 /// Collect a string field: use provided value, prompt in TTY mode, or default to empty.
@@ -52,6 +54,9 @@ fn maybe_prompt_deploy(deploy_flag: bool) -> Result<()> {
 
 /// Handle `dotagents commands new`.
 fn new_command(opts: AddCommandOptions) -> Result<bool> {
+    resolve_and_override_workspace(opts.workspace.cwd)
+        .context("Failed to resolve workspace directory")?;
+
     let app_dir = get_application_dir().context(
         "No .dotagents directory found. Run `dotagents init` to initialise a workspace.",
     )?;
@@ -101,6 +106,9 @@ fn new_command(opts: AddCommandOptions) -> Result<bool> {
 
 /// Handle `dotagents commands rm`.
 fn rm_command(opts: RmCommandOptions) -> Result<bool> {
+    resolve_and_override_workspace(opts.workspace.cwd)
+        .context("Failed to resolve workspace directory")?;
+
     let app_dir = get_application_dir().context(
         "No .dotagents directory found. Run `dotagents init` to initialise a workspace.",
     )?;
@@ -198,6 +206,9 @@ fn load_commands() -> Result<Vec<ListItem>> {
 
 /// Handle `dotagents commands ls`.
 fn ls_commands(opts: SubLsOptions) -> Result<bool> {
+    resolve_and_override_workspace(opts.workspace.cwd)
+        .context("Failed to resolve workspace directory")?;
+
     get_application_dir().context(
         "No .dotagents directory found. Run `dotagents init` to initialise a workspace.",
     )?;

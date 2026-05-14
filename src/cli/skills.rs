@@ -16,7 +16,9 @@ use crate::prelude::*;
 use crate::schema::list_item::ListItem;
 use crate::templates::get_templater;
 use crate::utils::fs::write_file;
-use crate::utils::path::{get_application_dir, get_skills_dir, get_workspace_dir};
+use crate::utils::path::{
+    get_application_dir, get_skills_dir, get_workspace_dir, resolve_and_override_workspace,
+};
 use crate::utils::tty::is_tty;
 
 /// Collect a string field: use provided value, prompt in TTY mode, or default to empty.
@@ -55,6 +57,9 @@ fn maybe_prompt_deploy(deploy_flag: bool) -> Result<()> {
 
 /// Install a skill into `.dotagents/skills/` by wrapping the `skills` CLI.
 fn add(opts: SkillsAddOptions) -> Result<bool> {
+    resolve_and_override_workspace(opts.workspace.cwd)
+        .context("Failed to resolve workspace directory")?;
+
     let templater = get_templater()?;
     let app_config = AppConfig::from_application(templater)?;
 
@@ -111,6 +116,9 @@ fn add(opts: SkillsAddOptions) -> Result<bool> {
 
 /// Handle `dotagents skills new`.
 fn new_skill(opts: AddSkillOptions) -> Result<bool> {
+    resolve_and_override_workspace(opts.workspace.cwd)
+        .context("Failed to resolve workspace directory")?;
+
     let app_dir = get_application_dir().context(
         "No .dotagents directory found. Run `dotagents init` to initialise a workspace.",
     )?;
@@ -157,6 +165,9 @@ fn new_skill(opts: AddSkillOptions) -> Result<bool> {
 
 /// Handle `dotagents skills rm`.
 fn rm_skill(opts: RmSkillOptions) -> Result<bool> {
+    resolve_and_override_workspace(opts.workspace.cwd)
+        .context("Failed to resolve workspace directory")?;
+
     let app_dir = get_application_dir().context(
         "No .dotagents directory found. Run `dotagents init` to initialise a workspace.",
     )?;
@@ -256,6 +267,9 @@ fn load_skills() -> Result<Vec<ListItem>> {
 
 /// Handle `dotagents skills ls`.
 fn ls_skills(opts: SubLsOptions) -> Result<bool> {
+    resolve_and_override_workspace(opts.workspace.cwd)
+        .context("Failed to resolve workspace directory")?;
+
     get_application_dir().context(
         "No .dotagents directory found. Run `dotagents init` to initialise a workspace.",
     )?;

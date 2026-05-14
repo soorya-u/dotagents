@@ -7,7 +7,7 @@ use anyhow::{Context, Result, bail};
 use cliclack::{intro, multiselect, note, outro, spinner};
 use serde::Serialize;
 
-use crate::cli::options::ConfigTarget;
+use crate::cli::options::{ConfigOptions, ConfigTarget};
 use crate::cli::ui::init::prompt_targets;
 use crate::constants::dir::ROOT_DIR;
 use crate::constants::file::{GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE};
@@ -18,7 +18,7 @@ use crate::core::features::Feature;
 
 use crate::templates::get_templater;
 use crate::utils::fs::write_file;
-use crate::utils::path::get_workspace_dir;
+use crate::utils::path::{get_workspace_dir, resolve_and_override_workspace};
 
 /// Validate `--edit` constraints: reject on `app` target and in non-TTY mode.
 pub(crate) fn validate_edit(target: &ConfigTarget, edit: bool, is_tty: bool) -> Result<()> {
@@ -39,19 +39,22 @@ pub(crate) fn validate_edit(target: &ConfigTarget, edit: bool, is_tty: bool) -> 
 }
 
 /// Top-level handler for `dotagents config`.
-pub(crate) fn handle(target: ConfigTarget, json: bool, edit: bool) -> Result<bool> {
-    validate_edit(&target, edit, std::io::stdin().is_terminal())?;
+pub(crate) fn handle(opts: ConfigOptions) -> Result<bool> {
+    resolve_and_override_workspace(opts.workspace.cwd)
+        .context("Failed to resolve workspace directory")?;
+
+    validate_edit(&opts.target, opts.edit, std::io::stdin().is_terminal())?;
 
     let workspace = get_workspace_dir().context(
         "No .dotagents directory found. Run `dotagents init` to initialise a workspace.",
     )?;
     let root_dir = workspace.join(ROOT_DIR);
 
-    match target {
+    match opts.target {
         ConfigTarget::App => {
-            if json {
+            if opts.json {
                 handle_app_json()?;
-            } else if std::io::stdin().is_terminal() && !edit {
+            } else if std::io::stdin().is_terminal() && !opts.edit {
                 handle_app_tui()?;
             } else {
                 handle_app_text()?;
@@ -59,9 +62,9 @@ pub(crate) fn handle(target: ConfigTarget, json: bool, edit: bool) -> Result<boo
         }
         ConfigTarget::Global => {
             let path = root_dir.join(GLOBAL_CONFIG_FILE);
-            if json {
+            if opts.json {
                 handle_global_json(&path)?;
-            } else if edit {
+            } else if opts.edit {
                 handle_global_edit(&path)?;
             } else if std::io::stdin().is_terminal() {
                 handle_global_tui(&path)?;
@@ -71,9 +74,9 @@ pub(crate) fn handle(target: ConfigTarget, json: bool, edit: bool) -> Result<boo
         }
         ConfigTarget::Local => {
             let path = root_dir.join(LOCAL_CONFIG_FILE);
-            if json {
+            if opts.json {
                 handle_local_json(&path)?;
-            } else if edit {
+            } else if opts.edit {
                 handle_local_edit(&path)?;
             } else if std::io::stdin().is_terminal() {
                 handle_local_tui(&path)?;

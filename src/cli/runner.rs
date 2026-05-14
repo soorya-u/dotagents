@@ -38,8 +38,9 @@ pub(crate) fn run(opts: Options) -> Result<bool> {
             undeploy(opts)?;
             true
         }
-        Action::Config(opts) => config::handle(opts.target, opts.json, opts.edit)
-            .context("failed to run `config` subcommand")?,
+        Action::Config(opts) => {
+            config::handle(opts).context("failed to run `config` subcommand")?
+        }
     };
 
     Ok(success)
