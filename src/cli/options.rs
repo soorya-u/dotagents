@@ -98,9 +98,19 @@ pub(crate) enum CommandsAction {
     Ls(SubLsOptions),
 }
 
+/// Shared workspace path argument for `--cwd`.
+#[derive(Args, Default)]
+pub(crate) struct WorkspaceDirArgs {
+    /// Workspace root directory containing `.dotagents/` (default: inferred from current directory).
+    #[clap(long = "cwd", value_name = "PATH")]
+    pub cwd: Option<PathBuf>,
+}
+
 /// Options shared by `commands ls` and `skills ls`.
 #[derive(Args, Default)]
 pub(crate) struct SubLsOptions {
+    #[clap(flatten)]
+    pub workspace: WorkspaceDirArgs,
     /// Show full word-wrapped descriptions and include the markdown body content of each item.
     #[clap(long = "content")]
     pub content: bool,
@@ -120,6 +130,9 @@ pub(crate) struct SubLsOptions {
 
 #[derive(Args)]
 pub(crate) struct SkillsAddOptions {
+    #[clap(flatten)]
+    pub workspace: WorkspaceDirArgs,
+
     /// Skill name or owner/repo to install (e.g. vercel-labs/agent-skills)
     pub name: String,
 
@@ -219,6 +232,9 @@ impl InitOptions {
 
 #[derive(Args)]
 pub(crate) struct AddCommandOptions {
+    #[clap(flatten)]
+    pub workspace: WorkspaceDirArgs,
+
     /// Name of the command (used as the filename, e.g. "hello" → hello.md).
     pub name: String,
 
@@ -245,6 +261,9 @@ pub(crate) struct AddCommandOptions {
 
 #[derive(Args)]
 pub(crate) struct AddSkillOptions {
+    #[clap(flatten)]
+    pub workspace: WorkspaceDirArgs,
+
     /// Name of the skill (used as the directory name).
     pub name: String,
 
@@ -271,6 +290,9 @@ pub(crate) struct AddSkillOptions {
 
 #[derive(Args)]
 pub(crate) struct RmCommandOptions {
+    #[clap(flatten)]
+    pub workspace: WorkspaceDirArgs,
+
     /// Name of the command to remove.
     pub name: String,
 
@@ -285,6 +307,9 @@ pub(crate) struct RmCommandOptions {
 
 #[derive(Args)]
 pub(crate) struct RmSkillOptions {
+    #[clap(flatten)]
+    pub workspace: WorkspaceDirArgs,
+
     /// Name of the skill to remove.
     pub name: String,
 
@@ -332,6 +357,9 @@ pub(crate) enum ConfigTarget {
 /// Options for `dotagents config`.
 #[derive(Args, Default)]
 pub(crate) struct ConfigOptions {
+    #[clap(flatten)]
+    pub workspace: WorkspaceDirArgs,
+
     /// Config target: app (default), global, local
     #[clap(default_value = "app", value_enum)]
     pub target: ConfigTarget,

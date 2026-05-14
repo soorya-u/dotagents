@@ -5,6 +5,7 @@ import {
 	cleanup,
 	initWithLocalProvider,
 	makeTmpDir,
+	makeTwoDirs,
 	run,
 	shellProgram,
 } from "./helpers.js";
@@ -351,6 +352,121 @@ test.describe("commands rm CLI", () => {
 			run(["commands", "rm", "greet", "--force"], d);
 			expect(existsSync(join(d, ".dotagents/commands/hello.md"))).toBe(true);
 			expect(existsSync(join(d, ".dotagents/commands/greet.md"))).toBe(false);
+		} finally {
+			cleanup(d);
+		}
+	});
+});
+
+// ── commands --cwd ────────────────────────────────────────────────────────────
+
+test.describe("commands --cwd", () => {
+	// commands ls --cwd reads from the specified workspace
+	test("commands ls --cwd reads from target workspace", async () => {
+		const { cwd, workspace } = makeTwoDirs();
+		try {
+			run(["init", "--template", "starter"], workspace);
+			run(["commands", "new", "greet", "--description", "Greet"], workspace);
+			const { exitCode, stderr } = run(
+				["commands", "ls", "--cwd", workspace],
+				cwd,
+			);
+			expect(exitCode).toBe(0);
+			expect(stderr).toMatch(/greet/);
+		} finally {
+			cleanup(cwd);
+			cleanup(workspace);
+		}
+	});
+
+	// commands ls --cwd <nonexistent> exits non-zero
+	test("commands ls --cwd nonexistent exits non-zero", async () => {
+		const d = makeTmpDir();
+		try {
+			const { exitCode, stderr } = run(
+				["commands", "ls", "--cwd", "/tmp/not-a-dotagents-workspace"],
+				d,
+			);
+			expect(exitCode).not.toBe(0);
+			const ok = stderr.includes(".dotagents") || stderr.includes("Failed");
+			expect(ok).toBe(true);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// commands new --cwd creates file in target workspace
+	test("commands new --cwd creates file in target workspace", async () => {
+		const { cwd, workspace } = makeTwoDirs();
+		try {
+			run(["init", "--template", "starter"], workspace);
+			const { exitCode } = run(
+				[
+					"commands",
+					"new",
+					"greet",
+					"--cwd",
+					workspace,
+					"--description",
+					"Test",
+				],
+				cwd,
+			);
+			expect(exitCode).toBe(0);
+			const file = join(workspace, ".dotagents/commands/greet.md");
+			expect(existsSync(file)).toBe(true);
+			const content = readFileSync(file, "utf8");
+			expect(content).toContain("name: greet");
+		} finally {
+			cleanup(cwd);
+			cleanup(workspace);
+		}
+	});
+
+	// commands rm --cwd removes from target workspace
+	test("commands rm --cwd removes from target workspace", async () => {
+		const { cwd, workspace } = makeTwoDirs();
+		try {
+			run(["init", "--template", "starter"], workspace);
+			run(["commands", "new", "greet", "--description", "Test"], workspace);
+			const file = join(workspace, ".dotagents/commands/greet.md");
+			expect(existsSync(file)).toBe(true);
+
+			const { exitCode } = run(
+				["commands", "rm", "greet", "--force", "--cwd", workspace],
+				cwd,
+			);
+			expect(exitCode).toBe(0);
+			expect(existsSync(file)).toBe(false);
+		} finally {
+			cleanup(cwd);
+			cleanup(workspace);
+		}
+	});
+
+	// relative --cwd resolved against CWD
+	test("relative --cwd resolved against current directory", async () => {
+		const d = makeTmpDir();
+		try {
+			const sub = join(d, "sub");
+			run(["init", "--template", "starter", sub]);
+			const { exitCode, stderr } = run(["commands", "ls", "--cwd", "sub"], d);
+			expect(exitCode).toBe(0);
+			expect(stderr).toMatch(/hello/);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --cwd omitted resolves from CWD as before
+	test("--cwd omitted resolves from CWD as before", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			run(["commands", "new", "greet", "--description", "Test"], d);
+			const { exitCode, stderr } = run(["commands", "ls"], d);
+			expect(exitCode).toBe(0);
+			expect(stderr).toMatch(/greet/);
 		} finally {
 			cleanup(d);
 		}

@@ -5,6 +5,7 @@ import {
 	cleanup,
 	initWithLocalProvider,
 	makeTmpDir,
+	makeTwoDirs,
 	run,
 	shellProgram,
 } from "./helpers.js";
@@ -193,6 +194,58 @@ test.describe("config CLI – empty config", () => {
 			const { exitCode, stdout } = run(["config"], d);
 			expect(exitCode).toBe(0);
 			expect(stdout).toMatch(/none configured/i);
+		} finally {
+			cleanup(d);
+		}
+	});
+});
+
+// ── config --cwd ──────────────────────────────────────────────────────────────
+
+test.describe("config --cwd", () => {
+	// config --cwd reads config from target workspace
+	test("config --cwd reads config from target workspace", async () => {
+		const { cwd, workspace } = makeTwoDirs();
+		try {
+			run(["init", "--template", "starter"], workspace);
+			const { exitCode, stdout } = run(["config", "--cwd", workspace], cwd);
+			expect(exitCode).toBe(0);
+			expect(stdout).toMatch(/features/i);
+		} finally {
+			cleanup(cwd);
+			cleanup(workspace);
+		}
+	});
+
+	// config --json --cwd outputs JSON for target workspace
+	test("config --json --cwd outputs JSON for target workspace", async () => {
+		const { cwd, workspace } = makeTwoDirs();
+		try {
+			run(["init", "--template", "starter"], workspace);
+			const { exitCode, stdout } = run(
+				["config", "--json", "--cwd", workspace],
+				cwd,
+			);
+			expect(exitCode).toBe(0);
+			const parsed = JSON.parse(stdout);
+			expect(parsed).toHaveProperty("features");
+		} finally {
+			cleanup(cwd);
+			cleanup(workspace);
+		}
+	});
+
+	// config --cwd without .dotagents/ exits non-zero
+	test("config --cwd nonexistent exits non-zero", async () => {
+		const d = makeTmpDir();
+		try {
+			const { exitCode, stderr } = run(
+				["config", "--cwd", "/tmp/not-a-dotagents-workspace"],
+				d,
+			);
+			expect(exitCode).not.toBe(0);
+			const ok = stderr.includes(".dotagents") || stderr.includes("Failed");
+			expect(ok).toBe(true);
 		} finally {
 			cleanup(d);
 		}

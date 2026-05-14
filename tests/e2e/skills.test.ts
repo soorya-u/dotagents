@@ -5,6 +5,7 @@ import {
 	cleanup,
 	initWithLocalProvider,
 	makeTmpDir,
+	makeTwoDirs,
 	run,
 	shellProgram,
 } from "./helpers.js";
@@ -325,6 +326,77 @@ test.describe("skills rm CLI", () => {
 			expect(stderr).toContain("No deployed files found");
 		} finally {
 			cleanup(d);
+		}
+	});
+});
+
+// ── skills --cwd ──────────────────────────────────────────────────────────────
+
+test.describe("skills --cwd", () => {
+	// skills ls --cwd reads from target workspace
+	test("skills ls --cwd reads from target workspace", async () => {
+		const { cwd, workspace } = makeTwoDirs();
+		try {
+			run(["init", "--template", "starter"], workspace);
+			run(["skills", "new", "my-skill", "--description", "A skill"], workspace);
+			const { exitCode, stderr } = run(
+				["skills", "ls", "--cwd", workspace],
+				cwd,
+			);
+			expect(exitCode).toBe(0);
+			expect(stderr).toMatch(/my-skill/);
+		} finally {
+			cleanup(cwd);
+			cleanup(workspace);
+		}
+	});
+
+	// skills new --cwd creates skill in target workspace
+	test("skills new --cwd creates skill in target workspace", async () => {
+		const { cwd, workspace } = makeTwoDirs();
+		try {
+			run(["init", "--template", "starter"], workspace);
+			const { exitCode } = run(
+				[
+					"skills",
+					"new",
+					"my-skill",
+					"--cwd",
+					workspace,
+					"--description",
+					"Test",
+				],
+				cwd,
+			);
+			expect(exitCode).toBe(0);
+			const file = join(workspace, ".dotagents/skills/my-skill/SKILL.md");
+			expect(existsSync(file)).toBe(true);
+			const content = readFileSync(file, "utf8");
+			expect(content).toContain("name: my-skill");
+		} finally {
+			cleanup(cwd);
+			cleanup(workspace);
+		}
+	});
+
+	// skills rm --cwd removes from target workspace
+	test("skills rm --cwd removes from target workspace", async () => {
+		const { cwd, workspace } = makeTwoDirs();
+		try {
+			run(["init", "--template", "starter"], workspace);
+			run(["skills", "new", "my-skill", "--description", "Test"], workspace);
+			const skillDir = join(workspace, ".dotagents/skills/my-skill");
+			expect(existsSync(skillDir)).toBe(true);
+
+			const { exitCode } = run(
+				["skills", "rm", "my-skill", "--force", "--cwd", workspace],
+				cwd,
+			);
+			expect(exitCode).toBe(0);
+			expect(existsSync(skillDir)).toBe(false);
+		} finally {
+			cleanup(cwd);
+			cleanup(workspace);
 		}
 	});
 });
