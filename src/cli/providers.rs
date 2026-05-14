@@ -22,7 +22,7 @@ struct DisplayProvider {
 fn cache_registry(registry_json: &str) {
     match get_global_template_cache_dir() {
         Ok(cache_dir) => {
-            let path = cache_dir.join("registry.json");
+            let path = cache_dir.join(REGISTRY_FILE);
             if let Err(e) = std::fs::write(&path, registry_json) {
                 warn!("Failed to cache registry: {}", e);
             }
@@ -44,11 +44,12 @@ fn fetch_registry(offline: bool) -> Result<Registry> {
     let body = crate::utils::http::do_get(url)
         .with_context(|| format!("Failed to fetch registry from {}", url))?;
 
-    // Save to cache for offline use.
-    cache_registry(&body);
+    let registry: Registry = serde_json::from_str(&body)
+        .with_context(|| format!("Failed to parse registry JSON from {}", url))?;
 
-    serde_json::from_str(&body)
-        .with_context(|| format!("Failed to parse registry JSON from {}", url))
+    // Cache only after successful parse to avoid poisoning offline cache with bad payloads.
+    cache_registry(&body);
+    Ok(registry)
 }
 
 /// Read `registry.json` from the template-source cache directory.
