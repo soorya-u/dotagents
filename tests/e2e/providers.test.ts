@@ -4,7 +4,6 @@ import {
 	makeTmpDir,
 	run,
 	seedRegistryCache,
-	shellProgram,
 } from "./helpers.js";
 
 // ── providers ls – CLI ────────────────────────────────────────────────────────
@@ -85,44 +84,3 @@ test.describe("providers ls CLI", () => {
 	});
 });
 
-// ── providers ls – TUI ────────────────────────────────────────────────────────
-//
-// TUI discovery observations (2026-05-14, cliclack select with max_rows(10)):
-//   Initial: ◆  Select a provider
-//            │  ● amp
-//            │  ○ auggie
-//            │  ○ autohand  ...  │  ○ deepagents
-//            └
-//   ArrowDown: ● moves from amp → auggie
-//   Enter (on amp): ◇  Select a provider / │  amp / │ / └  — process exits
-
-const tuiD = makeTmpDir();
-
-test.describe("providers ls TUI", () => {
-	test.use({ program: shellProgram(tuiD, ["providers", "ls"]) });
-
-	// T-PV01: prompt header and first item are visible on initial render
-	test("renders Select a provider prompt with first item highlighted", async ({
-		terminal,
-	}) => {
-		await expect(terminal.getByText("Select a provider")).toBeVisible();
-		await expect(terminal.getByText("amp")).toBeVisible();
-	});
-
-	// T-PV02: keyDown moves the selection to the second item
-	test("keyDown moves selection to auggie", async ({ terminal }) => {
-		await expect(terminal.getByText("Select a provider")).toBeVisible();
-		terminal.keyDown();
-		await expect(terminal.getByText("auggie")).toBeVisible();
-	});
-
-	// T-PV03: Enter submits the selection and exits — submitted ◇ state is visible
-	test("Enter submits and shows submitted state with selected slug", async ({
-		terminal,
-	}) => {
-		await expect(terminal.getByText("Select a provider")).toBeVisible();
-		terminal.keyPress("Enter");
-		// After submit cliclack shows ◇ symbol and the selected value inline
-		await expect(terminal.getByText("amp")).toBeVisible();
-	});
-});

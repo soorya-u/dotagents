@@ -1,4 +1,4 @@
-use cliclack::{outro, select};
+use cliclack::{outro, select, spinner};
 use serde::Serialize;
 
 use crate::constants::{domain::registry_url, file::REGISTRY_FILE};
@@ -102,13 +102,7 @@ fn print_text(providers: &[DisplayProvider]) {
     }
 }
 
-/// Output providers as JSON array.
-fn print_json(providers: &[DisplayProvider]) {
-    let output = serde_json::to_string_pretty(providers).expect("failed to serialize to JSON");
-    println!("{}", output);
-}
-
-/// Interactive TUI mode: browsable list with slug and URL shown on the highlighted item.
+/// Interactive TUI mode: scrollable provider list.
 fn run_tui(providers: &[DisplayProvider]) -> Result<bool> {
     if providers.is_empty() {
         outro("No providers found.")?;
@@ -119,7 +113,6 @@ fn run_tui(providers: &[DisplayProvider]) -> Result<bool> {
         .iter()
         .map(|p| {
             let label = p.name.as_deref().unwrap_or(&p.slug);
-            // Only show [slug] in hint when the label is a name, not the slug itself.
             let slug_part = p
                 .name
                 .as_ref()
@@ -136,15 +129,37 @@ fn run_tui(providers: &[DisplayProvider]) -> Result<bool> {
         })
         .collect();
 
-    select("Select a provider")
+    let selected = select("Providers")
         .items(&items)
         .max_rows(10)
         .interact()
         .map_err(|e| anyhow!("TUI interaction failed: {}", e))?;
 
-    outro("")?;
+    let outro_msg = providers
+        .iter()
+        .find(|p| p.slug == selected)
+        .map(|p| {
+            let name = p.name.as_deref().unwrap_or("");
+            let url = p.url.as_deref().unwrap_or("");
+            match (name.is_empty(), url.is_empty()) {
+                (false, false) => format!("{} ({})", name, url),
+                (false, true) => name.to_string(),
+                (true, false) => url.to_string(),
+                (true, true) => "Done".to_string(),
+            }
+        })
+        .unwrap_or_else(|| "Done".to_string());
+
+    outro(outro_msg)?;
     Ok(true)
 }
+
+/// Output providers as JSON array.
+fn print_json(providers: &[DisplayProvider]) {
+    let output = serde_json::to_string_pretty(providers).expect("failed to serialize to JSON");
+    println!("{}", output);
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -278,7 +293,22 @@ pub(crate) fn run_providers(action: ProvidersAction) -> Result<bool> {
 
 /// Handle `dotagents providers ls`.
 fn handle_ls(opts: ProvidersLsOptions) -> Result<bool> {
-    let registry = fetch_registry(opts.offline).context("Failed to load provider registry")?;
+    let registry = if is_tty() && !opts.offline && !opts.json {
+        let sp = spinner();
+        sp.start("Fetching providers…");
+        match fetch_registry(false) {
+            Ok(r) => {
+                sp.clear();
+                r
+            }
+            Err(e) => {
+                sp.error(format!("Could not reach registry: {}", e));
+                return Err(e.context("Failed to load provider registry"));
+            }
+        }
+    } else {
+        fetch_registry(opts.offline).context("Failed to load provider registry")?
+    };
 
     let providers = collect_providers(&registry);
 
