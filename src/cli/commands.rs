@@ -71,8 +71,10 @@ fn new_command(opts: AddCommandOptions) -> Result<bool> {
         );
     }
 
-    let use_interactive =
-        is_tui_enabled() && opts.description.is_none() && opts.category.is_none() && opts.tags.is_none();
+    let use_interactive = is_tui_enabled()
+        && opts.description.is_none()
+        && opts.category.is_none()
+        && opts.tags.is_none();
 
     let description = collect_field(
         opts.description,
