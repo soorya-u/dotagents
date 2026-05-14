@@ -133,7 +133,7 @@
     "goose": {
       "path": "/v1/templates/goose/provider.toml",
       "checksums": {
-        "provider.toml": "d517590438d8ef7b6a91999e4aa0c71eaac4559729dc660795834b5876053b5e",
+        "provider.toml": "e2560d1eba7fb4091e90bfe5c1b55520f5fa0e048e29ec46cb755a18808f61ca",
         "command.hbs": "27da9b4869cfb52fe8ac303b4e80b0146e094f123a92f670b96eb9614c403fd4",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "2b8a672ecee27503275962f91b58b43b8374047aa4c1a3d4aa065e8220c5f273",
