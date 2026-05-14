@@ -29,12 +29,12 @@
 
 ## 5. E2E tests
 
-- [ ] 5.1 tui-devtools discovery pass for `providers ls` TUI flow
-- [ ] 5.2 Add e2e test: `providers ls` CLI default output
-- [ ] 5.3 Add e2e test: `providers ls --url` output
-- [ ] 5.4 Add e2e test: `providers ls --json` valid JSON output
-- [ ] 5.5 Add e2e test: `providers ls --offline` with cold cache errors
-- [ ] 5.6 Add e2e test: `providers ls` TUI mode (fuzzy search and detail view)
+- [x] 5.1 tui-devtools discovery pass for `providers ls` TUI flow
+- [x] 5.2 Add e2e test: `providers ls` CLI default output
+- [x] 5.3 Add e2e test: `providers ls --url` output (N/A — `--url` flag removed; URL always shown)
+- [x] 5.4 Add e2e test: `providers ls --json` valid JSON output
+- [x] 5.5 Add e2e test: `providers ls --offline` with cold cache errors
+- [x] 5.6 Add e2e test: `providers ls` TUI mode (initial render, navigation, Enter submission)
 
 ## 6. Verification
 
