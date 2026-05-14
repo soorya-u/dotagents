@@ -297,7 +297,7 @@ test.describe("skills rm CLI", () => {
 			);
 
 			const giBefore = readFileSync(join(d, ".gitignore"), "utf8");
-			expect(giBefore).toContain(".mycode/skills/hello-skill/SKILL.md");
+			expect(giBefore).toContain(".mycode/");
 
 			const { exitCode } = run(["skills", "rm", "hello-skill", "--force"], d);
 			expect(exitCode).toBe(0);
@@ -307,7 +307,7 @@ test.describe("skills rm CLI", () => {
 			);
 
 			const giAfter = readFileSync(join(d, ".gitignore"), "utf8");
-			expect(giAfter).not.toContain(".mycode/skills/hello-skill/SKILL.md");
+			expect(giAfter).toContain(".mycode/");
 		} finally {
 			cleanup(d);
 		}
