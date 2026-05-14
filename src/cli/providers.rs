@@ -1,4 +1,4 @@
-use cliclack::{intro, outro, select};
+use cliclack::{outro, select};
 use serde::Serialize;
 
 use crate::constants::{domain::registry_url, file::REGISTRY_FILE};
@@ -13,9 +13,7 @@ use super::options::{ProvidersAction, ProvidersLsOptions};
 #[derive(Debug, Serialize)]
 struct DisplayProvider {
     slug: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
     name: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     url: Option<String>,
 }
 
@@ -84,8 +82,8 @@ fn collect_providers(registry: &Registry) -> Vec<DisplayProvider> {
     providers
 }
 
-/// Output providers as plain text or `--url` mode.
-fn print_text(providers: &[DisplayProvider], show_url: bool) {
+/// Output providers as plain text.
+fn print_text(providers: &[DisplayProvider]) {
     if providers.is_empty() {
         println!("No providers found.");
         return;
@@ -93,13 +91,12 @@ fn print_text(providers: &[DisplayProvider], show_url: bool) {
 
     for p in providers {
         let name = p.name.as_deref().unwrap_or("");
-        if show_url {
-            let url = p.url.as_deref().unwrap_or("N/A");
-            println!("{}  ({}) \u{2014} {}", p.slug, name, url);
-        } else if name.is_empty() {
-            println!("{}", p.slug);
-        } else {
-            println!("{}  ({})", p.slug, name);
+        let url = p.url.as_deref().unwrap_or("");
+        match (name.is_empty(), url.is_empty()) {
+            (false, false) => println!("{}  ({}) \u{2014} {}", p.slug, name, url),
+            (false, true) => println!("{}  ({})", p.slug, name),
+            (true, false) => println!("{}  \u{2014} {}", p.slug, url),
+            (true, true) => println!("{}", p.slug),
         }
     }
 }
@@ -110,53 +107,39 @@ fn print_json(providers: &[DisplayProvider]) {
     println!("{}", output);
 }
 
-/// Interactive TUI mode: fuzzy-search select then show provider detail.
-fn run_tui(providers: &[DisplayProvider], show_url: bool) -> Result<bool> {
+/// Interactive TUI mode: browsable list with slug and URL shown on the highlighted item.
+fn run_tui(providers: &[DisplayProvider]) -> Result<bool> {
     if providers.is_empty() {
-        intro("dotagents providers ls")?;
         outro("No providers found.")?;
         return Ok(true);
     }
 
-    loop {
-        let items: Vec<(&str, &str, &str)> = providers
-            .iter()
-            .map(|p| {
-                let label = p.name.as_deref().unwrap_or(&p.slug);
-                let hint = if show_url {
-                    p.url.as_deref().unwrap_or("N/A")
-                } else {
-                    ""
-                };
-                (p.slug.as_str(), label, hint)
-            })
-            .collect();
+    let items: Vec<(&str, &str, String)> = providers
+        .iter()
+        .map(|p| {
+            let label = p.name.as_deref().unwrap_or(&p.slug);
+            // Only show [slug] in hint when the label is a name, not the slug itself.
+            let slug_part = p
+                .name
+                .as_ref()
+                .map(|_| format!("[{}]", p.slug))
+                .unwrap_or_default();
+            let url_part = p.url.as_deref().unwrap_or("");
+            let hint = match (slug_part.is_empty(), url_part.is_empty()) {
+                (false, false) => format!("{} {}", slug_part, url_part),
+                (false, true) => slug_part,
+                (true, false) => url_part.to_string(),
+                (true, true) => String::new(),
+            };
+            (p.slug.as_str(), label, hint)
+        })
+        .collect();
 
-        let selected = select("Select a provider to view details")
-            .items(&items)
-            .interact()
-            .map_err(|e| anyhow!("TUI interaction failed: {}", e))?;
-
-        if let Some(provider) = providers.iter().find(|p| p.slug == selected) {
-            let name = provider.name.as_deref().unwrap_or("N/A");
-            let url = provider.url.as_deref().unwrap_or("N/A");
-
-            intro(format!("Provider: {}", provider.slug))?;
-            println!("Slug:  {}", provider.slug);
-            println!("Name:  {}", name);
-            println!("URL:   {}", url);
-
-            let choices = [("back", "Back to list", ""), ("exit", "Exit", "")];
-            let again = select("")
-                .items(&choices)
-                .interact()
-                .map_err(|e| anyhow!("TUI interaction failed: {}", e))?;
-
-            if again == "exit" {
-                break;
-            }
-        }
-    }
+    select("Select a provider")
+        .items(&items)
+        .max_rows(10)
+        .interact()
+        .map_err(|e| anyhow!("TUI interaction failed: {}", e))?;
 
     outro("")?;
     Ok(true)
@@ -233,9 +216,9 @@ mod tests {
         assert!(roo.url.is_none());
     }
 
-    // print_json outputs valid JSON with correct skip_serializing_if
+    // print_json includes null name and url fields for all providers
     #[test]
-    fn print_json_omit_null_fields() {
+    fn print_json_includes_all_fields() {
         let providers = vec![
             DisplayProvider {
                 slug: "claude".into(),
@@ -253,7 +236,6 @@ mod tests {
         let parsed: Vec<serde_json::Value> = serde_json::from_str(&output).unwrap();
         assert_eq!(parsed.len(), 2);
 
-        // claude has name and url
         let claude = &parsed[0];
         assert_eq!(claude["slug"], "claude");
         assert_eq!(claude["name"], "Claude Code");
@@ -262,11 +244,11 @@ mod tests {
             "https://docs.anthropic.com/en/docs/claude-code"
         );
 
-        // roo has no name or url (skipped by skip_serializing_if)
+        // roo has null name and url
         let roo = &parsed[1];
         assert_eq!(roo["slug"], "roo");
-        assert!(roo.get("name").is_none());
-        assert!(roo.get("url").is_none());
+        assert!(roo["name"].is_null());
+        assert!(roo["url"].is_null());
     }
 
     // read_registry_from_cache errors with clear message when cache is cold
@@ -314,9 +296,9 @@ fn handle_ls(opts: ProvidersLsOptions) -> Result<bool> {
     }
 
     if is_tty() {
-        return run_tui(&providers, opts.url);
+        return run_tui(&providers);
     }
 
-    print_text(&providers, opts.url);
+    print_text(&providers);
     Ok(true)
 }

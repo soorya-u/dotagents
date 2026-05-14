@@ -118,10 +118,6 @@ pub(crate) enum ProvidersAction {
 /// Options for `dotagents providers ls`.
 #[derive(Args, Default)]
 pub(crate) struct ProvidersLsOptions {
-    /// Show documentation URLs for each provider.
-    #[clap(long)]
-    pub url: bool,
-
     /// Output as JSON array instead of text.
     #[clap(long)]
     pub json: bool,
