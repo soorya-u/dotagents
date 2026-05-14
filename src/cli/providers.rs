@@ -7,7 +7,7 @@ use crate::schema::registry::Registry;
 use crate::utils::path::get_global_template_cache_dir;
 use crate::utils::tui::is_tty;
 
-use super::options::{ProvidersAction, ProvidersLsOptions};
+use super::options::ProvidersLsOptions;
 
 /// A display-friendly provider entry.
 #[derive(Debug, Serialize)]
@@ -283,15 +283,8 @@ mod tests {
     }
 }
 
-/// Dispatch `dotagents providers`.
-pub(crate) fn run_providers(action: ProvidersAction) -> Result<bool> {
-    match action {
-        ProvidersAction::Ls(opts) => handle_ls(opts),
-    }
-}
-
-/// Handle `dotagents providers ls`.
-fn handle_ls(opts: ProvidersLsOptions) -> Result<bool> {
+/// Handle `dotagents providers`.
+pub(crate) fn run_providers(opts: ProvidersLsOptions) -> Result<bool> {
     let registry = if is_tty() && !opts.offline && !opts.json {
         let sp = spinner();
         sp.start("Fetching providers…");

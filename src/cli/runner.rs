@@ -35,8 +35,8 @@ pub(crate) fn run(opts: Options) -> Result<bool> {
         Action::Commands { action } => {
             commands::run_commands(action).context("failed to run `commands` subcommand")?
         }
-        Action::Providers { action } => {
-            providers::run_providers(action).context("failed to run `providers` subcommand")?
+        Action::Providers(opts) => {
+            providers::run_providers(opts).context("failed to run `providers` subcommand")?
         }
         Action::Undeploy(opts) => {
             undeploy(opts)?;

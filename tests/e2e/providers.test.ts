@@ -8,7 +8,7 @@ test.describe("providers ls CLI", () => {
 	test("--json exits 0 and returns valid JSON array", async () => {
 		const d = makeTmpDir();
 		try {
-			const { exitCode, stdout } = run(["providers", "ls", "--json"], d);
+			const { exitCode, stdout } = run(["providers", "--json"], d);
 			expect(exitCode).toBe(0);
 			const parsed = JSON.parse(stdout);
 			expect(Array.isArray(parsed)).toBe(true);
@@ -29,7 +29,7 @@ test.describe("providers ls CLI", () => {
 		const xdgDir = seedRegistryCache();
 		try {
 			const { exitCode, stdout } = run(
-				["providers", "ls", "--json", "--offline"],
+				["providers", "--json", "--offline"],
 				d,
 				{ XDG_CONFIG_HOME: xdgDir },
 			);
@@ -50,7 +50,7 @@ test.describe("providers ls CLI", () => {
 		const d = makeTmpDir();
 		const xdgDir = seedRegistryCache();
 		try {
-			const { exitCode, stdout } = run(["providers", "ls", "--offline"], d, {
+			const { exitCode, stdout } = run(["providers", "--offline"], d, {
 				XDG_CONFIG_HOME: xdgDir,
 			});
 			expect(exitCode).toBe(0);
@@ -67,7 +67,7 @@ test.describe("providers ls CLI", () => {
 		const d = makeTmpDir();
 		const xdgDir = makeTmpDir(); // empty — no registry seeded
 		try {
-			const { exitCode, stderr } = run(["providers", "ls", "--offline"], d, {
+			const { exitCode, stderr } = run(["providers", "--offline"], d, {
 				XDG_CONFIG_HOME: xdgDir,
 			});
 			expect(exitCode).not.toBe(0);

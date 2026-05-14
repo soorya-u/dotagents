@@ -57,10 +57,7 @@ pub(crate) enum Action {
     },
 
     /// List providers from the registry
-    Providers {
-        #[clap(subcommand)]
-        action: ProvidersAction,
-    },
+    Providers(ProvidersLsOptions),
 
     /// Remove all files deployed by the last `dotagents deploy` run
     Undeploy(UndeployOptions),
@@ -108,14 +105,7 @@ pub(crate) enum CommandsAction {
     Ls(SubLsOptions),
 }
 
-/// Subcommands for `dotagents providers`.
-#[derive(Subcommand)]
-pub(crate) enum ProvidersAction {
-    /// List providers from the registry
-    Ls(ProvidersLsOptions),
-}
-
-/// Options for `dotagents providers ls`.
+/// Options for `dotagents providers`.
 #[derive(Args, Default)]
 pub(crate) struct ProvidersLsOptions {
     /// Output as JSON array instead of text.
