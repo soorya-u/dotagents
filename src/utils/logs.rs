@@ -2,7 +2,7 @@ use std::sync::OnceLock;
 
 use simplelog::{ColorChoice, ConfigBuilder, LevelFilter, TerminalMode};
 
-use crate::utils::tty::is_tty;
+use crate::utils::tui::is_tui_enabled;
 
 /// Runtime logging configuration, decided once at startup.
 pub(crate) struct LogConfig {
@@ -19,7 +19,7 @@ pub(crate) fn log_config() -> Option<&'static LogConfig> {
 
 /// Initialises logging: TTY → cliclack backend; non-TTY → simplelog backend.
 pub(crate) fn set_log_config(quiet: bool, verbosity: u8) {
-    let tty = is_tty();
+    let tty = is_tui_enabled();
 
     let level = if quiet {
         LevelFilter::Error

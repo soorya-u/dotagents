@@ -16,6 +16,10 @@ pub(crate) struct Options {
     #[clap(short, long, value_parser, global = true)]
     pub quiet: bool,
 
+    /// Force non-interactive CI mode; suppresses all prompts (equivalent to DOTAGENTS_CI=true)
+    #[clap(long, global = true)]
+    pub ci: bool,
+
     #[clap(subcommand)]
     pub action: Option<Action>,
 }

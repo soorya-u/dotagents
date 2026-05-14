@@ -19,13 +19,16 @@ export function cleanup(dir: string): void {
 
 /// Run the binary with the given args in the given working directory (non-TTY).
 /// Always captures both stdout and stderr so callers can inspect both streams.
+/// Pass `env` to merge extra environment variables into the child process environment.
 export function run(
 	args: string[],
 	cwd: string,
+	env?: Record<string, string>,
 ): { stdout: string; stderr: string; exitCode: number } {
 	const result = spawnSync(BIN, args, {
 		cwd,
 		stdio: ["pipe", "pipe", "pipe"],
+		env: env ? { ...process.env, ...env } : undefined,
 	});
 	return {
 		stdout: result.stdout?.toString() ?? "",

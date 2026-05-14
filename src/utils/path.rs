@@ -325,13 +325,12 @@ mod tests {
     #[test]
     // resolve_and_override_workspace resolves relative paths against CWD
     fn resolve_and_override_workspace_resolves_relative_path() {
+        let original_dir = std::env::current_dir().unwrap();
         let temp = TempDir::new().unwrap();
         fs::create_dir(temp.path().join(ROOT_DIR)).unwrap();
-        // Navigate into the temp dir and resolve a relative "." path
-        let _guard = std::env::set_current_dir(temp.path()).ok();
-        // "./" relative path
+        let _ = std::env::set_current_dir(temp.path());
         let result = resolve_and_override_workspace(Some(PathBuf::from("./")));
-        // May pass or fail depending on OnceLock state — we just check it doesn't panic
+        let _ = std::env::set_current_dir(&original_dir); // restore before temp drops
         if let Err(ref e) = result {
             let msg = e.to_string();
             assert!(

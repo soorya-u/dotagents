@@ -16,7 +16,7 @@ use crate::utils::gitignore::{
     GitignorePath, clear_gitignore_fence, gitignore_path_to_pattern, remove_paths_from_fence,
 };
 use crate::utils::path::{get_workspace_dir, override_workspace_dir};
-use crate::utils::tty::is_tty;
+use crate::utils::tui::is_tui_enabled;
 
 pub(super) fn undeploy(mut opts: UndeployOptions) -> Result<()> {
     // Override workspace root before any path resolution is triggered.
@@ -40,7 +40,7 @@ pub(super) fn undeploy(mut opts: UndeployOptions) -> Result<()> {
     if entries.is_empty() {
         if opts.dry_run {
             print_dry_run_undeploy_summary(&[]);
-        } else if is_tty() {
+        } else if is_tui_enabled() {
             println!("Nothing to undeploy.");
         }
         return Ok(());
