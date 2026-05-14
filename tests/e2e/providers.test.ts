@@ -1,10 +1,5 @@
 import { expect, test } from "@microsoft/tui-test";
-import {
-	cleanup,
-	makeTmpDir,
-	run,
-	seedRegistryCache,
-} from "./helpers.js";
+import { cleanup, makeTmpDir, run, seedRegistryCache } from "./helpers.js";
 
 // ── providers ls – CLI ────────────────────────────────────────────────────────
 
@@ -83,4 +78,3 @@ test.describe("providers ls CLI", () => {
 		}
 	});
 });
-

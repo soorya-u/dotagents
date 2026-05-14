@@ -328,11 +328,11 @@ mod tests {
         let original_dir = env::current_dir().unwrap();
         let temp = TempDir::new().unwrap();
         fs::create_dir(temp.path().join(ROOT_DIR)).unwrap();
-        let _ = std::env::set_current_dir(temp.path());
+        std::env::set_current_dir(temp.path()).unwrap();
         let result = resolve_and_override_workspace(Some(PathBuf::from("./")));
         // Restore CWD before temp drops — if temp is deleted first, restoring becomes a no-op
         // and other tests calling env::current_dir() see a deleted directory.
-        let _ = std::env::set_current_dir(&original_dir);
+        std::env::set_current_dir(&original_dir).unwrap();
         if let Err(ref e) = result {
             let msg = e.to_string();
             assert!(

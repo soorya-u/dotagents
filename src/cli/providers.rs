@@ -5,7 +5,7 @@ use crate::constants::{domain::registry_url, file::REGISTRY_FILE};
 use crate::prelude::*;
 use crate::schema::registry::Registry;
 use crate::utils::path::get_global_template_cache_dir;
-use crate::utils::tty::is_tty;
+use crate::utils::tui::is_tty;
 
 use super::options::{ProvidersAction, ProvidersLsOptions};
 
@@ -159,7 +159,6 @@ fn print_json(providers: &[DisplayProvider]) {
     let output = serde_json::to_string_pretty(providers).expect("failed to serialize to JSON");
     println!("{}", output);
 }
-
 
 #[cfg(test)]
 mod tests {
