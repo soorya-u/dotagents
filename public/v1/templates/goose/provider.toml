@@ -1,5 +1,5 @@
 name = "Goose"
-url =  "https://goose-docs.ai/docs/quickstart"
+url = "https://goose-docs.ai/docs/quickstart"
 
 # Goose Instructions
 [providers.goose.instructions]
