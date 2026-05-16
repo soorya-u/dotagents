@@ -20,7 +20,7 @@
 
 - [ ] 4.1 Add e2e test in `tests/e2e/undeploy.test.ts`: deploy, manually delete one deployed file, run `undeploy --force --no-gitignore`, assert exit 0 and remaining files deleted (TC-UNDEPLOY-14)
 - [ ] 4.2 Update gitignore removal logic in `src/core/gitignore/` to recognize and remove old-style `# BEGIN dotagents managed` / `# END dotagents managed` markers alongside current `#region`/`#endregion` markers
-- [ ] 4.3 Add e2e test in `tests/e2e/undeploy.test.ts`: write `.gitignore` with old-style fence markers, deploy, run `undeploy --force`, assert old-style markers are removed (TC-UNDEPLOY-12)
+- [ ] 4.3 Add e2e test in `tests/e2e/undeploy.test.ts`: write `.gitignore` containing old-style `# BEGIN dotagents managed` / `# END dotagents managed` fence markers (do NOT deploy first), run `undeploy --force`, assert exit 0 and old-style markers are removed from `.gitignore` (TC-UNDEPLOY-12)
 
 ## 5. Verification
 

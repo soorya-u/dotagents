@@ -17,7 +17,7 @@ The no-providers case: `deploy_feature()` calls `app_config.get_provider_feature
 
 ## Decisions
 
-1. **`println!()` in non-TTY summary**: The TTY branch keeps the `"✓ "` prefix; the non-TTY branch omits the checkmark and uses a plain `println!()` like `"deployed: 2 written, 1 skipped"`. This separates the TUI styling concern from the visibility concern.
+1. **`println!()` in non-TTY summary**: The TTY branch keeps the `"✓ "` prefix; the non-TTY branch omits the checkmark and uses a plain `println!()` like `"2 written, 1 skipped"`. This separates the TUI styling concern from the visibility concern.
 
 2. **Warn on zero total providers**: After `resolve_provider_defaults()` and before the deploy loop, check `app_config` for any provider entries. If none exist across all features, emit `warn!("No providers configured — nothing to deploy. Add providers to config.toml.")`. This is a single check at the top level, not inside each `deploy_feature()` call.
 

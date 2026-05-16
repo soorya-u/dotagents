@@ -6,7 +6,7 @@
 
 ## 2. Config missing-file tests
 
-- [ ] 2.1 Add e2e test in `tests/e2e/config.test.ts`: init, delete `local.config.toml`, run `config local --ci`, assert exit 0 and stdout contains "No local config" (TC-CFG-08 text)
+- [ ] 2.1 Add e2e test in `tests/e2e/config.test.ts`: init, delete `local.config.toml`, run `config local --ci`, assert exit 0 and stdout contains "No local config found" (TC-CFG-08 text)
 - [ ] 2.2 Add e2e test in `tests/e2e/config.test.ts`: init, delete `local.config.toml`, run `config local --json`, assert exit 0 and stdout is `{}` (TC-CFG-08 JSON)
 - [ ] 2.3 Add e2e test in `tests/e2e/config.test.ts`: init, delete `config.toml`, run `config global --ci`, assert exit 1 and stderr contains "not found" (TC-CFG-09)
 - [ ] 2.4 Add e2e test in `tests/e2e/config.test.ts`: init, delete `config.toml`, run `config global --json`, assert exit 1 and stderr contains "not found" (TC-CFG-09 JSON)
@@ -21,7 +21,7 @@
 - [ ] 4.1 Update `src/cli/providers.rs` to gate text output behind quiet flag check — when `--quiet` is active, skip `println!()` output (TC-PROV-09 implementation)
 - [ ] 4.2 Add `debug!()` calls in providers fetch/cache path to emit diagnostic info visible at `-v` level (TC-PROV-10 implementation)
 - [ ] 4.3 Add e2e test in `tests/e2e/providers.test.ts`: seed cache, run `providers --ci --quiet --offline`, assert exit 0 and stdout is empty (TC-PROV-09)
-- [ ] 4.4 Add e2e test in `tests/e2e/providers.test.ts`: seed cache, run `providers --ci -v --offline`, assert exit 0 and stderr contains debug diagnostic output (TC-PROV-10)
+- [ ] 4.4 Add e2e test in `tests/e2e/providers.test.ts`: seed cache, run `providers --ci -v --offline`, assert exit 0 and stderr contains debug diagnostic output (TC-PROV-10); both tests use seeded cache + `--offline` for determinism
 
 ## 5. Verification
 

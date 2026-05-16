@@ -12,7 +12,7 @@
 - **THEN** a message indicating no providers were found is displayed and the command exits 0
 
 #### Scenario: Error message references correct command name
-- **WHEN** the registry cannot be read from cache
+- **WHEN** the registry cannot be read from cache (for cache behavior details, see `template-source-cache` spec)
 - **THEN** the error message instructs the user to run `dotagents providers` (NOT `dotagents providers ls`)
 
 ## ADDED Requirements

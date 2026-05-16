@@ -11,5 +11,5 @@ The `--quiet` flag currently has no effect on the `providers` command because ou
 The `--verbose` flag currently adds no extra detail to the `providers` command output. Add diagnostic information (cache status, fetch URL) at debug level, then add e2e test.
 
 #### Scenario: --verbose adds diagnostic output (TC-PROV-10)
-- **WHEN** `providers --ci -v --offline` is run with a seeded cache
+- **WHEN** `providers --ci -v --offline` is run with a seeded cache (seeded per `template-source-cache` spec)
 - **THEN** exit code is 0, stderr contains debug-level output with cache or fetch diagnostic information (e.g., cache path, "reading from cache", or similar)

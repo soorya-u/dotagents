@@ -10,12 +10,13 @@ When a Handlebars template render fails, the error chain SHALL contain exactly o
 - **THEN** the string `"failed to render template"` does NOT appear more than once
 
 #### Scenario: Template content render failure shows phase and provider context
-- **WHEN** a provider's template file contains a Handlebars syntax error
+- **WHEN** a provider named `"mycode"` has a template file containing a Handlebars syntax error
 - **WHEN** `deploy` is run
-- **THEN** the error chain contains a string matching `"unable to render template content for provider"`
-- **THEN** the provider name is included in the error context
+- **THEN** the error chain contains exactly one string matching `"unable to render template content for provider 'mycode'"`
+- **THEN** the string `"failed to render template"` does NOT appear in the error chain
 
 #### Scenario: Feature variable render failure shows phase context
 - **WHEN** a feature's content (e.g. INSTRUCTIONS.md) contains a Handlebars syntax error
 - **WHEN** `deploy` is run
-- **THEN** the error chain contains `"unable to render feature variables"`
+- **THEN** the error chain contains exactly one string `"unable to render feature variables"`
+- **THEN** the string `"failed to render template"` does NOT appear in the error chain

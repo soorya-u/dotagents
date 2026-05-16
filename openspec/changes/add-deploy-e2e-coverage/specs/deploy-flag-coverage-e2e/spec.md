@@ -5,7 +5,7 @@ Verify that `--no-gitignore` suppresses gitignore fence creation during deploy.
 
 #### Scenario: --no-gitignore skips gitignore update (TC-DEPLOY-10)
 - **WHEN** `deploy --offline --no-gitignore` is run on a fresh workspace
-- **THEN** exit code is 0, deployed files are created, no `.gitignore` file exists in the workspace root
+- **THEN** exit code is 0, deployed files are created, and no dotagents-managed gitignore fence entries exist in the workspace root (`.gitignore` is not created or modified by the deploy)
 
 ### Requirement: E2e test for missing default .env file
 Verify that deploy succeeds when the default `.dotagents/.env` file does not exist.

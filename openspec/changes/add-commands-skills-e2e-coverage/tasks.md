@@ -6,7 +6,7 @@
 ## 2. Commands error path tests
 
 - [ ] 2.1 Add e2e test in `tests/e2e/commands.test.ts`: `init --ci`, run `commands new NAME --ci` with no metadata flags, read file, assert `description: ''` in frontmatter and no `category`/`tags` keys (TC-CMD-NEW-03)
-- [ ] 2.2 Add e2e test in `tests/e2e/commands.test.ts`: run `commands new NAME --cwd /tmp/nonexistent --ci`, assert exit 1 and stderr mentions missing `.dotagents` (TC-CMD-NEW-10)
+- [ ] 2.2 Add e2e test in `tests/e2e/commands.test.ts`: create an empty temp directory (not a workspace), run `commands new NAME --cwd <empty-temp-dir> --ci`, assert exit 1 and stderr mentions missing `.dotagents` (TC-CMD-NEW-10)
 
 ## 3. Skills --deploy flag tests
 

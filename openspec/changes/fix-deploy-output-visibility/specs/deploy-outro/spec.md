@@ -9,7 +9,7 @@ After all features are deployed and the cache is saved, `dotagents deploy` SHALL
 
 #### Scenario: Files written and skipped in CI mode
 - **WHEN** deploy runs in CI (non-TTY) and writes 3 files while skipping 2
-- **THEN** a summary line is printed to stdout, e.g. `"deployed: 3 written, 1 skipped"`
+- **THEN** a summary line is printed to stdout, e.g. `"3 written, 1 skipped"`
 
 #### Scenario: No files deployed in CI mode
 - **WHEN** deploy runs in CI and no files are written or skipped
