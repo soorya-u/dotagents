@@ -49,7 +49,7 @@ impl InitFile {
 
 /// Returns true when init should run in interactive TUI mode.
 fn is_tui_mode(opts: &InitOptions) -> bool {
-    opts.features.is_none() && opts.template.is_none() && is_tui_enabled()
+    opts.features.is_none() && is_tui_enabled()
 }
 
 /// Validates the `--features` flag: errors on empty value or `none` combined with others.
@@ -249,22 +249,33 @@ mod tests {
         }));
     }
 
-    // is_tui_mode returns false when --template is set
+    // is_tui_mode with only --template set matches the baseline (template no longer disables TUI)
     #[test]
-    fn is_tui_mode_false_when_template_set() {
+    fn is_tui_mode_template_only_matches_baseline() {
+        let baseline = is_tui_mode(&default_opts());
+        assert_eq!(
+            is_tui_mode(&InitOptions {
+                template: Some(InitTemplate::Starter),
+                ..default_opts()
+            }),
+            baseline,
+            "template alone should not change TUI mode vs baseline"
+        );
+    }
+
+    // is_tui_mode returns false when both --template and --features are set
+    #[test]
+    fn is_tui_mode_false_when_template_and_features_set() {
         assert!(!is_tui_mode(&InitOptions {
             template: Some(InitTemplate::Starter),
-            ..default_opts()
-        }));
-        assert!(!is_tui_mode(&InitOptions {
-            template: Some(InitTemplate::WithCustomProvider),
+            features: Some(vec![Feature::Commands]),
             ..default_opts()
         }));
     }
 
-    // is_tui_mode returns false whenever any headless flag is set
+    // is_tui_mode returns false whenever features flag is set (template alone does not disable TUI)
     #[test]
-    fn is_tui_mode_false_when_any_headless_flag_set() {
+    fn is_tui_mode_false_when_features_flag_set() {
         let cases = [
             InitOptions {
                 features: Some(vec![Feature::Commands]),
@@ -280,17 +291,19 @@ mod tests {
             },
             InitOptions {
                 template: Some(InitTemplate::Starter),
+                features: Some(vec![Feature::Commands]),
                 ..default_opts()
             },
             InitOptions {
                 template: Some(InitTemplate::WithCustomProvider),
+                features: Some(vec![Feature::Mcp]),
                 ..default_opts()
             },
         ];
         for opts in &cases {
             assert!(
                 !is_tui_mode(opts),
-                "expected TUI mode disabled when a headless flag is set"
+                "expected TUI mode disabled when features flag is set"
             );
         }
     }

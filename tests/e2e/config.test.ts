@@ -183,6 +183,23 @@ test.describe("config CLI – --edit validation", () => {
 			cleanup(d);
 		}
 	});
+
+	// config --json --edit are mutually exclusive — Clap parse error
+	test("config --json --edit exits with conflict error", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			const { exitCode, stderr, stdout } = run(
+				["config", "--json", "--edit"],
+				d,
+			);
+			expect(exitCode).toBe(2);
+			expect(stderr).toMatch(/cannot be used with/i);
+			expect(stdout).toBe("");
+		} finally {
+			cleanup(d);
+		}
+	});
 });
 
 test.describe("config CLI – empty config", () => {

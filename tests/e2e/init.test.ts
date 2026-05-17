@@ -465,3 +465,41 @@ test.describe("init TUI – T05 overwrite cancel", () => {
 		}
 	});
 });
+
+// T06: --template flag still shows feature prompt in TTY
+test.describe("init TUI – T06 --template with TTY shows feature prompt", () => {
+	const d = makeTmpDir();
+	test.use({ program: shellProgram(d, ["init", "--template", "starter"]) });
+
+	test("feature multiselect appears when --template is provided", async ({
+		terminal,
+	}) => {
+		try {
+			// Feature multiselect should appear even though --template was specified
+			await expect(
+				terminal.getByText("Which features do you want to enable?"),
+			).toBeVisible();
+
+			// Verify the INSTRUCTIONS.md label (not AGENTS.md)
+			await expect(terminal.getByText("INSTRUCTIONS.md")).toBeVisible();
+
+			// Confirm features
+			terminal.keyPress("Enter");
+
+			// Template prompt should be SKIPPED when --template is already provided
+			// So we should go directly to provider selection
+			await expect(
+				terminal.getByText("Which providers would you like to target?"),
+			).toBeVisible();
+
+			// Skip providers
+			terminal.keyPress("Enter");
+			await expect(terminal.getByText("Done! Run")).toBeVisible();
+
+			// Workspace was created
+			expect(existsSync(join(d, ".dotagents/config.toml"))).toBe(true);
+		} finally {
+			cleanup(d);
+		}
+	});
+});

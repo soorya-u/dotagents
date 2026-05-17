@@ -384,7 +384,7 @@ pub(crate) struct ConfigOptions {
     pub target: ConfigTarget,
 
     /// Output as JSON
-    #[clap(long)]
+    #[clap(long, conflicts_with = "edit")]
     pub json: bool,
 
     /// Edit config interactively (only for global/local targets)

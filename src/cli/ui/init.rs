@@ -28,7 +28,11 @@ pub(crate) fn run_init_wizard(opts: &mut InitOptions, dir_exists: bool) -> Resul
             "Custom Commands",
             "Sync slash commands to your AI tools",
         )
-        .item("instructions", "AGENTS.md", "Sync a global AGENTS.md")
+        .item(
+            "instructions",
+            "INSTRUCTIONS.md",
+            "Sync a global INSTRUCTIONS.md",
+        )
         .item("mcp", "MCP Configuration", "Sync MCP server configuration")
         .item("skills", "Skills", "Sync skills")
         .initial_values(vec!["commands", "instructions", "mcp", "skills"])
@@ -48,16 +52,18 @@ pub(crate) fn run_init_wizard(opts: &mut InitOptions, dir_exists: bool) -> Resul
         .collect();
     opts.features = Some(feature_list);
 
-    // Template select — Starter is the first item (default).
-    let mut ts = select("Which starting template?")
-        .item(InitTemplate::Starter, "Starter", "Core files only")
-        .item(
-            InitTemplate::WithCustomProvider,
-            "With Custom Provider",
-            "Adds an example of a custom provider",
-        );
-    let template = ts.interact().context("unable to get template choice")?;
-    opts.template = Some(template);
+    // Template select — skipped when --template was already provided.
+    if opts.template.is_none() {
+        let mut ts = select("Which starting template?")
+            .item(InitTemplate::Starter, "Starter", "Core files only")
+            .item(
+                InitTemplate::WithCustomProvider,
+                "With Custom Provider",
+                "Adds an example of a custom provider",
+            );
+        let template = ts.interact().context("unable to get template choice")?;
+        opts.template = Some(template);
+    }
 
     // Provider selection — runs before files are written so targets are known upfront.
     opts.targets = prompt_targets(&[])?.unwrap_or_default();
