@@ -3,6 +3,7 @@ use cliclack::{confirm, input, outro};
 use std::fs;
 #[cfg(feature = "skills-add")]
 use std::io::ErrorKind;
+use std::io::Write;
 
 use crate::cli::deploy::deploy;
 #[cfg(feature = "skills-add")]
@@ -200,6 +201,7 @@ pub(crate) fn rm_skill(opts: RmSkillOptions) -> Result<bool> {
 
         if !confirmed {
             outro("Cancelled.").ok();
+            let _ = std::io::stdout().flush();
             return Ok(true);
         }
     }

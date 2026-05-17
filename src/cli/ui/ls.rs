@@ -1,4 +1,5 @@
 use cliclack::outro;
+use std::io::Write;
 
 use crate::cli::ui::common::{
     styled_name, styled_note_name, terminal_cols, truncate_to_width, wrap_at_width,
@@ -68,6 +69,7 @@ pub(crate) fn render_commands(items: Vec<ListItem>, content: bool) {
             println!("No commands found.");
         }
         outro("").ok();
+        let _ = std::io::stdout().flush();
         return;
     }
 
@@ -76,6 +78,7 @@ pub(crate) fn render_commands(items: Vec<ListItem>, content: bool) {
 
     render_section(&items, content, name_col, cols);
     outro(format!("{} command(s)", items.len())).ok();
+    let _ = std::io::stdout().flush();
 }
 
 /// Render the skills listing for `dotagents skills ls`.
@@ -87,6 +90,7 @@ pub(crate) fn render_skills(items: Vec<ListItem>, content: bool) {
             println!("No skills found.");
         }
         outro("").ok();
+        let _ = std::io::stdout().flush();
         return;
     }
 
@@ -95,4 +99,5 @@ pub(crate) fn render_skills(items: Vec<ListItem>, content: bool) {
 
     render_section(&items, content, name_col, cols);
     outro(format!("{} skill(s)", items.len())).ok();
+    let _ = std::io::stdout().flush();
 }
