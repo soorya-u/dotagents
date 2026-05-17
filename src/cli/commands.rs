@@ -379,16 +379,21 @@ mod tests {
     // maybe_prompt_deploy(false) in CI auto-deploys without prompting
     #[test]
     fn maybe_prompt_deploy_ci_calls_deploy_when_no_deploy_false() {
-        // When no_deploy=false and CI mode is active, deploy is attempted
-        // (error is expected since there's no workspace; the test proves deploy is called)
+        use crate::utils::path::override_workspace_dir;
         let original_dir = std::env::current_dir().unwrap();
         let tmp = TempDir::new().unwrap();
+        let root = tmp.path().join(".dotagents-debug");
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(root.join("config.toml"), "features = []\ntargets = []\n").unwrap();
         std::env::set_current_dir(tmp.path()).unwrap();
+
+        override_workspace_dir(tmp.path().to_path_buf())
+            .expect("commands deploy test should be able to set workspace lock");
         set_ci_mode(true);
         let result = maybe_prompt_deploy(false);
         set_ci_mode(false);
         std::env::set_current_dir(&original_dir).unwrap();
-        // Deploy fails because no workspace exists, but the key point is deploy was called
-        assert!(result.is_err());
+        // Deploy succeeds trivially (no targets, no features), proving deploy was called
+        assert!(result.is_ok());
     }
 }

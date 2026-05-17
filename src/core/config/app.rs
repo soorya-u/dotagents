@@ -73,14 +73,16 @@ impl AppConfig {
     }
 
     pub fn from_application(templater: &Templater) -> Result<Self> {
-        let global_config_content =
-            templater.render_template(RenderType::Name(GLOBAL_CONFIG_FILE.into()), None)?;
+        let global_config_content = templater
+            .render_template(RenderType::Name(GLOBAL_CONFIG_FILE.into()), None)
+            .context("unable to render global config")?;
 
         let local_config = {
             let local_config_path = get_application_dir()?.join(LOCAL_CONFIG_FILE);
             if local_config_path.exists() {
-                let content =
-                    templater.render_template(RenderType::Name(LOCAL_CONFIG_FILE.into()), None)?;
+                let content = templater
+                    .render_template(RenderType::Name(LOCAL_CONFIG_FILE.into()), None)
+                    .context("unable to render local config")?;
                 let config = LocalConfig::from_toml(&content)?;
                 config.validate().context("invalid local config")?;
                 config

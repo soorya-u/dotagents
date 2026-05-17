@@ -44,10 +44,14 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
         .transpose()?
         .flatten();
     let target_vars = merge_json(variables, name_var.as_ref());
-    let target_path = PathBuf::from(templater.render_template(
-        RenderType::Content(target_str.to_string()),
-        Some(&target_vars),
-    )?);
+    let target_path = PathBuf::from(
+        templater
+            .render_template(
+                RenderType::Content(target_str.to_string()),
+                Some(&target_vars),
+            )
+            .context("unable to render target path")?,
+    );
 
     let local_vars = feature_settings
         .variables
@@ -57,7 +61,9 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
 
     let user_vars = get_user_defined_variables(Some(merge_json(variables, local_vars.as_ref())))?;
 
-    let populate_config = feature.populate_with_values(templater, Some(&user_vars))?;
+    let populate_config = feature
+        .populate_with_values(templater, Some(&user_vars))
+        .context("unable to render feature variables")?;
 
     let feature_as_variables = populate_config.to_value();
 
@@ -80,8 +86,12 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
         };
 
     let vars = merge_json(Some(&user_vars), Some(&feature_as_variables));
-    let content =
-        templater.render_template(RenderType::Content(template_file_content), Some(&vars))?;
+    let content = templater
+        .render_template(RenderType::Content(template_file_content), Some(&vars))
+        .context(format!(
+            "unable to render template content for provider '{}'",
+            provider_name
+        ))?;
 
     let rendered_hash = hash_content(&content);
 
@@ -128,4 +138,102 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
         hash: rendered_hash,
         target: target_path.to_string_lossy().into_owned(),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use tempfile::TempDir;
+
+    use crate::constants::dir::ROOT_DIR;
+    use crate::constants::file::{GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE};
+    use crate::constants::mocks::default_config;
+    use crate::core::features::instruction::InstructionFeature;
+    use crate::utils::path::override_workspace_dir;
+
+    fn setup_test_workspace() -> anyhow::Result<TempDir> {
+        let tmp = TempDir::new().unwrap();
+        let root = tmp.path().join(ROOT_DIR);
+        fs::create_dir_all(&root)?;
+        fs::write(
+            root.join(GLOBAL_CONFIG_FILE),
+            default_config(&["commands", "instructions", "mcp", "skills"], &["claude"]),
+        )?;
+        fs::write(root.join(LOCAL_CONFIG_FILE), "")?;
+        override_workspace_dir(tmp.path().to_path_buf())?;
+        Ok(tmp)
+    }
+
+    // broken target path expression produces "unable to render target path" in error chain
+    #[test]
+    fn render_feature_broken_target_path_emits_phase_context() {
+        let Ok(tmp) = setup_test_workspace() else {
+            return; // WORKSPACE_DIR OnceLock already set by a prior test; skip
+        };
+        let templater = Templater::new().unwrap();
+
+        let valid_template_path = tmp.path().join("valid.hbs");
+        fs::write(&valid_template_path, "{{ instruction.content }}").unwrap();
+
+        let feature = InstructionFeature::from_string("plain content").unwrap();
+        let settings = FeatureSettings {
+            template: Some(valid_template_path.to_string_lossy().to_string()),
+            target: Some("{{invalid".to_string()),
+            ..Default::default()
+        };
+
+        let result = render_feature_with_settings(
+            "test-provider",
+            &feature,
+            &settings,
+            &templater,
+            None,
+            None,
+            true,
+            true,
+        );
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(
+            err.contains("unable to render target path"),
+            "expected 'unable to render target path' in error, got: {err}"
+        );
+    }
+
+    // broken template content produces "unable to render template content for provider" in error chain
+    #[test]
+    fn render_feature_broken_template_content_emits_phase_context() {
+        let Ok(tmp) = setup_test_workspace() else {
+            return; // WORKSPACE_DIR OnceLock already set by a prior test; skip
+        };
+        let templater = Templater::new().unwrap();
+
+        let broken_template_path = tmp.path().join("broken.hbs");
+        fs::write(&broken_template_path, "{{#if}}").unwrap();
+
+        let feature = InstructionFeature::from_string("plain content").unwrap();
+        let settings = FeatureSettings {
+            template: Some(broken_template_path.to_string_lossy().to_string()),
+            target: Some("out.md".to_string()),
+            ..Default::default()
+        };
+
+        let result = render_feature_with_settings(
+            "my-provider",
+            &feature,
+            &settings,
+            &templater,
+            None,
+            None,
+            true,
+            true,
+        );
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(
+            err.contains("unable to render template content for provider 'my-provider'"),
+            "expected 'unable to render template content for provider' in error, got: {err}"
+        );
+    }
 }

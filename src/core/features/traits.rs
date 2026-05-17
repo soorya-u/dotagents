@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use serde_json::Value;
 
 use crate::templates::{RenderType, Templater};
@@ -11,7 +11,9 @@ pub trait FeatureTrait: Sized {
     // Can't mutate it as we have to populate the same struct with different values for different providers
     fn populate_with_values(&self, templater: &Templater, values: Option<&Value>) -> Result<Self> {
         let content = self.to_string()?;
-        let rendered_content = templater.render_template(RenderType::Content(content), values)?;
+        let rendered_content = templater
+            .render_template(RenderType::Content(content), values)
+            .context("unable to render feature content")?;
         Self::from_string(&rendered_content)
     }
 

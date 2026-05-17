@@ -110,6 +110,47 @@ impl Templater {
             RenderType::Name(path) => self.handlebar.render(&path, &data),
             RenderType::Content(str) => self.handlebar.render_template(&str, &data),
         }
-        .context("failed to render template")
+        .map_err(|e| anyhow::anyhow!("{}", e))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use tempfile::TempDir;
+
+    use crate::constants::dir::ROOT_DIR;
+    use crate::constants::file::{GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE};
+    use crate::constants::mocks::default_config;
+    use crate::utils::path::override_workspace_dir;
+
+    fn setup_test_workspace() -> Result<TempDir> {
+        let tmp = TempDir::new().unwrap();
+        let root = tmp.path().join(ROOT_DIR);
+        fs::create_dir_all(&root)?;
+        fs::write(
+            root.join(GLOBAL_CONFIG_FILE),
+            default_config(&["commands", "instructions", "mcp", "skills"], &["claude"]),
+        )?;
+        fs::write(root.join(LOCAL_CONFIG_FILE), "")?;
+        override_workspace_dir(tmp.path().to_path_buf())?;
+        Ok(tmp)
+    }
+
+    // render_template with a broken template does not emit "failed to render template"
+    #[test]
+    fn render_template_error_does_not_contain_generic_message() {
+        let Ok(_tmp) = setup_test_workspace() else {
+            return; // WORKSPACE_DIR OnceLock already set by a prior test; skip
+        };
+        let templater = Templater::new().unwrap();
+        let result = templater.render_template(RenderType::Content("{{".to_string()), None);
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(
+            !err.contains("failed to render template"),
+            "error chain should not contain generic 'failed to render template', got: {err}"
+        );
     }
 }

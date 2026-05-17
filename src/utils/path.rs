@@ -49,8 +49,9 @@ pub fn override_workspace_dir(path: PathBuf) -> Result<()> {
     if !path.join(ROOT_DIR).is_dir() {
         anyhow::bail!("No `{}` directory found in `{}`", ROOT_DIR, path.display());
     }
-    let _ = WORKSPACE_DIR.set(Ok(path));
-    Ok(())
+    WORKSPACE_DIR
+        .set(Ok(path))
+        .map_err(|_| anyhow!("workspace directory already set"))
 }
 
 /// Resolve an optional `--cwd` path against CWD and override the workspace dir.
@@ -250,18 +251,22 @@ mod tests {
     }
 
     #[test]
-    // override_workspace_dir returns Ok when path contains ROOT_DIR
+    // override_workspace_dir returns Ok when path contains ROOT_DIR and lock is free
     fn override_workspace_dir_ok_when_root_dir_present() {
         let temp = TempDir::new().unwrap();
         std::fs::create_dir(temp.path().join(ROOT_DIR)).unwrap();
-        // Use a fresh OnceLock-independent check via the validation logic directly
         let result = override_workspace_dir(temp.path().to_path_buf());
-        // Either Ok (lock wasn't set yet) or Ok regardless — validation passed
-        assert!(
-            result.is_ok(),
-            "expected Ok for a valid workspace path, got {:?}",
-            result
-        );
+        // May fail if the lock was already seized by a prior test — both outcomes acceptable
+        match result {
+            Ok(()) => (),
+            Err(e) => {
+                let msg = e.to_string();
+                assert!(
+                    msg.contains("already set"),
+                    "expected Ok or 'already set', got: {msg}"
+                );
+            }
+        }
     }
 
     #[test]
@@ -318,6 +323,7 @@ mod tests {
                 assert!(
                     msg.contains(ROOT_DIR)
                         || msg.contains("lock")
+                        || msg.contains("already set")
                         || msg.contains("current directory"),
                     "unexpected error: {msg}"
                 );
@@ -346,7 +352,10 @@ mod tests {
         if let Err(ref e) = result {
             let msg = e.to_string();
             assert!(
-                msg.contains(ROOT_DIR) || msg.contains("lock") || msg.contains("current directory"),
+                msg.contains(ROOT_DIR)
+                    || msg.contains("lock")
+                    || msg.contains("already set")
+                    || msg.contains("current directory"),
                 "unexpected error: {msg}"
             );
         }
