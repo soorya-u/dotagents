@@ -455,6 +455,12 @@ mod tests {
             dir: Some(target.clone()),
             template: Some(InitTemplate::Starter),
             force: true,
+            features: Some(vec![
+                Feature::Commands,
+                Feature::Instructions,
+                Feature::Mcp,
+                Feature::Skills,
+            ]),
             ..default_opts()
         };
         initialize_agents_dir(opts).expect("init should succeed");
@@ -474,6 +480,12 @@ mod tests {
             dir: Some(target.clone()),
             template: Some(InitTemplate::Starter),
             force: true,
+            features: Some(vec![
+                Feature::Commands,
+                Feature::Instructions,
+                Feature::Mcp,
+                Feature::Skills,
+            ]),
             ..default_opts()
         };
         initialize_agents_dir(opts).expect("init should succeed");

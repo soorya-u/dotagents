@@ -1,8 +1,6 @@
 import { expect, test } from "@microsoft/tui-test";
 import { cleanup, makeTmpDir, run, seedRegistryCache } from "./helpers.js";
 
-// ── providers ls – CLI ────────────────────────────────────────────────────────
-
 test.describe("providers ls CLI", () => {
 	// --json exits 0 and returns a valid JSON array with slug/name/url fields
 	test("--json exits 0 and returns valid JSON array", async () => {
