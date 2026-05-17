@@ -2,6 +2,7 @@ use clap::{Args, Parser, Subcommand, ValueEnum};
 use clap_complete::Shell;
 use std::path::PathBuf;
 
+#[cfg(feature = "skills-add")]
 use crate::core::config::common::PackageRunner;
 
 #[derive(Parser, Default)]
@@ -92,6 +93,7 @@ impl Feature {
 #[derive(Subcommand)]
 pub(crate) enum SkillsAction {
     /// Install a skill from skills.sh or a GitHub owner/repo into .dotagents/skills/
+    #[cfg(feature = "skills-add")]
     Add(SkillsAddOptions),
     /// Create a new skill scaffold
     New(AddSkillOptions),
@@ -150,6 +152,7 @@ pub(crate) struct SubLsOptions {
     pub skill: Option<String>,
 }
 
+#[cfg(feature = "skills-add")]
 #[derive(Args)]
 pub(crate) struct SkillsAddOptions {
     #[clap(flatten)]

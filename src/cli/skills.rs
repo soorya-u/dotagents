@@ -1,19 +1,23 @@
 use anyhow::{Context, Result, bail};
 use cliclack::{confirm, input, outro};
 use std::fs;
+#[cfg(feature = "skills-add")]
 use std::io::ErrorKind;
 
 use crate::cli::deploy::deploy;
-use crate::cli::options::{
-    AddSkillOptions, DeployOptions, RmSkillOptions, SkillsAddOptions, SubLsOptions,
-};
+#[cfg(feature = "skills-add")]
+use crate::cli::options::SkillsAddOptions;
+use crate::cli::options::{AddSkillOptions, DeployOptions, RmSkillOptions, SubLsOptions};
 use crate::cli::ui::ls::render_skills;
 use crate::core::config::CacheConfig;
+#[cfg(feature = "skills-add")]
 use crate::core::config::app::AppConfig;
+#[cfg(feature = "skills-add")]
 use crate::core::config::common::PackageRunner;
 use crate::core::features::skill::SkillFeature;
 use crate::prelude::*;
 use crate::schema::list_item::ListItem;
+#[cfg(feature = "skills-add")]
 use crate::templates::get_templater;
 use crate::utils::fs::write_file;
 use crate::utils::path::{
@@ -57,6 +61,7 @@ fn maybe_prompt_deploy(force_deploy: bool, no_deploy: bool) -> Result<()> {
 }
 
 /// Install a skill into `.dotagents/skills/` by wrapping the `skills` CLI.
+#[cfg(feature = "skills-add")]
 pub(crate) fn add(opts: SkillsAddOptions) -> Result<bool> {
     resolve_and_override_workspace(opts.workspace.cwd)
         .context("unable to resolve workspace directory")?;
