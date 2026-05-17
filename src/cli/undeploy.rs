@@ -22,12 +22,12 @@ pub(super) fn undeploy(mut opts: UndeployOptions) -> Result<()> {
         let workspace = std::env::current_dir()
             .context("failed to get current directory")?
             .join(dir);
-        override_workspace_dir(workspace).context("Failed to set workspace directory")?;
+        override_workspace_dir(workspace).context("unable to set workspace directory")?;
     }
 
-    let workspace_root = get_workspace_dir().context("Failed to get workspace directory")?;
+    let workspace_root = get_workspace_dir().context("unable to get workspace directory")?;
 
-    let mut cache = CacheConfig::load().context("Failed to load cache")?;
+    let mut cache = CacheConfig::load().context("unable to load cache")?;
 
     // Collect all target paths and their expected hashes from the cache.
     let entries: Vec<(PathBuf, String)> = cache
@@ -115,7 +115,7 @@ pub(super) fn undeploy(mut opts: UndeployOptions) -> Result<()> {
     cache.clear();
     cache
         .save()
-        .context("Failed to save cache after undeploy")?;
+        .context("unable to save cache after undeploy")?;
 
     // Remove the dotagents-managed fence from .gitignore.
     if !opts.no_gitignore

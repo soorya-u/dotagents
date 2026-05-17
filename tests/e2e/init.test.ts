@@ -435,7 +435,7 @@ test.describe("init TUI – T04 cancel wizard leaves no directory", () => {
 		// The process should exit (with error output) once the prompt is cancelled.
 		// Wait for the error message chain to appear.
 		await expect(
-			terminal.getByText("Failed to get feature selection"),
+			terminal.getByText("unable to get feature selection"),
 		).toBeVisible();
 
 		// No directory of any kind should exist — `create_dir_all` runs after

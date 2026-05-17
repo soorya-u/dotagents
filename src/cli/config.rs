@@ -41,7 +41,7 @@ pub(crate) fn validate_edit(target: &ConfigTarget, edit: bool, is_tty: bool) -> 
 /// Top-level handler for `dotagents config`.
 pub(crate) fn handle(opts: ConfigOptions) -> Result<bool> {
     resolve_and_override_workspace(opts.workspace.cwd)
-        .context("Failed to resolve workspace directory")?;
+        .context("unable to resolve workspace directory")?;
 
     validate_edit(&opts.target, opts.edit, is_tui_enabled())?;
 
@@ -95,7 +95,7 @@ fn handle_app_json() -> Result<()> {
     let config = load_app_config()?;
     let display = AppDisplay::from_app_config(&config);
     let json =
-        serde_json::to_string_pretty(&display).context("Failed to serialize config to JSON")?;
+        serde_json::to_string_pretty(&display).context("unable to serialize config to JSON")?;
     println!("{json}");
     Ok(())
 }
@@ -118,10 +118,10 @@ fn handle_global_json(path: &Path) -> Result<()> {
     if !path.exists() {
         bail!("Global config not found at {}", path.display());
     }
-    let content = fs::read_to_string(path).context("Failed to read global config")?;
+    let content = fs::read_to_string(path).context("unable to read global config")?;
     let config: GlobalConfig = GlobalConfig::from_toml(&content)?;
     let mut value =
-        serde_json::to_value(&config).context("Failed to serialize global config to JSON")?;
+        serde_json::to_value(&config).context("unable to serialize global config to JSON")?;
     value.as_object_mut().map(|m| m.remove("schema"));
     println!("{}", serde_json::to_string_pretty(&value)?);
     Ok(())
@@ -131,7 +131,7 @@ fn handle_global_text(path: &Path) -> Result<()> {
     if !path.exists() {
         bail!("Global config not found at {}", path.display());
     }
-    let content = fs::read_to_string(path).context("Failed to read global config")?;
+    let content = fs::read_to_string(path).context("unable to read global config")?;
     println!("{}", content.trim());
     Ok(())
 }
@@ -140,7 +140,7 @@ fn handle_global_tui(path: &Path) -> Result<()> {
     if !path.exists() {
         bail!("Global config not found at {}", path.display());
     }
-    let content = fs::read_to_string(path).context("Failed to read global config")?;
+    let content = fs::read_to_string(path).context("unable to read global config")?;
     let config: GlobalConfig = GlobalConfig::from_toml(&content)?;
     display_tui_global(&config)?;
     Ok(())
@@ -152,7 +152,7 @@ fn handle_global_edit(path: &Path) -> Result<()> {
     let spin = spinner();
     spin.start("Reading global config...");
     let existing_content = if path.exists() {
-        fs::read_to_string(path).context("Failed to read global config")?
+        fs::read_to_string(path).context("unable to read global config")?
     } else {
         String::new()
     };
@@ -168,7 +168,7 @@ fn handle_global_edit(path: &Path) -> Result<()> {
     let spin = spinner();
     spin.start("Writing global config...");
     let content = config.to_toml()?;
-    write_file(&path.to_path_buf(), &content).context("Failed to write global config")?;
+    write_file(&path.to_path_buf(), &content).context("unable to write global config")?;
     spin.stop("Global config updated.");
 
     outro("Done.")?;
@@ -182,10 +182,10 @@ fn handle_local_json(path: &Path) -> Result<()> {
         println!("{{}}");
         return Ok(());
     }
-    let content = fs::read_to_string(path).context("Failed to read local config")?;
+    let content = fs::read_to_string(path).context("unable to read local config")?;
     let config: LocalConfig = LocalConfig::from_toml(&content)?;
     let mut value =
-        serde_json::to_value(&config).context("Failed to serialize local config to JSON")?;
+        serde_json::to_value(&config).context("unable to serialize local config to JSON")?;
     value.as_object_mut().map(|m| m.remove("schema"));
     println!("{}", serde_json::to_string_pretty(&value)?);
     Ok(())
@@ -196,7 +196,7 @@ fn handle_local_text(path: &Path) -> Result<()> {
         println!("No local config found at {}", path.display());
         return Ok(());
     }
-    let content = fs::read_to_string(path).context("Failed to read local config")?;
+    let content = fs::read_to_string(path).context("unable to read local config")?;
     println!("{}", content.trim());
     Ok(())
 }
@@ -206,7 +206,7 @@ fn handle_local_tui(path: &Path) -> Result<()> {
         println!("No local config found at {}", path.display());
         return Ok(());
     }
-    let content = fs::read_to_string(path).context("Failed to read local config")?;
+    let content = fs::read_to_string(path).context("unable to read local config")?;
     let config: LocalConfig = LocalConfig::from_toml(&content)?;
     display_tui_local(&config)?;
     Ok(())
@@ -218,7 +218,7 @@ fn handle_local_edit(path: &Path) -> Result<()> {
     let spin = spinner();
     spin.start("Reading local config...");
     let existing_content = if path.exists() {
-        fs::read_to_string(path).context("Failed to read local config")?
+        fs::read_to_string(path).context("unable to read local config")?
     } else {
         String::new()
     };
@@ -234,7 +234,7 @@ fn handle_local_edit(path: &Path) -> Result<()> {
     let spin = spinner();
     spin.start("Writing local config...");
     let content = config.to_toml()?;
-    write_file(&path.to_path_buf(), &content).context("Failed to write local config")?;
+    write_file(&path.to_path_buf(), &content).context("unable to write local config")?;
     spin.stop("Local config updated.");
 
     outro("Done.")?;
@@ -244,9 +244,9 @@ fn handle_local_edit(path: &Path) -> Result<()> {
 // ── App display helpers ─────────────────────────────────────────────
 
 fn load_app_config() -> Result<AppConfig> {
-    let templater = get_templater().context("Failed to initialise templater")?;
+    let templater = get_templater().context("unable to initialise templater")?;
     let config =
-        AppConfig::from_application(templater).context("Failed to load application config")?;
+        AppConfig::from_application(templater).context("unable to load application config")?;
     Ok(config)
 }
 
@@ -561,7 +561,7 @@ fn edit_global_config(config: &mut GlobalConfig) -> Result<()> {
         .initial_values(current_features)
         .required(false)
         .interact()
-        .context("Failed to select features")?;
+        .context("unable to select features")?;
 
     config.features = selected.into_iter().map(|s| s.to_string()).collect();
 
@@ -625,7 +625,7 @@ fn edit_local_config(config: &mut LocalConfig) -> Result<()> {
         .initial_values(current_features)
         .required(false)
         .interact()
-        .context("Failed to select features")?;
+        .context("unable to select override features")?;
 
     if selected.is_empty() {
         config.features = None;

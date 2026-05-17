@@ -13,7 +13,7 @@ pub(crate) fn run_init_wizard(opts: &mut InitOptions, dir_exists: bool) -> Resul
         let mut sel = select("A .dotagents directory already exists. Overwrite?")
             .item(false, "No, cancel", "")
             .item(true, "Yes, overwrite", "existing files will be deleted");
-        let overwrite = sel.interact().context("Failed to get overwrite choice")?;
+        let overwrite = sel.interact().context("unable to get overwrite choice")?;
         if !overwrite {
             outro_cancel("Init cancelled.").ok();
             return Ok(false);
@@ -33,7 +33,7 @@ pub(crate) fn run_init_wizard(opts: &mut InitOptions, dir_exists: bool) -> Resul
         .item("skills", "Skills", "Sync skills")
         .initial_values(vec!["commands", "instructions", "mcp", "skills"])
         .required(false);
-    let features = ms.interact().context("Failed to get feature selection")?;
+    let features = ms.interact().context("unable to get feature selection")?;
 
     // Map the string selections back to Feature enum values and store in opts.features.
     let feature_list: Vec<Feature> = features
@@ -56,7 +56,7 @@ pub(crate) fn run_init_wizard(opts: &mut InitOptions, dir_exists: bool) -> Resul
             "With Custom Provider",
             "Adds an example of a custom provider",
         );
-    let template = ts.interact().context("Failed to get template choice")?;
+    let template = ts.interact().context("unable to get template choice")?;
     opts.template = Some(template);
 
     // Provider selection — runs before files are written so targets are known upfront.
@@ -108,7 +108,7 @@ pub(crate) fn prompt_targets(initial: &[String]) -> Result<Option<Vec<String>>> 
     for provider in &providers {
         ms = ms.item(provider.clone(), provider.as_str(), "");
     }
-    let selected = ms.interact().context("Failed to get provider selection")?;
+    let selected = ms.interact().context("unable to get provider selection")?;
 
     Ok(Some(selected))
 }

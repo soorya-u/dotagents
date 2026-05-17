@@ -55,7 +55,7 @@ fn fetch_registry(offline: bool) -> Result<Registry> {
 /// Read `registry.json` from the template-source cache directory.
 fn read_registry_from_cache() -> Result<Registry> {
     let cache_dir =
-        get_global_template_cache_dir().context("Failed to get template cache directory")?;
+        get_global_template_cache_dir().context("unable to get template cache directory")?;
     let cache_path = cache_dir.join(REGISTRY_FILE);
 
     let body = std::fs::read_to_string(&cache_path).map_err(|_| {
@@ -295,11 +295,11 @@ pub(crate) fn run_providers(opts: ProvidersLsOptions) -> Result<bool> {
             }
             Err(e) => {
                 sp.error(format!("Could not reach registry: {}", e));
-                return Err(e.context("Failed to load provider registry"));
+                return Err(e.context("unable to load provider registry"));
             }
         }
     } else {
-        fetch_registry(opts.offline).context("Failed to load provider registry")?
+        fetch_registry(opts.offline).context("unable to load provider registry")?
     };
 
     let providers = collect_providers(&registry);

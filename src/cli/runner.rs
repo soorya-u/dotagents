@@ -3,7 +3,7 @@ use super::completions::generate_cli_completions;
 use super::config;
 use super::deploy::deploy;
 use super::init::initialize_agents_dir;
-use super::options::{Action, Options};
+use super::options::{Action, CommandsAction, Options, SkillsAction};
 use super::providers;
 use super::skills;
 use super::undeploy::undeploy;
@@ -18,7 +18,7 @@ pub(crate) fn run(opts: Options) -> Result<bool> {
 
     let success = match opts.action.unwrap_or_else(default_action) {
         Action::Init(opts) => {
-            initialize_agents_dir(opts)?;
+            initialize_agents_dir(opts).context("complete 'init' command")?;
             true
         }
         Action::GenCompletions { shell, to } => {
@@ -26,25 +26,42 @@ pub(crate) fn run(opts: Options) -> Result<bool> {
             true
         }
         Action::Deploy(opts) => {
-            deploy(opts)?;
+            deploy(opts).context("complete 'deploy' command")?;
             true
         }
-        Action::Skills { action } => {
-            skills::run_skills(action).context("failed to run `skills` subcommand")?
-        }
-        Action::Commands { action } => {
-            commands::run_commands(action).context("failed to run `commands` subcommand")?
-        }
+        Action::Skills { action } => match action {
+            SkillsAction::Add(opts) => {
+                skills::add(opts).context("complete 'skills add' command")?
+            }
+            SkillsAction::New(opts) => {
+                skills::new_skill(opts).context("complete 'skills new' command")?
+            }
+            SkillsAction::Rm(opts) => {
+                skills::rm_skill(opts).context("complete 'skills rm' command")?
+            }
+            SkillsAction::Ls(opts) => {
+                skills::ls_skills(opts).context("complete 'skills ls' command")?
+            }
+        },
+        Action::Commands { action } => match action {
+            CommandsAction::New(opts) => {
+                commands::new_command(opts).context("complete 'commands new' command")?
+            }
+            CommandsAction::Rm(opts) => {
+                commands::rm_command(opts).context("complete 'commands rm' command")?
+            }
+            CommandsAction::Ls(opts) => {
+                commands::ls_commands(opts).context("complete 'commands ls' command")?
+            }
+        },
         Action::Providers(opts) => {
-            providers::run_providers(opts).context("failed to run `providers` subcommand")?
+            providers::run_providers(opts).context("complete 'providers' command")?
         }
         Action::Undeploy(opts) => {
-            undeploy(opts)?;
+            undeploy(opts).context("complete 'undeploy' command")?;
             true
         }
-        Action::Config(opts) => {
-            config::handle(opts).context("failed to run `config` subcommand")?
-        }
+        Action::Config(opts) => config::handle(opts).context("complete 'config' command")?,
     };
 
     Ok(success)
