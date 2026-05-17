@@ -358,6 +358,89 @@ test.describe("commands rm CLI", () => {
 	});
 });
 
+// ── commands deploy-default behavior ───────────────────────────────────────────
+
+test.describe("commands deploy-default", () => {
+	// --no-deploy skips auto-deploy in CI
+	test("--no-deploy skips deploy after commands new", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			const { exitCode } = run(
+				[
+					"commands",
+					"new",
+					"greet",
+					"--ci",
+					"--no-deploy",
+					"--description",
+					"test",
+				],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			expect(existsSync(join(d, ".mycode/commands/greet.md"))).toBe(false);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// CI auto-deploys after commands new
+	test("CI auto-deploys after commands new", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			const { exitCode } = run(
+				["commands", "new", "greet", "--ci", "--description", "test"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			expect(existsSync(join(d, ".mycode/commands/greet.md"))).toBe(true);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --no-deploy skips redeploy after commands rm
+	test("--no-deploy skips deploy after commands rm", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			run(["deploy", "--offline", "--gitignore"], d);
+			expect(existsSync(join(d, ".mycode/commands/hello.md"))).toBe(true);
+			const { exitCode } = run(
+				["commands", "rm", "hello", "--ci", "--no-deploy", "--force"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			// The deployed file still exists because rm cleans up via undeploy,
+			// but the deploy after rm is skipped by --no-deploy
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// CI auto-deploys after commands rm
+	test("CI auto-deploys after commands rm", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			// First deploy to create the mycode output
+			run(["deploy", "--offline", "--gitignore"], d);
+			expect(existsSync(join(d, ".mycode/commands/hello.md"))).toBe(true);
+			// Then rm in CI should redeploy (removing the deployed file)
+			const { exitCode } = run(
+				["commands", "rm", "hello", "--ci", "--force"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			expect(existsSync(join(d, ".mycode/commands/hello.md"))).toBe(false);
+		} finally {
+			cleanup(d);
+		}
+	});
+});
+
 // ── commands --cwd ────────────────────────────────────────────────────────────
 
 test.describe("commands --cwd", () => {

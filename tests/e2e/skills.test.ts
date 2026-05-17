@@ -330,6 +330,95 @@ test.describe("skills rm CLI", () => {
 	});
 });
 
+// ── skills deploy-default behavior ─────────────────────────────────────────────
+
+test.describe("skills deploy-default", () => {
+	// --no-deploy skips auto-deploy in CI
+	test("--no-deploy skips deploy after skills new", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			const { exitCode } = run(
+				[
+					"skills",
+					"new",
+					"my-skill",
+					"--ci",
+					"--no-deploy",
+					"--description",
+					"test",
+				],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			expect(existsSync(join(d, ".mycode/skills/my-skill/SKILL.md"))).toBe(
+				false,
+			);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// CI auto-deploys after skills new
+	test("CI auto-deploys after skills new", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			const { exitCode } = run(
+				["skills", "new", "my-skill", "--ci", "--description", "test"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			expect(existsSync(join(d, ".mycode/skills/my-skill/SKILL.md"))).toBe(
+				true,
+			);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// --no-deploy skips redeploy after skills rm
+	test("--no-deploy skips deploy after skills rm", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			run(["deploy", "--offline", "--gitignore"], d);
+			expect(existsSync(join(d, ".mycode/skills/hello-skill/SKILL.md"))).toBe(
+				true,
+			);
+			const { exitCode } = run(
+				["skills", "rm", "hello-skill", "--ci", "--no-deploy", "--force"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// CI auto-deploys after skills rm
+	test("CI auto-deploys after skills rm", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			run(["deploy", "--offline", "--gitignore"], d);
+			expect(existsSync(join(d, ".mycode/skills/hello-skill/SKILL.md"))).toBe(
+				true,
+			);
+			const { exitCode } = run(
+				["skills", "rm", "hello-skill", "--ci", "--force"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			expect(existsSync(join(d, ".mycode/skills/hello-skill/SKILL.md"))).toBe(
+				false,
+			);
+		} finally {
+			cleanup(d);
+		}
+	});
+});
+
 // ── skills --cwd ──────────────────────────────────────────────────────────────
 
 test.describe("skills --cwd", () => {

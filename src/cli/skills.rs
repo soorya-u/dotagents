@@ -37,20 +37,21 @@ fn collect_field(value: Option<String>, prompt: &str, placeholder: &str) -> Resu
     Ok(String::new())
 }
 
-/// Prompt the user to deploy now (TTY only, used when --deploy was not passed).
-fn maybe_prompt_deploy(deploy_flag: bool) -> Result<()> {
-    if deploy_flag {
+/// Deploy after skill mutation: skip if --no-deploy, auto-deploy in CI, prompt in TTY.
+fn maybe_prompt_deploy(no_deploy: bool) -> Result<()> {
+    if no_deploy {
+        return Ok(());
+    }
+    if !is_tui_enabled() {
         deploy(DeployOptions::default()).context("deploy failed")?;
         return Ok(());
     }
-    if is_tui_enabled() {
-        let should_deploy = confirm("Deploy now?")
-            .initial_value(false)
-            .interact()
-            .unwrap_or(false);
-        if should_deploy {
-            deploy(DeployOptions::default()).context("deploy failed")?;
-        }
+    let should_deploy = confirm("Deploy now?")
+        .initial_value(false)
+        .interact()
+        .unwrap_or(false);
+    if should_deploy {
+        deploy(DeployOptions::default()).context("deploy failed")?;
     }
     Ok(())
 }
@@ -154,7 +155,7 @@ pub(crate) fn new_skill(opts: AddSkillOptions) -> Result<bool> {
 
     success!("Created {}", target.display());
 
-    maybe_prompt_deploy(opts.deploy)?;
+    maybe_prompt_deploy(opts.no_deploy)?;
 
     if use_interactive {
         outro("").ok();
@@ -234,7 +235,7 @@ pub(crate) fn rm_skill(opts: RmSkillOptions) -> Result<bool> {
         }
     }
 
-    maybe_prompt_deploy(opts.deploy)?;
+    maybe_prompt_deploy(opts.no_deploy)?;
 
     outro("").ok();
     Ok(true)
@@ -293,6 +294,7 @@ pub(crate) fn ls_skills(opts: SubLsOptions) -> Result<bool> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::utils::tui::set_ci_mode;
     use std::fs;
     use tempfile::TempDir;
 
@@ -411,5 +413,27 @@ mod tests {
         }];
         let result = ListItem::to_json_array(&items, true);
         assert_eq!(result[0]["content"], "body text");
+    }
+
+    // maybe_prompt_deploy(true) skips deploy and returns immediately
+    #[test]
+    fn maybe_prompt_deploy_no_deploy_true_skips_deploy() {
+        // no_deploy=true causes early return without calling deploy
+        assert!(maybe_prompt_deploy(true).is_ok());
+    }
+
+    // maybe_prompt_deploy(false) in CI auto-deploys without prompting
+    #[test]
+    fn maybe_prompt_deploy_ci_calls_deploy_when_no_deploy_false() {
+        // When no_deploy=false and CI mode is active, deploy is attempted
+        // (error is expected since there's no workspace; the test proves deploy is called)
+        let original_dir = std::env::current_dir().unwrap();
+        let tmp = TempDir::new().unwrap();
+        std::env::set_current_dir(tmp.path()).unwrap();
+        set_ci_mode(true);
+        let result = maybe_prompt_deploy(false);
+        set_ci_mode(false);
+        std::env::set_current_dir(&original_dir).unwrap();
+        assert!(result.is_err());
     }
 }

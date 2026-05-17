@@ -273,9 +273,9 @@ pub(crate) struct AddCommandOptions {
     #[clap(long, short = 'f')]
     pub force: bool,
 
-    /// Run deploy after creating the command.
-    #[clap(long)]
-    pub deploy: bool,
+    /// Skip automatic deploy after creating the command.
+    #[clap(long, default_value_t = false)]
+    pub no_deploy: bool,
 }
 
 #[derive(Args)]
@@ -302,9 +302,9 @@ pub(crate) struct AddSkillOptions {
     #[clap(long, short = 'f')]
     pub force: bool,
 
-    /// Run deploy after creating the skill.
-    #[clap(long)]
-    pub deploy: bool,
+    /// Skip automatic deploy after creating the skill.
+    #[clap(long, default_value_t = false)]
+    pub no_deploy: bool,
 }
 
 #[derive(Args)]
@@ -319,9 +319,9 @@ pub(crate) struct RmCommandOptions {
     #[clap(long, short = 'f')]
     pub force: bool,
 
-    /// Run deploy after removing the command.
-    #[clap(long)]
-    pub deploy: bool,
+    /// Skip automatic deploy after removing the command.
+    #[clap(long, default_value_t = false)]
+    pub no_deploy: bool,
 }
 
 #[derive(Args)]
@@ -336,9 +336,9 @@ pub(crate) struct RmSkillOptions {
     #[clap(long, short = 'f')]
     pub force: bool,
 
-    /// Run deploy after removing the skill.
-    #[clap(long)]
-    pub deploy: bool,
+    /// Skip automatic deploy after removing the skill.
+    #[clap(long, default_value_t = false)]
+    pub no_deploy: bool,
 }
 
 /// Options for `dotagents undeploy`.
