@@ -136,6 +136,35 @@ test.describe("commands new CLI", () => {
 			cleanup(d);
 		}
 	});
+
+	// TC-CMD-NEW-03: CI mode with no metadata flags produces empty defaults
+	test("CI mode with no metadata flags produces empty defaults", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--ci"], d);
+			const { exitCode } = run(["commands", "new", "test-cmd", "--ci"], d);
+			expect(exitCode).toBe(0);
+			const content = readFileSync(
+				join(d, ".dotagents/commands/test-cmd.md"),
+				"utf8",
+			);
+			// frontmatter is the first YAML block between --- markers
+			const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+			expect(frontmatterMatch).not.toBeNull();
+			const frontmatter = frontmatterMatch?.[1] ?? "";
+			expect(frontmatter).toContain("description: ''");
+			expect(frontmatter).not.toMatch(/^category:/m);
+			expect(frontmatter).not.toMatch(/^tags:/m);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// TC-CMD-NEW-06: --deploy (default CI auto-deploy) triggers deploy after creation.
+	// Already covered by "CI auto-deploys after commands new" in deploy-default block.
+
+	// TC-CMD-RM-06: --deploy (default CI auto-deploy) re-runs deploy after removal.
+	// Already covered by "CI auto-deploys after commands rm" in deploy-default block.
 });
 
 // ── commands ls – CLI ─────────────────────────────────────────────────────────
@@ -764,6 +793,26 @@ test.describe("commands --cwd", () => {
 			const { exitCode, stderr } = run(["commands", "ls"], d);
 			expect(exitCode).toBe(0);
 			expect(stderr).toMatch(/greet/);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// TC-CMD-NEW-10: --cwd pointing to a directory without .dotagents/ exits non-zero
+	test("commands new --cwd to non-workspace exits non-zero", async () => {
+		const d = makeTmpDir();
+		try {
+			const emptyDir = makeTmpDir();
+			try {
+				const { exitCode, stderr } = run(
+					["commands", "new", "test-cmd", "--cwd", emptyDir, "--ci"],
+					d,
+				);
+				expect(exitCode).not.toBe(0);
+				expect(stderr).toContain(".dotagents");
+			} finally {
+				cleanup(emptyDir);
+			}
 		} finally {
 			cleanup(d);
 		}
