@@ -17,7 +17,16 @@ test.describe("commands new CLI", () => {
 	test("all flags populate frontmatter fields", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			const { exitCode } = run(
 				[
 					"commands",
@@ -50,7 +59,16 @@ test.describe("commands new CLI", () => {
 	test("command file contains Steps and When to use sections", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			run(["commands", "new", "greet", "--description", "Say hello"], d);
 			const content = readFileSync(
 				join(d, ".dotagents/commands/greet.md"),
@@ -67,7 +85,16 @@ test.describe("commands new CLI", () => {
 	test("--force overwrites existing command file", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			run(["commands", "new", "greet", "--description", "first"], d);
 			const { exitCode } = run(
 				["commands", "new", "greet", "--description", "second", "--force"],
@@ -88,7 +115,16 @@ test.describe("commands new CLI", () => {
 	test("duplicate without --force exits non-zero", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			run(["commands", "new", "greet", "--description", "first"], d);
 			const { exitCode, stderr } = run(
 				["commands", "new", "greet", "--description", "second"],
@@ -109,7 +145,16 @@ test.describe("commands ls CLI", () => {
 	test("shows hello command from init scaffold", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			const { exitCode, stderr } = run(["commands", "ls"], d);
 			expect(exitCode).toBe(0);
 			expect(stderr).toMatch(/hello/);
@@ -122,7 +167,16 @@ test.describe("commands ls CLI", () => {
 	test("shows command count summary line", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			const { exitCode, stderr } = run(["commands", "ls"], d);
 			expect(exitCode).toBe(0);
 			expect(stderr).toMatch(/command\(s\)/);
@@ -135,7 +189,16 @@ test.describe("commands ls CLI", () => {
 	test("--content exits zero", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			const { exitCode } = run(["commands", "ls", "--content"], d);
 			expect(exitCode).toBe(0);
 		} finally {
@@ -147,7 +210,16 @@ test.describe("commands ls CLI", () => {
 	test("--json outputs valid JSON array with name and description", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			const { exitCode, stdout } = run(["commands", "ls", "--json"], d);
 			expect(exitCode).toBe(0);
 			const parsed = JSON.parse(stdout);
@@ -164,7 +236,16 @@ test.describe("commands ls CLI", () => {
 	test("--json without --content does not include content key", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			const { exitCode, stdout } = run(["commands", "ls", "--json"], d);
 			expect(exitCode).toBe(0);
 			const parsed = JSON.parse(stdout);
@@ -178,7 +259,16 @@ test.describe("commands ls CLI", () => {
 	test("--json --content includes content key with body", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			const { exitCode, stdout } = run(
 				["commands", "ls", "--json", "--content"],
 				d,
@@ -197,7 +287,16 @@ test.describe("commands ls CLI", () => {
 	test("--content shows body content in text output", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			const { exitCode, stderr } = run(["commands", "ls", "--content"], d);
 			expect(exitCode).toBe(0);
 			expect(stderr).toMatch(/var\.agent_name/);
@@ -210,7 +309,16 @@ test.describe("commands ls CLI", () => {
 	test("default output does not show body content", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			const { exitCode, stderr } = run(["commands", "ls"], d);
 			expect(exitCode).toBe(0);
 			expect(stderr).not.toMatch(/var\.agent_name/);
@@ -223,7 +331,16 @@ test.describe("commands ls CLI", () => {
 	test("--json with no commands outputs []", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			// Remove the scaffolded hello command to make it empty
 			rmSync(join(d, ".dotagents/commands/hello.md"), { force: true });
 			const { exitCode, stdout } = run(["commands", "ls", "--json"], d);
@@ -238,7 +355,16 @@ test.describe("commands ls CLI", () => {
 	test("--json output is valid JSON array (pipeable)", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			const { exitCode, stdout } = run(["commands", "ls", "--json"], d);
 			expect(exitCode).toBe(0);
 			const parsed = JSON.parse(stdout);
@@ -252,7 +378,16 @@ test.describe("commands ls CLI", () => {
 	test("--command filters to matching command", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			run(["commands", "new", "greet", "--description", "test"], d);
 			const { exitCode, stderr } = run(
 				["commands", "ls", "--command", "greet"],
@@ -270,7 +405,16 @@ test.describe("commands ls CLI", () => {
 	test("--command with unmatched name shows no commands found", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			const { exitCode, stderr } = run(
 				["commands", "ls", "--command", "nonexistent"],
 				d,
@@ -286,7 +430,16 @@ test.describe("commands ls CLI", () => {
 	test("--command --json filters JSON output", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			const { exitCode, stdout } = run(
 				["commands", "ls", "--json", "--command", "hello"],
 				d,
@@ -308,7 +461,16 @@ test.describe("commands rm CLI", () => {
 	test("--force deletes command file", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			expect(existsSync(join(d, ".dotagents/commands/hello.md"))).toBe(true);
 			const { exitCode } = run(["commands", "rm", "hello", "--force"], d);
 			expect(exitCode).toBe(0);
@@ -346,7 +508,16 @@ test.describe("commands rm CLI", () => {
 	test("only removes the named command, others remain", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			run(["commands", "new", "greet", "--description", "test"], d);
 			expect(existsSync(join(d, ".dotagents/commands/greet.md"))).toBe(true);
 			run(["commands", "rm", "greet", "--force"], d);
@@ -448,7 +619,16 @@ test.describe("commands --cwd", () => {
 	test("commands ls --cwd reads from target workspace", async () => {
 		const { cwd, workspace } = makeTwoDirs();
 		try {
-			run(["init", "--template", "starter"], workspace);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				workspace,
+			);
 			run(["commands", "new", "greet", "--description", "Greet"], workspace);
 			const { exitCode, stderr } = run(
 				["commands", "ls", "--cwd", workspace],
@@ -482,7 +662,16 @@ test.describe("commands --cwd", () => {
 	test("commands new --cwd creates file in target workspace", async () => {
 		const { cwd, workspace } = makeTwoDirs();
 		try {
-			run(["init", "--template", "starter"], workspace);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				workspace,
+			);
 			const { exitCode } = run(
 				[
 					"commands",
@@ -510,7 +699,16 @@ test.describe("commands --cwd", () => {
 	test("commands rm --cwd removes from target workspace", async () => {
 		const { cwd, workspace } = makeTwoDirs();
 		try {
-			run(["init", "--template", "starter"], workspace);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				workspace,
+			);
 			run(["commands", "new", "greet", "--description", "Test"], workspace);
 			const file = join(workspace, ".dotagents/commands/greet.md");
 			expect(existsSync(file)).toBe(true);
@@ -532,7 +730,14 @@ test.describe("commands --cwd", () => {
 		const d = makeTmpDir();
 		try {
 			const sub = join(d, "sub");
-			run(["init", "--template", "starter", sub]);
+			run([
+				"init",
+				sub,
+				"--template",
+				"starter",
+				"--features",
+				"commands,instructions,mcp,skills",
+			]);
 			const { exitCode, stderr } = run(["commands", "ls", "--cwd", "sub"], d);
 			expect(exitCode).toBe(0);
 			expect(stderr).toMatch(/hello/);
@@ -545,7 +750,16 @@ test.describe("commands --cwd", () => {
 	test("--cwd omitted resolves from CWD as before", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			run(["commands", "new", "greet", "--description", "Test"], d);
 			const { exitCode, stderr } = run(["commands", "ls"], d);
 			expect(exitCode).toBe(0);
@@ -563,7 +777,16 @@ test.describe("commands --cwd", () => {
 // T06: all three prompts appear, deploy prompt defaults to No
 test.describe("commands new TUI – T06 interactive prompts", () => {
 	const d = makeTmpDir();
-	run(["init", "--template", "starter"], d);
+	run(
+		[
+			"init",
+			"--template",
+			"starter",
+			"--features",
+			"commands,instructions,mcp,skills",
+		],
+		d,
+	);
 	test.use({ program: shellProgram(d, ["commands", "new", "greet"]) });
 
 	test("prompts for description, category, tags then deploy", async ({
@@ -610,7 +833,16 @@ test.describe("commands new TUI – T06 interactive prompts", () => {
 // tests (J07).
 test.describe("commands new TUI – T07 deploy on Yes", () => {
 	const d = makeTmpDir();
-	run(["init", "--template", "with-custom-provider"], d);
+	run(
+		[
+			"init",
+			"--template",
+			"with-custom-provider",
+			"--features",
+			"commands,instructions,mcp,skills",
+		],
+		d,
+	);
 	const lcPath = join(d, ".dotagents/local.config.toml");
 	writeFileSync(
 		lcPath,
@@ -652,7 +884,16 @@ test.describe("commands new TUI – T07 deploy on Yes", () => {
 // T10: confirm prompt appears, navigating to Yes removes the file
 test.describe("commands rm TUI – T10 confirm Yes", () => {
 	const d = makeTmpDir();
-	run(["init", "--template", "starter"], d);
+	run(
+		[
+			"init",
+			"--template",
+			"starter",
+			"--features",
+			"commands,instructions,mcp,skills",
+		],
+		d,
+	);
 	test.use({ program: shellProgram(d, ["commands", "rm", "hello"]) });
 
 	test("confirm Yes removes the command", async ({ terminal }) => {
@@ -675,7 +916,16 @@ test.describe("commands rm TUI – T10 confirm Yes", () => {
 // T11: pressing Enter on default No cancels the removal
 test.describe("commands rm TUI – T11 confirm No", () => {
 	const d = makeTmpDir();
-	run(["init", "--template", "starter"], d);
+	run(
+		[
+			"init",
+			"--template",
+			"starter",
+			"--features",
+			"commands,instructions,mcp,skills",
+		],
+		d,
+	);
 	test.use({ program: shellProgram(d, ["commands", "rm", "hello"]) });
 
 	test("confirm No leaves the command file intact", async ({ terminal }) => {

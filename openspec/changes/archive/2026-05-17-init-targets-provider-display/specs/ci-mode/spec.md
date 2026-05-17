@@ -1,10 +1,4 @@
-# CI Mode
-
-## Purpose
-
-Defines how the CLI behaves in non-interactive (CI) environments, including how CI mode is activated and which behaviors it suppresses.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: CI mode flag
 
@@ -29,4 +23,3 @@ The CLI SHALL accept a global `--ci` flag on the `Options` struct. When present,
 
 - **WHEN** user runs `dotagents --ci <any-subcommand>`
 - **THEN** the flag is accepted without error and CI mode is active for that subcommand
-

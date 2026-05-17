@@ -158,8 +158,14 @@ impl CmdResult {
 /// Initialises a `with-custom-provider` workspace and strips the remote
 /// `gemini` target so that deploy can run fully offline in tests.
 pub fn init_with_mycode_provider(ws: &TestWorkspace) {
-    ws.run_command(&["init", "--template", "with-custom-provider"])
-        .assert_success();
+    ws.run_command(&[
+        "init",
+        "--template",
+        "with-custom-provider",
+        "--features",
+        "commands,instructions,mcp,skills",
+    ])
+    .assert_success();
     let config_path = ws.active_root_dir().join("local.config.toml");
     let content = fs::read_to_string(&config_path).expect("failed to read local.config.toml");
     // Remove the remote gemini target; mycode inline provider remains.

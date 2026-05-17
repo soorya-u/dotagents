@@ -21,38 +21,37 @@ pub(crate) fn run_init_wizard(opts: &mut InitOptions, dir_exists: bool) -> Resul
         opts.force = true;
     }
 
-    // Feature multiselect — all four features pre-checked by default.
-    let mut ms = multiselect("Which features do you want to enable?")
-        .item(
-            "commands",
-            "Custom Commands",
-            "Sync slash commands to your AI tools",
-        )
-        .item(
-            "instructions",
-            "INSTRUCTIONS.md",
-            "Sync a global INSTRUCTIONS.md",
-        )
-        .item("mcp", "MCP Configuration", "Sync MCP server configuration")
-        .item("skills", "Skills", "Sync skills")
-        .initial_values(vec!["commands", "instructions", "mcp", "skills"])
-        .required(false);
-    let features = ms.interact().context("unable to get feature selection")?;
+    if opts.features.is_none() {
+        let mut ms = multiselect("Which features do you want to enable?")
+            .item(
+                "commands",
+                "Custom Commands",
+                "Sync slash commands to your AI tools",
+            )
+            .item(
+                "instructions",
+                "INSTRUCTIONS.md",
+                "Sync a global INSTRUCTIONS.md",
+            )
+            .item("mcp", "MCP Configuration", "Sync MCP server configuration")
+            .item("skills", "Skills", "Sync skills")
+            .initial_values(vec!["commands", "instructions", "mcp", "skills"])
+            .required(false);
+        let features = ms.interact().context("unable to get feature selection")?;
 
-    // Map the string selections back to Feature enum values and store in opts.features.
-    let feature_list: Vec<Feature> = features
-        .iter()
-        .filter_map(|&f| match f {
-            "commands" => Some(Feature::Commands),
-            "instructions" => Some(Feature::Instructions),
-            "mcp" => Some(Feature::Mcp),
-            "skills" => Some(Feature::Skills),
-            _ => None,
-        })
-        .collect();
-    opts.features = Some(feature_list);
+        let feature_list: Vec<Feature> = features
+            .iter()
+            .filter_map(|&f| match f {
+                "commands" => Some(Feature::Commands),
+                "instructions" => Some(Feature::Instructions),
+                "mcp" => Some(Feature::Mcp),
+                "skills" => Some(Feature::Skills),
+                _ => None,
+            })
+            .collect();
+        opts.features = Some(feature_list);
+    }
 
-    // Template select — skipped when --template was already provided.
     if opts.template.is_none() {
         let mut ts = select("Which starting template?")
             .item(InitTemplate::Starter, "Starter", "Core files only")
@@ -65,8 +64,9 @@ pub(crate) fn run_init_wizard(opts: &mut InitOptions, dir_exists: bool) -> Resul
         opts.template = Some(template);
     }
 
-    // Provider selection — runs before files are written so targets are known upfront.
-    opts.targets = prompt_targets(&[])?.unwrap_or_default();
+    if opts.targets.is_none() {
+        opts.targets = prompt_targets(&[])?.or(Some(vec![]));
+    }
 
     Ok(true)
 }
@@ -94,8 +94,18 @@ pub(crate) fn prompt_targets(initial: &[String]) -> Result<Option<Vec<String>>> 
         }
     };
 
-    let mut providers: Vec<String> = registry.providers.keys().cloned().collect();
-    providers.sort();
+    let mut providers: Vec<(String, String)> = registry
+        .providers
+        .iter()
+        .map(|(slug, entry)| {
+            let label = match &entry.name {
+                Some(name) => format!("{} [{}]", name, slug),
+                None => slug.clone(),
+            };
+            (slug.clone(), label)
+        })
+        .collect();
+    providers.sort_by(|a, b| a.0.cmp(&b.0));
 
     if providers.is_empty() {
         return Ok(Some(vec![]));
@@ -103,7 +113,7 @@ pub(crate) fn prompt_targets(initial: &[String]) -> Result<Option<Vec<String>>> 
 
     let initial_values: Vec<String> = initial
         .iter()
-        .filter(|p| providers.contains(p))
+        .filter(|p| providers.iter().any(|(slug, _)| slug == *p))
         .cloned()
         .collect();
 
@@ -111,8 +121,8 @@ pub(crate) fn prompt_targets(initial: &[String]) -> Result<Option<Vec<String>>> 
         .required(false)
         .max_rows(12)
         .initial_values(initial_values);
-    for provider in &providers {
-        ms = ms.item(provider.clone(), provider.as_str(), "");
+    for (slug, label) in &providers {
+        ms = ms.item(slug.clone(), label.as_str(), "");
     }
     let selected = ms.interact().context("unable to get provider selection")?;
 

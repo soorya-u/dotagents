@@ -1,8 +1,14 @@
-## Purpose
+## REMOVED Requirements
 
-Specifies the `--features` flag for `dotagents init`, which replaces the removed `--no-mcp`, `--no-command`, `--no-instruction`, and `--no-skill` boolean flags with a single whitelist-style selector.
+### Requirement: --features none disables all feature scaffolding
+**Reason**: The `Feature::None` sentinel was a workaround before `--ci` existed. With `--ci`, users can run `dotagents --ci init` without `--features` to get no features. The sentinel adds unnecessary complexity.
+**Migration**: Use `dotagents --ci init` (no `--features` flag) instead of `dotagents init --features none`.
 
-## Requirements
+### Requirement: --features with no values is an error
+**Reason**: The validation logic in `validate_features()` was primarily for checking `None` sentinel mixing. With `Feature::None` removed, clap's built-in `num_args = 1..` validation handles the empty-value case.
+**Migration**: Clap will reject `--features` with no values at the argument-parsing level.
+
+## MODIFIED Requirements
 
 ### Requirement: --features flag selects which features init scaffolds
 `dotagents init` SHALL accept an optional `--features` flag that takes a comma-separated list of feature names and/or may be repeated. Valid feature names are `commands`, `instructions`, `mcp`, and `skills`. When `--features` is absent and TUI is available, the wizard SHALL prompt for features. When `--features` is absent and TUI is not available (CI/non-TTY), no features SHALL be scaffolded.

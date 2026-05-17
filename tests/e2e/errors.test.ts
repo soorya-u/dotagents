@@ -52,7 +52,16 @@ test.describe("error flows – missing targets", () => {
 	test("rm non-existent command exits non-zero", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			const { exitCode, stderr } = run(
 				["commands", "rm", "ghost", "--force"],
 				d,
@@ -68,7 +77,16 @@ test.describe("error flows – missing targets", () => {
 	test("rm non-existent skill exits non-zero", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			const { exitCode, stderr } = run(["skills", "rm", "ghost", "--force"], d);
 			expect(exitCode).not.toBe(0);
 			expect(stderr).toContain("ghost");
@@ -81,7 +99,16 @@ test.describe("error flows – missing targets", () => {
 	test("duplicate commands new without --force mentions --force", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			// hello.md already exists from init
 			const { exitCode, stderr } = run(
 				["commands", "new", "hello", "--description", "x"],

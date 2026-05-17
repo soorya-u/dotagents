@@ -207,7 +207,7 @@ test.describe("config CLI – empty config", () => {
 	test("config with no features shows none configured", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter", "--features", "none"], d);
+			run(["init", "--template", "starter"], d);
 			const { exitCode, stdout } = run(["config"], d);
 			expect(exitCode).toBe(0);
 			expect(stdout).toMatch(/none configured/i);
@@ -224,7 +224,16 @@ test.describe("config --cwd", () => {
 	test("config --cwd reads config from target workspace", async () => {
 		const { cwd, workspace } = makeTwoDirs();
 		try {
-			run(["init", "--template", "starter"], workspace);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				workspace,
+			);
 			const { exitCode, stdout } = run(["config", "--cwd", workspace], cwd);
 			expect(exitCode).toBe(0);
 			expect(stdout).toMatch(/features/i);
@@ -238,7 +247,16 @@ test.describe("config --cwd", () => {
 	test("config --json --cwd outputs JSON for target workspace", async () => {
 		const { cwd, workspace } = makeTwoDirs();
 		try {
-			run(["init", "--template", "starter"], workspace);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				workspace,
+			);
 			const { exitCode, stdout } = run(
 				["config", "--json", "--cwd", workspace],
 				cwd,
