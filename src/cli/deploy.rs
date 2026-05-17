@@ -26,6 +26,7 @@ use crate::utils::gitignore::rebuild_fence_from_cache;
 use crate::utils::path::{get_workspace_dir, override_workspace_dir};
 use crate::utils::tui::is_tui_enabled;
 use cliclack::{outro, spinner};
+use std::io::Write;
 
 /// Aggregated result of deploying one feature across all providers.
 #[derive(Debug, Default)]
@@ -305,6 +306,7 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
     if opts.no_gitignore {
         if is_tui_enabled() {
             outro(deploy_outro(&stats)).ok();
+            let _ = std::io::stdout().flush();
         } else {
             print_deploy_summary(&stats);
         }
@@ -317,6 +319,7 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
     if cache_targets.is_empty() {
         if is_tui_enabled() {
             outro(deploy_outro(&stats)).ok();
+            let _ = std::io::stdout().flush();
         } else {
             print_deploy_summary(&stats);
         }
@@ -335,6 +338,7 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
 
     if is_tui_enabled() {
         outro(deploy_outro(&stats)).ok();
+        let _ = std::io::stdout().flush();
     } else {
         print_deploy_summary(&stats);
     }

@@ -1,4 +1,4 @@
-use std::io::ErrorKind;
+use std::io::{ErrorKind, Write};
 use std::path::{Path, PathBuf};
 
 use crate::prelude::*;
@@ -81,6 +81,7 @@ pub(super) fn undeploy(mut opts: UndeployOptions) -> Result<()> {
     if !opts.force && !prompt_confirm_undeploy(entries.len()) {
         if is_tui_enabled() {
             cliclack::outro_cancel("Undeploy cancelled.").ok();
+            let _ = std::io::stdout().flush();
         }
         return Ok(());
     }

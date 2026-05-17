@@ -1,6 +1,7 @@
 use crate::prelude::*;
 use anyhow::{Context, Result};
 use cliclack::{multiselect, outro, outro_cancel, select, spinner};
+use std::io::Write;
 
 use crate::cli::options::{Feature, InitOptions, InitTemplate};
 use crate::schema::registry::Registry;
@@ -17,6 +18,7 @@ pub(crate) fn run_init_wizard(opts: &mut InitOptions, dir_exists: bool) -> Resul
         let overwrite = sel.interact().context("unable to get overwrite choice")?;
         if !overwrite {
             outro_cancel("Init cancelled.").ok();
+            let _ = std::io::stdout().flush();
             return Ok(false);
         }
         opts.force = true;
@@ -137,4 +139,5 @@ pub(crate) fn prompt_targets(initial: &[String]) -> Result<Option<Vec<String>>> 
 /// Shows the closing outro message after init completes successfully.
 pub(crate) fn finish_init() {
     outro("Done! Run `dotagents deploy` to render your templates.").ok();
+    let _ = std::io::stdout().flush();
 }

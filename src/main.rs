@@ -6,6 +6,8 @@ mod schema;
 mod templates;
 pub(crate) mod utils;
 
+use std::io::Write;
+
 fn main() {
     let opts = cli::get_options();
     let ci_from_env = std::env::var("DOTAGENTS_CI")
@@ -22,6 +24,7 @@ fn main() {
             utils::display_error(e);
             if utils::logs::log_config().is_some_and(|c| c.is_tty) {
                 cliclack::outro_cancel("Fatal error").ok();
+                let _ = std::io::stdout().flush();
             }
             std::process::exit(1);
         }

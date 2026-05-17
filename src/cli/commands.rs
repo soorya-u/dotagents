@@ -1,4 +1,5 @@
 use std::fs;
+use std::io::Write;
 
 use anyhow::{Context, Result};
 use cliclack::{confirm, input, outro};
@@ -132,6 +133,7 @@ pub(crate) fn rm_command(opts: RmCommandOptions) -> Result<bool> {
 
         if !confirmed {
             outro("Cancelled.").ok();
+            let _ = std::io::stdout().flush();
             return Ok(true);
         }
     }
@@ -235,6 +237,7 @@ mod tests {
     use super::*;
     use crate::utils::tui::set_ci_mode;
     use std::fs;
+    use std::io::Write;
     use tempfile::TempDir;
 
     fn make_command(dir: &std::path::Path, name: &str, description: &str) {

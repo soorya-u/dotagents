@@ -107,8 +107,8 @@ target   = "{{ dir.workspace }}/.myagent/commands/{{ command.name }}.md"
 ## Supported Providers
 
 14 providers with community templates:
-`amp`, `auggie`, `claude`, `codebuddy`, `codex`, `copilot`, `cursor`, `gemini`,
-`kilocode`, `opencode`, `qwen`, `roo`, `shai`, `windsurf`
+`amp`, `auggie`, `claude`, `codex`, `copilot`, `cursor`, `gemini`,
+`kilocode`, `opencode`, `qwen`
 
 Full templates at [`public/v1/templates/`](./public/v1/templates/).
 To add a new provider, contribute a `.hbs` template and `provider.toml` snippet.
@@ -117,7 +117,7 @@ To add a new provider, contribute a `.hbs` template and `provider.toml` snippet.
 
 ## Contributing
 
-This project uses [OpenSpec](https://github.com/Fission-Codes/openspec) for change
+This project uses [OpenSpec](https://github.com/Fission-AI/openspec) for change
 proposals. Check `openspec/changes/` for active work before opening a new feature.
 
 ```bash
