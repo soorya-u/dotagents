@@ -65,7 +65,7 @@ where
     }
 
     let feature_name = feature.as_str();
-    let items = loader().context(format!("Failed to load {} feature", feature))?;
+    let items = loader().context(format!("unable to load {} feature", feature))?;
     let providers = app_config.get_provider_feature_settings(feature);
 
     let stats: DeployStats = providers
@@ -163,12 +163,12 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
         let workspace = std::env::current_dir()
             .context("failed to get current directory")?
             .join(dir);
-        override_workspace_dir(workspace).context("Failed to set workspace directory")?;
+        override_workspace_dir(workspace).context("unable to set workspace directory")?;
     }
 
-    let templater = get_templater().context("failed to initialise templater")?;
+    let templater = get_templater().context("unable to initialise templater")?;
     let mut app_config =
-        AppConfig::from_application(templater).context("Failed to load application config")?;
+        AppConfig::from_application(templater).context("unable to load application config")?;
 
     // In interactive sessions, ask whether to run offline before the registry fetch.
     if !opts.offline && is_tui_enabled() {
@@ -177,7 +177,7 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
 
     // Resolve missing template/target fields from the official provider registry.
     // registry.json is fetched at most once here; the result is shared across all providers.
-    let template_cache = TemplateCache::new().context("Failed to initialise template cache")?;
+    let template_cache = TemplateCache::new().context("unable to initialise template cache")?;
     let registry: Option<Registry> = if opts.offline {
         None // --offline: skip fetch entirely, resolve from cache only
     } else {
@@ -214,14 +214,14 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
         opts.offline,
         opts.no_cache,
     )
-    .context("Failed to resolve provider template defaults")?;
+    .context("unable to resolve provider template defaults")?;
 
     // Serialize user-defined variables only when present; None stays None so the
     // renderer doesn't receive Value::Null, which would wipe the Templater globals.
     let variables: Option<Value> = app_config
         .variables
         .as_ref()
-        .map(|v| to_value(v).context("Failed to extract variables"))
+        .map(|v| to_value(v).context("unable to extract variables"))
         .transpose()?;
 
     let has_any_provider = Feature::all()
@@ -233,7 +233,7 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
 
     // Always initialise cache; --no-cache only suppresses the hash-comparison read.
     let cache = Arc::new(Mutex::new(
-        CacheConfig::load().context("Failed to load cache")?,
+        CacheConfig::load().context("unable to load cache")?,
     ));
 
     let mut stats = DeployStats::default();
@@ -297,7 +297,7 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
         .lock()
         .unwrap()
         .save()
-        .context("Failed to save cache")?;
+        .context("unable to save cache")?;
 
     // Print deploy summary before the gitignore step.
     print_deploy_summary(&stats);
@@ -310,7 +310,7 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
         return Ok(());
     }
 
-    let workspace_root = get_workspace_dir().context("Failed to get workspace directory")?;
+    let workspace_root = get_workspace_dir().context("unable to get workspace directory")?;
     let cache_targets = cache.lock().unwrap().all_targets();
 
     if cache_targets.is_empty() {

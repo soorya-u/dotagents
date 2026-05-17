@@ -5,7 +5,7 @@ use std::io::ErrorKind;
 
 use crate::cli::deploy::deploy;
 use crate::cli::options::{
-    AddSkillOptions, DeployOptions, RmSkillOptions, SkillsAction, SkillsAddOptions, SubLsOptions,
+    AddSkillOptions, DeployOptions, RmSkillOptions, SkillsAddOptions, SubLsOptions,
 };
 use crate::cli::ui::ls::render_skills;
 use crate::core::config::CacheConfig;
@@ -56,9 +56,9 @@ fn maybe_prompt_deploy(deploy_flag: bool) -> Result<()> {
 }
 
 /// Install a skill into `.dotagents/skills/` by wrapping the `skills` CLI.
-fn add(opts: SkillsAddOptions) -> Result<bool> {
+pub(crate) fn add(opts: SkillsAddOptions) -> Result<bool> {
     resolve_and_override_workspace(opts.workspace.cwd)
-        .context("Failed to resolve workspace directory")?;
+        .context("unable to resolve workspace directory")?;
 
     let templater = get_templater()?;
     let app_config = AppConfig::from_application(templater)?;
@@ -115,9 +115,9 @@ fn add(opts: SkillsAddOptions) -> Result<bool> {
 }
 
 /// Handle `dotagents skills new`.
-fn new_skill(opts: AddSkillOptions) -> Result<bool> {
+pub(crate) fn new_skill(opts: AddSkillOptions) -> Result<bool> {
     resolve_and_override_workspace(opts.workspace.cwd)
-        .context("Failed to resolve workspace directory")?;
+        .context("unable to resolve workspace directory")?;
 
     let app_dir = get_application_dir().context(
         "No .dotagents directory found. Run `dotagents init` to initialise a workspace.",
@@ -164,9 +164,9 @@ fn new_skill(opts: AddSkillOptions) -> Result<bool> {
 }
 
 /// Handle `dotagents skills rm`.
-fn rm_skill(opts: RmSkillOptions) -> Result<bool> {
+pub(crate) fn rm_skill(opts: RmSkillOptions) -> Result<bool> {
     resolve_and_override_workspace(opts.workspace.cwd)
-        .context("Failed to resolve workspace directory")?;
+        .context("unable to resolve workspace directory")?;
 
     let app_dir = get_application_dir().context(
         "No .dotagents directory found. Run `dotagents init` to initialise a workspace.",
@@ -266,9 +266,9 @@ fn load_skills() -> Result<Vec<ListItem>> {
 }
 
 /// Handle `dotagents skills ls`.
-fn ls_skills(opts: SubLsOptions) -> Result<bool> {
+pub(crate) fn ls_skills(opts: SubLsOptions) -> Result<bool> {
     resolve_and_override_workspace(opts.workspace.cwd)
-        .context("Failed to resolve workspace directory")?;
+        .context("unable to resolve workspace directory")?;
 
     get_application_dir().context(
         "No .dotagents directory found. Run `dotagents init` to initialise a workspace.",
@@ -288,16 +288,6 @@ fn ls_skills(opts: SubLsOptions) -> Result<bool> {
 
     render_skills(skills, opts.content);
     Ok(true)
-}
-
-/// Dispatch `dotagents skills`.
-pub(crate) fn run_skills(action: SkillsAction) -> Result<bool> {
-    match action {
-        SkillsAction::Add(opts) => add(opts),
-        SkillsAction::New(opts) => new_skill(opts),
-        SkillsAction::Rm(opts) => rm_skill(opts),
-        SkillsAction::Ls(opts) => ls_skills(opts),
-    }
 }
 
 #[cfg(test)]

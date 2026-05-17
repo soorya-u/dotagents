@@ -4,9 +4,7 @@ use anyhow::{Context, Result};
 use cliclack::{confirm, input, outro};
 
 use crate::cli::deploy::deploy;
-use crate::cli::options::{
-    AddCommandOptions, CommandsAction, DeployOptions, RmCommandOptions, SubLsOptions,
-};
+use crate::cli::options::{AddCommandOptions, DeployOptions, RmCommandOptions, SubLsOptions};
 use crate::cli::ui::ls::render_commands;
 use crate::core::config::CacheConfig;
 use crate::core::features::command::CommandFeature;
@@ -53,9 +51,9 @@ fn maybe_prompt_deploy(deploy_flag: bool) -> Result<()> {
 }
 
 /// Handle `dotagents commands new`.
-fn new_command(opts: AddCommandOptions) -> Result<bool> {
+pub(crate) fn new_command(opts: AddCommandOptions) -> Result<bool> {
     resolve_and_override_workspace(opts.workspace.cwd)
-        .context("Failed to resolve workspace directory")?;
+        .context("unable to resolve workspace directory")?;
 
     let app_dir = get_application_dir().context(
         "No .dotagents directory found. Run `dotagents init` to initialise a workspace.",
@@ -107,9 +105,9 @@ fn new_command(opts: AddCommandOptions) -> Result<bool> {
 }
 
 /// Handle `dotagents commands rm`.
-fn rm_command(opts: RmCommandOptions) -> Result<bool> {
+pub(crate) fn rm_command(opts: RmCommandOptions) -> Result<bool> {
     resolve_and_override_workspace(opts.workspace.cwd)
-        .context("Failed to resolve workspace directory")?;
+        .context("unable to resolve workspace directory")?;
 
     let app_dir = get_application_dir().context(
         "No .dotagents directory found. Run `dotagents init` to initialise a workspace.",
@@ -207,9 +205,9 @@ fn load_commands() -> Result<Vec<ListItem>> {
 }
 
 /// Handle `dotagents commands ls`.
-fn ls_commands(opts: SubLsOptions) -> Result<bool> {
+pub(crate) fn ls_commands(opts: SubLsOptions) -> Result<bool> {
     resolve_and_override_workspace(opts.workspace.cwd)
-        .context("Failed to resolve workspace directory")?;
+        .context("unable to resolve workspace directory")?;
 
     get_application_dir().context(
         "No .dotagents directory found. Run `dotagents init` to initialise a workspace.",
@@ -229,15 +227,6 @@ fn ls_commands(opts: SubLsOptions) -> Result<bool> {
 
     render_commands(commands, opts.content);
     Ok(true)
-}
-
-/// Dispatch `dotagents commands`.
-pub(crate) fn run_commands(action: CommandsAction) -> Result<bool> {
-    match action {
-        CommandsAction::New(opts) => new_command(opts),
-        CommandsAction::Rm(opts) => rm_command(opts),
-        CommandsAction::Ls(opts) => ls_commands(opts),
-    }
 }
 
 #[cfg(test)]
