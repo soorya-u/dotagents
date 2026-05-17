@@ -4,7 +4,9 @@ use serde_json::{Value, to_value};
 use std::sync::{Arc, Mutex};
 
 use crate::cli::options::DeployOptions;
-use crate::cli::ui::deploy::{print_deploy_summary, prompt_gitignore_update, prompt_offline};
+use crate::cli::ui::deploy::{
+    deploy_outro, print_deploy_summary, prompt_gitignore_update, prompt_offline,
+};
 use crate::cli::ui::dry_run::{
     DeployDryRunStatus, DryRunDeployEntry, print_dry_run_deploy_summary,
 };
@@ -299,13 +301,12 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
         .save()
         .context("unable to save cache")?;
 
-    // Print deploy summary before the gitignore step.
-    print_deploy_summary(&stats);
-
     // Skip gitignore update only when the user opted out.
     if opts.no_gitignore {
         if is_tui_enabled() {
-            outro("Done.").ok();
+            outro(deploy_outro(&stats)).ok();
+        } else {
+            print_deploy_summary(&stats);
         }
         return Ok(());
     }
@@ -315,7 +316,9 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
 
     if cache_targets.is_empty() {
         if is_tui_enabled() {
-            outro("Done.").ok();
+            outro(deploy_outro(&stats)).ok();
+        } else {
+            print_deploy_summary(&stats);
         }
         return Ok(());
     }
@@ -331,7 +334,9 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
     }
 
     if is_tui_enabled() {
-        outro("Done.").ok();
+        outro(deploy_outro(&stats)).ok();
+    } else {
+        print_deploy_summary(&stats);
     }
 
     Ok(())
