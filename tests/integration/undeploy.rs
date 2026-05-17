@@ -22,8 +22,7 @@ fn undeploy_removes_deployed_files_and_clears_cache() {
         "instructions.md should exist after deploy"
     );
 
-    ws.run_command(&["undeploy", "--no-gitignore"])
-        .assert_success();
+    ws.run_command(&["undeploy"]).assert_success();
 
     assert!(
         !ws.file_exists(".mycode/instructions.md"),
@@ -48,43 +47,16 @@ fn undeploy_with_no_cache_exits_cleanly() {
     init_with_mycode_provider(&ws);
 
     // Do NOT deploy — no cache.toml exists.
-    ws.run_command(&["undeploy", "--no-gitignore"])
-        .assert_success();
+    ws.run_command(&["undeploy"]).assert_success();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// --no-gitignore flag
+// Gitignore fence cleanup on undeploy
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn undeploy_no_gitignore_leaves_fence_intact() {
-    // --no-gitignore preserves the .gitignore managed fence.
-    let ws = TestWorkspace::new();
-    init_with_mycode_provider(&ws);
-
-    ws.run_command(&["deploy", "--offline", "--gitignore"])
-        .assert_success();
-
-    // Fence should now exist.
-    let gi_before = ws.read_file(".gitignore");
-    assert!(
-        gi_before.contains("region dotagents"),
-        ".gitignore should contain managed fence after deploy"
-    );
-
-    ws.run_command(&["undeploy", "--no-gitignore"])
-        .assert_success();
-
-    let gi_after = ws.read_file(".gitignore");
-    assert!(
-        gi_after.contains("region dotagents"),
-        ".gitignore fence should be preserved with --no-gitignore"
-    );
-}
-
-#[test]
-fn undeploy_removes_gitignore_fence_by_default() {
-    // Without --no-gitignore, undeploy removes the managed fence.
+fn undeploy_removes_gitignore_fence() {
+    // Undeploy always removes the managed fence from .gitignore.
     let ws = TestWorkspace::new();
     init_with_mycode_provider(&ws);
 
@@ -124,8 +96,7 @@ fn no_cache_deploy_then_undeploy_works() {
         "instructions.md should exist after --no-cache deploy"
     );
 
-    ws.run_command(&["undeploy", "--no-gitignore"])
-        .assert_success();
+    ws.run_command(&["undeploy"]).assert_success();
 
     assert!(
         !ws.file_exists(".mycode/instructions.md"),
@@ -146,12 +117,10 @@ fn undeploy_twice_is_safe() {
     ws.run_command(&["deploy", "--offline", "--no-gitignore"])
         .assert_success();
 
-    ws.run_command(&["undeploy", "--no-gitignore"])
-        .assert_success();
+    ws.run_command(&["undeploy"]).assert_success();
 
     // Second undeploy — cache is already empty.
-    ws.run_command(&["undeploy", "--no-gitignore"])
-        .assert_success();
+    ws.run_command(&["undeploy"]).assert_success();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -172,8 +141,7 @@ fn undeploy_prunes_empty_parent_directory() {
         ".mycode/commands should exist after deploy"
     );
 
-    ws.run_command(&["undeploy", "--no-gitignore"])
-        .assert_success();
+    ws.run_command(&["undeploy"]).assert_success();
 
     assert!(
         !ws.dir_exists(".mycode/commands"),
@@ -199,8 +167,7 @@ fn undeploy_skips_user_edited_file_in_non_tty() {
     fs::write(&out_path, "User has edited this file.").unwrap();
 
     // stdin is null (non-TTY) in run_command; edited file should be skipped.
-    ws.run_command(&["undeploy", "--no-gitignore"])
-        .assert_success();
+    ws.run_command(&["undeploy"]).assert_success();
 
     assert!(
         ws.file_exists(".mycode/instructions.md"),
@@ -220,8 +187,7 @@ fn undeploy_force_deletes_user_edited_file() {
     let out_path = ws.root().join(".mycode/instructions.md");
     fs::write(&out_path, "User has edited this file.").unwrap();
 
-    ws.run_command(&["undeploy", "--no-gitignore", "--force"])
-        .assert_success();
+    ws.run_command(&["undeploy", "--force"]).assert_success();
 
     assert!(
         !ws.file_exists(".mycode/instructions.md"),

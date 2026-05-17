@@ -32,12 +32,12 @@ fn collect_field(value: Option<String>, prompt: &str, placeholder: &str) -> Resu
     Ok(String::new())
 }
 
-/// Deploy after command mutation: skip if --no-deploy, auto-deploy in CI, prompt in TTY.
-fn maybe_prompt_deploy(no_deploy: bool) -> Result<()> {
+/// Deploy after command mutation: skip if --no-deploy, auto-deploy if --deploy, auto-deploy in CI, prompt in TTY.
+fn maybe_prompt_deploy(force_deploy: bool, no_deploy: bool) -> Result<()> {
     if no_deploy {
         return Ok(());
     }
-    if !is_tui_enabled() {
+    if force_deploy || !is_tui_enabled() {
         deploy(DeployOptions::default()).context("deploy failed")?;
         return Ok(());
     }
@@ -96,7 +96,7 @@ pub(crate) fn new_command(opts: AddCommandOptions) -> Result<bool> {
 
     success!("Created {}", target.display());
 
-    maybe_prompt_deploy(opts.no_deploy)?;
+    maybe_prompt_deploy(opts.deploy, opts.no_deploy)?;
 
     if use_interactive {
         outro("").ok();
@@ -174,7 +174,7 @@ pub(crate) fn rm_command(opts: RmCommandOptions) -> Result<bool> {
         }
     }
 
-    maybe_prompt_deploy(opts.no_deploy)?;
+    maybe_prompt_deploy(opts.deploy, opts.no_deploy)?;
 
     outro("").ok();
     Ok(true)
@@ -369,14 +369,14 @@ mod tests {
         assert_eq!(result[0], serde_json::Value::String("not-an-object".into()));
     }
 
-    // maybe_prompt_deploy(true) skips deploy and returns immediately
+    // maybe_prompt_deploy(false, true) skips deploy and returns immediately
     #[test]
     fn maybe_prompt_deploy_no_deploy_true_skips_deploy() {
         // no_deploy=true causes early return without calling deploy
-        assert!(maybe_prompt_deploy(true).is_ok());
+        assert!(maybe_prompt_deploy(false, true).is_ok());
     }
 
-    // maybe_prompt_deploy(false) in CI auto-deploys without prompting
+    // maybe_prompt_deploy(false, false) in CI auto-deploys without prompting
     #[test]
     fn maybe_prompt_deploy_ci_calls_deploy_when_no_deploy_false() {
         use crate::utils::path::override_workspace_dir;
@@ -390,7 +390,7 @@ mod tests {
         override_workspace_dir(tmp.path().to_path_buf())
             .expect("commands deploy test should be able to set workspace lock");
         set_ci_mode(true);
-        let result = maybe_prompt_deploy(false);
+        let result = maybe_prompt_deploy(false, false);
         set_ci_mode(false);
         std::env::set_current_dir(&original_dir).unwrap();
         // Deploy succeeds trivially (no targets, no features), proving deploy was called

@@ -21,7 +21,7 @@ test.describe("undeploy CLI – basic lifecycle", () => {
 			expect(existsSync(join(d, ".mycode/instructions.md"))).toBe(true);
 			expect(existsSync(join(d, ".mycode/commands/hello.md"))).toBe(true);
 
-			const { exitCode } = run(["undeploy", "--no-gitignore"], d);
+			const { exitCode } = run(["undeploy"], d);
 			expect(exitCode).toBe(0);
 			expect(existsSync(join(d, ".mycode/instructions.md"))).toBe(false);
 			expect(existsSync(join(d, ".mycode/commands/hello.md"))).toBe(false);
@@ -36,7 +36,7 @@ test.describe("undeploy CLI – basic lifecycle", () => {
 		try {
 			initWithLocalProvider(d);
 			run(["deploy", "--offline", "--no-gitignore"], d);
-			run(["undeploy", "--no-gitignore"], d);
+			run(["undeploy"], d);
 
 			const cachePath = join(d, ".dotagents/cache.toml");
 			if (existsSync(cachePath)) {
@@ -54,7 +54,7 @@ test.describe("undeploy CLI – basic lifecycle", () => {
 		try {
 			initWithLocalProvider(d);
 			// No deploy run — cache.toml does not exist
-			const { exitCode } = run(["undeploy", "--no-gitignore"], d);
+			const { exitCode } = run(["undeploy"], d);
 			expect(exitCode).toBe(0);
 		} finally {
 			cleanup(d);
@@ -67,8 +67,8 @@ test.describe("undeploy CLI – basic lifecycle", () => {
 		try {
 			initWithLocalProvider(d);
 			run(["deploy", "--offline", "--no-gitignore"], d);
-			run(["undeploy", "--no-gitignore"], d);
-			const { exitCode } = run(["undeploy", "--no-gitignore"], d);
+			run(["undeploy"], d);
+			const { exitCode } = run(["undeploy"], d);
 			expect(exitCode).toBe(0);
 		} finally {
 			cleanup(d);
@@ -77,26 +77,7 @@ test.describe("undeploy CLI – basic lifecycle", () => {
 });
 
 test.describe("undeploy CLI – gitignore handling", () => {
-	// U05: --no-gitignore preserves the managed fence after undeploy
-	test("--no-gitignore preserves .gitignore fence", async () => {
-		const d = makeTmpDir();
-		try {
-			initWithLocalProvider(d);
-			run(["deploy", "--offline", "--gitignore"], d);
-
-			const giBefore = readFileSync(join(d, ".gitignore"), "utf8");
-			expect(giBefore).toContain("region dotagents");
-
-			run(["undeploy", "--no-gitignore"], d);
-
-			const giAfter = readFileSync(join(d, ".gitignore"), "utf8");
-			expect(giAfter).toContain("region dotagents");
-		} finally {
-			cleanup(d);
-		}
-	});
-
-	// U06: default undeploy removes the managed fence from .gitignore
+	// U05: default undeploy removes the managed fence from .gitignore
 	test("undeploy removes .gitignore fence by default", async () => {
 		const d = makeTmpDir();
 		try {
@@ -125,7 +106,7 @@ test.describe("undeploy CLI – --no-cache integration", () => {
 			run(["deploy", "--no-cache", "--offline", "--no-gitignore"], d);
 			expect(existsSync(join(d, ".mycode/instructions.md"))).toBe(true);
 
-			const { exitCode } = run(["undeploy", "--no-gitignore"], d);
+			const { exitCode } = run(["undeploy"], d);
 			expect(exitCode).toBe(0);
 			expect(existsSync(join(d, ".mycode/instructions.md"))).toBe(false);
 		} finally {
@@ -164,7 +145,7 @@ test.describe("undeploy CLI – user-edited files", () => {
 				"User has manually edited this file.",
 			);
 
-			run(["undeploy", "--no-gitignore"], d);
+			run(["undeploy"], d);
 
 			// Hash mismatch + non-TTY → file skipped, still present
 			expect(existsSync(join(d, ".mycode/instructions.md"))).toBe(true);
@@ -185,7 +166,7 @@ test.describe("undeploy CLI – user-edited files", () => {
 				"User has manually edited this file.",
 			);
 
-			const { exitCode } = run(["undeploy", "--no-gitignore", "--force"], d);
+			const { exitCode } = run(["undeploy", "--force"], d);
 			expect(exitCode).toBe(0);
 			expect(existsSync(join(d, ".mycode/instructions.md"))).toBe(false);
 		} finally {
@@ -203,7 +184,7 @@ test.describe("undeploy CLI – empty dir pruning", () => {
 			run(["deploy", "--offline", "--no-gitignore"], d);
 			expect(existsSync(join(d, ".mycode/commands"))).toBe(true);
 
-			run(["undeploy", "--no-gitignore", "--force"], d);
+			run(["undeploy", "--force"], d);
 
 			expect(existsSync(join(d, ".mycode/commands"))).toBe(false);
 		} finally {
@@ -238,7 +219,7 @@ test.describe("undeploy TUI – T-U1 confirm Yes removes files", () => {
 	const d = makeTmpDir();
 	initWithLocalProvider(d);
 	run(["deploy", "--offline", "--no-gitignore"], d);
-	test.use({ program: shellProgram(d, ["undeploy", "--no-gitignore"]) });
+	test.use({ program: shellProgram(d, ["undeploy"]) });
 
 	test("selecting Yes on confirmation prompt removes deployed files", async ({
 		terminal,
@@ -262,7 +243,7 @@ test.describe("undeploy TUI – T-U2 confirm No aborts", () => {
 	const d = makeTmpDir();
 	initWithLocalProvider(d);
 	run(["deploy", "--offline", "--no-gitignore"], d);
-	test.use({ program: shellProgram(d, ["undeploy", "--no-gitignore"]) });
+	test.use({ program: shellProgram(d, ["undeploy"]) });
 
 	test("pressing Enter on default No aborts undeploy", async ({ terminal }) => {
 		try {
@@ -291,10 +272,7 @@ test.describe("undeploy CLI – PATH argument", () => {
 			run(["deploy", target, "--offline", "--no-gitignore"], cwd);
 			expect(existsSync(join(target, ".mycode/instructions.md"))).toBe(true);
 
-			const { exitCode } = run(
-				["undeploy", target, "--force", "--no-gitignore"],
-				cwd,
-			);
+			const { exitCode } = run(["undeploy", target, "--force"], cwd);
 			expect(exitCode).toBe(0);
 			expect(existsSync(join(target, ".mycode/instructions.md"))).toBe(false);
 		} finally {
@@ -308,10 +286,7 @@ test.describe("undeploy CLI – PATH argument", () => {
 		const cwd = makeTmpDir();
 		const target = makeTmpDir(); // exists but has no .dotagents
 		try {
-			const { exitCode, stderr } = run(
-				["undeploy", target, "--force", "--no-gitignore"],
-				cwd,
-			);
+			const { exitCode, stderr } = run(["undeploy", target, "--force"], cwd);
 			expect(exitCode).not.toBe(0);
 			expect(stderr).toContain(".dotagents");
 		} finally {
@@ -471,7 +446,7 @@ test.describe("undeploy TUI – T-U3 edited file No", () => {
 	run(["deploy", "--offline", "--no-gitignore"], d);
 	// Simulate user editing a deployed file after deploy
 	writeFileSync(join(d, ".mycode/instructions.md"), "User edited this.");
-	test.use({ program: shellProgram(d, ["undeploy", "--no-gitignore"]) });
+	test.use({ program: shellProgram(d, ["undeploy"]) });
 
 	test("default No on edited-file prompt keeps the file", async ({
 		terminal,
@@ -502,7 +477,7 @@ test.describe("undeploy TUI – T-U4 edited file Yes", () => {
 	initWithLocalProvider(d);
 	run(["deploy", "--offline", "--no-gitignore"], d);
 	writeFileSync(join(d, ".mycode/instructions.md"), "User edited this.");
-	test.use({ program: shellProgram(d, ["undeploy", "--no-gitignore"]) });
+	test.use({ program: shellProgram(d, ["undeploy"]) });
 
 	test("selecting Yes on edited-file prompt deletes the file", async ({
 		terminal,
@@ -540,7 +515,7 @@ test.describe("undeploy CLI – missing deployed file", () => {
 			// Manually delete one deployed file
 			unlinkSync(join(d, ".mycode/instructions.md"));
 
-			const { exitCode } = run(["undeploy", "--force", "--no-gitignore"], d);
+			const { exitCode } = run(["undeploy", "--force"], d);
 			expect(exitCode).toBe(0);
 			// Remaining files should be deleted
 			expect(existsSync(join(d, ".mycode/commands/hello.md"))).toBe(false);

@@ -185,7 +185,7 @@ pub(crate) struct DeployOptions {
     pub no_cache: bool,
 
     /// Always update .gitignore without prompting.
-    #[clap(long)]
+    #[clap(long, conflicts_with = "no_gitignore")]
     pub gitignore: bool,
 
     /// Never update .gitignore.
@@ -276,6 +276,10 @@ pub(crate) struct AddCommandOptions {
     #[clap(long, short = 'f')]
     pub force: bool,
 
+    /// Deploy automatically after creating the command.
+    #[clap(long, conflicts_with = "no_deploy")]
+    pub deploy: bool,
+
     /// Skip automatic deploy after creating the command.
     #[clap(long, default_value_t = false)]
     pub no_deploy: bool,
@@ -305,6 +309,10 @@ pub(crate) struct AddSkillOptions {
     #[clap(long, short = 'f')]
     pub force: bool,
 
+    /// Deploy automatically after creating the skill.
+    #[clap(long, conflicts_with = "no_deploy")]
+    pub deploy: bool,
+
     /// Skip automatic deploy after creating the skill.
     #[clap(long, default_value_t = false)]
     pub no_deploy: bool,
@@ -321,6 +329,10 @@ pub(crate) struct RmCommandOptions {
     /// Skip the confirmation prompt.
     #[clap(long, short = 'f')]
     pub force: bool,
+
+    /// Deploy automatically after removing the command.
+    #[clap(long, conflicts_with = "no_deploy")]
+    pub deploy: bool,
 
     /// Skip automatic deploy after removing the command.
     #[clap(long, default_value_t = false)]
@@ -339,6 +351,10 @@ pub(crate) struct RmSkillOptions {
     #[clap(long, short = 'f')]
     pub force: bool,
 
+    /// Deploy automatically after removing the skill.
+    #[clap(long, conflicts_with = "no_deploy")]
+    pub deploy: bool,
+
     /// Skip automatic deploy after removing the skill.
     #[clap(long, default_value_t = false)]
     pub no_deploy: bool,
@@ -354,10 +370,6 @@ pub(crate) struct UndeployOptions {
     /// Skip confirmation prompt and delete user-edited files without asking.
     #[clap(long, short)]
     pub force: bool,
-
-    /// Do not remove entries from .gitignore.
-    #[clap(long)]
-    pub no_gitignore: bool,
 
     /// Preview what would be undeployed without deleting any files, clearing cache, or touching .gitignore.
     #[clap(long)]

@@ -36,9 +36,7 @@ pub(super) fn undeploy(mut opts: UndeployOptions) -> Result<()> {
         .collect();
 
     if entries.is_empty() {
-        if !opts.no_gitignore
-            && let Err(e) = clear_gitignore_fence(&workspace_root)
-        {
+        if let Err(e) = clear_gitignore_fence(&workspace_root) {
             warn!("Failed to update .gitignore: {}", e);
         }
         if opts.dry_run {
@@ -123,9 +121,7 @@ pub(super) fn undeploy(mut opts: UndeployOptions) -> Result<()> {
         .context("unable to save cache after undeploy")?;
 
     // Remove the dotagents-managed fence from .gitignore.
-    if !opts.no_gitignore
-        && let Err(e) = clear_gitignore_fence(&workspace_root)
-    {
+    if let Err(e) = clear_gitignore_fence(&workspace_root) {
         warn!("Failed to update .gitignore: {}", e);
     }
 
