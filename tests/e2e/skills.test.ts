@@ -185,9 +185,9 @@ test.describe("skills ls CLI", () => {
 				],
 				d,
 			);
-			const { exitCode, stderr } = run(["skills", "ls"], d);
+			const { exitCode, stdout } = run(["skills", "ls"], d);
 			expect(exitCode).toBe(0);
-			expect(stderr).toMatch(/hello-skill/);
+			expect(stdout).toMatch(/hello-skill/);
 		} finally {
 			cleanup(d);
 		}
@@ -327,9 +327,9 @@ test.describe("skills ls CLI", () => {
 				],
 				d,
 			);
-			const { exitCode, stderr } = run(["skills", "ls", "--content"], d);
+			const { exitCode, stdout } = run(["skills", "ls", "--content"], d);
 			expect(exitCode).toBe(0);
-			expect(stderr).toMatch(/var\.agent_name/);
+			expect(stdout).toMatch(/var\.agent_name/);
 		} finally {
 			cleanup(d);
 		}
@@ -349,9 +349,9 @@ test.describe("skills ls CLI", () => {
 				],
 				d,
 			);
-			const { exitCode, stderr } = run(["skills", "ls"], d);
+			const { exitCode, stdout } = run(["skills", "ls"], d);
 			expect(exitCode).toBe(0);
-			expect(stderr).not.toMatch(/var\.agent_name/);
+			expect(stdout).not.toMatch(/var\.agent_name/);
 		} finally {
 			cleanup(d);
 		}
@@ -394,12 +394,12 @@ test.describe("skills ls CLI", () => {
 				],
 				d,
 			);
-			const { exitCode, stderr } = run(
+			const { exitCode, stdout } = run(
 				["skills", "ls", "--skill", "hello-skill"],
 				d,
 			);
 			expect(exitCode).toBe(0);
-			expect(stderr).toMatch(/hello-skill/);
+			expect(stdout).toMatch(/hello-skill/);
 		} finally {
 			cleanup(d);
 		}
@@ -419,12 +419,12 @@ test.describe("skills ls CLI", () => {
 				],
 				d,
 			);
-			const { exitCode, stderr } = run(
+			const { exitCode, stdout } = run(
 				["skills", "ls", "--skill", "nonexistent"],
 				d,
 			);
 			expect(exitCode).toBe(0);
-			expect(stderr).toMatch(/No skills found/);
+			expect(stdout).toMatch(/No skills found/);
 		} finally {
 			cleanup(d);
 		}
@@ -674,12 +674,12 @@ test.describe("skills --cwd", () => {
 				workspace,
 			);
 			run(["skills", "new", "my-skill", "--description", "A skill"], workspace);
-			const { exitCode, stderr } = run(
+			const { exitCode, stdout } = run(
 				["skills", "ls", "--cwd", workspace],
 				cwd,
 			);
 			expect(exitCode).toBe(0);
-			expect(stderr).toMatch(/my-skill/);
+			expect(stdout).toMatch(/my-skill/);
 		} finally {
 			cleanup(cwd);
 			cleanup(workspace);

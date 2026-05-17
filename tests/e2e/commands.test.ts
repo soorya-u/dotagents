@@ -184,9 +184,9 @@ test.describe("commands ls CLI", () => {
 				],
 				d,
 			);
-			const { exitCode, stderr } = run(["commands", "ls"], d);
+			const { exitCode, stdout } = run(["commands", "ls"], d);
 			expect(exitCode).toBe(0);
-			expect(stderr).toMatch(/hello/);
+			expect(stdout).toMatch(/hello/);
 		} finally {
 			cleanup(d);
 		}
@@ -326,9 +326,9 @@ test.describe("commands ls CLI", () => {
 				],
 				d,
 			);
-			const { exitCode, stderr } = run(["commands", "ls", "--content"], d);
+			const { exitCode, stdout } = run(["commands", "ls", "--content"], d);
 			expect(exitCode).toBe(0);
-			expect(stderr).toMatch(/var\.agent_name/);
+			expect(stdout).toMatch(/var\.agent_name/);
 		} finally {
 			cleanup(d);
 		}
@@ -348,9 +348,9 @@ test.describe("commands ls CLI", () => {
 				],
 				d,
 			);
-			const { exitCode, stderr } = run(["commands", "ls"], d);
+			const { exitCode, stdout } = run(["commands", "ls"], d);
 			expect(exitCode).toBe(0);
-			expect(stderr).not.toMatch(/var\.agent_name/);
+			expect(stdout).not.toMatch(/var\.agent_name/);
 		} finally {
 			cleanup(d);
 		}
@@ -418,13 +418,13 @@ test.describe("commands ls CLI", () => {
 				d,
 			);
 			run(["commands", "new", "greet", "--description", "test"], d);
-			const { exitCode, stderr } = run(
+			const { exitCode, stdout } = run(
 				["commands", "ls", "--command", "greet"],
 				d,
 			);
 			expect(exitCode).toBe(0);
-			expect(stderr).toMatch(/greet/);
-			expect(stderr).not.toMatch(/hello/);
+			expect(stdout).toMatch(/greet/);
+			expect(stdout).not.toMatch(/hello/);
 		} finally {
 			cleanup(d);
 		}
@@ -444,12 +444,12 @@ test.describe("commands ls CLI", () => {
 				],
 				d,
 			);
-			const { exitCode, stderr } = run(
+			const { exitCode, stdout } = run(
 				["commands", "ls", "--command", "nonexistent"],
 				d,
 			);
 			expect(exitCode).toBe(0);
-			expect(stderr).toMatch(/No commands found/);
+			expect(stdout).toMatch(/No commands found/);
 		} finally {
 			cleanup(d);
 		}
@@ -659,12 +659,12 @@ test.describe("commands --cwd", () => {
 				workspace,
 			);
 			run(["commands", "new", "greet", "--description", "Greet"], workspace);
-			const { exitCode, stderr } = run(
+			const { exitCode, stdout } = run(
 				["commands", "ls", "--cwd", workspace],
 				cwd,
 			);
 			expect(exitCode).toBe(0);
-			expect(stderr).toMatch(/greet/);
+			expect(stdout).toMatch(/greet/);
 		} finally {
 			cleanup(cwd);
 			cleanup(workspace);
@@ -767,9 +767,9 @@ test.describe("commands --cwd", () => {
 				"--features",
 				"commands,instructions,mcp,skills",
 			]);
-			const { exitCode, stderr } = run(["commands", "ls", "--cwd", "sub"], d);
+			const { exitCode, stdout } = run(["commands", "ls", "--cwd", "sub"], d);
 			expect(exitCode).toBe(0);
-			expect(stderr).toMatch(/hello/);
+			expect(stdout).toMatch(/hello/);
 		} finally {
 			cleanup(d);
 		}
@@ -790,9 +790,9 @@ test.describe("commands --cwd", () => {
 				d,
 			);
 			run(["commands", "new", "greet", "--description", "Test"], d);
-			const { exitCode, stderr } = run(["commands", "ls"], d);
+			const { exitCode, stdout } = run(["commands", "ls"], d);
 			expect(exitCode).toBe(0);
-			expect(stderr).toMatch(/greet/);
+			expect(stdout).toMatch(/greet/);
 		} finally {
 			cleanup(d);
 		}

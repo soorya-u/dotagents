@@ -7,7 +7,7 @@ use crate::prelude::*;
 use crate::schema::list_item::ListItem;
 use crate::utils::tui::is_tui_enabled;
 
-/// Render one section of items with cliclack log output.
+/// Render one section of items with cliclack log output in TUI mode, or plain println in CI mode.
 fn render_section(items: &[ListItem], content: bool, name_col: usize, cols: usize) {
     for item in items {
         if content && is_tui_enabled() {
@@ -30,7 +30,13 @@ fn render_section(items: &[ListItem], content: bool, name_col: usize, cols: usiz
             };
 
             let padded = format!("{:<width$}", item.name, width = name_col);
-            info!("{} — {}", styled_name(&padded), desc);
+            let line = format!("{} — {}", styled_name(&padded), desc);
+
+            if is_tui_enabled() {
+                info!("{}", line);
+            } else {
+                println!("{}", line);
+            }
 
             if content
                 && let Some(body) = &item.body
@@ -41,7 +47,11 @@ fn render_section(items: &[ListItem], content: bool, name_col: usize, cols: usiz
                 for line in body.lines() {
                     let wrapped = wrap_at_width(line, body_avail.max(10), " ");
                     for sub_line in wrapped.lines() {
-                        info!("{}{}", body_indent, sub_line);
+                        if is_tui_enabled() {
+                            info!("{}{}", body_indent, sub_line);
+                        } else {
+                            println!("{}{}", body_indent, sub_line);
+                        }
                     }
                 }
             }
@@ -52,7 +62,11 @@ fn render_section(items: &[ListItem], content: bool, name_col: usize, cols: usiz
 /// Render the commands listing for `dotagents commands ls`.
 pub(crate) fn render_commands(items: Vec<ListItem>, content: bool) {
     if items.is_empty() {
-        info!("No commands found.");
+        if is_tui_enabled() {
+            info!("No commands found.");
+        } else {
+            println!("No commands found.");
+        }
         outro("").ok();
         return;
     }
@@ -67,7 +81,11 @@ pub(crate) fn render_commands(items: Vec<ListItem>, content: bool) {
 /// Render the skills listing for `dotagents skills ls`.
 pub(crate) fn render_skills(items: Vec<ListItem>, content: bool) {
     if items.is_empty() {
-        info!("No skills found.");
+        if is_tui_enabled() {
+            info!("No skills found.");
+        } else {
+            println!("No skills found.");
+        }
         outro("").ok();
         return;
     }
