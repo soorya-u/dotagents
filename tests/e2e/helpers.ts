@@ -94,7 +94,16 @@ export function seedRegistryCache(): string {
 /// CI-unsafe external providers such as gemini (which requires a local cache file).
 /// All deploy tests should use this helper unless they explicitly patch out unsafe providers.
 export function initWithLocalProvider(dir: string): void {
-	run(["init", "--template", "with-custom-provider", "--features", "commands,instructions,mcp,skills"], dir);
+	run(
+		[
+			"init",
+			"--template",
+			"with-custom-provider",
+			"--features",
+			"commands,instructions,mcp,skills",
+		],
+		dir,
+	);
 }
 
 /// Return a bash invocation suitable for test.use({ program: ... }) that

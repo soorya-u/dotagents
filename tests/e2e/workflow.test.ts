@@ -66,7 +66,16 @@ test.describe("J03-J04: CRUD – add, list, remove", () => {
 	test("add command → ls shows it → rm → ls no longer shows it", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			run(["commands", "new", "greet", "--description", "test"], d);
 
 			// ls shows the new command
@@ -89,7 +98,16 @@ test.describe("J03-J04: CRUD – add, list, remove", () => {
 	test("add skill → rm → skill gone", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 			run(["skills", "new", "my-skill", "--description", "test"], d);
 			expect(existsSync(join(d, ".dotagents/skills/my-skill"))).toBe(true);
 
@@ -194,7 +212,16 @@ test.describe("J08: full CRUD both types", () => {
 	test("add command and skill, rm both, ls shows empty workspace", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
 
 			// Add a second command and skill beyond the init scaffold
 			run(["commands", "new", "greet", "--description", "greet"], d);
