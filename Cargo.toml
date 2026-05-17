@@ -1,6 +1,6 @@
 [package]
 name = "dotagents"
-version = "0.0.0-rc.1"
+version = "0.1.0"
 authors = ["Soorya U <sooryau7@gmail.com>"]
 description = "An agent configuration manager and templater written in rust"
 repository = "https://github.com/soorya-u/dotagents"
