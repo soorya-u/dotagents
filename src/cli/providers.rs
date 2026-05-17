@@ -6,6 +6,7 @@ use crate::prelude::*;
 use crate::schema::registry::Registry;
 use crate::utils::path::get_global_template_cache_dir;
 use crate::utils::tui::is_tty;
+use crate::utils::tui::is_tui_enabled;
 
 use super::options::ProvidersLsOptions;
 
@@ -25,6 +26,8 @@ fn cache_registry(registry_json: &str) {
             let path = cache_dir.join(REGISTRY_FILE);
             if let Err(e) = std::fs::write(&path, registry_json) {
                 warn!("Failed to cache registry: {}", e);
+            } else {
+                debug!("Registry cached at {}", path.display());
             }
         }
         Err(e) => {
@@ -41,6 +44,7 @@ fn fetch_registry(offline: bool) -> Result<Registry> {
     }
 
     let url = registry_url();
+    debug!("Fetching provider registry from {}", url);
     let body = crate::utils::http::do_get(url)
         .with_context(|| format!("Failed to fetch registry from {}", url))?;
 
@@ -60,7 +64,7 @@ fn read_registry_from_cache() -> Result<Registry> {
 
     let body = std::fs::read_to_string(&cache_path).map_err(|_| {
         anyhow!(
-            "No cached registry found at {} — run `dotagents providers ls` without --offline first",
+            "No cached registry found at {} — run `dotagents providers` without --offline first",
             cache_path.display()
         )
     })?;
@@ -129,11 +133,10 @@ fn run_tui(providers: &[DisplayProvider]) -> Result<bool> {
         })
         .collect();
 
-    let selected = select("Providers")
-        .items(&items)
-        .max_rows(10)
-        .interact()
-        .map_err(|e| anyhow!("TUI interaction failed: {}", e))?;
+    let selected = match select("Providers").items(&items).max_rows(10).interact() {
+        Ok(s) => s,
+        Err(_) => return Ok(true),
+    };
 
     let outro_msg = providers
         .iter()
@@ -279,13 +282,23 @@ mod tests {
                 "error should mention 'cached registry', got: {}",
                 msg
             );
+            assert!(
+                msg.contains("dotagents providers"),
+                "error should mention 'dotagents providers', got: {}",
+                msg
+            );
+            assert!(
+                !msg.contains("dotagents providers ls"),
+                "error should NOT mention 'dotagents providers ls', got: {}",
+                msg
+            );
         }
     }
 }
 
 /// Handle `dotagents providers`.
 pub(crate) fn run_providers(opts: ProvidersLsOptions) -> Result<bool> {
-    let registry = if is_tty() && !opts.offline && !opts.json {
+    let registry = if is_tty() && is_tui_enabled() && !opts.offline && !opts.json {
         let sp = spinner();
         sp.start("Fetching providers…");
         match fetch_registry(false) {
