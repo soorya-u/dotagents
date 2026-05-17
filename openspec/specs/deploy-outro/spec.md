@@ -19,9 +19,9 @@ After all features are deployed and the cache is saved, `dotagents deploy` SHALL
 - **WHEN** deploy runs in a TTY and no features are enabled or no providers are configured
 - **THEN** a summary line is printed indicating nothing was deployed, e.g. "✓ Nothing deployed"
 
-#### Scenario: Non-TTY (CI) — no summary output
+#### Scenario: Non-TTY (CI) — plain-text summary printed
 - **WHEN** deploy runs without an interactive TTY (e.g. piped in CI)
-- **THEN** no summary line is printed; stdout is unchanged
+- **THEN** a summary line is printed to stdout as plain text without the `"✓ "` prefix, e.g. `"3 written, 2 skipped"` or `"Nothing deployed"`
 
 ### Requirement: Summary printed before gitignore step
 The deploy summary SHALL be printed after cache persistence and before the gitignore update prompt, so the user sees confirmation of the deploy before being asked about gitignore.
@@ -29,6 +29,18 @@ The deploy summary SHALL be printed after cache persistence and before the gitig
 #### Scenario: Summary appears before gitignore prompt
 - **WHEN** deploy writes files and then prompts for gitignore update
 - **THEN** the deploy summary is visible on screen before the gitignore prompt appears
+
+### Requirement: Deploy warns when no providers are configured
+If no providers are configured in the workspace config at deploy time, `dotagents deploy` SHALL emit a `warn!()` log message advising the user to add providers to their config.
+
+#### Scenario: No providers configured emits warning
+- **WHEN** `dotagents deploy` is run and `app_config` has no provider entries for any feature
+- **THEN** a warning is printed: `"No providers configured — nothing to deploy. Add providers to config.toml."`
+- **THEN** the command still exits 0
+
+#### Scenario: Providers configured suppresses the warning
+- **WHEN** `dotagents deploy` is run and at least one provider is configured
+- **THEN** no missing-providers warning is emitted
 
 ### Requirement: Deploy is framed with cliclack intro and outro in TTY mode
 When `dotagents deploy` runs interactively, it SHALL open with a cliclack `intro` banner and close with a cliclack `outro` message. The intro SHALL appear before the offline prompt. The outro SHALL appear after the gitignore step completes (or is skipped), at all TTY exit paths. In non-TTY mode neither intro nor outro is printed.

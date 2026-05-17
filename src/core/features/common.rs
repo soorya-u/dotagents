@@ -34,6 +34,15 @@ impl Feature {
     pub(crate) fn all_names() -> &'static [&'static str] {
         &["commands", "instructions", "mcp", "skills"]
     }
+
+    pub(crate) fn all() -> [Self; 4] {
+        [
+            Feature::Command,
+            Feature::Instruction,
+            Feature::Mcp,
+            Feature::Skill,
+        ]
+    }
 }
 
 impl fmt::Display for Feature {
