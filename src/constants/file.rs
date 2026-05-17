@@ -3,7 +3,6 @@ pub(crate) const MCP_FILE: &str = "mcp.jsonc";
 pub(crate) const GLOBAL_CONFIG_FILE: &str = "config.toml";
 pub(crate) const LOCAL_CONFIG_FILE: &str = "local.config.toml";
 pub(crate) const CACHE_CONFIG_FILE: &str = "cache.toml";
-pub(crate) const REGISTRY_FILE: &str = "registry.json";
 
 pub(crate) const GITIGNORE_FILE: &str = ".gitignore";
 pub(crate) const ENV_FILE: &str = ".env";
