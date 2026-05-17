@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@microsoft/tui-test";
 import {
@@ -520,6 +520,31 @@ test.describe("undeploy TUI – T-U4 edited file Yes", () => {
 			await expect(terminal.getByText("removed")).toBeVisible();
 			// File should now be deleted
 			expect(existsSync(join(d, ".mycode/instructions.md"))).toBe(false);
+		} finally {
+			cleanup(d);
+		}
+	});
+});
+
+// ── Undeploy edge cases ──────────────────────────────────────────────────────
+
+test.describe("undeploy CLI – missing deployed file", () => {
+	// TC-UNDEPLOY-14: manually deleted deployed file handled gracefully
+	test("undeploy handles manually deleted deployed file", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			run(["deploy", "--offline", "--no-gitignore"], d);
+			expect(existsSync(join(d, ".mycode/instructions.md"))).toBe(true);
+
+			// Manually delete one deployed file
+			unlinkSync(join(d, ".mycode/instructions.md"));
+
+			const { exitCode } = run(["undeploy", "--force", "--no-gitignore"], d);
+			expect(exitCode).toBe(0);
+			// Remaining files should be deleted
+			expect(existsSync(join(d, ".mycode/commands/hello.md"))).toBe(false);
+			expect(existsSync(join(d, ".mycode/mcp.json"))).toBe(false);
 		} finally {
 			cleanup(d);
 		}

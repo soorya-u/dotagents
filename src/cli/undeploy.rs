@@ -36,6 +36,11 @@ pub(super) fn undeploy(mut opts: UndeployOptions) -> Result<()> {
         .collect();
 
     if entries.is_empty() {
+        if !opts.no_gitignore
+            && let Err(e) = clear_gitignore_fence(&workspace_root)
+        {
+            warn!("Failed to update .gitignore: {}", e);
+        }
         if opts.dry_run {
             print_dry_run_undeploy_summary(&[]);
         } else if is_tui_enabled() {
