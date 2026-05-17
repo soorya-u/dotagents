@@ -555,6 +555,34 @@ test.describe("skills rm TUI – T12 confirm Yes", () => {
 	});
 });
 
+// ── skills add – CI ────────────────────────────────────────────────────────────
+
+// skills add in CI mode does not hang (non-zero exit OK — hang is the bug)
+test.describe("skills add CI", () => {
+	test("exits promptly in CI mode (does not hang)", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			// Use DOTAGENTS_CI env + --ci flag. The command will likely
+			// fail because no real package runner is available, but it
+			// must NOT hang. A non-zero exit code is acceptable.
+			const { exitCode, stderr } = run(
+				["skills", "add", "some-skill", "--ci"],
+				d,
+				{
+					DOTAGENTS_CI: "true",
+				},
+			);
+			// Must exit (non-zero OK — hangs would timeout)
+			expect(typeof exitCode).toBe("number");
+			// Passing --yes means no interactive prompt
+			expect(stderr).not.toMatch(/confirm/i);
+		} finally {
+			cleanup(d);
+		}
+	});
+});
+
 // T13: confirm No leaves skill intact
 test.describe("skills rm TUI – T13 confirm No", () => {
 	const d = makeTmpDir();
