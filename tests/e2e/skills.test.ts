@@ -111,6 +111,61 @@ test.describe("skills new CLI", () => {
 			cleanup(d);
 		}
 	});
+
+	// TC-SKILL-NEW-03: CI mode with no metadata flags produces empty defaults
+	test("CI mode with no metadata flags produces empty defaults", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--ci"], d);
+			const { exitCode } = run(["skills", "new", "test-skill", "--ci"], d);
+			expect(exitCode).toBe(0);
+			const content = readFileSync(
+				join(d, ".dotagents/skills/test-skill/SKILL.md"),
+				"utf8",
+			);
+			const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+			expect(frontmatterMatch).not.toBeNull();
+			const frontmatter = frontmatterMatch?.[1] ?? "";
+			expect(frontmatter).toContain("description: ''");
+			expect(frontmatter).not.toMatch(/^license:/m);
+			expect(frontmatter).not.toMatch(/^compatibility:/m);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// TC-SKILL-NEW-04: duplicate skill without --force exits non-zero
+	test("duplicate skill without --force exits non-zero", async () => {
+		const d = makeTmpDir();
+		try {
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
+			run(["skills", "new", "dup-skill", "--description", "first"], d);
+			const { exitCode, stderr } = run(
+				["skills", "new", "dup-skill", "--description", "second"],
+				d,
+			);
+			expect(exitCode).not.toBe(0);
+			expect(stderr).toContain("already exists");
+			expect(stderr).toContain("--force");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// TC-SKILL-NEW-06: --deploy (default CI auto-deploy) triggers deploy after creation.
+	// Already covered by "CI auto-deploys after skills new" in deploy-default block.
+
+	// TC-SKILL-RM-06: --deploy (default CI auto-deploy) re-runs deploy after removal.
+	// Already covered by "CI auto-deploys after skills rm" in deploy-default block.
 });
 
 // ── skills ls – CLI ───────────────────────────────────────────────────────────
@@ -397,6 +452,35 @@ test.describe("skills ls CLI", () => {
 			const { exitCode, stdout } = run(["skills", "ls", "--json"], d);
 			expect(exitCode).toBe(0);
 			expect(stdout.trim()).toBe("[]");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// TC-SKILL-LS-06: --json --skill combined filter returns filtered JSON array
+	test("--json --skill returns filtered JSON array with one element", async () => {
+		const d = makeTmpDir();
+		try {
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
+			run(["skills", "new", "another-skill", "--description", "Another"], d);
+			const { exitCode, stdout } = run(
+				["skills", "ls", "--json", "--skill", "hello-skill"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			const parsed = JSON.parse(stdout);
+			expect(Array.isArray(parsed)).toBe(true);
+			expect(parsed).toHaveLength(1);
+			expect(parsed[0].name).toBe("hello-skill");
 		} finally {
 			cleanup(d);
 		}
@@ -775,6 +859,42 @@ test.describe("skills add CI", () => {
 			expect(typeof exitCode).toBe("number");
 			// Passing --yes means no interactive prompt
 			expect(stderr).not.toMatch(/confirm/i);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// TC-SKILL-ADD-05: invalid --runner value exits with Clap error
+	test("--runner maven exits 2 with invalid value error", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			const { exitCode, stderr } = run(
+				["skills", "add", "test-skill", "--runner", "maven"],
+				d,
+			);
+			expect(exitCode).toBe(2);
+			expect(stderr.toLowerCase()).toContain("invalid");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// TC-SKILL-ADD-04: --runner yarn not on PATH exits non-zero with helpful error
+	test("--runner yarn not on PATH exits non-zero", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "starter"], d);
+			// Run with a PATH that excludes yarn
+			const { exitCode, stderr } = run(
+				["skills", "add", "test-skill", "--runner", "yarn"],
+				d,
+				{
+					PATH: "/usr/bin:/bin",
+				},
+			);
+			expect(exitCode).not.toBe(0);
+			expect(stderr).toMatch(/yarn/i);
 		} finally {
 			cleanup(d);
 		}
