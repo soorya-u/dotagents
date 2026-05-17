@@ -81,6 +81,9 @@ pub(super) fn undeploy(mut opts: UndeployOptions) -> Result<()> {
 
     // Interactive confirmation (skipped when --force or non-TTY).
     if !opts.force && !prompt_confirm_undeploy(entries.len()) {
+        if is_tui_enabled() {
+            cliclack::outro_cancel("Undeploy cancelled.").ok();
+        }
         return Ok(());
     }
 
