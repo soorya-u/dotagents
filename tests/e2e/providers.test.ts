@@ -72,6 +72,24 @@ test.describe("providers ls CLI", () => {
 			});
 			expect(exitCode).not.toBe(0);
 			expect(stderr).toContain("cached registry");
+			expect(stderr).toContain("dotagents providers");
+			expect(stderr).not.toContain("dotagents providers ls");
+		} finally {
+			cleanup(d);
+			cleanup(xdgDir);
+		}
+	});
+
+	// --verbose with cold cache shows debug line with registry URL before failing
+	test("-v with cold cache shows debug line with registry URL", async () => {
+		const d = makeTmpDir();
+		const xdgDir = makeTmpDir(); // empty — no registry seeded
+		try {
+			const { stderr } = run(["-v", "providers"], d, {
+				XDG_CONFIG_HOME: xdgDir,
+			});
+			// Should attempt fetch (showing debug URL) then fail with cache error
+			expect(stderr).toMatch(/Fetching provider registry from https?:\/\//);
 		} finally {
 			cleanup(d);
 			cleanup(xdgDir);
