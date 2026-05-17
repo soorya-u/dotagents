@@ -1,0 +1,52 @@
+name: Feature request
+description: Propose a scoped improvement or new capability.
+title: "[Feature]: "
+labels:
+  - enhancement
+  - needs-triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for new capabilities or meaningful improvements to existing behavior.
+        Small, concrete requests that clearly explain the problem and scope are much easier to evaluate.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What are you trying to do? What is hard, slow, or impossible today?
+      placeholder: I want to deploy to a custom provider that isn't in the built-in list.
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the behavior, API, or UX you want.
+      placeholder: Allow custom provider definitions in config.toml with a template path and target path.
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: value
+    attributes:
+      label: Why this matters
+      description: Who benefits, and what outcome does this unlock?
+      placeholder: Teams using internal tools could integrate dotagents without forking the project.
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Smallest useful scope
+      description: What is the narrowest version of this request that would still solve your problem?
+      placeholder: A first pass only needs to support a single custom provider with static template paths.
+      render: markdown
+    validations:
+      required: true

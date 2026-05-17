@@ -1,0 +1,59 @@
+name: Bug report
+description: Report broken behavior, regressions, crashes, or reliability issues.
+title: "[Bug]: "
+labels:
+  - bug
+  - needs-triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for broken behavior, regressions, crashes, or reliability problems.
+        Search existing issues first and keep the report focused on one problem.
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide a minimal, deterministic repro.
+      placeholder: |
+        1. Run `dotagents init`
+        2. Edit config.toml with ...
+        3. Run `dotagents deploy`
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: Deploy should render the template and write the output file.
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      placeholder: The command panics with an error about missing template.
+      render: markdown
+    validations:
+      required: true
+
+  - type: input
+    id: version_env
+    attributes:
+      label: Version and environment
+      description: Commit SHA or release version, plus OS and Rust version.
+      placeholder: v0.3.1, macOS 15.3, rustc 1.85.0
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or stack traces
+      description: Paste the most relevant output only. Redact secrets.
+      render: shell
