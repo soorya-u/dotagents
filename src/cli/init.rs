@@ -98,7 +98,7 @@ pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
     if dir_exists {
         if !opts.force {
             anyhow::bail!(format!(
-                "Configuration already exists: {}",
+                "Configuration already exists in {}. Please use --force to overwrite it.",
                 main_dir.display()
             ));
         } else {
