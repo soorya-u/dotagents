@@ -61,6 +61,10 @@ fn read_registry_from_cache() -> Result<Registry> {
     let cache_dir =
         get_global_template_cache_dir().context("unable to get template cache directory")?;
     let cache_path = cache_dir.join(REGISTRY_FILE);
+    debug!(
+        "Reading provider registry from cache at {}",
+        cache_path.display()
+    );
 
     let body = std::fs::read_to_string(&cache_path).map_err(|_| {
         anyhow!(
@@ -282,10 +286,11 @@ mod tests {
 }
 
 /// Handle `dotagents providers`.
-pub(crate) fn run_providers(opts: ProvidersLsOptions) -> Result<bool> {
+pub(crate) fn run_providers(opts: ProvidersLsOptions, quiet: bool) -> Result<bool> {
     let registry = if is_tty() && is_tui_enabled() && !opts.offline && !opts.json {
         let sp = spinner();
         sp.start("Fetching providers…");
+        debug!("Fetching provider registry from {}", registry_url());
         match fetch_registry(false) {
             Ok(r) => {
                 sp.clear();
@@ -297,22 +302,29 @@ pub(crate) fn run_providers(opts: ProvidersLsOptions) -> Result<bool> {
             }
         }
     } else {
+        if opts.offline {
+            debug!("Using offline mode for provider registry");
+        }
         fetch_registry(opts.offline).context("unable to load provider registry")?
     };
 
     let providers = collect_providers(&registry);
 
     if providers.is_empty() {
-        if opts.json {
-            println!("[]");
-        } else {
-            println!("No providers found.");
+        if !quiet {
+            if opts.json {
+                println!("[]");
+            } else {
+                println!("No providers found.");
+            }
         }
         return Ok(true);
     }
 
     if opts.json {
-        print_json(&providers);
+        if !quiet {
+            print_json(&providers);
+        }
         return Ok(true);
     }
 
@@ -320,6 +332,8 @@ pub(crate) fn run_providers(opts: ProvidersLsOptions) -> Result<bool> {
         return run_tui(&providers);
     }
 
-    print_text(&providers);
+    if !quiet {
+        print_text(&providers);
+    }
     Ok(true)
 }

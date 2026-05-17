@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@microsoft/tui-test";
 import {
@@ -211,6 +211,66 @@ test.describe("config CLI – empty config", () => {
 			const { exitCode, stdout } = run(["config"], d);
 			expect(exitCode).toBe(0);
 			expect(stdout).toMatch(/none configured/i);
+		} finally {
+			cleanup(d);
+		}
+	});
+});
+
+// ── Config missing-file handling ──────────────────────────────────────────────
+
+test.describe("config CLI – missing files", () => {
+	// TC-CFG-08: missing local.config.toml — text mode shows message, exits 0
+	test("config local with missing local.config.toml shows message, exits 0", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			unlinkSync(join(d, ".dotagents/local.config.toml"));
+			const { exitCode, stdout } = run(["config", "local", "--ci"], d);
+			expect(exitCode).toBe(0);
+			expect(stdout).toContain("No local config found");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// TC-CFG-08: missing local.config.toml — JSON mode returns {}
+	test("config local --json with missing local.config.toml returns {}", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			unlinkSync(join(d, ".dotagents/local.config.toml"));
+			const { exitCode, stdout } = run(["config", "local", "--json"], d);
+			expect(exitCode).toBe(0);
+			expect(stdout.trim()).toBe("{}");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// TC-CFG-09: missing config.toml — text mode exits 1 with "not found"
+	test("config global with missing config.toml exits 1 with not found", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			unlinkSync(join(d, ".dotagents/config.toml"));
+			const { exitCode, stderr } = run(["config", "global", "--ci"], d);
+			expect(exitCode).toBe(1);
+			expect(stderr).toContain("not found");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// TC-CFG-09: missing config.toml — JSON mode also exits 1 with "not found"
+	test("config global --json with missing config.toml exits 1 with not found", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			unlinkSync(join(d, ".dotagents/config.toml"));
+			const { exitCode, stderr } = run(["config", "global", "--json"], d);
+			expect(exitCode).toBe(1);
+			expect(stderr).toContain("not found");
 		} finally {
 			cleanup(d);
 		}

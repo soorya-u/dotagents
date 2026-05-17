@@ -1,5 +1,11 @@
 import { expect, test } from "@microsoft/tui-test";
-import { cleanup, makeTmpDir, run, seedRegistryCache } from "./helpers.js";
+import {
+	cleanup,
+	makeTmpDir,
+	run,
+	seedRegistryCache,
+	shellProgram,
+} from "./helpers.js";
 
 test.describe("providers ls CLI", () => {
 	// --json exits 0 and returns a valid JSON array with slug/name/url fields
@@ -88,6 +94,80 @@ test.describe("providers ls CLI", () => {
 			});
 			// Should attempt fetch (showing debug URL) then fail with cache error
 			expect(stderr).toMatch(/Fetching provider registry from https?:\/\//);
+		} finally {
+			cleanup(d);
+			cleanup(xdgDir);
+		}
+	});
+});
+
+// ── Providers --quiet / --verbose ─────────────────────────────────────────────
+
+test.describe("providers CLI – --quiet flag", () => {
+	// TC-PROV-09: --quiet suppresses provider listing output
+	test("--quiet --offline with seeded cache produces empty stdout", async () => {
+		const d = makeTmpDir();
+		const xdgDir = seedRegistryCache();
+		try {
+			const { exitCode, stdout } = run(
+				["providers", "--ci", "--quiet", "--offline"],
+				d,
+				{ XDG_CONFIG_HOME: xdgDir },
+			);
+			expect(exitCode).toBe(0);
+			expect(stdout).toBe("");
+		} finally {
+			cleanup(d);
+			cleanup(xdgDir);
+		}
+	});
+});
+
+test.describe("providers CLI – --verbose flag", () => {
+	// TC-PROV-10: -v adds diagnostic output with seeded cache
+	test("-v --offline with seeded cache shows debug output on stderr", async () => {
+		const d = makeTmpDir();
+		const xdgDir = seedRegistryCache();
+		try {
+			const { exitCode, stderr } = run(
+				["providers", "--ci", "-v", "--offline"],
+				d,
+				{ XDG_CONFIG_HOME: xdgDir },
+			);
+			expect(exitCode).toBe(0);
+			expect(stderr).toMatch(/cache|Cache|CACHE|offline|Offline/);
+		} finally {
+			cleanup(d);
+			cleanup(xdgDir);
+		}
+	});
+});
+
+// ── Providers TUI ─────────────────────────────────────────────────────────────
+
+// TC-PROV-01: TUI select widget renders and is navigable
+test.describe("providers TUI – TC-PROV-01 select widget", () => {
+	const d = makeTmpDir();
+	const xdgDir = seedRegistryCache();
+	test.use({
+		program: shellProgram(d, ["providers", "--offline"], {
+			XDG_CONFIG_HOME: xdgDir,
+		}),
+	});
+
+	test("select widget renders, Enter selects, shows outro", async ({
+		terminal,
+	}) => {
+		try {
+			await expect(terminal.getByText("Providers")).toBeVisible();
+			// "amp" is the first provider alphabetically by slug
+			await expect(terminal.getByText("amp")).toBeVisible();
+
+			// Press Enter to select the highlighted provider
+			terminal.keyPress("Enter");
+
+			// Outro should show with provider name
+			await expect(terminal.getByText("Amp Code")).toBeVisible();
 		} finally {
 			cleanup(d);
 			cleanup(xdgDir);

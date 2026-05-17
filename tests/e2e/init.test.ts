@@ -595,3 +595,56 @@ test.describe("init TUI – T06 --template with TTY shows feature prompt", () =>
 		}
 	});
 });
+
+// ── CLI flows – validation errors ────────────────────────────────────────────
+
+test.describe("init CLI – validation errors", () => {
+	// TC-INIT-ERR-01: invalid --features value exits 2 with Clap error
+	test("--features bogus exits 2 with invalid value error", async () => {
+		const d = makeTmpDir();
+		try {
+			const { exitCode, stderr } = run(
+				["init", "--features", "bogus", "--ci"],
+				d,
+			);
+			expect(exitCode).toBe(2);
+			expect(stderr).toContain("invalid value");
+			expect(stderr).toContain("commands");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// TC-INIT-07: --features none,commands rejected (none is not a valid feature)
+	test("--features none,commands exits 2 with invalid value error", async () => {
+		const d = makeTmpDir();
+		try {
+			const { exitCode, stderr } = run(
+				["init", "--features", "none,commands", "--ci"],
+				d,
+			);
+			expect(exitCode).toBe(2);
+			expect(stderr).toContain("invalid value");
+			expect(stderr).toContain("none");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// TC-INIT-ERR-02: invalid --template value exits 2 with Clap error
+	test("--template bogus exits 2 with invalid value error", async () => {
+		const d = makeTmpDir();
+		try {
+			const { exitCode, stderr } = run(
+				["init", "--template", "bogus", "--ci"],
+				d,
+			);
+			expect(exitCode).toBe(2);
+			expect(stderr).toContain("invalid value");
+			expect(stderr).toContain("starter");
+			expect(stderr).toContain("with-custom-provider");
+		} finally {
+			cleanup(d);
+		}
+	});
+});

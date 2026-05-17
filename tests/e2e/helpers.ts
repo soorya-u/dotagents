@@ -110,6 +110,7 @@ export function initWithLocalProvider(dir: string): void {
 /// changes to `dir` then execs the binary with `args`. Using `exec` replaces
 /// the shell process so the PTY is connected directly to dotagents.
 /// Single-quote a shell argument, escaping any embedded single quotes.
+/// Pass `env` to set environment variables in the shell invocation.
 function quoteShellArg(value: string): string {
 	return `'${value.replace(/'/g, "'\\''")}'`;
 }
@@ -117,12 +118,18 @@ function quoteShellArg(value: string): string {
 export function shellProgram(
 	dir: string,
 	args: string[],
+	env?: Record<string, string>,
 ): { file: string; args: string[] } {
+	const envPrefix = env
+		? `${Object.entries(env)
+				.map(([k, v]) => `${k}=${quoteShellArg(v)}`)
+				.join(" ")} `
+		: "";
 	return {
 		file: "bash",
 		args: [
 			"-c",
-			`cd ${quoteShellArg(dir)} && exec ${quoteShellArg(BIN)} ${args.map(quoteShellArg).join(" ")}`,
+			`cd ${quoteShellArg(dir)} && ${envPrefix}exec ${quoteShellArg(BIN)} ${args.map(quoteShellArg).join(" ")}`,
 		],
 	};
 }
