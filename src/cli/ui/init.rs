@@ -1,3 +1,4 @@
+use crate::prelude::*;
 use anyhow::{Context, Result};
 use cliclack::{multiselect, outro, outro_cancel, select, spinner};
 
@@ -66,6 +67,10 @@ pub(crate) fn run_init_wizard(opts: &mut InitOptions, dir_exists: bool) -> Resul
 
     if opts.targets.is_none() {
         opts.targets = prompt_targets(&[])?.or(Some(vec![]));
+    }
+
+    if let Some(ref targets) = opts.targets {
+        debug!("Selected provider targets: {:?}", targets);
     }
 
     Ok(true)
