@@ -113,24 +113,9 @@ fn run_tui(providers: &[DisplayProvider]) -> Result<bool> {
         return Ok(true);
     }
 
-    let items: Vec<(&str, &str, String)> = providers
+    let items: Vec<(&str, &str, &str)> = providers
         .iter()
-        .map(|p| {
-            let label = p.name.as_deref().unwrap_or(&p.slug);
-            let slug_part = p
-                .name
-                .as_ref()
-                .map(|_| format!("[{}]", p.slug))
-                .unwrap_or_default();
-            let url_part = p.url.as_deref().unwrap_or("");
-            let hint = match (slug_part.is_empty(), url_part.is_empty()) {
-                (false, false) => format!("{} {}", slug_part, url_part),
-                (false, true) => slug_part,
-                (true, false) => url_part.to_string(),
-                (true, true) => String::new(),
-            };
-            (p.slug.as_str(), label, hint)
-        })
+        .map(|p| (p.slug.as_str(), p.slug.as_str(), ""))
         .collect();
 
     let selected = match select("Providers").items(&items).max_rows(10).interact() {

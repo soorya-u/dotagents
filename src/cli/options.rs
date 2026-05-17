@@ -77,8 +77,17 @@ pub(crate) enum Feature {
     Mcp,
     /// Enable skill templating.
     Skills,
-    /// Disable all features (exclusive — cannot be combined with other values).
-    None,
+}
+
+impl Feature {
+    pub(crate) fn as_str(&self) -> &'static str {
+        match self {
+            Feature::Commands => "commands",
+            Feature::Instructions => "instructions",
+            Feature::Mcp => "mcp",
+            Feature::Skills => "skills",
+        }
+    }
 }
 
 /// Subcommands for `dotagents skills`.
@@ -213,10 +222,9 @@ pub(crate) struct InitOptions {
     pub dir: Option<PathBuf>,
 
     /// Features to scaffold. Accepts comma-separated values and/or repeated flags.
-    /// Valid values: commands, instructions, mcp, skills, none.
-    /// When omitted, features are chosen interactively when possible; otherwise all features are enabled.
-    /// Use `none` to disable all features.
-    #[clap(long, value_delimiter = ',', num_args = 1..)]
+    /// Valid values: commands, instructions, mcp, skills.
+    /// When omitted, features are chosen interactively when possible; otherwise no features are scaffolded.
+    #[clap(long, value_delimiter = ',')]
     pub features: Option<Vec<Feature>>,
 
     /// Force overwriting existing configuration.
@@ -228,23 +236,18 @@ pub(crate) struct InitOptions {
     #[clap(long, value_enum)]
     pub template: Option<InitTemplate>,
 
-    /// Provider targets selected interactively by the wizard; not a CLI flag.
-    #[clap(skip)]
-    pub targets: Vec<String>,
+    /// Provider targets to deploy to. Accepts comma-separated values and/or repeated flags.
+    /// When omitted, targets are chosen interactively when possible; otherwise no targets are set.
+    #[clap(long, value_delimiter = ',')]
+    pub targets: Option<Vec<String>>,
 }
 
 impl InitOptions {
     /// Returns true if the given feature is enabled based on the `--features` flag.
     pub(crate) fn has_feature(&self, feature: Feature) -> bool {
         match &self.features {
-            None => true, // all features enabled when flag is absent
-            Some(list) => {
-                if list.iter().any(|f| matches!(f, Feature::None)) {
-                    false // none sentinel: all features disabled
-                } else {
-                    list.contains(&feature)
-                }
-            }
+            None => false,
+            Some(list) => list.contains(&feature),
         }
     }
 }
@@ -420,17 +423,17 @@ mod tests {
 
     #[test]
     fn test_init_options_defaults() {
-        // features defaults to None (all features enabled, TUI mode possible)
         let init_options = InitOptions {
             dir: None,
             features: None,
             force: false,
             template: None,
-            targets: vec![],
+            targets: None,
         };
 
         assert!(init_options.features.is_none());
         assert!(init_options.template.is_none());
+        assert!(init_options.targets.is_none());
     }
 
     #[test]
@@ -453,51 +456,53 @@ mod tests {
     }
 
     #[test]
-    fn has_feature_returns_true_when_features_absent() {
-        // None (flag absent) enables all features
+    fn has_feature_returns_false_when_features_absent() {
         let opts = InitOptions {
             dir: None,
             features: None,
             force: false,
             template: None,
-            targets: vec![],
-        };
-        assert!(opts.has_feature(Feature::Commands));
-        assert!(opts.has_feature(Feature::Instructions));
-        assert!(opts.has_feature(Feature::Mcp));
-        assert!(opts.has_feature(Feature::Skills));
-    }
-
-    #[test]
-    fn has_feature_returns_false_for_unlisted_feature() {
-        // Only Commands is listed → Mcp is disabled
-        let opts = InitOptions {
-            dir: None,
-            features: Some(vec![Feature::Commands]),
-            force: false,
-            template: None,
-            targets: vec![],
-        };
-        assert!(opts.has_feature(Feature::Commands));
-        assert!(!opts.has_feature(Feature::Mcp));
-        assert!(!opts.has_feature(Feature::Instructions));
-        assert!(!opts.has_feature(Feature::Skills));
-    }
-
-    #[test]
-    fn has_feature_returns_false_for_all_when_none_sentinel() {
-        // Feature::None sentinel disables everything
-        let opts = InitOptions {
-            dir: None,
-            features: Some(vec![Feature::None]),
-            force: false,
-            template: None,
-            targets: vec![],
+            targets: None,
         };
         assert!(!opts.has_feature(Feature::Commands));
         assert!(!opts.has_feature(Feature::Instructions));
         assert!(!opts.has_feature(Feature::Mcp));
         assert!(!opts.has_feature(Feature::Skills));
+    }
+
+    #[test]
+    fn has_feature_returns_false_for_unlisted_feature() {
+        let opts = InitOptions {
+            dir: None,
+            features: Some(vec![Feature::Commands]),
+            force: false,
+            template: None,
+            targets: None,
+        };
+        assert!(opts.has_feature(Feature::Commands));
+        assert!(!opts.has_feature(Feature::Mcp));
+        assert!(!opts.has_feature(Feature::Instructions));
+        assert!(!opts.has_feature(Feature::Skills));
+    }
+
+    #[test]
+    fn has_feature_returns_true_for_all_listed() {
+        let opts = InitOptions {
+            dir: None,
+            features: Some(vec![
+                Feature::Commands,
+                Feature::Instructions,
+                Feature::Mcp,
+                Feature::Skills,
+            ]),
+            force: false,
+            template: None,
+            targets: None,
+        };
+        assert!(opts.has_feature(Feature::Commands));
+        assert!(opts.has_feature(Feature::Instructions));
+        assert!(opts.has_feature(Feature::Mcp));
+        assert!(opts.has_feature(Feature::Skills));
     }
 
     #[test]

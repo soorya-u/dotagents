@@ -8,7 +8,7 @@ test.describe("init CLI – file tree", () => {
 	test("starter template creates core files", async () => {
 		const d = makeTmpDir();
 		try {
-			const { exitCode } = run(["init", "--template", "starter"], d);
+			const { exitCode } = run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 			expect(exitCode).toBe(0);
 			const root = join(d, ".dotagents");
 			expect(existsSync(join(root, "config.toml"))).toBe(true);
@@ -31,7 +31,7 @@ test.describe("init CLI – file tree", () => {
 		const d = makeTmpDir();
 		try {
 			const { exitCode } = run(
-				["init", "--template", "with-custom-provider"],
+				["init", "--template", "with-custom-provider", "--features", "commands,instructions,mcp,skills"],
 				d,
 			);
 			expect(exitCode).toBe(0);
@@ -51,8 +51,8 @@ test.describe("init CLI – file tree", () => {
 	test("--force overwrites existing workspace", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
-			const { exitCode } = run(["init", "--force", "--template", "starter"], d);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
+			const { exitCode } = run(["init", "--force", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 			expect(exitCode).toBe(0);
 			expect(existsSync(join(d, ".dotagents/config.toml"))).toBe(true);
 		} finally {
@@ -143,7 +143,7 @@ test.describe("init CLI – config content", () => {
 	test("config.toml declares expected features", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 			const config = readFileSync(join(d, ".dotagents/config.toml"), "utf8");
 			expect(config).toContain("features");
 			expect(config).toContain('"commands"');
@@ -174,12 +174,12 @@ test.describe("init CLI – config content", () => {
 		}
 	});
 
-	// C09: --features none writes empty features array to config.toml
-	test("--features none writes empty features array to config.toml", async () => {
+	// C09: absent --features in non-TUI mode writes empty features array
+	test("absent --features writes empty features array to config.toml", async () => {
 		const d = makeTmpDir();
 		try {
 			const { exitCode } = run(
-				["init", "--template", "starter", "--features", "none"],
+				["init", "--template", "starter"],
 				d,
 			);
 			expect(exitCode).toBe(0);
@@ -193,7 +193,7 @@ test.describe("init CLI – config content", () => {
 	test(".gitignore excludes local.config.toml and .env", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 			const gi = readFileSync(join(d, ".dotagents/.gitignore"), "utf8");
 			expect(gi).toContain("local.config.toml");
 			expect(gi).toContain(".env");
@@ -205,7 +205,7 @@ test.describe("init CLI – config content", () => {
 	test("hello.md has YAML frontmatter with name and description", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 			const cmd = readFileSync(join(d, ".dotagents/commands/hello.md"), "utf8");
 			expect(cmd).toMatch(/^---/);
 			expect(cmd).toContain("name:");
@@ -224,7 +224,7 @@ test.describe("init CLI – PATH argument", () => {
 		const cwd = makeTmpDir();
 		const target = makeTmpDir();
 		try {
-			const { exitCode } = run(["init", target, "--template", "starter"], cwd);
+			const { exitCode } = run(["init", target, "--template", "starter", "--features", "commands,instructions,mcp,skills"], cwd);
 			expect(exitCode).toBe(0);
 			expect(existsSync(join(target, ".dotagents/config.toml"))).toBe(true);
 			// CWD should NOT have been initialised
@@ -240,7 +240,7 @@ test.describe("init CLI – PATH argument", () => {
 		const cwd = makeTmpDir();
 		try {
 			const { exitCode } = run(
-				["init", "./subproject", "--template", "starter"],
+				["init", "./subproject", "--template", "starter", "--features", "commands,instructions,mcp,skills"],
 				cwd,
 			);
 			expect(exitCode).toBe(0);
@@ -257,7 +257,7 @@ test.describe("init CLI – PATH argument", () => {
 		const cwd = makeTmpDir();
 		const target = join(cwd, "brand", "new", "nested");
 		try {
-			const { exitCode } = run(["init", target, "--template", "starter"], cwd);
+			const { exitCode } = run(["init", target, "--template", "starter", "--features", "commands,instructions,mcp,skills"], cwd);
 			expect(exitCode).toBe(0);
 			expect(existsSync(join(target, ".dotagents/config.toml"))).toBe(true);
 		} finally {
@@ -449,7 +449,7 @@ test.describe("init TUI – T04 cancel wizard leaves no directory", () => {
 // T05: overwrite cancel
 test.describe("init TUI – T05 overwrite cancel", () => {
 	const d = makeTmpDir();
-	run(["init", "--template", "starter"], d);
+	run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 	test.use({ program: shellProgram(d, ["init"]) });
 
 	test("cancel overwrite exits without changes", async ({ terminal }) => {

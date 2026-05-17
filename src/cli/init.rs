@@ -47,47 +47,20 @@ impl InitFile {
     }
 }
 
-/// Returns true when init should run in interactive TUI mode.
-fn is_tui_mode(opts: &InitOptions) -> bool {
-    opts.features.is_none() && is_tui_enabled()
-}
-
-/// Validates the `--features` flag: errors on empty value or `none` combined with others.
-fn validate_features(opts: &InitOptions) -> Result<()> {
-    let Some(features) = &opts.features else {
-        return Ok(());
-    };
-    if features.is_empty() {
-        anyhow::bail!(
-            "--features requires at least one value. Use '--features none' to disable all features."
-        );
-    }
-    let has_none = features.iter().any(|f| matches!(f, Feature::None));
-    if has_none && features.len() > 1 {
-        anyhow::bail!("'none' cannot be combined with other feature names in --features.");
-    }
-    Ok(())
-}
-
-/// Maps a Feature variant to its config string; Feature::None produces no entry (yields empty list).
-fn feature_to_str(f: &Feature) -> Option<&'static str> {
-    match f {
-        Feature::Commands => Some("commands"),
-        Feature::Instructions => Some("instructions"),
-        Feature::Mcp => Some("mcp"),
-        Feature::Skills => Some("skills"),
-        Feature::None => Option::None,
-    }
-}
-
 /// Derives the global and local config file content from init options.
 fn build_config_content(opts: &InitOptions, template: InitTemplate) -> (String, String) {
     let config_features: Vec<&str> = opts
         .features
         .as_ref()
-        .map(|fs| fs.iter().filter_map(feature_to_str).collect())
-        .unwrap_or_else(|| vec!["commands", "instructions", "mcp", "skills"]);
-    let config_targets: Vec<&str> = opts.targets.iter().map(String::as_str).collect();
+        .map(|fs| fs.iter().map(|f| f.as_str()).collect())
+        .unwrap_or_default();
+    let config_targets: Vec<&str> = opts
+        .targets
+        .as_deref()
+        .unwrap_or_default()
+        .iter()
+        .map(String::as_str)
+        .collect();
     let base_config = mocks::default_config(&config_features, &config_targets);
     let local_config = if template == InitTemplate::WithCustomProvider {
         format!("{}{}", base_config, mocks::MYCODE_PROVIDER_CONFIG)
@@ -98,8 +71,6 @@ fn build_config_content(opts: &InitOptions, template: InitTemplate) -> (String, 
 }
 
 pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
-    validate_features(&opts)?;
-
     // Resolve workspace root from the optional positional dir arg.
     let cwd = std::env::current_dir().context("failed to get current directory")?;
     let workspace = match opts.dir.take() {
@@ -112,7 +83,7 @@ pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
         .try_exists()
         .context("failed to check if .dotagents directory exists")?;
 
-    let tui_mode = is_tui_mode(&opts);
+    let tui_mode = is_tui_enabled();
 
     if tui_mode {
         let proceed = ui::init::run_init_wizard(&mut opts, dir_exists)?;
@@ -218,140 +189,24 @@ mod tests {
             features: None,
             force: false,
             template: None,
-            targets: vec![],
+            targets: None,
         }
     }
 
-    // is_tui_mode returns false when CI mode is active
     #[test]
-    fn is_tui_mode_false_when_ci_mode_set() {
+    fn is_tui_enabled_false_when_ci_mode_set() {
         use crate::utils::tui::set_ci_mode;
         set_ci_mode(true);
-        assert!(!is_tui_mode(&default_opts()));
-        set_ci_mode(false); // reset for other tests
+        assert!(!is_tui_enabled());
+        set_ci_mode(false);
     }
 
-    // is_tui_mode returns false when --features is set
-    #[test]
-    fn is_tui_mode_false_when_features_set() {
-        assert!(!is_tui_mode(&InitOptions {
-            features: Some(vec![Feature::Commands]),
-            ..default_opts()
-        }));
-    }
-
-    // is_tui_mode returns false when --features none is set
-    #[test]
-    fn is_tui_mode_false_when_features_none_set() {
-        assert!(!is_tui_mode(&InitOptions {
-            features: Some(vec![Feature::None]),
-            ..default_opts()
-        }));
-    }
-
-    // is_tui_mode with only --template set matches the baseline (template no longer disables TUI)
-    #[test]
-    fn is_tui_mode_template_only_matches_baseline() {
-        let baseline = is_tui_mode(&default_opts());
-        assert_eq!(
-            is_tui_mode(&InitOptions {
-                template: Some(InitTemplate::Starter),
-                ..default_opts()
-            }),
-            baseline,
-            "template alone should not change TUI mode vs baseline"
-        );
-    }
-
-    // is_tui_mode returns false when both --template and --features are set
-    #[test]
-    fn is_tui_mode_false_when_template_and_features_set() {
-        assert!(!is_tui_mode(&InitOptions {
-            template: Some(InitTemplate::Starter),
-            features: Some(vec![Feature::Commands]),
-            ..default_opts()
-        }));
-    }
-
-    // is_tui_mode returns false whenever features flag is set (template alone does not disable TUI)
-    #[test]
-    fn is_tui_mode_false_when_features_flag_set() {
-        let cases = [
-            InitOptions {
-                features: Some(vec![Feature::Commands]),
-                ..default_opts()
-            },
-            InitOptions {
-                features: Some(vec![Feature::Commands, Feature::Mcp]),
-                ..default_opts()
-            },
-            InitOptions {
-                features: Some(vec![Feature::None]),
-                ..default_opts()
-            },
-            InitOptions {
-                template: Some(InitTemplate::Starter),
-                features: Some(vec![Feature::Commands]),
-                ..default_opts()
-            },
-            InitOptions {
-                template: Some(InitTemplate::WithCustomProvider),
-                features: Some(vec![Feature::Mcp]),
-                ..default_opts()
-            },
-        ];
-        for opts in &cases {
-            assert!(
-                !is_tui_mode(opts),
-                "expected TUI mode disabled when features flag is set"
-            );
-        }
-    }
-
-    // validate_features errors on none combined with other values
-    #[test]
-    fn validate_features_errors_on_none_combined() {
-        let opts = InitOptions {
-            features: Some(vec![Feature::None, Feature::Commands]),
-            ..default_opts()
-        };
-        assert!(validate_features(&opts).is_err());
-    }
-
-    // validate_features succeeds for a valid explicit list
-    #[test]
-    fn validate_features_ok_for_explicit_list() {
-        let opts = InitOptions {
-            features: Some(vec![Feature::Commands, Feature::Mcp]),
-            ..default_opts()
-        };
-        assert!(validate_features(&opts).is_ok());
-    }
-
-    // validate_features succeeds for none sentinel alone
-    #[test]
-    fn validate_features_ok_for_none_alone() {
-        let opts = InitOptions {
-            features: Some(vec![Feature::None]),
-            ..default_opts()
-        };
-        assert!(validate_features(&opts).is_ok());
-    }
-
-    // validate_features succeeds when flag is absent
-    #[test]
-    fn validate_features_ok_when_absent() {
-        assert!(validate_features(&default_opts()).is_ok());
-    }
-
-    // InitFile::should_skip returns false when no condition is set
     #[test]
     fn init_file_should_not_skip_without_condition() {
         let file = InitFile::new("some.txt", "content");
         assert!(!file.should_skip(&default_opts()));
     }
 
-    // InitFile::should_skip returns true when the feature is not in the list
     #[test]
     fn init_file_should_skip_when_feature_disabled() {
         let file =
@@ -362,32 +217,27 @@ mod tests {
         }));
     }
 
-    // InitFile::should_skip returns false when the feature is enabled
     #[test]
-    fn init_file_should_not_skip_when_feature_enabled() {
+    fn init_file_should_skip_when_features_absent() {
         let file =
             InitFile::new("some.txt", "content").with_skip_if(|o| !o.has_feature(Feature::Mcp));
-        assert!(!file.should_skip(&default_opts()));
+        assert!(file.should_skip(&default_opts()));
     }
 
-    // build_config_content with no features flag defaults to all four features
     #[test]
-    fn build_config_content_defaults_to_all_features() {
+    fn build_config_content_defaults_to_empty_features() {
         let opts = default_opts();
         let (global, local) = build_config_content(&opts, InitTemplate::Starter);
-        for feature in ["commands", "instructions", "mcp", "skills"] {
-            assert!(
-                global.contains(feature),
-                "expected {feature} in global config"
-            );
-            assert!(
-                local.contains(feature),
-                "expected {feature} in local config"
-            );
-        }
+        assert!(
+            global.contains("features = []"),
+            "expected empty features list; got: {global}"
+        );
+        assert!(
+            local.contains("features = []"),
+            "expected empty features list in local; got: {local}"
+        );
     }
 
-    // build_config_content with a subset of features writes only those features
     #[test]
     fn build_config_content_writes_selected_features() {
         let opts = InitOptions {
@@ -401,25 +251,6 @@ mod tests {
         assert!(!global.contains("\"skills\""));
     }
 
-    // build_config_content with --features none produces features = []
-    #[test]
-    fn build_config_content_none_sentinel_produces_empty_features() {
-        let opts = InitOptions {
-            features: Some(vec![Feature::None]),
-            ..default_opts()
-        };
-        let (global, local) = build_config_content(&opts, InitTemplate::Starter);
-        assert!(
-            global.contains("features = []"),
-            "expected empty features list; got: {global}"
-        );
-        assert!(
-            local.contains("features = []"),
-            "expected empty features list in local; got: {local}"
-        );
-    }
-
-    // build_config_content with WithCustomProvider appends provider block to local config
     #[test]
     fn build_config_content_with_custom_provider_appends_provider_block() {
         let opts = default_opts();
@@ -435,7 +266,6 @@ mod tests {
         assert!(local.contains(mocks::MYCODE_PROVIDER_CONFIG));
     }
 
-    // build_config_content with Starter template produces identical global and local content
     #[test]
     fn build_config_content_starter_global_and_local_are_identical() {
         let opts = default_opts();
@@ -446,7 +276,6 @@ mod tests {
         );
     }
 
-    // init with explicit dir creates .dotagents inside that directory
     #[test]
     fn initialize_agents_dir_with_explicit_dir() {
         let temp = tempfile::TempDir::new().expect("temp dir");
@@ -470,7 +299,6 @@ mod tests {
         );
     }
 
-    // init with explicit dir creates the workspace directory if it does not exist
     #[test]
     fn initialize_agents_dir_creates_missing_workspace() {
         let temp = tempfile::TempDir::new().expect("temp dir");

@@ -17,7 +17,7 @@ test.describe("skills new CLI", () => {
 	test("all flags populate frontmatter fields", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 			const { exitCode } = run(
 				[
 					"skills",
@@ -51,7 +51,7 @@ test.describe("skills new CLI", () => {
 	test("skill file contains Instructions and When to use sections", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 			run(["skills", "new", "my-skill", "--description", "Greet users"], d);
 			const content = readFileSync(
 				join(d, ".dotagents/skills/my-skill/SKILL.md"),
@@ -68,7 +68,7 @@ test.describe("skills new CLI", () => {
 	test("--force overwrites existing skill", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 			run(["skills", "new", "my-skill", "--description", "first"], d);
 			const { exitCode } = run(
 				["skills", "new", "my-skill", "--description", "second", "--force"],
@@ -93,7 +93,7 @@ test.describe("skills ls CLI", () => {
 	test("shows hello-skill from init scaffold", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 			const { exitCode, stderr } = run(["skills", "ls"], d);
 			expect(exitCode).toBe(0);
 			expect(stderr).toMatch(/hello-skill/);
@@ -106,7 +106,7 @@ test.describe("skills ls CLI", () => {
 	test("shows skill count summary line", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 			const { exitCode, stderr } = run(["skills", "ls"], d);
 			expect(exitCode).toBe(0);
 			expect(stderr).toMatch(/skill\(s\)/);
@@ -119,7 +119,7 @@ test.describe("skills ls CLI", () => {
 	test("--content exits zero", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 			const { exitCode } = run(["skills", "ls", "--content"], d);
 			expect(exitCode).toBe(0);
 		} finally {
@@ -131,7 +131,7 @@ test.describe("skills ls CLI", () => {
 	test("--json outputs valid JSON array with name and description", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 			const { exitCode, stdout } = run(["skills", "ls", "--json"], d);
 			expect(exitCode).toBe(0);
 			const parsed = JSON.parse(stdout);
@@ -148,7 +148,7 @@ test.describe("skills ls CLI", () => {
 	test("--json without --content does not include content key", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 			const { exitCode, stdout } = run(["skills", "ls", "--json"], d);
 			expect(exitCode).toBe(0);
 			const parsed = JSON.parse(stdout);
@@ -162,7 +162,7 @@ test.describe("skills ls CLI", () => {
 	test("--json --content includes content key with body", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 			const { exitCode, stdout } = run(
 				["skills", "ls", "--json", "--content"],
 				d,
@@ -181,7 +181,7 @@ test.describe("skills ls CLI", () => {
 	test("--content shows body content in text output", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 			const { exitCode, stderr } = run(["skills", "ls", "--content"], d);
 			expect(exitCode).toBe(0);
 			expect(stderr).toMatch(/var\.agent_name/);
@@ -194,7 +194,7 @@ test.describe("skills ls CLI", () => {
 	test("default output does not show body content", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 			const { exitCode, stderr } = run(["skills", "ls"], d);
 			expect(exitCode).toBe(0);
 			expect(stderr).not.toMatch(/var\.agent_name/);
@@ -207,7 +207,7 @@ test.describe("skills ls CLI", () => {
 	test("--json outputs pipeable JSON", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 			const { exitCode, stdout } = run(["skills", "ls", "--json"], d);
 			expect(exitCode).toBe(0);
 			const parsed = JSON.parse(stdout);
@@ -221,7 +221,7 @@ test.describe("skills ls CLI", () => {
 	test("--skill filters to matching skill", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 			const { exitCode, stderr } = run(
 				["skills", "ls", "--skill", "hello-skill"],
 				d,
@@ -237,7 +237,7 @@ test.describe("skills ls CLI", () => {
 	test("--skill with unmatched name shows no skills found", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 			const { exitCode, stderr } = run(
 				["skills", "ls", "--skill", "nonexistent"],
 				d,
@@ -253,7 +253,7 @@ test.describe("skills ls CLI", () => {
 	test("--json with no skills outputs []", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 			// Remove the scaffolded hello-skill to make it empty
 			rmSync(join(d, ".dotagents/skills/hello-skill"), {
 				recursive: true,
@@ -275,7 +275,7 @@ test.describe("skills rm CLI", () => {
 	test("--force deletes skill directory", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 			expect(existsSync(join(d, ".dotagents/skills/hello-skill"))).toBe(true);
 			const { exitCode } = run(["skills", "rm", "hello-skill", "--force"], d);
 			expect(exitCode).toBe(0);
@@ -317,7 +317,7 @@ test.describe("skills rm CLI", () => {
 	test("--force exits 0 and warns when skill was never deployed", async () => {
 		const d = makeTmpDir();
 		try {
-			run(["init", "--template", "starter"], d);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 			const { exitCode, stderr } = run(
 				["skills", "rm", "hello-skill", "--force"],
 				d,
@@ -426,7 +426,7 @@ test.describe("skills --cwd", () => {
 	test("skills ls --cwd reads from target workspace", async () => {
 		const { cwd, workspace } = makeTwoDirs();
 		try {
-			run(["init", "--template", "starter"], workspace);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], workspace);
 			run(["skills", "new", "my-skill", "--description", "A skill"], workspace);
 			const { exitCode, stderr } = run(
 				["skills", "ls", "--cwd", workspace],
@@ -444,7 +444,7 @@ test.describe("skills --cwd", () => {
 	test("skills new --cwd creates skill in target workspace", async () => {
 		const { cwd, workspace } = makeTwoDirs();
 		try {
-			run(["init", "--template", "starter"], workspace);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], workspace);
 			const { exitCode } = run(
 				[
 					"skills",
@@ -472,7 +472,7 @@ test.describe("skills --cwd", () => {
 	test("skills rm --cwd removes from target workspace", async () => {
 		const { cwd, workspace } = makeTwoDirs();
 		try {
-			run(["init", "--template", "starter"], workspace);
+			run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], workspace);
 			run(["skills", "new", "my-skill", "--description", "Test"], workspace);
 			const skillDir = join(workspace, ".dotagents/skills/my-skill");
 			expect(existsSync(skillDir)).toBe(true);
@@ -497,7 +497,7 @@ test.describe("skills --cwd", () => {
 // T08: all three prompts appear for skill
 test.describe("skills new TUI – T08 interactive prompts", () => {
 	const d = makeTmpDir();
-	run(["init", "--template", "starter"], d);
+	run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 	test.use({ program: shellProgram(d, ["skills", "new", "my-skill"]) });
 
 	test("prompts for description, license, compatibility", async ({
@@ -535,7 +535,7 @@ test.describe("skills new TUI – T08 interactive prompts", () => {
 // T12: confirm Yes removes the skill directory
 test.describe("skills rm TUI – T12 confirm Yes", () => {
 	const d = makeTmpDir();
-	run(["init", "--template", "starter"], d);
+	run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 	test.use({ program: shellProgram(d, ["skills", "rm", "hello-skill"]) });
 
 	test("confirm Yes removes the skill", async ({ terminal }) => {
@@ -586,7 +586,7 @@ test.describe("skills add CI", () => {
 // T13: confirm No leaves skill intact
 test.describe("skills rm TUI – T13 confirm No", () => {
 	const d = makeTmpDir();
-	run(["init", "--template", "starter"], d);
+	run(["init", "--template", "starter", "--features", "commands,instructions,mcp,skills"], d);
 	test.use({ program: shellProgram(d, ["skills", "rm", "hello-skill"]) });
 
 	test("confirm No leaves the skill directory intact", async ({ terminal }) => {

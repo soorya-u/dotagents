@@ -42,15 +42,19 @@ When `--json` is passed to `dotagents providers`, the command SHALL output a JSO
 - **THEN** stdout contains `[]` and the command exits 0
 
 ### Requirement: TUI mode provides interactive scrollable provider list
-When stdin is a TTY and `--json` is not passed, `dotagents providers` SHALL display an interactive scrollable selection list using cliclack. Each option shows the provider name (or slug when name is absent) with the slug in brackets and the URL as a hint on the highlighted item. Selecting a provider and pressing Enter SHALL display the provider's name and URL in the closing outro. Esc or Ctrl+C SHALL exit cleanly with code 0 and no error output.
+When stdin is a TTY and `--json` is not passed, `dotagents providers` SHALL display an interactive scrollable selection list using cliclack. Each option SHALL show only the provider slug as the label. No hint text SHALL be displayed on list items. Selecting a provider and pressing Enter SHALL display the provider's name and URL in the closing outro as `Name (url)`. Esc or Ctrl+C SHALL exit cleanly with code 0 and no error output.
 
-#### Scenario: TUI shows all providers in a scrollable list
+#### Scenario: TUI shows all providers in a scrollable list with slug labels
 - **WHEN** `dotagents providers` is run in a TTY
-- **THEN** a cliclack select prompt titled "Providers" is shown with all providers, capped at 10 visible rows
+- **THEN** a cliclack select prompt titled "Providers" is shown with all providers listed by slug, capped at 10 visible rows
 
-#### Scenario: TUI shows provider info on selection
+#### Scenario: TUI shows provider details on selection
 - **WHEN** the user selects a provider and presses Enter
-- **THEN** the closing message displays the provider's name and URL (e.g. `Amp Code (https://ampcode.com/manual)`); if name/url are absent, a fallback of "Done" is shown
+- **THEN** the closing message displays the provider's name and URL (e.g. `Claude Code (https://docs.anthropic.com/en/docs/claude-code)`); if name/url are absent, a fallback of "Done" is shown
+
+#### Scenario: TUI select label is slug only
+- **WHEN** `dotagents providers ls` is run in a TTY and a provider has name "Claude Code" and slug "claude"
+- **THEN** the select list item label is "claude", not "Claude Code"
 
 #### Scenario: Escape key exits cleanly
 - **WHEN** `dotagents providers` is run in a TTY
