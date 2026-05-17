@@ -102,7 +102,7 @@ pub(crate) fn add(opts: SkillsAddOptions) -> Result<bool> {
         .to_str()
         .ok_or_else(|| anyhow::anyhow!("application dir path is not valid UTF-8"))?;
 
-    let args = runner.args(&opts.name);
+    let args = runner.args(&opts.name, !is_tui_enabled());
     let (program, rest) = args
         .split_first()
         .ok_or_else(|| anyhow::anyhow!("runner produced empty args list"))?;

@@ -82,3 +82,10 @@ The system SHALL accept an optional `package-runner` field in both `config.toml`
 
 - **WHEN** neither `config.toml` nor `local.config.toml` contains `package-runner`
 - **THEN** `AppConfig.package_runner` is `None`
+
+### Requirement: skills add passes ci flag to PackageRunner::args
+The `skills add` command SHALL invoke `PackageRunner::args(skill_name, ci)` where `ci` is `true` when `is_tui_enabled()` returns `false`.
+
+#### Scenario: skills add in CI environment passes ci=true
+- **WHEN** `skills add <name>` is run with `DOTAGENTS_CI=true` or in a non-TTY environment
+- **THEN** the package runner subprocess receives `--yes` in its argument list

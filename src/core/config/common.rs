@@ -25,8 +25,9 @@ impl PackageRunner {
     }
 
     /// Returns the full argument list for `skills add <skill_name>`.
-    pub(crate) fn args(&self, skill_name: &str) -> Vec<String> {
-        match self {
+    /// When `ci` is true, appends `--yes` to skip interactive confirmation prompts.
+    pub(crate) fn args(&self, skill_name: &str, ci: bool) -> Vec<String> {
+        let mut v = match self {
             PackageRunner::Npm => vec![
                 "npx".into(),
                 "skills".into(),
@@ -61,7 +62,11 @@ impl PackageRunner {
                 "--agent".into(),
                 "claude-code".into(),
             ],
+        };
+        if ci {
+            v.push("--yes".into());
         }
+        v
     }
 }
 
@@ -289,7 +294,7 @@ mod tests {
     #[test]
     fn package_runner_args_npm() {
         // npm produces the npx-based argv
-        let args = PackageRunner::Npm.args("vercel-labs/agent-skills");
+        let args = PackageRunner::Npm.args("vercel-labs/agent-skills", false);
         assert_eq!(
             args,
             vec![
@@ -304,9 +309,27 @@ mod tests {
     }
 
     #[test]
+    fn package_runner_args_npm_ci() {
+        // npm in CI mode appends --yes
+        let args = PackageRunner::Npm.args("vercel-labs/agent-skills", true);
+        assert_eq!(
+            args,
+            vec![
+                "npx",
+                "skills",
+                "add",
+                "vercel-labs/agent-skills",
+                "--agent",
+                "claude-code",
+                "--yes"
+            ]
+        );
+    }
+
+    #[test]
     fn package_runner_args_pnpm() {
         // pnpm produces the dlx-based argv
-        let args = PackageRunner::Pnpm.args("my-skill");
+        let args = PackageRunner::Pnpm.args("my-skill", false);
         assert_eq!(
             args,
             vec![
@@ -322,9 +345,28 @@ mod tests {
     }
 
     #[test]
+    fn package_runner_args_pnpm_ci() {
+        // pnpm in CI mode appends --yes
+        let args = PackageRunner::Pnpm.args("my-skill", true);
+        assert_eq!(
+            args,
+            vec![
+                "pnpm",
+                "dlx",
+                "skills",
+                "add",
+                "my-skill",
+                "--agent",
+                "claude-code",
+                "--yes"
+            ]
+        );
+    }
+
+    #[test]
     fn package_runner_args_yarn() {
         // yarn produces the dlx-based argv
-        let args = PackageRunner::Yarn.args("my-skill");
+        let args = PackageRunner::Yarn.args("my-skill", false);
         assert_eq!(
             args,
             vec![
@@ -340,9 +382,28 @@ mod tests {
     }
 
     #[test]
+    fn package_runner_args_yarn_ci() {
+        // yarn in CI mode appends --yes
+        let args = PackageRunner::Yarn.args("my-skill", true);
+        assert_eq!(
+            args,
+            vec![
+                "yarn",
+                "dlx",
+                "skills",
+                "add",
+                "my-skill",
+                "--agent",
+                "claude-code",
+                "--yes"
+            ]
+        );
+    }
+
+    #[test]
     fn package_runner_args_bun() {
         // bun produces the bunx-based argv
-        let args = PackageRunner::Bun.args("my-skill");
+        let args = PackageRunner::Bun.args("my-skill", false);
         assert_eq!(
             args,
             vec![
@@ -352,6 +413,24 @@ mod tests {
                 "my-skill",
                 "--agent",
                 "claude-code"
+            ]
+        );
+    }
+
+    #[test]
+    fn package_runner_args_bun_ci() {
+        // bun in CI mode appends --yes
+        let args = PackageRunner::Bun.args("my-skill", true);
+        assert_eq!(
+            args,
+            vec![
+                "bunx",
+                "skills",
+                "add",
+                "my-skill",
+                "--agent",
+                "claude-code",
+                "--yes"
             ]
         );
     }
