@@ -339,11 +339,21 @@ test.describe("skills deploy-default", () => {
 		try {
 			initWithLocalProvider(d);
 			const { exitCode } = run(
-				["skills", "new", "my-skill", "--ci", "--no-deploy", "--description", "test"],
+				[
+					"skills",
+					"new",
+					"my-skill",
+					"--ci",
+					"--no-deploy",
+					"--description",
+					"test",
+				],
 				d,
 			);
 			expect(exitCode).toBe(0);
-			expect(existsSync(join(d, ".mycode/skills/my-skill/SKILL.md"))).toBe(false);
+			expect(existsSync(join(d, ".mycode/skills/my-skill/SKILL.md"))).toBe(
+				false,
+			);
 		} finally {
 			cleanup(d);
 		}
@@ -359,7 +369,9 @@ test.describe("skills deploy-default", () => {
 				d,
 			);
 			expect(exitCode).toBe(0);
-			expect(existsSync(join(d, ".mycode/skills/my-skill/SKILL.md"))).toBe(true);
+			expect(existsSync(join(d, ".mycode/skills/my-skill/SKILL.md"))).toBe(
+				true,
+			);
 		} finally {
 			cleanup(d);
 		}
@@ -371,7 +383,9 @@ test.describe("skills deploy-default", () => {
 		try {
 			initWithLocalProvider(d);
 			run(["deploy", "--offline", "--gitignore"], d);
-			expect(existsSync(join(d, ".mycode/skills/hello-skill/SKILL.md"))).toBe(true);
+			expect(existsSync(join(d, ".mycode/skills/hello-skill/SKILL.md"))).toBe(
+				true,
+			);
 			const { exitCode } = run(
 				["skills", "rm", "hello-skill", "--ci", "--no-deploy", "--force"],
 				d,
@@ -388,13 +402,17 @@ test.describe("skills deploy-default", () => {
 		try {
 			initWithLocalProvider(d);
 			run(["deploy", "--offline", "--gitignore"], d);
-			expect(existsSync(join(d, ".mycode/skills/hello-skill/SKILL.md"))).toBe(true);
+			expect(existsSync(join(d, ".mycode/skills/hello-skill/SKILL.md"))).toBe(
+				true,
+			);
 			const { exitCode } = run(
 				["skills", "rm", "hello-skill", "--ci", "--force"],
 				d,
 			);
 			expect(exitCode).toBe(0);
-			expect(existsSync(join(d, ".mycode/skills/hello-skill/SKILL.md"))).toBe(false);
+			expect(existsSync(join(d, ".mycode/skills/hello-skill/SKILL.md"))).toBe(
+				false,
+			);
 		} finally {
 			cleanup(d);
 		}

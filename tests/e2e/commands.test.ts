@@ -367,7 +367,15 @@ test.describe("commands deploy-default", () => {
 		try {
 			initWithLocalProvider(d);
 			const { exitCode } = run(
-				["commands", "new", "greet", "--ci", "--no-deploy", "--description", "test"],
+				[
+					"commands",
+					"new",
+					"greet",
+					"--ci",
+					"--no-deploy",
+					"--description",
+					"test",
+				],
 				d,
 			);
 			expect(exitCode).toBe(0);
