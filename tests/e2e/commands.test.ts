@@ -637,6 +637,10 @@ test.describe("commands new TUI – T07 deploy on Yes", () => {
 			terminal.keyPress("Enter"); // Yes to deploy
 			await expect(terminal.getByText("Run in offline mode?")).toBeVisible();
 			terminal.keyPress("Enter"); // accept online
+			await expect(terminal.getByText("written")).toBeVisible();
+			expect(existsSync(join(d, ".mycode/commands/deploy-test-cmd.md"))).toBe(
+				true,
+			);
 		} finally {
 			cleanup(d);
 		}

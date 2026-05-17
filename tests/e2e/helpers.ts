@@ -26,7 +26,11 @@ function ensureCleanupRegistered(): void {
 	// Synchronous cleanup for process exit events (async handlers are ignored).
 	process.on("exit", () => {
 		for (const dir of CLEANUP_DIRS) {
-			rmSync(dir, { recursive: true, force: true });
+			try {
+				rmSync(dir, { recursive: true, force: true });
+			} catch (err) {
+				process.stderr.write(`cleanup failed for ${dir}: ${err}\n`);
+			}
 		}
 	});
 }
