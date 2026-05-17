@@ -1,11 +1,5 @@
 import { expect, test } from "@microsoft/tui-test";
-import {
-	cleanup,
-	makeTmpDir,
-	run,
-	seedRegistryCache,
-	shellProgram,
-} from "./helpers.js";
+import { cleanup, makeTmpDir, run, shellProgram } from "./helpers.js";
 
 test.describe("providers ls CLI", () => {
 	// --json exits 0 and returns a valid JSON array with slug/name/url fields
@@ -27,76 +21,27 @@ test.describe("providers ls CLI", () => {
 		}
 	});
 
-	// --json --offline with seeded cache returns providers with name and url populated
-	test("--json --offline with seeded cache returns populated name and url", async () => {
+	// default text output lists providers in Name [slug] (url) format
+	test("default text output contains provider slugs in brackets", async () => {
 		const d = makeTmpDir();
-		const xdgDir = seedRegistryCache();
 		try {
-			const { exitCode, stdout } = run(
-				["providers", "--json", "--offline"],
-				d,
-				{ XDG_CONFIG_HOME: xdgDir },
-			);
+			const { exitCode, stdout } = run(["providers", "--ci"], d);
 			expect(exitCode).toBe(0);
-			const parsed = JSON.parse(stdout);
-			const claude = parsed.find((p: { slug: string }) => p.slug === "claude");
-			expect(claude).toBeDefined();
-			expect(claude.name).toBe("Claude Code");
-			expect(claude.url).toBe("https://docs.anthropic.com/en/docs/claude-code");
+			expect(stdout).toContain("[claude]");
+			expect(stdout).toContain("[amp]");
 		} finally {
 			cleanup(d);
-			cleanup(xdgDir);
 		}
 	});
 
-	// default text output lists slugs and names
-	test("default text output --offline contains provider slugs", async () => {
+	// --verbose shows debug line with registry URL
+	test("-v shows debug line with registry URL", async () => {
 		const d = makeTmpDir();
-		const xdgDir = seedRegistryCache();
 		try {
-			const { exitCode, stdout } = run(["providers", "--offline"], d, {
-				XDG_CONFIG_HOME: xdgDir,
-			});
-			expect(exitCode).toBe(0);
-			expect(stdout).toContain("claude");
-			expect(stdout).toContain("amp");
-		} finally {
-			cleanup(d);
-			cleanup(xdgDir);
-		}
-	});
-
-	// --offline with cold cache exits non-zero with a helpful error message
-	test("--offline with cold cache exits non-zero with cached registry error", async () => {
-		const d = makeTmpDir();
-		const xdgDir = makeTmpDir(); // empty — no registry seeded
-		try {
-			const { exitCode, stderr } = run(["providers", "--offline"], d, {
-				XDG_CONFIG_HOME: xdgDir,
-			});
-			expect(exitCode).not.toBe(0);
-			expect(stderr).toContain("cached registry");
-			expect(stderr).toContain("dotagents providers");
-			expect(stderr).not.toContain("dotagents providers ls");
-		} finally {
-			cleanup(d);
-			cleanup(xdgDir);
-		}
-	});
-
-	// --verbose with cold cache shows debug line with registry URL before failing
-	test("-v with cold cache shows debug line with registry URL", async () => {
-		const d = makeTmpDir();
-		const xdgDir = makeTmpDir(); // empty — no registry seeded
-		try {
-			const { stderr } = run(["-v", "providers"], d, {
-				XDG_CONFIG_HOME: xdgDir,
-			});
-			// Should attempt fetch (showing debug URL) then fail with cache error
+			const { stderr } = run(["-v", "providers"], d);
 			expect(stderr).toMatch(/Fetching provider registry from https?:\/\//);
 		} finally {
 			cleanup(d);
-			cleanup(xdgDir);
 		}
 	});
 });
@@ -104,41 +49,29 @@ test.describe("providers ls CLI", () => {
 // ── Providers --quiet / --verbose ─────────────────────────────────────────────
 
 test.describe("providers CLI – --quiet flag", () => {
-	// TC-PROV-09: --quiet suppresses provider listing output
-	test("--quiet --offline with seeded cache produces empty stdout", async () => {
+	// --quiet suppresses provider listing output
+	test("--quiet produces empty stdout", async () => {
 		const d = makeTmpDir();
-		const xdgDir = seedRegistryCache();
 		try {
-			const { exitCode, stdout } = run(
-				["providers", "--ci", "--quiet", "--offline"],
-				d,
-				{ XDG_CONFIG_HOME: xdgDir },
-			);
+			const { exitCode, stdout } = run(["providers", "--ci", "--quiet"], d);
 			expect(exitCode).toBe(0);
 			expect(stdout).toBe("");
 		} finally {
 			cleanup(d);
-			cleanup(xdgDir);
 		}
 	});
 });
 
 test.describe("providers CLI – --verbose flag", () => {
-	// TC-PROV-10: -v adds diagnostic output with seeded cache
-	test("-v --offline with seeded cache shows debug output on stderr", async () => {
+	// -v adds diagnostic output
+	test("-v shows debug output on stderr", async () => {
 		const d = makeTmpDir();
-		const xdgDir = seedRegistryCache();
 		try {
-			const { exitCode, stderr } = run(
-				["providers", "--ci", "-v", "--offline"],
-				d,
-				{ XDG_CONFIG_HOME: xdgDir },
-			);
+			const { exitCode, stderr } = run(["providers", "--ci", "-v"], d);
 			expect(exitCode).toBe(0);
-			expect(stderr).toMatch(/cache|Cache|CACHE|offline|Offline/);
+			expect(stderr).toMatch(/cache|Cache|CACHE|fetch|Fetch/);
 		} finally {
 			cleanup(d);
-			cleanup(xdgDir);
 		}
 	});
 });
@@ -148,11 +81,8 @@ test.describe("providers CLI – --verbose flag", () => {
 // TC-PROV-01: TUI select widget renders and is navigable
 test.describe("providers TUI – TC-PROV-01 select widget", () => {
 	const d = makeTmpDir();
-	const xdgDir = seedRegistryCache();
 	test.use({
-		program: shellProgram(d, ["providers", "--offline"], {
-			XDG_CONFIG_HOME: xdgDir,
-		}),
+		program: shellProgram(d, ["providers"]),
 	});
 
 	test("select widget renders, Enter selects, shows outro", async ({
@@ -170,7 +100,6 @@ test.describe("providers TUI – TC-PROV-01 select widget", () => {
 			await expect(terminal.getByText("Amp Code")).toBeVisible();
 		} finally {
 			cleanup(d);
-			cleanup(xdgDir);
 		}
 	});
 });

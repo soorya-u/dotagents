@@ -1,11 +1,9 @@
 use cliclack::{outro, select, spinner};
 use serde::Serialize;
 
-use crate::constants::{domain::registry_url, file::REGISTRY_FILE};
+use crate::constants::domain::registry_url;
 use crate::prelude::*;
 use crate::schema::registry::Registry;
-use crate::utils::path::get_global_template_cache_dir;
-use crate::utils::tui::is_tty;
 use crate::utils::tui::is_tui_enabled;
 
 use super::options::ProvidersLsOptions;
@@ -18,31 +16,8 @@ struct DisplayProvider {
     url: Option<String>,
 }
 
-/// Persist the fetched registry JSON to the template-source cache so offline
-/// mode can read it back.
-fn cache_registry(registry_json: &str) {
-    match get_global_template_cache_dir() {
-        Ok(cache_dir) => {
-            let path = cache_dir.join(REGISTRY_FILE);
-            if let Err(e) = std::fs::write(&path, registry_json) {
-                warn!("Failed to cache registry: {}", e);
-            } else {
-                debug!("Registry cached at {}", path.display());
-            }
-        }
-        Err(e) => {
-            warn!("Failed to get cache dir: {}", e);
-        }
-    }
-}
-
-/// Fetch the registry: online by default, then cache it.  Cache-only when
-/// `offline` is true.
-fn fetch_registry(offline: bool) -> Result<Registry> {
-    if offline {
-        return read_registry_from_cache();
-    }
-
+/// Fetch the provider registry from the remote URL.
+fn fetch_registry() -> Result<Registry> {
     let url = registry_url();
     debug!("Fetching provider registry from {}", url);
     let body = crate::utils::http::do_get(url)
@@ -51,29 +26,7 @@ fn fetch_registry(offline: bool) -> Result<Registry> {
     let registry: Registry = serde_json::from_str(&body)
         .with_context(|| format!("Failed to parse registry JSON from {}", url))?;
 
-    // Cache only after successful parse to avoid poisoning offline cache with bad payloads.
-    cache_registry(&body);
     Ok(registry)
-}
-
-/// Read `registry.json` from the template-source cache directory.
-fn read_registry_from_cache() -> Result<Registry> {
-    let cache_dir =
-        get_global_template_cache_dir().context("unable to get template cache directory")?;
-    let cache_path = cache_dir.join(REGISTRY_FILE);
-    debug!(
-        "Reading provider registry from cache at {}",
-        cache_path.display()
-    );
-
-    let body = std::fs::read_to_string(&cache_path).map_err(|_| {
-        anyhow!(
-            "No cached registry found at {} — run `dotagents providers` without --offline first",
-            cache_path.display()
-        )
-    })?;
-
-    serde_json::from_str(&body).with_context(|| "Failed to parse cached registry JSON")
 }
 
 fn collect_providers(registry: &Registry) -> Vec<DisplayProvider> {
@@ -91,7 +44,7 @@ fn collect_providers(registry: &Registry) -> Vec<DisplayProvider> {
     providers
 }
 
-/// Output providers as plain text.
+/// Output providers as plain text in CI format: `Name [slug] (url)`.
 fn print_text(providers: &[DisplayProvider]) {
     if providers.is_empty() {
         println!("No providers found.");
@@ -102,10 +55,10 @@ fn print_text(providers: &[DisplayProvider]) {
         let name = p.name.as_deref().unwrap_or("");
         let url = p.url.as_deref().unwrap_or("");
         match (name.is_empty(), url.is_empty()) {
-            (false, false) => println!("{}  ({}) \u{2014} {}", p.slug, name, url),
-            (false, true) => println!("{}  ({})", p.slug, name),
-            (true, false) => println!("{}  \u{2014} {}", p.slug, url),
-            (true, true) => println!("{}", p.slug),
+            (false, false) => println!("{} [{}] ({})", name, p.slug, url),
+            (false, true) => println!("{} [{}]", name, p.slug),
+            (true, false) => println!("[{}] ({})", p.slug, url),
+            (true, true) => println!("[{}]", p.slug),
         }
     }
 }
@@ -258,40 +211,32 @@ mod tests {
         assert!(roo["url"].is_null());
     }
 
-    // read_registry_from_cache errors with clear message when cache is cold
+    // print_text does not panic with mixed name/url presence
     #[test]
-    fn read_registry_from_cache_cold_cache_errors() {
-        let result = read_registry_from_cache();
-        // May succeed if there happens to be a cached registry in CI;
-        // just ensure the function exists and either succeeds or errors with the right message.
-        if let Err(e) = result {
-            let msg = e.to_string();
-            assert!(
-                msg.contains("cached registry"),
-                "error should mention 'cached registry', got: {}",
-                msg
-            );
-            assert!(
-                msg.contains("dotagents providers"),
-                "error should mention 'dotagents providers', got: {}",
-                msg
-            );
-            assert!(
-                !msg.contains("dotagents providers ls"),
-                "error should NOT mention 'dotagents providers ls', got: {}",
-                msg
-            );
-        }
+    fn print_text_does_not_panic() {
+        let providers = vec![
+            DisplayProvider {
+                slug: "claude".into(),
+                name: Some("Claude Code".into()),
+                url: Some("https://docs.anthropic.com/en/docs/claude-code".into()),
+            },
+            DisplayProvider {
+                slug: "roo".into(),
+                name: None,
+                url: None,
+            },
+        ];
+        print_text(&providers);
     }
 }
 
 /// Handle `dotagents providers`.
 pub(crate) fn run_providers(opts: ProvidersLsOptions, quiet: bool) -> Result<bool> {
-    let registry = if is_tty() && is_tui_enabled() && !opts.offline && !opts.json {
+    let registry = if is_tui_enabled() && !opts.json {
         let sp = spinner();
         sp.start("Fetching providers…");
         debug!("Fetching provider registry from {}", registry_url());
-        match fetch_registry(false) {
+        match fetch_registry() {
             Ok(r) => {
                 sp.clear();
                 r
@@ -302,10 +247,8 @@ pub(crate) fn run_providers(opts: ProvidersLsOptions, quiet: bool) -> Result<boo
             }
         }
     } else {
-        if opts.offline {
-            debug!("Using offline mode for provider registry");
-        }
-        fetch_registry(opts.offline).context("unable to load provider registry")?
+        debug!("Fetching provider registry from {}", registry_url());
+        fetch_registry().context("unable to load provider registry")?
     };
 
     let providers = collect_providers(&registry);
@@ -328,7 +271,7 @@ pub(crate) fn run_providers(opts: ProvidersLsOptions, quiet: bool) -> Result<boo
         return Ok(true);
     }
 
-    if is_tty() {
+    if is_tui_enabled() {
         return run_tui(&providers);
     }
 
