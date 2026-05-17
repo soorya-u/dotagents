@@ -11,6 +11,7 @@ use anyhow::{Context, Result};
 use clap::CommandFactory;
 
 pub(crate) fn run(opts: Options) -> Result<bool> {
+    let global_quiet = opts.quiet;
     let default_action = || {
         Options::command().print_help().unwrap();
         std::process::exit(0);
@@ -55,7 +56,7 @@ pub(crate) fn run(opts: Options) -> Result<bool> {
             }
         },
         Action::Providers(opts) => {
-            providers::run_providers(opts).context("complete 'providers' command")?
+            providers::run_providers(opts, global_quiet).context("complete 'providers' command")?
         }
         Action::Undeploy(opts) => {
             undeploy(opts).context("complete 'undeploy' command")?;
