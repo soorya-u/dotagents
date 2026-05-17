@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use crate::{core::features::Feature, utils::merge::merge_optional};
 
 /// Package runner used to invoke the `skills` CLI.
+#[cfg(feature = "skills-add")]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, clap::ValueEnum)]
 #[serde(rename_all = "lowercase")]
 pub enum PackageRunner {
@@ -13,6 +14,7 @@ pub enum PackageRunner {
     Bun,
 }
 
+#[cfg(feature = "skills-add")]
 impl PackageRunner {
     /// Returns the executable name to check on PATH and use as the first argv element.
     pub(crate) fn binary(&self) -> &str {
@@ -252,9 +254,9 @@ mod tests {
         assert!(skill_config.is_none());
     }
 
+    #[cfg(feature = "skills-add")]
     #[test]
     fn package_runner_serialises_to_lowercase() {
-        // TOML requires a key-value context; use a wrapper struct as in real usage
         #[derive(Serialize, Deserialize)]
         struct W {
             r: PackageRunner,
@@ -273,9 +275,9 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "skills-add")]
     #[test]
     fn package_runner_deserialises_from_lowercase() {
-        // round-trip from TOML key-value string back to enum
         #[derive(Serialize, Deserialize)]
         struct W {
             r: PackageRunner,
@@ -291,9 +293,9 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "skills-add")]
     #[test]
     fn package_runner_args_npm() {
-        // npm produces the npx-based argv
         let args = PackageRunner::Npm.args("vercel-labs/agent-skills", false);
         assert_eq!(
             args,
@@ -308,9 +310,9 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "skills-add")]
     #[test]
     fn package_runner_args_npm_ci() {
-        // npm in CI mode appends --yes
         let args = PackageRunner::Npm.args("vercel-labs/agent-skills", true);
         assert_eq!(
             args,
@@ -326,9 +328,9 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "skills-add")]
     #[test]
     fn package_runner_args_pnpm() {
-        // pnpm produces the dlx-based argv
         let args = PackageRunner::Pnpm.args("my-skill", false);
         assert_eq!(
             args,
@@ -344,9 +346,9 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "skills-add")]
     #[test]
     fn package_runner_args_pnpm_ci() {
-        // pnpm in CI mode appends --yes
         let args = PackageRunner::Pnpm.args("my-skill", true);
         assert_eq!(
             args,
@@ -363,9 +365,9 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "skills-add")]
     #[test]
     fn package_runner_args_yarn() {
-        // yarn produces the dlx-based argv
         let args = PackageRunner::Yarn.args("my-skill", false);
         assert_eq!(
             args,
@@ -381,9 +383,9 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "skills-add")]
     #[test]
     fn package_runner_args_yarn_ci() {
-        // yarn in CI mode appends --yes
         let args = PackageRunner::Yarn.args("my-skill", true);
         assert_eq!(
             args,
@@ -400,9 +402,9 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "skills-add")]
     #[test]
     fn package_runner_args_bun() {
-        // bun produces the bunx-based argv
         let args = PackageRunner::Bun.args("my-skill", false);
         assert_eq!(
             args,
@@ -417,9 +419,9 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "skills-add")]
     #[test]
     fn package_runner_args_bun_ci() {
-        // bun in CI mode appends --yes
         let args = PackageRunner::Bun.args("my-skill", true);
         assert_eq!(
             args,

@@ -10,6 +10,10 @@ keywords = ["dotagents", "configuration", "dotfiles", "agent"]
 categories = ["command-line-utilities"]
 edition = "2024"
 
+[features]
+default = []
+skills-add = []
+
 [dependencies]
 anyhow = "1.0.100"
 clap = { version = "4.5.48", features = ["derive"] }

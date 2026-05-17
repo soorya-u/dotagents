@@ -2,7 +2,9 @@ use std::collections::{HashMap, HashSet};
 
 use anyhow::{Context, Result};
 
-use super::common::{PackageRunner, Providers};
+#[cfg(feature = "skills-add")]
+use super::common::PackageRunner;
+use super::common::Providers;
 use super::global::GlobalConfig;
 use super::local::LocalConfig;
 use crate::constants::file::{GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE};
@@ -23,6 +25,7 @@ pub struct AppConfig {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub providers: Option<Providers>,
     pub variables: Option<HashMap<String, String>>,
+    #[cfg(feature = "skills-add")]
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub package_runner: Option<PackageRunner>,
 }
@@ -35,6 +38,7 @@ impl AppConfig {
             targets: HashSet::new(),
             providers: None,
             variables: None,
+            #[cfg(feature = "skills-add")]
             package_runner: None,
         }
     }
@@ -135,6 +139,7 @@ impl From<(&GlobalConfig, &LocalConfig)> for AppConfig {
             },
         );
 
+        #[cfg(feature = "skills-add")]
         let package_runner = local
             .package_runner
             .clone()
@@ -146,6 +151,7 @@ impl From<(&GlobalConfig, &LocalConfig)> for AppConfig {
             targets,
             providers,
             variables,
+            #[cfg(feature = "skills-add")]
             package_runner,
         }
     }
@@ -160,7 +166,7 @@ impl Default for AppConfig {
 #[cfg(debug_assertions)]
 impl TomlConfig for AppConfig {}
 
-#[cfg(test)]
+#[cfg(all(test, feature = "skills-add"))]
 mod tests {
     use super::*;
     use crate::core::config::common::PackageRunner;
@@ -189,7 +195,6 @@ mod tests {
 
     #[test]
     fn local_runner_wins_over_global() {
-        // local package-runner overrides global
         let global = make_global(Some(PackageRunner::Npm));
         let local = make_local(Some(PackageRunner::Pnpm));
         let app = AppConfig::from((&global, &local));
@@ -198,7 +203,6 @@ mod tests {
 
     #[test]
     fn global_runner_used_when_local_absent() {
-        // global package-runner is used when local doesn't specify one
         let global = make_global(Some(PackageRunner::Yarn));
         let local = make_local(None);
         let app = AppConfig::from((&global, &local));
@@ -207,7 +211,6 @@ mod tests {
 
     #[test]
     fn both_absent_yields_none() {
-        // None in both configs → AppConfig.package_runner is None
         let global = make_global(None);
         let local = make_local(None);
         let app = AppConfig::from((&global, &local));
@@ -238,7 +241,6 @@ mod tests {
 
     #[test]
     fn local_targets_win_over_global() {
-        // local targets override global targets when both are present
         let global = make_global_with_targets(Some(["codex".into()].into_iter().collect()));
         let local = make_local_with_targets(Some(["claude".into()].into_iter().collect()));
         let app = AppConfig::from((&global, &local));
@@ -247,7 +249,6 @@ mod tests {
 
     #[test]
     fn global_targets_used_when_local_absent() {
-        // global targets are used when local specifies none
         let global = make_global_with_targets(Some(["codex".into()].into_iter().collect()));
         let local = make_local_with_targets(None);
         let app = AppConfig::from((&global, &local));
@@ -256,7 +257,6 @@ mod tests {
 
     #[test]
     fn both_targets_absent_yields_empty() {
-        // no targets in either config → AppConfig.targets is empty
         let global = make_global_with_targets(None);
         let local = make_local_with_targets(None);
         let app = AppConfig::from((&global, &local));

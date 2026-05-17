@@ -838,10 +838,9 @@ test.describe("skills rm TUI – T12 confirm Yes", () => {
 });
 
 // ── skills add – CI ────────────────────────────────────────────────────────────
-
-// skills add in CI mode does not hang (non-zero exit OK — hang is the bug)
+// Gated behind the `skills-add` Cargo feature; skipped until v0.2.0 ships it.
 test.describe("skills add CI", () => {
-	test("exits promptly in CI mode (does not hang)", async () => {
+	test.skip("exits promptly in CI mode (does not hang)", async () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
@@ -865,7 +864,7 @@ test.describe("skills add CI", () => {
 	});
 
 	// TC-SKILL-ADD-05: invalid --runner value exits with Clap error
-	test("--runner maven exits 2 with invalid value error", async () => {
+	test.skip("--runner maven exits 2 with invalid value error", async () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
@@ -881,7 +880,7 @@ test.describe("skills add CI", () => {
 	});
 
 	// TC-SKILL-ADD-04: --runner yarn not on PATH exits non-zero with helpful error
-	test("--runner yarn not on PATH exits non-zero", async () => {
+	test.skip("--runner yarn not on PATH exits non-zero", async () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);

@@ -1,6 +1,8 @@
 use std::collections::{HashMap, HashSet};
 
-use super::common::{PackageRunner, Providers};
+#[cfg(feature = "skills-add")]
+use super::common::PackageRunner;
+use super::common::Providers;
 use super::traits::TomlConfig;
 use crate::constants::schema::CONFIG_SCHEMA;
 use crate::core::features::Feature;
@@ -19,6 +21,7 @@ pub struct LocalConfig {
     pub providers: Option<Providers>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub variables: Option<HashMap<String, String>>,
+    #[cfg(feature = "skills-add")]
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub package_runner: Option<PackageRunner>,
 }
@@ -31,6 +34,7 @@ impl LocalConfig {
             targets: None,
             providers: None,
             variables: None,
+            #[cfg(feature = "skills-add")]
             package_runner: None,
         }
     }
@@ -43,6 +47,7 @@ impl LocalConfig {
             targets: None,
             providers: None,
             variables: None,
+            #[cfg(feature = "skills-add")]
             package_runner: None,
         }
     }
@@ -55,12 +60,12 @@ impl LocalConfig {
             targets: None,
             providers: Some(providers),
             variables: None,
+            #[cfg(feature = "skills-add")]
             package_runner: None,
         }
     }
 
     pub fn validate(&self) -> anyhow::Result<()> {
-        // Check that features are valid if present
         if let Some(features) = &self.features {
             for feature in features {
                 if Feature::from_str(feature).is_none() {
@@ -74,15 +79,6 @@ impl LocalConfig {
         }
 
         Ok(())
-    }
-
-    #[allow(dead_code)]
-    pub fn is_empty(&self) -> bool {
-        self.schema.is_none()
-            && self.features.is_none()
-            && self.targets.is_none()
-            && self.providers.is_none()
-            && self.package_runner.is_none()
     }
 }
 
@@ -98,9 +94,9 @@ impl TomlConfig for LocalConfig {}
 mod tests {
     use super::*;
 
+    #[cfg(feature = "skills-add")]
     #[test]
     fn package_runner_field_deserialises_in_local_config() {
-        // all four runner values parse correctly from TOML
         for (toml_val, expected) in [
             ("npm", PackageRunner::Npm),
             ("pnpm", PackageRunner::Pnpm),
@@ -113,9 +109,9 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "skills-add")]
     #[test]
     fn package_runner_absent_yields_none_in_local_config() {
-        // omitting the field deserialises to None
         let config: LocalConfig = toml::from_str("").unwrap();
         assert_eq!(config.package_runner, None);
     }

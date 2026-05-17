@@ -287,6 +287,7 @@ fn print_app_config(config: &AppConfig) {
         }
     }
 
+    #[cfg(feature = "skills-add")]
     if let Some(runner) = &config.package_runner {
         println!(
             "\nPackage runner: {}",
