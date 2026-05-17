@@ -224,6 +224,13 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
         .map(|v| to_value(v).context("Failed to extract variables"))
         .transpose()?;
 
+    let has_any_provider = Feature::all()
+        .iter()
+        .any(|f| !app_config.get_provider_feature_settings(f).is_empty());
+    if !has_any_provider {
+        warn!("No providers configured — nothing to deploy. Add providers to config.toml.");
+    }
+
     // Always initialise cache; --no-cache only suppresses the hash-comparison read.
     let cache = Arc::new(Mutex::new(
         CacheConfig::load().context("Failed to load cache")?,

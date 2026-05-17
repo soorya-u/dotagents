@@ -166,6 +166,41 @@ test.describe("deploy CLI – rendered content", () => {
 	});
 });
 
+// deploy CI – summary output visibility
+test.describe("deploy CLI – CI mode summary", () => {
+	// CI mode with providers: stdout contains written count
+	test("CI mode prints written count on stdout when providers are configured", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			const { stdout, exitCode } = run(
+				["deploy", "--ci", "--offline", "--no-gitignore"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			expect(stdout).toMatch(/\d+ written/);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// CI mode with no providers: stderr contains warning
+	test("no providers configured emits warning on stderr", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--force"], d);
+			const { stderr, exitCode } = run(
+				["deploy", "--ci", "--offline", "--no-gitignore"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			expect(stderr).toContain("No providers configured");
+		} finally {
+			cleanup(d);
+		}
+	});
+});
+
 // ── TUI flows ────────────────────────────────────────────────────────────────
 // Each TUI test has its own describe block so test.use() is at describe level.
 
