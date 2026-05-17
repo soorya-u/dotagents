@@ -61,6 +61,15 @@ pub(crate) fn prompt_gitignore_update(new_path_count: usize) -> bool {
     sel.interact().unwrap_or(false)
 }
 
+/// Formats deploy summary as a string for use with `cliclack::outro`.
+pub(crate) fn deploy_outro(stats: &DeployStats) -> String {
+    if stats.written == 0 && stats.skipped == 0 {
+        "Nothing deployed.".to_string()
+    } else {
+        format!("{} written, {} skipped.", stats.written, stats.skipped)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

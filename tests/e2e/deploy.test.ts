@@ -597,7 +597,7 @@ test.describe("deploy TUI – T-GP01 gitignore prompt No", () => {
 				terminal.getByText("deployed path(s) to .gitignore?"),
 			).toBeVisible();
 			terminal.keyPress("Enter"); // accept default No
-			await expect(terminal.getByText("Done.")).toBeVisible();
+			await expect(terminal.getByText("written")).toBeVisible();
 			// .gitignore should NOT contain the dotagents fence
 			const giPath = join(d, ".gitignore");
 			if (existsSync(giPath)) {
@@ -623,7 +623,7 @@ test.describe("deploy TUI – T-GP02 gitignore prompt Yes", () => {
 			).toBeVisible();
 			terminal.keyDown(); // navigate to Yes
 			terminal.keyPress("Enter");
-			await expect(terminal.getByText("Done.")).toBeVisible();
+			await expect(terminal.getByText("written")).toBeVisible();
 			const gi = readFileSync(join(d, ".gitignore"), "utf8");
 			expect(gi).toContain("region dotagents");
 		} finally {
@@ -809,7 +809,7 @@ test.describe("deploy TUI – TC-DEPLOY-16 offline prompt Yes", () => {
 				terminal.getByText("deployed path(s) to .gitignore?"),
 			).toBeVisible();
 			terminal.keyPress("Enter");
-			await expect(terminal.getByText("Done.")).toBeVisible();
+			await expect(terminal.getByText("written")).toBeVisible();
 			expect(existsSync(join(d, ".mycode/commands/hello.md"))).toBe(true);
 		} finally {
 			cleanup(d);
@@ -839,7 +839,6 @@ test.describe("deploy TUI – TC-DEPLOY-01 full deploy journey", () => {
 			terminal.keyPress("Enter");
 
 			await expect(terminal.getByText("written")).toBeVisible();
-			await expect(terminal.getByText("Done.")).toBeVisible();
 			expect(existsSync(join(d, ".mycode/commands/hello.md"))).toBe(true);
 			expect(existsSync(join(d, ".mycode/instructions.md"))).toBe(true);
 		} finally {
