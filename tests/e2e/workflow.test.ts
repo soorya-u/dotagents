@@ -79,16 +79,16 @@ test.describe("J03-J04: CRUD – add, list, remove", () => {
 			run(["commands", "new", "greet", "--description", "test"], d);
 
 			// ls shows the new command
-			const { stderr } = run(["commands", "ls"], d);
-			expect(stderr).toMatch(/greet/);
+			const { stdout } = run(["commands", "ls"], d);
+			expect(stdout).toMatch(/greet/);
 
 			// rm it
 			run(["commands", "rm", "greet", "--force"], d);
 			expect(existsSync(join(d, ".dotagents/commands/greet.md"))).toBe(false);
 
 			// ls no longer shows greet as a command name (hello's description contains "greet" so use stricter pattern)
-			const { stderr: afterStderr } = run(["commands", "ls"], d);
-			expect(afterStderr).not.toMatch(/^\[.*INFO.*\]\s+greet\s/m);
+			const { stdout: afterStdout } = run(["commands", "ls"], d);
+			expect(afterStdout).not.toMatch(/^greet\s/m);
 		} finally {
 			cleanup(d);
 		}
@@ -234,19 +234,19 @@ test.describe("J08: full CRUD both types", () => {
 			run(["skills", "rm", "my-skill", "--force"], d);
 
 			// commands ls and skills ls both show empty
-			const { exitCode: cmdExit, stderr: cmdStderr } = run(
+			const { exitCode: cmdExit, stdout: cmdStdout } = run(
 				["commands", "ls"],
 				d,
 			);
 			expect(cmdExit).toBe(0);
-			expect(cmdStderr).toMatch(/No commands found/);
+			expect(cmdStdout).toMatch(/No commands found/);
 
-			const { exitCode: skillExit, stderr: skillStderr } = run(
+			const { exitCode: skillExit, stdout: skillStdout } = run(
 				["skills", "ls"],
 				d,
 			);
 			expect(skillExit).toBe(0);
-			expect(skillStderr).toMatch(/No skills found/);
+			expect(skillStdout).toMatch(/No skills found/);
 		} finally {
 			cleanup(d);
 		}

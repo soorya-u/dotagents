@@ -1,14 +1,24 @@
 use console::style;
 use crossterm::terminal;
 
-/// Apply cyan+bold styling to a name for regular list rows.
+use crate::utils::tui::is_tui_enabled;
+
+/// Apply cyan+bold styling to a name for regular list rows, or plain text in CI mode.
 pub(crate) fn styled_name(name: &str) -> String {
-    style(name).cyan().bold().to_string()
+    if is_tui_enabled() {
+        style(name).cyan().bold().to_string()
+    } else {
+        name.to_string()
+    }
 }
 
-/// Apply green+bold styling to a name for note headers (used with --content in TTY).
+/// Apply green+bold styling to a name for note headers, or plain text in CI mode.
 pub(crate) fn styled_note_name(name: &str) -> String {
-    style(name).green().bold().to_string()
+    if is_tui_enabled() {
+        style(name).green().bold().to_string()
+    } else {
+        name.to_string()
+    }
 }
 
 /// Detect terminal column count, falling back to 80 on error.
