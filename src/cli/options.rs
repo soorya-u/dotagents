@@ -7,8 +7,7 @@ use crate::core::config::common::PackageRunner;
 #[derive(Parser, Default)]
 #[clap(author, version, about, long_about=None)]
 pub(crate) struct Options {
-    /// Verbosity level - specify up to 3 times to get more detailed output.
-    /// Specifying at least once prints the differences between what was before and after Dotter's run
+    /// Verbosity level — specify up to 2 times (-v for debug, -vv for trace).
     #[clap(short = 'v', long = "verbose", action = clap::ArgAction::Count, global = true)]
     pub verbosity: u8,
 
@@ -26,13 +25,12 @@ pub(crate) struct Options {
 
 #[derive(Subcommand)]
 pub(crate) enum Action {
-    /// Initialize .dotagents directory with a single package containing all the files in the current
-    /// directory creating a mock templates for commands, instructions and mcp configuration.
+    /// Initialize .dotagents directory with the given template.
     Init(InitOptions),
 
     /// Generate completions for the given shell
     GenCompletions {
-        /// Set the shell for generating completions [values: bash, elvish, fish, powerShell, zsh]
+        /// Set the shell for generating completions
         #[clap(long, short)]
         shell: Shell,
 
@@ -69,13 +67,13 @@ pub(crate) enum Action {
 /// Features that can be scaffolded by `dotagents init`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
 pub(crate) enum Feature {
-    /// Enable command templating.
+    /// Enable custom slash commands.
     Commands,
-    /// Enable instruction templating.
+    /// Enable global instruction.
     Instructions,
-    /// Enable MCP templating.
+    /// Enable MCP configurations.
     Mcp,
-    /// Enable skill templating.
+    /// Enable skills.
     Skills,
 }
 
@@ -95,22 +93,22 @@ impl Feature {
 pub(crate) enum SkillsAction {
     /// Install a skill from skills.sh or a GitHub owner/repo into .dotagents/skills/
     Add(SkillsAddOptions),
-    /// Create a new local skill scaffold in .dotagents/skills/
+    /// Create a new skill scaffold
     New(AddSkillOptions),
-    /// Remove a local skill from .dotagents/skills/
+    /// Remove a skill
     Rm(RmSkillOptions),
-    /// List local skills in .dotagents/skills/
+    /// List skills
     Ls(SubLsOptions),
 }
 
 /// Subcommands for `dotagents commands`.
 #[derive(Subcommand)]
 pub(crate) enum CommandsAction {
-    /// Create a new command in .dotagents/commands/
+    /// Create a new command
     New(AddCommandOptions),
-    /// Remove a command from .dotagents/commands/
+    /// Remove a command
     Rm(RmCommandOptions),
-    /// List commands in .dotagents/commands/
+    /// List commands
     Ls(SubLsOptions),
 }
 
@@ -129,7 +127,7 @@ pub(crate) struct ProvidersLsOptions {
 /// Shared workspace path argument for `--cwd`.
 #[derive(Args, Default)]
 pub(crate) struct WorkspaceDirArgs {
-    /// Workspace root directory containing `.dotagents/` (default: inferred from current directory).
+    /// Workspace root directory containing `.dotagents/`.
     #[clap(long = "cwd", value_name = "PATH")]
     pub cwd: Option<PathBuf>,
 }
@@ -139,7 +137,7 @@ pub(crate) struct WorkspaceDirArgs {
 pub(crate) struct SubLsOptions {
     #[clap(flatten)]
     pub workspace: WorkspaceDirArgs,
-    /// Show full word-wrapped descriptions and include the markdown body content of each item.
+    /// Show descriptions and content of each item.
     #[clap(long = "content")]
     pub content: bool,
 
@@ -171,7 +169,7 @@ pub(crate) struct SkillsAddOptions {
 
 #[derive(Args, Default)]
 pub(crate) struct DeployOptions {
-    /// Workspace root directory containing `.dotagents/` (default: inferred from current directory).
+    /// Workspace root directory containing `.dotagents/`.
     #[clap(value_name = "PATH")]
     pub dir: Option<PathBuf>,
 
@@ -179,8 +177,7 @@ pub(crate) struct DeployOptions {
     #[clap(long, short)]
     pub force: bool,
 
-    /// Skip hash comparison; always re-render and write all target files.
-    /// cache.toml is still written at the end of the run.
+    /// re-render without hash lookup and write all target files.
     #[clap(long)]
     pub no_cache: bool,
 
@@ -192,16 +189,15 @@ pub(crate) struct DeployOptions {
     #[clap(long)]
     pub no_gitignore: bool,
 
-    /// Skip the remote registry fetch; resolve missing templates from the local cache only.
-    /// Errors if a required template has not been cached by a previous online deploy.
+    /// resolve templates only from the local cache.
     #[clap(long)]
     pub offline: bool,
 
-    /// Preview what would be deployed without writing any files, saving cache, or updating .gitignore.
+    /// Preview what would be deployed without writing any files.
     #[clap(long)]
     pub dry_run: bool,
 
-    /// Custom .env file(s) to load instead of .dotagents/.env. Repeatable; later files override earlier ones on duplicate keys.
+    /// Custom `.env` file(s) to load; later files override earlier ones when duplicate keys exist.
     #[clap(long)]
     pub env: Vec<std::path::PathBuf>,
 }
@@ -217,13 +213,11 @@ pub(crate) enum InitTemplate {
 
 #[derive(Args)]
 pub(crate) struct InitOptions {
-    /// Workspace root directory to initialise (default: current directory). Created if it does not exist.
+    /// Workspace root directory to initialise (default: current directory).
     #[clap(value_name = "PATH")]
     pub dir: Option<PathBuf>,
 
-    /// Features to scaffold. Accepts comma-separated values and/or repeated flags.
-    /// Valid values: commands, instructions, mcp, skills.
-    /// When omitted, features are chosen interactively when possible; otherwise no features are scaffolded.
+    /// Features to scaffold.
     #[clap(long, value_delimiter = ',')]
     pub features: Option<Vec<Feature>>,
 
@@ -231,13 +225,11 @@ pub(crate) struct InitOptions {
     #[clap(long, short, default_value_t = cfg!(debug_assertions))]
     pub force: bool,
 
-    /// Scaffolding template: 'starter' (core files only) or 'with-custom-provider' (adds mycode example).
-    /// When omitted in an interactive terminal, the wizard will prompt for a choice.
+    /// Template to scaffold from.
     #[clap(long, value_enum)]
     pub template: Option<InitTemplate>,
 
-    /// Provider targets to deploy to. Accepts comma-separated values and/or repeated flags.
-    /// When omitted, targets are chosen interactively when possible; otherwise no targets are set.
+    /// Provider targets to deploy to.
     #[clap(long, value_delimiter = ',')]
     pub targets: Option<Vec<String>>,
 }
@@ -257,7 +249,7 @@ pub(crate) struct AddCommandOptions {
     #[clap(flatten)]
     pub workspace: WorkspaceDirArgs,
 
-    /// Name of the command (used as the filename, e.g. "hello" → hello.md).
+    /// Name of the command.
     pub name: String,
 
     /// Short description of the command.
@@ -286,7 +278,7 @@ pub(crate) struct AddSkillOptions {
     #[clap(flatten)]
     pub workspace: WorkspaceDirArgs,
 
-    /// Name of the skill (used as the directory name).
+    /// Name of the skill.
     pub name: String,
 
     /// Short description of the skill.
@@ -347,7 +339,7 @@ pub(crate) struct RmSkillOptions {
 /// Options for `dotagents undeploy`.
 #[derive(Args, Default)]
 pub(crate) struct UndeployOptions {
-    /// Workspace root directory containing `.dotagents/` (default: inferred from current directory).
+    /// Workspace root directory containing `.dotagents/`.
     #[clap(value_name = "PATH")]
     pub dir: Option<PathBuf>,
 
@@ -367,12 +359,12 @@ pub(crate) struct UndeployOptions {
 /// Target config layer to inspect/edit.
 #[derive(Clone, Debug, Default, PartialEq, Eq, ValueEnum)]
 pub(crate) enum ConfigTarget {
-    /// Merged runtime configuration (default).
+    /// runtime config (default).
     #[default]
     App,
-    /// Global config.toml.
+    /// config.toml.
     Global,
-    /// Local local.config.toml.
+    /// local.config.toml.
     Local,
 }
 
@@ -382,7 +374,7 @@ pub(crate) struct ConfigOptions {
     #[clap(flatten)]
     pub workspace: WorkspaceDirArgs,
 
-    /// Config target: app (default), global, local
+    /// Config target
     #[clap(default_value = "app", value_enum)]
     pub target: ConfigTarget,
 
@@ -398,7 +390,7 @@ pub(crate) struct ConfigOptions {
 pub fn get_options() -> Options {
     let mut opt = Options::parse();
 
-    opt.verbosity = std::cmp::min(3, opt.verbosity);
+    opt.verbosity = std::cmp::min(2, opt.verbosity);
 
     opt
 }
@@ -409,14 +401,14 @@ mod tests {
 
     #[test]
     fn test_verbosity_clamping() {
-        // Test that verbosity is clamped to max 3
+        // Test that verbosity is clamped to max 2
         let verbosity_values = [0, 1, 2, 3, 4, 5, 10];
         for v in verbosity_values {
-            let clamped = std::cmp::min(3, v);
-            if v <= 3 {
+            let clamped = std::cmp::min(2, v);
+            if v <= 2 {
                 assert_eq!(clamped, v);
             } else {
-                assert_eq!(clamped, 3);
+                assert_eq!(clamped, 2);
             }
         }
     }

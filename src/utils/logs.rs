@@ -28,7 +28,6 @@ pub(crate) fn set_log_config(quiet: bool, verbosity: u8) {
             0 => LevelFilter::Info,
             1 => LevelFilter::Debug,
             2 => LevelFilter::Trace,
-            3 => LevelFilter::Trace,
             _ => unreachable!(),
         }
     };
@@ -183,7 +182,6 @@ mod tests {
                 0 => LevelFilter::Warn,
                 1 => LevelFilter::Info,
                 2 => LevelFilter::Debug,
-                3 => LevelFilter::Trace,
                 _ => unreachable!(),
             }
         };
@@ -200,7 +198,6 @@ mod tests {
                 0 => LevelFilter::Info,
                 1 => LevelFilter::Debug,
                 2 => LevelFilter::Trace,
-                3 => LevelFilter::Trace,
                 _ => unreachable!(),
             }
         };
@@ -216,7 +213,6 @@ mod tests {
                 0 => LevelFilter::Info,
                 1 => LevelFilter::Debug,
                 2 => LevelFilter::Trace,
-                3 => LevelFilter::Trace,
                 _ => unreachable!(),
             }
         };
@@ -232,23 +228,6 @@ mod tests {
                 0 => LevelFilter::Info,
                 1 => LevelFilter::Debug,
                 2 => LevelFilter::Trace,
-                3 => LevelFilter::Trace,
-                _ => unreachable!(),
-            }
-        };
-        assert_eq!(log_level, LevelFilter::Trace);
-    }
-
-    #[test]
-    fn test_log_level_selection_verbosity_3() {
-        let log_level = if false {
-            LevelFilter::Error
-        } else {
-            match 3u8 {
-                0 => LevelFilter::Info,
-                1 => LevelFilter::Debug,
-                2 => LevelFilter::Trace,
-                3 => LevelFilter::Trace,
                 _ => unreachable!(),
             }
         };
