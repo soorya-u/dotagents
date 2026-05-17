@@ -13,14 +13,40 @@ import { join, resolve } from "node:path";
 /// Tests are run with cwd=tests/e2e; the binary sits two levels up at <repo>/target/release/.
 export const BIN = resolve(process.cwd(), "../../target/release/dotagents");
 
+/// Directories created by makeTmpDir that need cleanup when the worker process exits.
+/// tui-test runs each test file in an isolated worker; registering on process exit
+/// ensures cleanup runs even if afterAll hooks are lost during suite serialization.
+const CLEANUP_DIRS = new Set<string>();
+
+let cleanupRegistered = false;
+function ensureCleanupRegistered(): void {
+	if (cleanupRegistered) return;
+	cleanupRegistered = true;
+
+	// Synchronous cleanup for process exit events (async handlers are ignored).
+	process.on("exit", () => {
+		for (const dir of CLEANUP_DIRS) {
+			try {
+				rmSync(dir, { recursive: true, force: true });
+			} catch (err) {
+				process.stderr.write(`cleanup failed for ${dir}: ${err}\n`);
+			}
+		}
+	});
+}
+
 /// Create a fresh isolated temp directory for a single test
 export function makeTmpDir(): string {
-	return mkdtempSync(join(tmpdir(), "dotagents-test-"));
+	ensureCleanupRegistered();
+	const dir = mkdtempSync(join(tmpdir(), "dotagents-test-"));
+	CLEANUP_DIRS.add(dir);
+	return dir;
 }
 
 /// Remove a temp directory created by makeTmpDir
 export function cleanup(dir: string): void {
 	rmSync(dir, { recursive: true, force: true });
+	CLEANUP_DIRS.delete(dir);
 }
 
 /// Run the binary with the given args in the given working directory (non-TTY).

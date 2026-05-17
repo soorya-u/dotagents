@@ -3,8 +3,6 @@ import { join } from "node:path";
 import { expect, Key, test } from "@microsoft/tui-test";
 import { cleanup, makeTmpDir, run, shellProgram } from "./helpers.js";
 
-// ── CLI flows (non-interactive) ──────────────────────────────────────────────
-
 test.describe("init CLI – file tree", () => {
 	// C01: starter template creates expected files
 	test("starter template creates core files", async () => {
