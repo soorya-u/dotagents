@@ -15,8 +15,7 @@ args = {{json this.args}}
 {{/if}}{{#if this.env_file}}env_file = "{{this.env_file}}"
 {{/if}}{{#if this.env}}
 [mcp_servers.{{@key}}.env]
-{{#each this.env}}{{@key}} = "{{this}}"
-{{/each}}
+{{toml this.env}}
 {{/if}}
 {{/ifEq}}
 {{/each}}

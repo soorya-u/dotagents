@@ -2,6 +2,7 @@ use handlebars::{
     Context, Handlebars, Helper, HelperDef, HelperResult, JsonRender, Output, RenderContext,
     RenderError, RenderErrorReason, Renderable,
 };
+
 #[derive(Clone, Copy)]
 pub struct IfEqHelper;
 
@@ -49,6 +50,99 @@ impl HelperDef for JsonHelper {
             .map_err(|e| RenderError::from(RenderErrorReason::NestedError(Box::new(e))))?;
 
         out.write(&json_string)?;
+        Ok(())
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct TomlHelper;
+
+impl HelperDef for TomlHelper {
+    fn call<'reg: 'rc, 'rc>(
+        &self,
+        h: &Helper<'rc>,
+        _: &'reg Handlebars<'reg>,
+        _: &'rc Context,
+        _: &mut RenderContext<'reg, 'rc>,
+        out: &mut dyn Output,
+    ) -> HelperResult {
+        let param = h.param(0).ok_or_else(|| {
+            RenderError::from(RenderErrorReason::ParamNotFoundForIndex("toml", 0))
+        })?;
+
+        let value = param.value();
+        if !value.is_object() {
+            return Err(RenderError::from(RenderErrorReason::NestedError(Box::new(
+                std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    "{{toml}} helper only supports objects",
+                ),
+            ))));
+        }
+
+        let toml_string = toml::to_string(value)
+            .map_err(|e| RenderError::from(RenderErrorReason::NestedError(Box::new(e))))?;
+
+        out.write(&toml_string)?;
+        Ok(())
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct TomlInlineHelper;
+
+impl HelperDef for TomlInlineHelper {
+    fn call<'reg: 'rc, 'rc>(
+        &self,
+        h: &Helper<'rc>,
+        _: &'reg Handlebars<'reg>,
+        _: &'rc Context,
+        _: &mut RenderContext<'reg, 'rc>,
+        out: &mut dyn Output,
+    ) -> HelperResult {
+        let param = h.param(0).ok_or_else(|| {
+            RenderError::from(RenderErrorReason::ParamNotFoundForIndex("toml-inline", 0))
+        })?;
+
+        let value = param.value();
+        if !value.is_object() {
+            return Err(RenderError::from(RenderErrorReason::NestedError(Box::new(
+                std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    "{{toml-inline}} helper only supports objects",
+                ),
+            ))));
+        }
+
+        let toml_string = toml::to_string(value)
+            .map_err(|e| RenderError::from(RenderErrorReason::NestedError(Box::new(e))))?;
+
+        let inline = format!("{{ {} }}", toml_string.trim());
+        out.write(&inline)?;
+        Ok(())
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct YamlHelper;
+
+impl HelperDef for YamlHelper {
+    fn call<'reg: 'rc, 'rc>(
+        &self,
+        h: &Helper<'rc>,
+        _: &'reg Handlebars<'reg>,
+        _: &'rc Context,
+        _: &mut RenderContext<'reg, 'rc>,
+        out: &mut dyn Output,
+    ) -> HelperResult {
+        let param = h.param(0).ok_or_else(|| {
+            RenderError::from(RenderErrorReason::ParamNotFoundForIndex("yaml", 0))
+        })?;
+
+        let yaml_string = serde_yaml::to_string(param.value())
+            .map_err(|e| RenderError::from(RenderErrorReason::NestedError(Box::new(e))))?;
+
+        out.write(&yaml_string)?;
         Ok(())
     }
 }
@@ -177,5 +271,131 @@ mod tests {
         let data = json!({"age": 42});
         let result = handlebars.render("test", &data).unwrap();
         assert_eq!(result, "42");
+    }
+
+    #[test]
+    fn test_toml_helper_object() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("toml", Box::new(TomlHelper));
+
+        let template = "{{toml env}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"env": {"KEY": "val", "FOO": "bar"}});
+        let result = handlebars.render("test", &data).unwrap();
+        assert!(result.contains("KEY = \"val\""));
+        assert!(result.contains("FOO = \"bar\""));
+    }
+
+    #[test]
+    fn test_toml_helper_errors_on_string() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("toml", Box::new(TomlHelper));
+
+        let template = "{{toml name}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"name": "hello"});
+        let result = handlebars.render("test", &data);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_toml_helper_errors_on_array() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("toml", Box::new(TomlHelper));
+
+        let template = "{{toml items}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"items": [1, 2, 3]});
+        let result = handlebars.render("test", &data);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_toml_inline_helper_object() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("toml-inline", Box::new(TomlInlineHelper));
+
+        let template = "env = {{toml-inline env}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"env": {"KEY": "val", "FOO": "bar"}});
+        let result = handlebars.render("test", &data).unwrap();
+        assert!(result.starts_with("env = {"));
+        assert!(result.ends_with("}"));
+        assert!(result.contains("KEY = \"val\""));
+    }
+
+    #[test]
+    fn test_toml_inline_helper_errors_on_null() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("toml-inline", Box::new(TomlInlineHelper));
+
+        let template = "{{toml-inline value}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"value": null});
+        let result = handlebars.render("test", &data);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_yaml_helper_object() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("yaml", Box::new(YamlHelper));
+
+        let template = "{{yaml env}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"env": {"KEY": "val", "FOO": "bar"}});
+        let result = handlebars.render("test", &data).unwrap();
+        assert!(result.contains("KEY: val"));
+        assert!(result.contains("FOO: bar"));
+    }
+
+    #[test]
+    fn test_yaml_helper_array() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("yaml", Box::new(YamlHelper));
+
+        let template = "{{yaml items}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"items": [1, 2, 3]});
+        let result = handlebars.render("test", &data).unwrap();
+        assert!(result.contains("- 1"));
+        assert!(result.contains("- 2"));
+        assert!(result.contains("- 3"));
+    }
+
+    #[test]
+    fn test_yaml_helper_string() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("yaml", Box::new(YamlHelper));
+
+        let template = "{{yaml name}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"name": "hello"});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result.trim(), "hello");
     }
 }
