@@ -62,12 +62,14 @@ fn build_config_content(opts: &InitOptions, template: InitTemplate) -> (String, 
         .map(String::as_str)
         .collect();
     let base_config = mocks::default_config(&config_features, &config_targets);
-    let local_config = if template == InitTemplate::WithCustomProvider {
-        format!("{}{}", base_config, mocks::MYCODE_PROVIDER_CONFIG)
-    } else {
-        base_config.clone()
-    };
-    (base_config, local_config)
+    match template {
+        InitTemplate::Blank => (base_config, String::new()),
+        InitTemplate::Starter => (base_config.clone(), base_config),
+        InitTemplate::Advanced => (
+            base_config.clone(),
+            format!("{}{}", base_config, mocks::MYCODE_PROVIDER_CONFIG),
+        ),
+    }
 }
 
 pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
@@ -112,18 +114,22 @@ pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
     fs::create_dir(&main_dir).context("failed to create .dotagents directory")?;
 
     // Resolve the effective template: default to Starter when no flag was set.
-    let template = opts.template.unwrap_or(InitTemplate::Starter);
+    let template = opts.template.unwrap_or(InitTemplate::Blank);
 
     // Write config files directly — content is runtime-generated so cannot live in InitFile.
     let (base_config, local_config) = build_config_content(&opts, template);
     write_file(&main_dir.join(GLOBAL_CONFIG_FILE), &base_config)
         .with_context(|| format!("failed to write {GLOBAL_CONFIG_FILE}"))?;
-    write_file(&main_dir.join(LOCAL_CONFIG_FILE), &local_config)
-        .with_context(|| format!("failed to write {LOCAL_CONFIG_FILE}"))?;
+    if !local_config.is_empty() {
+        write_file(&main_dir.join(LOCAL_CONFIG_FILE), &local_config)
+            .with_context(|| format!("failed to write {LOCAL_CONFIG_FILE}"))?;
+    }
 
     let init_files = vec![
-        InitFile::new(ENV_EXAMPLE_FILE, mocks::ENV_EXAMPLE),
-        InitFile::new(ENV_FILE, mocks::ENV_EXAMPLE),
+        InitFile::new(ENV_EXAMPLE_FILE, mocks::ENV_EXAMPLE)
+            .with_skip_if(|opts| matches!(opts.template, Some(InitTemplate::Blank) | None)),
+        InitFile::new(ENV_FILE, mocks::ENV_EXAMPLE)
+            .with_skip_if(|opts| matches!(opts.template, Some(InitTemplate::Blank) | None)),
         InitFile::new(GITIGNORE_FILE, mocks::GITIGNORE),
         InitFile::new(INSTRUCTIONS_FILE, InstructionFeature::mock())
             .with_skip_if(|opts| !opts.has_feature(Feature::Instructions)),
@@ -139,29 +145,29 @@ pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
             SkillFeature::mock(),
         )
         .with_skip_if(|opts| !opts.has_feature(Feature::Skills)),
-        // Template files — only written for the WithCustomProvider template.
+        // Template files — only written for the Advanced template.
         InitFile::new(
             Path::new("templates").join("mycode").join("command.hbs"),
             mocks::TEMPLATE_MYCODE_COMMAND,
         )
-        .with_skip_if(|opts| opts.template != Some(InitTemplate::WithCustomProvider)),
+        .with_skip_if(|opts| opts.template != Some(InitTemplate::Advanced)),
         InitFile::new(
             Path::new("templates").join("mycode").join("skill.hbs"),
             mocks::TEMPLATE_MYCODE_SKILL,
         )
-        .with_skip_if(|opts| opts.template != Some(InitTemplate::WithCustomProvider)),
+        .with_skip_if(|opts| opts.template != Some(InitTemplate::Advanced)),
         InitFile::new(
             Path::new("templates")
                 .join("mycode")
                 .join("instructions.hbs"),
             mocks::TEMPLATE_MYCODE_INSTRUCTIONS,
         )
-        .with_skip_if(|opts| opts.template != Some(InitTemplate::WithCustomProvider)),
+        .with_skip_if(|opts| opts.template != Some(InitTemplate::Advanced)),
         InitFile::new(
             Path::new("templates").join("mycode").join("mcp.hbs"),
             mocks::TEMPLATE_MYCODE_MCP,
         )
-        .with_skip_if(|opts| opts.template != Some(InitTemplate::WithCustomProvider)),
+        .with_skip_if(|opts| opts.template != Some(InitTemplate::Advanced)),
     ];
 
     for file in init_files {
@@ -227,14 +233,24 @@ mod tests {
     #[test]
     fn build_config_content_defaults_to_empty_features() {
         let opts = default_opts();
-        let (global, local) = build_config_content(&opts, InitTemplate::Starter);
+        let (global, local) = build_config_content(&opts, InitTemplate::Blank);
         assert!(
             global.contains("features = []"),
             "expected empty features list; got: {global}"
         );
         assert!(
-            local.contains("features = []"),
-            "expected empty features list in local; got: {local}"
+            local.is_empty(),
+            "Blank template should produce empty local config"
+        );
+    }
+
+    #[test]
+    fn build_config_content_blank_skips_local_config() {
+        let opts = default_opts();
+        let (_, local) = build_config_content(&opts, InitTemplate::Blank);
+        assert!(
+            local.is_empty(),
+            "Blank template: local config should be empty"
         );
     }
 
@@ -244,26 +260,11 @@ mod tests {
             features: Some(vec![Feature::Commands, Feature::Instructions]),
             ..default_opts()
         };
-        let (global, _) = build_config_content(&opts, InitTemplate::Starter);
+        let (global, _) = build_config_content(&opts, InitTemplate::Blank);
         assert!(global.contains("commands"));
         assert!(global.contains("instructions"));
         assert!(!global.contains("\"mcp\""));
         assert!(!global.contains("\"skills\""));
-    }
-
-    #[test]
-    fn build_config_content_with_custom_provider_appends_provider_block() {
-        let opts = default_opts();
-        let (global, local) = build_config_content(&opts, InitTemplate::WithCustomProvider);
-        assert!(
-            !global.contains("providers.mycode"),
-            "global should not have provider block"
-        );
-        assert!(
-            local.contains("providers.mycode"),
-            "local should contain mycode provider block"
-        );
-        assert!(local.contains(mocks::MYCODE_PROVIDER_CONFIG));
     }
 
     #[test]
@@ -274,6 +275,21 @@ mod tests {
             global, local,
             "Starter template: global and local configs should match"
         );
+    }
+
+    #[test]
+    fn build_config_content_advanced_appends_provider_block() {
+        let opts = default_opts();
+        let (global, local) = build_config_content(&opts, InitTemplate::Advanced);
+        assert!(
+            !global.contains("providers.mycode"),
+            "global should not have provider block"
+        );
+        assert!(
+            local.contains("providers.mycode"),
+            "local should contain mycode provider block"
+        );
+        assert!(local.contains(mocks::MYCODE_PROVIDER_CONFIG));
     }
 
     #[test]

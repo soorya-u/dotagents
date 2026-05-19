@@ -89,7 +89,7 @@ export function seedRegistryCache(): string {
 }
 
 /// Canonical setup for deploy tests: initializes a workspace with only the local provider.
-/// Uses `init --template with-custom-provider`, which configures local.config.toml to
+/// Uses `init --template advanced`, which configures local.config.toml to
 /// set `targets = []` and define only the mycode provider templates. This avoids
 /// CI-unsafe external providers such as gemini (which requires a local cache file).
 /// All deploy tests should use this helper unless they explicitly patch out unsafe providers.
@@ -98,7 +98,7 @@ export function initWithLocalProvider(dir: string): void {
 		[
 			"init",
 			"--template",
-			"with-custom-provider",
+			"advanced",
 			"--features",
 			"commands,instructions,mcp,skills",
 		],

@@ -57,11 +57,16 @@ pub(crate) fn run_init_wizard(opts: &mut InitOptions, dir_exists: bool) -> Resul
 
     if opts.template.is_none() {
         let mut ts = select("Which starting template?")
-            .item(InitTemplate::Starter, "Starter", "Core files only")
+            .item(InitTemplate::Blank, "Blank", "Minimal scaffolding")
             .item(
-                InitTemplate::WithCustomProvider,
-                "With Custom Provider",
-                "Adds an example of a custom provider",
+                InitTemplate::Starter,
+                "Starter",
+                "Variables, env & rendering",
+            )
+            .item(
+                InitTemplate::Advanced,
+                "Advanced",
+                "Custom provider & overrides",
             );
         let template = ts.interact().context("unable to get template choice")?;
         opts.template = Some(template);

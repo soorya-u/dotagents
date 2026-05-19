@@ -180,8 +180,8 @@ test.describe("J07: full interactive journey", () => {
 			await expect(
 				terminal.getByText("Which starting template?"),
 			).toBeVisible();
-			// move down to WithCustomProvider
-			terminal.keyDown();
+			// move down twice to Advanced
+			terminal.keyDown(2);
 			terminal.keyPress("Enter");
 			terminal.keyPress("Enter"); // skip providers
 			await expect(terminal.getByText("Done! Run")).toBeVisible();

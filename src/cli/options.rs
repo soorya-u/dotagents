@@ -204,10 +204,12 @@ pub(crate) struct DeployOptions {
 /// Scaffolding template to use when running `dotagents init`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
 pub(crate) enum InitTemplate {
-    /// Core files only — no example custom-provider templates.
+    /// Minimal scaffolding.
+    Blank,
+    /// Variables, env & rendering.
     Starter,
-    /// Core files plus a mycode example provider (templates/ dir + local.config.toml provider block).
-    WithCustomProvider,
+    /// Custom provider & overrides.
+    Advanced,
 }
 
 #[derive(Args)]
@@ -441,13 +443,13 @@ mod tests {
 
     #[test]
     fn test_init_template_variants() {
-        // Both template variants are distinct and correct
+        // All three template variants are distinct and correct
+        assert_eq!(InitTemplate::Blank, InitTemplate::Blank);
         assert_eq!(InitTemplate::Starter, InitTemplate::Starter);
-        assert_eq!(
-            InitTemplate::WithCustomProvider,
-            InitTemplate::WithCustomProvider
-        );
-        assert_ne!(InitTemplate::Starter, InitTemplate::WithCustomProvider);
+        assert_eq!(InitTemplate::Advanced, InitTemplate::Advanced);
+        assert_ne!(InitTemplate::Blank, InitTemplate::Starter);
+        assert_ne!(InitTemplate::Starter, InitTemplate::Advanced);
+        assert_ne!(InitTemplate::Blank, InitTemplate::Advanced);
     }
 
     #[test]

@@ -136,7 +136,7 @@ test.describe("config CLI – local target", () => {
 			const { exitCode, stdout } = run(["config", "local", "--json"], d);
 			expect(exitCode).toBe(0);
 			const parsed = JSON.parse(stdout);
-			// with-custom-provider template writes features to local config
+			// advanced template writes features to local config
 			expect(parsed).toHaveProperty("features");
 		} finally {
 			cleanup(d);

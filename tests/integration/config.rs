@@ -50,7 +50,7 @@ fn feature_subset_limits_deployed_artifacts() {
 
 #[test]
 fn features_all_enabled_deploys_all_artifacts() {
-    // default with-custom-provider enables all features; all output files should appear
+    // default advanced enables all features; all output files should appear
     let ws = TestWorkspace::new();
     init_with_mycode_provider(&ws);
 
