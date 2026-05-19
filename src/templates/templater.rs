@@ -6,9 +6,9 @@ use std::sync::OnceLock;
 use crate::templates::variables::get_env_variables;
 use crate::utils::path::get_application_dir;
 use crate::{
-    constants::helpers::JSON_HELPER,
+    constants::helpers::{JSON_HELPER, TOML_HELPER, TOML_INLINE_HELPER, YAML_HELPER},
     templates::{
-        helpers::{IfEqHelper, JsonHelper},
+        helpers::{IfEqHelper, JsonHelper, TomlHelper, TomlInlineHelper, YamlHelper},
         variables::{get_command_name_variable, get_dir_variables, get_skill_name_variable},
     },
 };
@@ -90,6 +90,9 @@ impl Templater {
         let mut handlebar = Handlebars::new();
         handlebar.register_helper(IF_EQ_HELPER, Box::new(IfEqHelper));
         handlebar.register_helper(JSON_HELPER, Box::new(JsonHelper));
+        handlebar.register_helper(TOML_HELPER, Box::new(TomlHelper));
+        handlebar.register_helper(TOML_INLINE_HELPER, Box::new(TomlInlineHelper));
+        handlebar.register_helper(YAML_HELPER, Box::new(YamlHelper));
         let mut templater = Self { handlebar, globals };
         templater.register_default_templates()?;
         Ok(templater)
