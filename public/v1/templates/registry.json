@@ -65,7 +65,7 @@
         "provider.toml": "305c0a32a928e40831773631e25e8407af1c6e126d920f1485c040a8fcfacf49",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
-        "mcp.hbs": "368d63dfeb9c9f17b1745f80a3af292a3f3d567718d5184ca3f718ca304d187b",
+        "mcp.hbs": "76146907cede8254a66d5a9cad958059e12f547243caa20de93dcea2fa969491",
         "skill.hbs": "5d80e6f18c0b4c8006ae73a3c78d788a6443f93f85f4ffc779029b7da571bce5"
       },
       "name": "Codex CLI",
@@ -182,7 +182,7 @@
       "checksums": {
         "provider.toml": "943f9d458e5ec35ecacfcede414f6582a9f2f2818650d21736ba6f03773f4640",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
-        "mcp.hbs": "46a26a05211ac4165ea6c6d125eaf7387b812afdd5529fd908721fe0216a0817",
+        "mcp.hbs": "a307c969bb8d542372250eed7d778c6625d36e1f80a27daa5e7a89a5984e993c",
         "skill.hbs": "ffeba830939b06b1e911b5d3132a33c932cd427bd0a5c6f9bf201cb95a69d598"
       },
       "name": "Mistral Vibe",
