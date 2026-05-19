@@ -4,6 +4,38 @@ import { expect, Key, test } from "@microsoft/tui-test";
 import { cleanup, makeTmpDir, run, shellProgram } from "./helpers.js";
 
 test.describe("init CLI – file tree", () => {
+	// C00: blank template creates minimal files
+	test("blank template creates minimal files", async () => {
+		const d = makeTmpDir();
+		try {
+			const { exitCode } = run(
+				[
+					"init",
+					"--template",
+					"blank",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			const root = join(d, ".dotagents");
+			expect(existsSync(join(root, "config.toml"))).toBe(true);
+			expect(existsSync(join(root, ".gitignore"))).toBe(true);
+			expect(existsSync(join(root, "INSTRUCTIONS.md"))).toBe(true);
+			expect(existsSync(join(root, "mcp.jsonc"))).toBe(true);
+			expect(existsSync(join(root, "commands/hello.md"))).toBe(true);
+			expect(existsSync(join(root, "skills/hello-skill/SKILL.md"))).toBe(true);
+			// blank does NOT create .env, .env.example, or local.config.toml
+			expect(existsSync(join(root, ".env"))).toBe(false);
+			expect(existsSync(join(root, ".env.example"))).toBe(false);
+			expect(existsSync(join(root, "local.config.toml"))).toBe(false);
+			expect(existsSync(join(root, "templates/mycode"))).toBe(false);
+		} finally {
+			cleanup(d);
+		}
+	});
+
 	// C01: starter template creates expected files
 	test("starter template creates core files", async () => {
 		const d = makeTmpDir();
@@ -35,15 +67,15 @@ test.describe("init CLI – file tree", () => {
 		}
 	});
 
-	// C02: with-custom-provider adds mycode templates
-	test("with-custom-provider adds template files", async () => {
+	// C02: advanced adds mycode templates
+	test("advanced adds template files", async () => {
 		const d = makeTmpDir();
 		try {
 			const { exitCode } = run(
 				[
 					"init",
 					"--template",
-					"with-custom-provider",
+					"advanced",
 					"--features",
 					"commands,instructions,mcp,skills",
 				],
@@ -429,12 +461,12 @@ test.describe("init TUI – T02 deselect features", () => {
 	});
 });
 
-// T03: select WithCustomProvider template
-test.describe("init TUI – T03 WithCustomProvider template", () => {
+// T03: select Advanced template
+test.describe("init TUI – T03 Advanced template", () => {
 	const d = makeTmpDir();
 	test.use({ program: shellProgram(d, ["init"]) });
 
-	test("selecting WithCustomProvider template creates mycode templates", async ({
+	test("selecting Advanced template creates mycode templates", async ({
 		terminal,
 	}) => {
 		try {
@@ -446,8 +478,8 @@ test.describe("init TUI – T03 WithCustomProvider template", () => {
 				terminal.getByText("Which starting template?"),
 			).toBeVisible();
 
-			// move down to select "With Custom Provider"
-			terminal.keyDown();
+			// move down twice to select "Advanced" (3rd option)
+			terminal.keyDown(2);
 			terminal.keyPress("Enter");
 			// skip providers
 			terminal.keyPress("Enter");
@@ -641,8 +673,9 @@ test.describe("init CLI – validation errors", () => {
 			);
 			expect(exitCode).toBe(2);
 			expect(stderr).toContain("invalid value");
+			expect(stderr).toContain("blank");
 			expect(stderr).toContain("starter");
-			expect(stderr).toContain("with-custom-provider");
+			expect(stderr).toContain("advanced");
 		} finally {
 			cleanup(d);
 		}

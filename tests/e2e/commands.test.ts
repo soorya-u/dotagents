@@ -886,7 +886,7 @@ test.describe("commands new TUI – T07 deploy on Yes", () => {
 		[
 			"init",
 			"--template",
-			"with-custom-provider",
+			"advanced",
 			"--features",
 			"commands,instructions,mcp,skills",
 		],

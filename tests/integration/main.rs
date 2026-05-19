@@ -155,13 +155,13 @@ impl CmdResult {
 // Shared helpers for test modules
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Initialises a `with-custom-provider` workspace and strips the remote
+/// Initialises an `advanced` workspace and strips the remote
 /// `gemini` target so that deploy can run fully offline in tests.
 pub fn init_with_mycode_provider(ws: &TestWorkspace) {
     ws.run_command(&[
         "init",
         "--template",
-        "with-custom-provider",
+        "advanced",
         "--features",
         "commands,instructions,mcp,skills",
     ])

@@ -129,7 +129,7 @@ pub(crate) const TEMPLATE_MYCODE_MCP: &str = r#"{
 }
 "#;
 
-/// Provider config block appended to `local.config.toml` when using the `with-custom-provider` template.
+/// Provider config block appended to `local.config.toml` when using the `advanced` template.
 pub(crate) const MYCODE_PROVIDER_CONFIG: &str = r#"
 [providers.mycode.mcp]
 template = "{{ dir.application }}/templates/mycode/mcp.hbs"

@@ -6,11 +6,11 @@
 #### Scenario: Blank template file set
 - **WHEN** the Blank template is selected
 - **THEN** the following files are written and no others: `config.toml`, `.gitignore`, `INSTRUCTIONS.md` (if instructions enabled), `mcp.jsonc` (if mcp enabled), `commands/hello.md` (if commands enabled), `skills/hello-skill/SKILL.md` (if skills enabled)
-- **AND** `.env`, `.env.example`, and `local.config.toml` SHALL NOT be written
+- **AND** `.env` and `local.config.toml` SHALL NOT be written
 
 #### Scenario: Starter template file set
 - **WHEN** the Starter template is selected
-- **THEN** all Blank files are written AND additionally: `.env`, `.env.example`, `local.config.toml` (identical content to `config.toml`, no providers block)
+- **THEN** all Blank files are written AND additionally: `.env`, `local.config.toml` (identical content to `config.toml`, no providers block)
 
 #### Scenario: Advanced template file set
 - **WHEN** the Advanced template is selected
