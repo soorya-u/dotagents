@@ -7,6 +7,7 @@
 | `config.toml` | ✓ (with --features/--targets) | ✓ | ✓ |
 | `local.config.toml` | ✗ | ✓ (identical to global) | ✓ (+ mycode provider block) |
 | `.env` | ✗ | ✓ | ✓ |
+| `.env.example` | ✗ | ✓ | ✓ |
 | `.gitignore` | ✓ | ✓ | ✓ |
 | Feature mocks (commands, skills, mcp, instructions) | ✓ | ✓ | ✓ |
 | `templates/mycode/*.hbs` | ✗ | ✗ | ✓ |
@@ -44,7 +45,7 @@ CLI flag values: `blank`, `starter`, `advanced` (kebab-case via `ValueEnum`).
 
 ### TUI labels
 
-```
+```text
 Which starting template?
   Blank       Minimal scaffolding
   Starter     Variables, env & rendering

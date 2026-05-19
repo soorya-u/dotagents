@@ -4,7 +4,7 @@
 
 ## What Changes
 
-- **Add `Blank` template** — writes `config.toml` (reflects `--features`/`--targets`), feature mock files, `.gitignore`. Skips `.env`, `local.config.toml`, and provider templates.
+- **Add `Blank` template** — writes `config.toml` (reflects `--features`/`--targets`), feature mock files, `.gitignore`. Skips `.env`, `.env.example`, `local.config.toml`, and provider templates.
 - **Rename `WithCustomProvider` → `Advanced`** — same behavior (mycode templates + provider block in `local.config.toml`), updated CLI flag and TUI label.
 - **Keep `Starter` as-is** — already provides variables, `.env`, and `local.config.toml` with rendering-ready config. No content changes.
 - **Default template changes from `Starter` → `Blank`** — non-interactive `dotagents init` now produces minimal scaffolding.
@@ -30,7 +30,7 @@
 ## Impact
 
 - `src/cli/options.rs` — `InitTemplate` enum: add `Blank`, rename `WithCustomProvider` → `Advanced`, update `ValueEnum` labels, change default.
-- `src/cli/init.rs` — `build_config_content` handles `Blank` (no local config), file write logic skips `local.config.toml` and `.env` for `Blank`, default template resolves to `Blank`.
+- `src/cli/init.rs` — `build_config_content` handles `Blank` (no local config), file write logic skips `local.config.toml`, `.env`, and `.env.example` for `Blank`, default template resolves to `Blank`.
 - `src/cli/ui/init.rs` — TUI template selector adds `Blank` option, updates descriptions, renames `WithCustomProvider` → `Advanced`.
 - `openspec/specs/init-templates/spec.md` — updated from 2-template to 3-template spec.
 - No new dependencies.
