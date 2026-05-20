@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::path::PathBuf;
 
 /// Status of a single entry in a deploy dry run.
@@ -50,7 +51,8 @@ pub(crate) fn print_dry_run_deploy_summary(entries: &[DryRunDeployEntry]) {
             }
         }
     }
-    println!("\n{} files would be affected", entries.len());
+    let unique_count: HashSet<&PathBuf> = entries.iter().map(|e| &e.path).collect();
+    println!("\n{} files would be affected", unique_count.len());
 }
 
 /// Prints undeploy dry-run summary: header, per-file status lines, footer count.
@@ -66,7 +68,8 @@ pub(crate) fn print_dry_run_undeploy_summary(entries: &[DryRunUndeployEntry]) {
             }
         }
     }
-    println!("\n{} files would be affected", entries.len());
+    let unique_count: HashSet<&PathBuf> = entries.iter().map(|e| &e.path).collect();
+    println!("\n{} files would be affected", unique_count.len());
 }
 
 #[cfg(test)]

@@ -89,7 +89,7 @@ When `--dry-run` is set and provider deduplication occurs, the command SHALL sho
 
 #### Scenario: Dedup winner shown in dry-run output
 - **WHEN** `--dry-run` is set and multiple providers target the same path
-- **THEN** the output shows `[~] <path> (<winner>)` for the winning provider
+- **THEN** the output shows `<status> <path> (<winner>)` for the winning provider, where `<status>` follows the existing dry-run rules (`[+]` for new files, `[~]` for modified)
 
 #### Scenario: Dedup losers listed under winner in dry-run output
 - **WHEN** `--dry-run` is set and providers are dedup-skipped

@@ -14,26 +14,28 @@ fn dedup_single_path_multiple_providers_only_winner_writes() {
     let ws = TestWorkspace::new();
     init_with_mycode_provider(&ws);
 
-    // Add a second provider "aaa" that also targets the same instructions file.
-    let config_path = ws.active_root_dir().join("config.toml");
+    // Add a second provider "aaa" that also targets the same instructions file
+    // with a distinct agent_name so we can identify the winner by file content.
+    let config_path = ws.active_root_dir().join("local.config.toml");
     let original = fs::read_to_string(&config_path).unwrap();
     let patched = original.replace(
-        "[providers.mycode.instructions]",
-        r#"[providers.aaa.instructions]
-template = "{{ dir.application }}/templates/instructions.hbs"
-target = ".mycode/instructions.md"
-
-[providers.mycode.instructions]"#,
+        "\n[providers.mycode.instructions]\ntemplate = \"{{ dir.application }}/templates/mycode/instructions.hbs\"\ntarget = \"{{ dir.workspace }}/.mycode/instructions.md\"\nvariables = {agent_name = \"Mycode\"}",
+        "\n[providers.aaa.instructions]\ntemplate = \"{{ dir.application }}/templates/mycode/instructions.hbs\"\ntarget = \"{{ dir.workspace }}/.mycode/instructions.md\"\nvariables = {agent_name = \"aaa-provider\"}\n\n[providers.mycode.instructions]\ntemplate = \"{{ dir.application }}/templates/mycode/instructions.hbs\"\ntarget = \"{{ dir.workspace }}/.mycode/instructions.md\"\nvariables = {agent_name = \"mycode-provider\"}",
     );
     fs::write(&config_path, patched).unwrap();
 
     ws.run_command(&["deploy", "--offline", "--no-gitignore", "--force"])
         .assert_success();
 
-    // The file should exist (written by "aaa" since it's alphabetically first).
+    // "aaa" is alphabetically first, so its agent_name should appear in the file.
+    let content = ws.read_file(".mycode/instructions.md");
     assert!(
-        ws.file_exists(".mycode/instructions.md"),
-        "instructions.md should be deployed by the winning provider"
+        content.contains("aaa-provider"),
+        "instructions.md should contain winner's agent_name 'aaa-provider', got:\n{content}"
+    );
+    assert!(
+        !content.contains("mycode-provider"),
+        "instructions.md should NOT contain loser's agent_name 'mycode-provider', got:\n{content}"
     );
 }
 
@@ -45,31 +47,38 @@ fn dedup_cache_has_one_entry_per_unique_path() {
     init_with_mycode_provider(&ws);
 
     // Add a second provider targeting the same instructions file.
-    let config_path = ws.active_root_dir().join("config.toml");
+    let config_path = ws.active_root_dir().join("local.config.toml");
     let original = fs::read_to_string(&config_path).unwrap();
     let patched = original.replace(
-        "[providers.mycode.instructions]",
-        r#"[providers.aaa.instructions]
-template = "{{ dir.application }}/templates/instructions.hbs"
-target = ".mycode/instructions.md"
-
-[providers.mycode.instructions]"#,
+        "\n[providers.mycode.instructions]\ntemplate = \"{{ dir.application }}/templates/mycode/instructions.hbs\"\ntarget = \"{{ dir.workspace }}/.mycode/instructions.md\"\nvariables = {agent_name = \"Mycode\"}",
+        "\n[providers.aaa.instructions]\ntemplate = \"{{ dir.application }}/templates/mycode/instructions.hbs\"\ntarget = \"{{ dir.workspace }}/.mycode/instructions.md\"\nvariables = {agent_name = \"aaa-provider\"}\n\n[providers.mycode.instructions]\ntemplate = \"{{ dir.application }}/templates/mycode/instructions.hbs\"\ntarget = \"{{ dir.workspace }}/.mycode/instructions.md\"\nvariables = {agent_name = \"mycode-provider\"}",
     );
     fs::write(&config_path, patched).unwrap();
 
     ws.run_command(&["deploy", "--offline", "--no-gitignore", "--force"])
         .assert_success();
 
-    // Read cache.toml and count entries for the instructions feature.
+    // Read cache.toml and parse it to verify exactly one entry for the instructions feature.
     let cache_path = ws.root().join(format!("{}/cache.toml", ws.root_dir_name()));
     let cache_content = fs::read_to_string(&cache_path).unwrap();
+    let cache: toml::Value =
+        toml::from_str(&cache_content).expect("cache.toml should be valid TOML");
 
-    // Count how many times "instructions" appears as a feature key in the cache.
-    // With dedup, only the winning provider should have a cache entry.
-    let instructions_count = cache_content.matches("instructions").count();
-    assert!(
-        instructions_count <= 2,
-        "cache should have at most 2 'instructions' references (one provider entry); got {instructions_count} in:\n{cache_content}"
+    // Cache structure: [providers.<name>.instructions.<item_key>]
+    // Count how many top-level provider keys contain an "instructions" sub-table.
+    let instructions_count = cache
+        .get("providers")
+        .and_then(|p| p.as_table())
+        .map(|providers| {
+            providers
+                .values()
+                .filter(|provider_table| provider_table.get("instructions").is_some())
+                .count()
+        })
+        .unwrap_or(0);
+    assert_eq!(
+        instructions_count, 1,
+        "cache should have exactly 1 provider with 'instructions' entry; got {instructions_count} in:\n{cache_content}"
     );
 }
 
@@ -80,15 +89,11 @@ fn dedup_undeploy_removes_file_once() {
     init_with_mycode_provider(&ws);
 
     // Add a second provider targeting the same instructions file.
-    let config_path = ws.active_root_dir().join("config.toml");
+    let config_path = ws.active_root_dir().join("local.config.toml");
     let original = fs::read_to_string(&config_path).unwrap();
     let patched = original.replace(
-        "[providers.mycode.instructions]",
-        r#"[providers.aaa.instructions]
-template = "{{ dir.application }}/templates/instructions.hbs"
-target = ".mycode/instructions.md"
-
-[providers.mycode.instructions]"#,
+        "\n[providers.mycode.instructions]\ntemplate = \"{{ dir.application }}/templates/mycode/instructions.hbs\"\ntarget = \"{{ dir.workspace }}/.mycode/instructions.md\"\nvariables = {agent_name = \"Mycode\"}",
+        "\n[providers.aaa.instructions]\ntemplate = \"{{ dir.application }}/templates/mycode/instructions.hbs\"\ntarget = \"{{ dir.workspace }}/.mycode/instructions.md\"\nvariables = {agent_name = \"aaa-provider\"}\n\n[providers.mycode.instructions]\ntemplate = \"{{ dir.application }}/templates/mycode/instructions.hbs\"\ntarget = \"{{ dir.workspace }}/.mycode/instructions.md\"\nvariables = {agent_name = \"mycode-provider\"}",
     );
     fs::write(&config_path, patched).unwrap();
 

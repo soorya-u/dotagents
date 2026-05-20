@@ -14,7 +14,7 @@ When multiple providers target the same resolved file path during deploy, the sy
 
 #### Scenario: Winner selection is alphabetical by provider name
 - **WHEN** multiple providers target the same path and no priority is configured
-- **THEN** the provider with the alphabetically first name is selected as the winner
+- **THEN** the provider with the alphabetically first name is selected as the winner, comparing provider keys byte-wise in ASCII ascending order
 
 #### Scenario: Dedup is per-target-path, not per-feature
 - **WHEN** provider A and B target `AGENTS.md` and provider C targets `CLAUDE.md` for the same feature

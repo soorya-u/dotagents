@@ -18,9 +18,9 @@ pub(crate) fn set_ci_mode(enabled: bool) {
     CI_MODE.store(enabled, Ordering::Relaxed);
 }
 
-/// Returns true when both stdin and stdout are interactive terminals.
+/// Returns true when stdin is an interactive terminal.
 fn is_tty() -> bool {
-    std::io::stdin().is_terminal() && std::io::stdout().is_terminal()
+    std::io::stdin().is_terminal()
 }
 
 /// Returns true when TUI should be shown: terminal is interactive and CI mode is not active.
