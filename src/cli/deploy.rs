@@ -107,9 +107,11 @@ fn resolve_provider_paths<'a, T: FeatureTrait>(
 }
 
 /// Groups providers by resolved target path and marks dedup winners/losers.
-/// Returns `(provider_name, is_winner, dedup_winner_name)`.
-pub(crate) fn dedup_by_path(providers: &[(String, String)]) -> Vec<(String, bool, Option<String>)> {
-    let mut path_groups: HashMap<String, Vec<String>> = HashMap::new();
+/// Returns `(target_path, winner, losers)` for each unique path.
+pub(crate) fn dedup_by_path(
+    providers: &[(String, PathBuf)],
+) -> Vec<(PathBuf, String, Vec<String>)> {
+    let mut path_groups: HashMap<PathBuf, Vec<String>> = HashMap::new();
     for (provider_name, target_path) in providers {
         path_groups
             .entry(target_path.clone())
@@ -117,15 +119,14 @@ pub(crate) fn dedup_by_path(providers: &[(String, String)]) -> Vec<(String, bool
             .push(provider_name.clone());
     }
 
-    let mut result = Vec::new();
-    for (_path, mut group) in path_groups {
-        group.sort();
-        let winner = group[0].clone();
-        result.push((winner.clone(), true, None));
-        for loser in &group[1..] {
-            result.push((loser.clone(), false, Some(winner.clone())));
-        }
-    }
+    let mut result: Vec<(PathBuf, String, Vec<String>)> = path_groups
+        .into_iter()
+        .map(|(path, mut group)| {
+            group.sort();
+            let winner = group.remove(0);
+            (path, winner, group)
+        })
+        .collect();
     result.sort_by(|a, b| a.0.cmp(&b.0));
     result
 }
@@ -139,12 +140,12 @@ fn build_item_work_items<'a, T: FeatureTrait>(
 ) -> Result<Vec<DeployWorkItem<'a, T>>> {
     let path_groups = resolve_provider_paths(item, providers, templater, variables)?;
 
-    let provider_pairs: Vec<(String, String)> = path_groups
+    let provider_pairs: Vec<(String, PathBuf)> = path_groups
         .into_iter()
         .flat_map(|(path, group)| {
             group
                 .into_iter()
-                .map(|(name, _)| (name.clone(), path.to_string_lossy().to_string()))
+                .map(|(name, _)| (name.clone(), path.clone()))
                 .collect::<Vec<_>>()
         })
         .collect();
@@ -152,21 +153,25 @@ fn build_item_work_items<'a, T: FeatureTrait>(
     let dedup_results = dedup_by_path(&provider_pairs);
 
     let mut work_list = Vec::new();
-    for (provider_name, is_winner, winner_name) in dedup_results {
-        let settings = providers.get(&provider_name).unwrap();
-        let dedup = if is_winner {
-            None
-        } else {
-            Some(DedupInfo {
-                winner: winner_name.unwrap(),
-            })
-        };
+    for (_path, winner, losers) in dedup_results {
+        let settings = providers.get(&winner).unwrap();
         work_list.push(DeployWorkItem {
-            provider_name,
+            provider_name: winner.clone(),
             settings,
             item,
-            dedup,
+            dedup: None,
         });
+        for loser in losers {
+            let settings = providers.get(&loser).unwrap();
+            work_list.push(DeployWorkItem {
+                provider_name: loser,
+                settings,
+                item,
+                dedup: Some(DedupInfo {
+                    winner: winner.clone(),
+                }),
+            });
+        }
     }
     Ok(work_list)
 }
@@ -526,62 +531,57 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::dedup_by_path;
+    use std::path::PathBuf;
 
     // alphabetical winner selected when 3 providers target same path
     #[test]
     fn dedup_alphabetical_winner_three_providers() {
         let providers = vec![
-            ("zebra".to_string(), "AGENTS.md".to_string()),
-            ("alpha".to_string(), "AGENTS.md".to_string()),
-            ("middle".to_string(), "AGENTS.md".to_string()),
+            ("zebra".to_string(), PathBuf::from("AGENTS.md")),
+            ("alpha".to_string(), PathBuf::from("AGENTS.md")),
+            ("middle".to_string(), PathBuf::from("AGENTS.md")),
         ];
         let result = dedup_by_path(&providers);
-        let winner = result.iter().find(|(_, is_winner, _)| *is_winner).unwrap();
-        assert_eq!(winner.0, "alpha");
-        let losers: Vec<_> = result
-            .iter()
-            .filter(|(_, is_winner, _)| !is_winner)
-            .collect();
-        assert_eq!(losers.len(), 2);
-        assert!(
-            losers
-                .iter()
-                .all(|(_, _, w)| w.as_ref().unwrap() == "alpha")
-        );
+        assert_eq!(result.len(), 1);
+        let (path, winner, losers) = &result[0];
+        assert_eq!(path, &PathBuf::from("AGENTS.md"));
+        assert_eq!(winner, "alpha");
+        assert_eq!(losers, &vec!["middle".to_string(), "zebra".to_string()]);
     }
 
     // no dedup when providers target different paths
     #[test]
     fn dedup_no_collision_different_paths() {
         let providers = vec![
-            ("claude".to_string(), ".claude/AGENTS.md".to_string()),
-            ("codex".to_string(), ".openai/AGENTS.md".to_string()),
+            ("claude".to_string(), PathBuf::from(".claude/AGENTS.md")),
+            ("codex".to_string(), PathBuf::from(".openai/AGENTS.md")),
         ];
         let result = dedup_by_path(&providers);
         assert_eq!(result.len(), 2);
-        assert!(result.iter().all(|(_, is_winner, _)| *is_winner));
-        assert!(result.iter().all(|(_, _, w)| w.is_none()));
+        assert!(result.iter().all(|(_, _, losers)| losers.is_empty()));
     }
 
     // mixed: some providers share path, others don't
     #[test]
     fn dedup_mixed_some_collide() {
         let providers = vec![
-            ("a".to_string(), "shared.md".to_string()),
-            ("b".to_string(), "shared.md".to_string()),
-            ("c".to_string(), "unique.md".to_string()),
+            ("a".to_string(), PathBuf::from("shared.md")),
+            ("b".to_string(), PathBuf::from("shared.md")),
+            ("c".to_string(), PathBuf::from("unique.md")),
         ];
         let result = dedup_by_path(&providers);
-        let winners: Vec<_> = result
+        assert_eq!(result.len(), 2);
+        let shared = result
             .iter()
-            .filter(|(_, is_winner, _)| *is_winner)
-            .collect();
-        let losers: Vec<_> = result
+            .find(|(p, _, _)| p == &PathBuf::from("shared.md"))
+            .unwrap();
+        let unique = result
             .iter()
-            .filter(|(_, is_winner, _)| !is_winner)
-            .collect();
-        assert_eq!(winners.len(), 2);
-        assert_eq!(losers.len(), 1);
-        assert_eq!(losers[0].2.as_ref().unwrap(), "a");
+            .find(|(p, _, _)| p == &PathBuf::from("unique.md"))
+            .unwrap();
+        assert_eq!(shared.1, "a");
+        assert_eq!(shared.2, vec!["b"]);
+        assert_eq!(unique.1, "c");
+        assert_eq!(unique.2, Vec::<String>::new());
     }
 }
