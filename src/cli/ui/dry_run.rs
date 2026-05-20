@@ -7,6 +7,8 @@ pub(crate) enum DeployDryRunStatus {
     New,
     /// Target path exists but content differs — would be overwritten.
     Modified,
+    /// Provider was dedup-skipped — another provider will write to this path.
+    DedupSkipped { winner: String },
 }
 
 /// A single file entry produced by `deploy --dry-run`.
@@ -36,11 +38,17 @@ pub(crate) struct DryRunUndeployEntry {
 pub(crate) fn print_dry_run_deploy_summary(entries: &[DryRunDeployEntry]) {
     println!("Dry run — no files will be written\n");
     for entry in entries {
-        let symbol = match entry.status {
-            DeployDryRunStatus::New => "[+]",
-            DeployDryRunStatus::Modified => "[~]",
-        };
-        println!("  {} {}", symbol, entry.path.display());
+        match entry.status {
+            DeployDryRunStatus::New => {
+                println!("  [+] {}", entry.path.display());
+            }
+            DeployDryRunStatus::Modified => {
+                println!("  [~] {}", entry.path.display());
+            }
+            DeployDryRunStatus::DedupSkipped { ref winner } => {
+                println!("  [x] {} (skipped: {} wins)", entry.path.display(), winner);
+            }
+        }
     }
     println!("\n{} files would be affected", entries.len());
 }

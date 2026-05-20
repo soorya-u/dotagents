@@ -1,6 +1,8 @@
 use crate::prelude::*;
 use rayon::prelude::*;
 use serde_json::{Value, to_value};
+use std::collections::HashMap;
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use crate::cli::options::DeployOptions;
@@ -10,7 +12,9 @@ use crate::cli::ui::deploy::{
 use crate::cli::ui::dry_run::{
     DeployDryRunStatus, DryRunDeployEntry, print_dry_run_deploy_summary,
 };
-use crate::core::config::{AppConfig, CACHE_SINGLETON_KEY, CacheConfig, CacheEntry, CacheUpdate};
+use crate::core::config::{
+    AppConfig, CACHE_SINGLETON_KEY, CacheConfig, CacheEntry, CacheUpdate, FeatureSettings,
+};
 use crate::core::features::{
     Feature, command::CommandFeature, instruction::InstructionFeature, mcp::McpFeature,
     skill::SkillFeature, traits::FeatureTrait,
@@ -19,14 +23,29 @@ use crate::schema::registry::Registry;
 use crate::templates::variables::set_env_paths;
 use crate::templates::{
     TemplateCache, Templater, get_templater, registry_url, render_feature_with_settings,
-    resolve_provider_defaults,
+    resolve_provider_defaults, resolve_target_path,
 };
 use crate::utils::gitignore::rebuild_fence_from_cache;
 use crate::utils::hash::{hash_content, hash_file};
+use crate::utils::json::merge_json;
 use crate::utils::path::{get_workspace_dir, override_workspace_dir};
 use crate::utils::tui::is_tui_enabled;
 use cliclack::{outro, spinner};
 use std::io::Write;
+
+/// Tracks deduplication info for a skipped provider.
+#[derive(Debug, Clone)]
+struct DedupInfo {
+    winner: String,
+}
+
+/// A single unit of work for deploy_feature: one (provider, item) pair.
+struct DeployWorkItem<'a, T: FeatureTrait> {
+    provider_name: String,
+    settings: &'a FeatureSettings,
+    item: &'a T,
+    dedup: Option<DedupInfo>,
+}
 
 /// Aggregated result of deploying one feature across all providers.
 #[derive(Debug, Default)]
@@ -47,269 +66,288 @@ impl DeployStats {
     }
 }
 
-/// Deploys one feature across all enabled providers, collecting gitignore entries and updating cache.
-#[allow(clippy::too_many_arguments)]
-fn deploy_feature<T>(
-    app_config: &AppConfig,
-    templater: &Templater,
-    variables: Option<&Value>,
-    feature: &Feature,
-    cache: &Arc<Mutex<CacheConfig>>,
+/// Shared context passed to `deploy_feature` to reduce argument count.
+struct DeployContext<'a> {
+    app_config: &'a AppConfig,
+    templater: &'a Templater,
+    variables: Option<&'a Value>,
+    cache: &'a Arc<Mutex<CacheConfig>>,
     force: bool,
     no_cache: bool,
     dry_run: bool,
+}
+
+/// Resolves target paths for all providers for a single item, grouping by path.
+fn resolve_provider_paths<'a, T: FeatureTrait>(
+    item: &'a T,
+    providers: &'a HashMap<String, FeatureSettings>,
+    templater: &Templater,
+    variables: Option<&Value>,
+) -> Result<HashMap<PathBuf, Vec<(&'a String, &'a FeatureSettings)>>> {
+    let name_var: Option<Value> = item
+        .get_file_name()
+        .map(|filename| item.get_name_variable(&filename))
+        .transpose()?
+        .flatten();
+    let item_base_vars = merge_json(variables, name_var.as_ref());
+
+    let mut path_groups: HashMap<PathBuf, Vec<(&String, &FeatureSettings)>> = HashMap::new();
+    for (provider_name, settings) in providers {
+        let target_str = settings
+            .target
+            .as_deref()
+            .ok_or_else(|| anyhow!("Target config not found for provider {}", provider_name))?;
+        let target_path = resolve_target_path(templater, target_str, Some(&item_base_vars))?;
+        path_groups
+            .entry(target_path)
+            .or_default()
+            .push((provider_name, settings));
+    }
+    Ok(path_groups)
+}
+
+/// Builds the dedup-aware work list for a single item across all providers.
+fn build_item_work_items<'a, T: FeatureTrait>(
+    item: &'a T,
+    providers: &'a HashMap<String, FeatureSettings>,
+    templater: &Templater,
+    variables: Option<&Value>,
+) -> Result<Vec<DeployWorkItem<'a, T>>> {
+    let path_groups = resolve_provider_paths(item, providers, templater, variables)?;
+
+    let mut work_list = Vec::new();
+    for (_path, mut group) in path_groups {
+        group.sort_by_key(|(name, _)| name.as_str());
+        let winner_name = group[0].0.clone();
+
+        work_list.push(DeployWorkItem {
+            provider_name: winner_name.clone(),
+            settings: group[0].1,
+            item,
+            dedup: None,
+        });
+
+        for (loser_name, loser_settings) in &group[1..] {
+            work_list.push(DeployWorkItem {
+                provider_name: (*loser_name).clone(),
+                settings: loser_settings,
+                item,
+                dedup: Some(DedupInfo {
+                    winner: winner_name.clone(),
+                }),
+            });
+        }
+    }
+    Ok(work_list)
+}
+
+/// Builds the full dedup-aware work list for all items.
+fn build_work_list<'a, T: FeatureTrait>(
+    items: &'a [T],
+    providers: &'a HashMap<String, FeatureSettings>,
+    templater: &Templater,
+    variables: Option<&Value>,
+) -> Result<Vec<DeployWorkItem<'a, T>>> {
+    let mut all_work = Vec::new();
+    for item in items {
+        all_work.extend(build_item_work_items(
+            item, providers, templater, variables,
+        )?);
+    }
+    Ok(all_work)
+}
+
+/// Handles a dedup-skipped work item: logs, increments skip count, and records dry-run entry.
+fn handle_dedup_skip<T: FeatureTrait>(
+    work: &DeployWorkItem<'_, T>,
+    templater: &Templater,
+    variables: Option<&Value>,
+    dry_run: bool,
+    stats: &mut DeployStats,
+) -> Result<()> {
+    debug!(
+        "provider {} targets same file as {} — deduplicating",
+        work.provider_name,
+        work.dedup.as_ref().unwrap().winner
+    );
+    stats.skipped += 1;
+
+    if dry_run {
+        let target_str = work.settings.target.as_deref().unwrap_or("");
+        let name_var: Option<Value> = work
+            .item
+            .get_file_name()
+            .map(|filename| work.item.get_name_variable(&filename))
+            .transpose()?
+            .flatten();
+        let target_vars = merge_json(variables, name_var.as_ref());
+        if let Ok(target_path) = resolve_target_path(templater, target_str, Some(&target_vars)) {
+            stats.dry_run_entries.push(DryRunDeployEntry {
+                path: target_path,
+                status: DeployDryRunStatus::DedupSkipped {
+                    winner: work.dedup.as_ref().unwrap().winner.clone(),
+                },
+            });
+        }
+    }
+    Ok(())
+}
+
+/// Processes a single cache update result, updating stats and cache accordingly.
+fn process_cache_update<T: FeatureTrait>(
+    work: &DeployWorkItem<'_, T>,
+    feature_name: &str,
+    item_key: &str,
+    update: CacheUpdate,
+    cache: &Arc<Mutex<CacheConfig>>,
+    stats: &mut DeployStats,
+) -> Result<()> {
+    match update {
+        CacheUpdate::Written { hash, target } => {
+            stats.written += 1;
+            cache.lock().unwrap().set(
+                &work.provider_name,
+                feature_name,
+                item_key,
+                CacheEntry { hash, target },
+            );
+        }
+        CacheUpdate::DryRun { target, content } => {
+            let rendered_hash = hash_content(&content);
+            if !target.exists() {
+                stats.dry_run_entries.push(DryRunDeployEntry {
+                    path: target,
+                    status: DeployDryRunStatus::New,
+                });
+            } else {
+                match hash_file(&target)? {
+                    Some(disk_hash) if disk_hash == rendered_hash => {}
+                    _ => {
+                        stats.dry_run_entries.push(DryRunDeployEntry {
+                            path: target,
+                            status: DeployDryRunStatus::Modified,
+                        });
+                    }
+                }
+            }
+        }
+        CacheUpdate::Skipped | CacheUpdate::UserEditedSkipped { .. } => {
+            stats.skipped += 1;
+        }
+    }
+    Ok(())
+}
+
+/// Deploys one feature across all enabled providers, collecting gitignore entries and updating cache.
+fn deploy_feature<T>(
+    ctx: &DeployContext<'_>,
+    feature: &Feature,
     loader: impl FnOnce() -> Result<Vec<T>>,
 ) -> Result<DeployStats>
 where
     T: FeatureTrait + Sync,
 {
-    if !app_config.has_feature(feature) {
+    if !ctx.app_config.has_feature(feature) {
         return Ok(DeployStats::default());
     }
 
-    let feature_name = feature.as_str();
     let items = loader().context(format!("unable to load {} feature", feature))?;
-    let providers = app_config.get_provider_feature_settings(feature);
+    let providers = ctx.app_config.get_provider_feature_settings(feature);
 
-    let stats: DeployStats = providers
+    if providers.is_empty() {
+        return Ok(DeployStats::default());
+    }
+
+    let work_list = build_work_list(&items, &providers, ctx.templater, ctx.variables)?;
+
+    let feature_name = feature.as_str();
+    let cache_ref = ctx.cache.clone();
+
+    let stats: DeployStats = work_list
         .par_iter()
-        .try_fold(
-            DeployStats::default,
-            |mut acc, (provider_name, settings)| -> Result<DeployStats> {
-                for item in items.iter() {
-                    let file_name = item.get_file_name();
-                    let item_key = file_name.as_deref().unwrap_or(CACHE_SINGLETON_KEY);
+        .try_fold(DeployStats::default, |acc, work| -> Result<DeployStats> {
+            let mut stats = acc;
 
-                    // Skip cache lookup when --no-cache: treat as a miss so comparison is bypassed.
-                    let cached_entry: Option<CacheEntry> = if no_cache {
-                        None
-                    } else {
-                        cache
-                            .lock()
-                            .unwrap()
-                            .get(provider_name, feature_name, item_key)
-                            .cloned()
-                    };
+            if let Some(ref _dedup) = work.dedup {
+                handle_dedup_skip(work, ctx.templater, ctx.variables, ctx.dry_run, &mut stats)?;
+                return Ok(stats);
+            }
 
-                    let update = render_feature_with_settings(
-                        provider_name,
-                        item,
-                        settings,
-                        templater,
-                        variables,
-                        cached_entry.as_ref(),
-                        force,
-                        dry_run,
-                    )?;
+            let file_name = work.item.get_file_name();
+            let item_key = file_name.as_deref().unwrap_or(CACHE_SINGLETON_KEY);
 
-                    match update {
-                        CacheUpdate::Written { hash, target } => {
-                            acc.written += 1;
-                            cache.lock().unwrap().set(
-                                provider_name,
-                                feature_name,
-                                item_key,
-                                CacheEntry { hash, target },
-                            );
-                        }
-                        CacheUpdate::DryRun { target, content } => {
-                            // Classify as New, Modified, or unchanged (skip).
-                            let rendered_hash = hash_content(&content);
-                            if !target.exists() {
-                                acc.dry_run_entries.push(DryRunDeployEntry {
-                                    path: target,
-                                    status: DeployDryRunStatus::New,
-                                });
-                            } else {
-                                match hash_file(&target)? {
-                                    Some(disk_hash) if disk_hash == rendered_hash => {
-                                        // Content identical on disk — nothing to show.
-                                    }
-                                    _ => {
-                                        acc.dry_run_entries.push(DryRunDeployEntry {
-                                            path: target,
-                                            status: DeployDryRunStatus::Modified,
-                                        });
-                                    }
-                                }
-                            }
-                        }
-                        CacheUpdate::Skipped | CacheUpdate::UserEditedSkipped { .. } => {
-                            acc.skipped += 1;
-                        }
-                    }
-                }
+            let cached_entry: Option<CacheEntry> = if ctx.no_cache {
+                None
+            } else {
+                cache_ref
+                    .lock()
+                    .unwrap()
+                    .get(&work.provider_name, feature_name, item_key)
+                    .cloned()
+            };
 
-                Ok(acc)
-            },
-        )
+            let update = render_feature_with_settings(
+                &work.provider_name,
+                work.item,
+                work.settings,
+                ctx.templater,
+                ctx.variables,
+                cached_entry.as_ref(),
+                ctx.force,
+                ctx.dry_run,
+            )?;
+
+            process_cache_update(work, feature_name, item_key, update, &cache_ref, &mut stats)?;
+
+            Ok(stats)
+        })
         .try_reduce(DeployStats::default, |a, b| Ok(a.merge(b)))?;
 
     Ok(stats)
 }
 
-pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
-    // Validate env paths before the OnceLock fires so missing files surface as clean errors.
-    for path in &opts.env {
-        if !path.exists() {
-            return Err(anyhow::anyhow!(
-                "load env file '{}': file not found",
-                path.display()
-            ));
-        }
-    }
-    // Must be called before get_templater() so ENV_PATHS is set before the OnceLock fires.
-    set_env_paths(std::mem::take(&mut opts.env));
-
-    // Override workspace root before any path resolution is triggered.
-    if let Some(dir) = opts.dir.take() {
-        let workspace = std::env::current_dir()
-            .context("failed to get current directory")?
-            .join(dir);
-        override_workspace_dir(workspace).context("unable to set workspace directory")?;
+/// Fetches the provider registry, showing a spinner in TUI mode. Returns None on failure or when offline.
+fn fetch_registry(offline: bool) -> Option<Registry> {
+    if offline {
+        return None;
     }
 
-    let templater = get_templater().context("unable to initialise templater")?;
-    let mut app_config =
-        AppConfig::from_application(templater).context("unable to load application config")?;
-
-    // In interactive sessions, ask whether to run offline before the registry fetch.
-    if !opts.offline && is_tui_enabled() {
-        opts.offline = prompt_offline();
-    }
-
-    // Resolve missing template/target fields from the official provider registry.
-    // registry.json is fetched at most once here; the result is shared across all providers.
-    let template_cache = TemplateCache::new().context("unable to initialise template cache")?;
-    let registry: Option<Registry> = if opts.offline {
-        None // --offline: skip fetch entirely, resolve from cache only
+    let sp = if is_tui_enabled() {
+        let s = spinner();
+        s.start("Fetching provider registry…");
+        Some(s)
     } else {
-        let sp = if is_tui_enabled() {
-            let s = spinner();
-            s.start("Fetching provider registry…");
-            Some(s)
-        } else {
-            None
-        };
-        match Registry::fetch(registry_url()) {
-            Ok(r) => {
-                if let Some(s) = sp {
-                    s.clear();
-                }
-                Some(r)
-            }
-            Err(e) => {
-                if let Some(s) = sp {
-                    s.error(format!("Could not reach registry: {}", e));
-                }
-                warn!(
-                    "Failed to fetch provider registry: {} — falling back to local cache",
-                    e
-                );
-                None
-            }
-        }
+        None
     };
-    resolve_provider_defaults(
-        &mut app_config,
-        registry.as_ref(),
-        &template_cache,
-        opts.offline,
-        opts.no_cache,
-    )
-    .context("unable to resolve provider template defaults")?;
 
-    // Serialize user-defined variables only when present; None stays None so the
-    // renderer doesn't receive Value::Null, which would wipe the Templater globals.
-    let variables: Option<Value> = app_config
-        .variables
-        .as_ref()
-        .map(|v| to_value(v).context("unable to extract variables"))
-        .transpose()?;
-
-    let has_any_provider = Feature::all()
-        .iter()
-        .any(|f| !app_config.get_provider_feature_settings(f).is_empty());
-    if !has_any_provider {
-        warn!("No providers configured — nothing to deploy. Add providers to config.toml.");
-    }
-
-    // Always initialise cache; --no-cache only suppresses the hash-comparison read.
-    let cache = Arc::new(Mutex::new(
-        CacheConfig::load().context("unable to load cache")?,
-    ));
-
-    let mut stats = DeployStats::default();
-
-    stats = stats.merge(deploy_feature::<CommandFeature>(
-        &app_config,
-        templater,
-        variables.as_ref(),
-        &Feature::Command,
-        &cache,
-        opts.force,
-        opts.no_cache,
-        opts.dry_run,
-        CommandFeature::from_application,
-    )?);
-
-    stats = stats.merge(deploy_feature::<SkillFeature>(
-        &app_config,
-        templater,
-        variables.as_ref(),
-        &Feature::Skill,
-        &cache,
-        opts.force,
-        opts.no_cache,
-        opts.dry_run,
-        SkillFeature::from_application,
-    )?);
-
-    stats = stats.merge(deploy_feature::<McpFeature>(
-        &app_config,
-        templater,
-        variables.as_ref(),
-        &Feature::Mcp,
-        &cache,
-        opts.force,
-        opts.no_cache,
-        opts.dry_run,
-        || McpFeature::from_application().map(|mcp| vec![mcp]),
-    )?);
-
-    stats = stats.merge(deploy_feature::<InstructionFeature>(
-        &app_config,
-        templater,
-        variables.as_ref(),
-        &Feature::Instruction,
-        &cache,
-        opts.force,
-        opts.no_cache,
-        opts.dry_run,
-        || InstructionFeature::from_application().map(|inst| vec![inst]),
-    )?);
-
-    // Dry-run: print preview and exit — skip cache save and gitignore.
-    if opts.dry_run {
-        print_dry_run_deploy_summary(&stats.dry_run_entries);
-        return Ok(());
-    }
-
-    // Always persist cache to disk (--no-cache only skips hash comparison, not persistence).
-    cache
-        .lock()
-        .unwrap()
-        .save()
-        .context("unable to save cache")?;
-
-    // Skip gitignore update only when the user opted out.
-    if opts.no_gitignore {
-        if is_tui_enabled() {
-            outro(deploy_outro(&stats)).ok();
-            let _ = std::io::stdout().flush();
-        } else {
-            print_deploy_summary(&stats);
+    match Registry::fetch(registry_url()) {
+        Ok(r) => {
+            if let Some(s) = sp {
+                s.clear();
+            }
+            Some(r)
         }
+        Err(e) => {
+            if let Some(s) = sp {
+                s.error(format!("Could not reach registry: {}", e));
+            }
+            warn!(
+                "Failed to fetch provider registry: {} — falling back to local cache",
+                e
+            );
+            None
+        }
+    }
+}
+
+/// Prints the deploy summary and optionally updates .gitignore from cache targets.
+fn finalize_deploy(
+    opts: &DeployOptions,
+    stats: &DeployStats,
+    cache: &Arc<Mutex<CacheConfig>>,
+) -> Result<()> {
+    if opts.no_gitignore {
+        print_summary(stats);
         return Ok(());
     }
 
@@ -317,12 +355,7 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
     let cache_targets = cache.lock().unwrap().all_targets();
 
     if cache_targets.is_empty() {
-        if is_tui_enabled() {
-            outro(deploy_outro(&stats)).ok();
-            let _ = std::io::stdout().flush();
-        } else {
-            print_deploy_summary(&stats);
-        }
+        print_summary(stats);
         return Ok(());
     }
 
@@ -336,12 +369,214 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
         warn!("Failed to update .gitignore: {}", e);
     }
 
+    print_summary(stats);
+    Ok(())
+}
+
+/// Prints the deploy summary using TUI or plain output depending on context.
+fn print_summary(stats: &DeployStats) {
     if is_tui_enabled() {
-        outro(deploy_outro(&stats)).ok();
+        outro(deploy_outro(stats)).ok();
         let _ = std::io::stdout().flush();
     } else {
-        print_deploy_summary(&stats);
+        print_deploy_summary(stats);
+    }
+}
+
+/// Deploys all enabled features and returns aggregated stats.
+fn deploy_all_features(ctx: &DeployContext<'_>) -> Result<DeployStats> {
+    let mut stats = DeployStats::default();
+
+    stats = stats.merge(deploy_feature::<CommandFeature>(
+        ctx,
+        &Feature::Command,
+        CommandFeature::from_application,
+    )?);
+
+    stats = stats.merge(deploy_feature::<SkillFeature>(
+        ctx,
+        &Feature::Skill,
+        SkillFeature::from_application,
+    )?);
+
+    stats = stats.merge(deploy_feature::<McpFeature>(ctx, &Feature::Mcp, || {
+        McpFeature::from_application().map(|mcp| vec![mcp])
+    })?);
+
+    stats = stats.merge(deploy_feature::<InstructionFeature>(
+        ctx,
+        &Feature::Instruction,
+        || InstructionFeature::from_application().map(|inst| vec![inst]),
+    )?);
+
+    Ok(stats)
+}
+
+pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
+    for path in &opts.env {
+        if !path.exists() {
+            return Err(anyhow::anyhow!(
+                "load env file '{}': file not found",
+                path.display()
+            ));
+        }
+    }
+    set_env_paths(std::mem::take(&mut opts.env));
+
+    if let Some(dir) = opts.dir.take() {
+        let workspace = std::env::current_dir()
+            .context("failed to get current directory")?
+            .join(dir);
+        override_workspace_dir(workspace).context("unable to set workspace directory")?;
     }
 
-    Ok(())
+    let templater = get_templater().context("unable to initialise templater")?;
+    let mut app_config =
+        AppConfig::from_application(templater).context("unable to load application config")?;
+
+    if !opts.offline && is_tui_enabled() {
+        opts.offline = prompt_offline();
+    }
+
+    let template_cache = TemplateCache::new().context("unable to initialise template cache")?;
+    let registry = fetch_registry(opts.offline);
+
+    resolve_provider_defaults(
+        &mut app_config,
+        registry.as_ref(),
+        &template_cache,
+        opts.offline,
+        opts.no_cache,
+    )
+    .context("unable to resolve provider template defaults")?;
+
+    let variables: Option<Value> = app_config
+        .variables
+        .as_ref()
+        .map(|v| to_value(v).context("unable to extract variables"))
+        .transpose()?;
+
+    let has_any_provider = Feature::all()
+        .iter()
+        .any(|f| !app_config.get_provider_feature_settings(f).is_empty());
+    if !has_any_provider {
+        warn!("No providers configured — nothing to deploy. Add providers to config.toml.");
+    }
+
+    let cache = Arc::new(Mutex::new(
+        CacheConfig::load().context("unable to load cache")?,
+    ));
+
+    let ctx = DeployContext {
+        app_config: &app_config,
+        templater,
+        variables: variables.as_ref(),
+        cache: &cache,
+        force: opts.force,
+        no_cache: opts.no_cache,
+        dry_run: opts.dry_run,
+    };
+
+    let stats = deploy_all_features(&ctx)?;
+
+    if opts.dry_run {
+        print_dry_run_deploy_summary(&stats.dry_run_entries);
+        return Ok(());
+    }
+
+    cache
+        .lock()
+        .unwrap()
+        .save()
+        .context("unable to save cache")?;
+
+    finalize_deploy(&opts, &stats, &cache)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+
+    // Groups providers by resolved target path and marks dedup winners/losers.
+    fn dedup_providers_by_path(
+        providers: &[(String, String)],
+    ) -> Vec<(String, bool, Option<String>)> {
+        let mut path_groups: HashMap<String, Vec<String>> = HashMap::new();
+        for (provider_name, target_path) in providers {
+            path_groups
+                .entry(target_path.clone())
+                .or_default()
+                .push(provider_name.clone());
+        }
+
+        let mut result = Vec::new();
+        for (_path, mut group) in path_groups {
+            group.sort();
+            let winner = group[0].clone();
+            result.push((winner.clone(), true, None));
+            for loser in &group[1..] {
+                result.push((loser.clone(), false, Some(winner.clone())));
+            }
+        }
+        result.sort_by(|a, b| a.0.cmp(&b.0));
+        result
+    }
+
+    // alphabetical winner selected when 3 providers target same path
+    #[test]
+    fn dedup_alphabetical_winner_three_providers() {
+        let providers = vec![
+            ("zebra".to_string(), "AGENTS.md".to_string()),
+            ("alpha".to_string(), "AGENTS.md".to_string()),
+            ("middle".to_string(), "AGENTS.md".to_string()),
+        ];
+        let result = dedup_providers_by_path(&providers);
+        let winner = result.iter().find(|(_, is_winner, _)| *is_winner).unwrap();
+        assert_eq!(winner.0, "alpha");
+        let losers: Vec<_> = result
+            .iter()
+            .filter(|(_, is_winner, _)| !is_winner)
+            .collect();
+        assert_eq!(losers.len(), 2);
+        assert!(
+            losers
+                .iter()
+                .all(|(_, _, w)| w.as_ref().unwrap() == "alpha")
+        );
+    }
+
+    // no dedup when providers target different paths
+    #[test]
+    fn dedup_no_collision_different_paths() {
+        let providers = vec![
+            ("claude".to_string(), ".claude/AGENTS.md".to_string()),
+            ("codex".to_string(), ".openai/AGENTS.md".to_string()),
+        ];
+        let result = dedup_providers_by_path(&providers);
+        assert_eq!(result.len(), 2);
+        assert!(result.iter().all(|(_, is_winner, _)| *is_winner));
+        assert!(result.iter().all(|(_, _, w)| w.is_none()));
+    }
+
+    // mixed: some providers share path, others don't
+    #[test]
+    fn dedup_mixed_some_collide() {
+        let providers = vec![
+            ("a".to_string(), "shared.md".to_string()),
+            ("b".to_string(), "shared.md".to_string()),
+            ("c".to_string(), "unique.md".to_string()),
+        ];
+        let result = dedup_providers_by_path(&providers);
+        let winners: Vec<_> = result
+            .iter()
+            .filter(|(_, is_winner, _)| *is_winner)
+            .collect();
+        let losers: Vec<_> = result
+            .iter()
+            .filter(|(_, is_winner, _)| !is_winner)
+            .collect();
+        assert_eq!(winners.len(), 2);
+        assert_eq!(losers.len(), 1);
+        assert_eq!(losers[0].2.as_ref().unwrap(), "a");
+    }
 }

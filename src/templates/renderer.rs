@@ -17,6 +17,19 @@ use crate::{
     },
 };
 
+/// Resolves a Handlebars target path template to a concrete `PathBuf`.
+pub(crate) fn resolve_target_path(
+    templater: &Templater,
+    target_str: &str,
+    variables: Option<&Value>,
+) -> Result<PathBuf> {
+    Ok(PathBuf::from(
+        templater
+            .render_template(RenderType::Content(target_str.to_string()), variables)
+            .context("unable to render target path")?,
+    ))
+}
+
 /// Renders a feature for a provider, applying cache skip/detect logic.
 #[allow(clippy::too_many_arguments)]
 pub fn render_feature_with_settings<T: FeatureTrait>(
@@ -45,14 +58,8 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
         .transpose()?
         .flatten();
     let target_vars = merge_json(variables, name_var.as_ref());
-    let target_path = PathBuf::from(
-        templater
-            .render_template(
-                RenderType::Content(target_str.to_string()),
-                Some(&target_vars),
-            )
-            .context("unable to render target path")?,
-    );
+    let target_path = resolve_target_path(templater, target_str, Some(&target_vars))
+        .context("unable to render target path")?;
 
     let local_vars = feature_settings
         .variables
@@ -236,5 +243,30 @@ mod tests {
             err.contains("unable to render template content for provider 'my-provider'"),
             "expected 'unable to render template content for provider' in error, got: {err}"
         );
+    }
+
+    // resolve_target_path renders a plain path without variables
+    #[test]
+    fn resolve_target_path_plain_string() {
+        let Ok(tmp) = setup_test_workspace() else {
+            return;
+        };
+        let templater = Templater::new().unwrap();
+        let path = resolve_target_path(&templater, ".claude/AGENTS.md", None).unwrap();
+        assert_eq!(path, PathBuf::from(".claude/AGENTS.md"));
+        let _ = tmp;
+    }
+
+    // resolve_target_path renders variables in the target template
+    #[test]
+    fn resolve_target_path_with_variables() {
+        let Ok(tmp) = setup_test_workspace() else {
+            return;
+        };
+        let templater = Templater::new().unwrap();
+        let vars = serde_json::json!({ "dir": { "workspace": tmp.path().to_string_lossy() } });
+        let path =
+            resolve_target_path(&templater, "{{ dir.workspace }}/AGENTS.md", Some(&vars)).unwrap();
+        assert!(path.to_string_lossy().ends_with("AGENTS.md"));
     }
 }
