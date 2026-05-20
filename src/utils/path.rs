@@ -45,7 +45,7 @@ fn find_workspace_dir(
 }
 
 /// Pre-populate the workspace dir from an explicit path; must be called before get_workspace_dir().
-pub fn override_workspace_dir(path: PathBuf) -> Result<()> {
+pub(crate) fn override_workspace_dir(path: PathBuf) -> Result<()> {
     if !path.join(ROOT_DIR).is_dir() {
         anyhow::bail!("No `{}` directory found in `{}`", ROOT_DIR, path.display());
     }
@@ -55,7 +55,7 @@ pub fn override_workspace_dir(path: PathBuf) -> Result<()> {
 }
 
 /// Resolve an optional `--cwd` path against CWD and override the workspace dir.
-pub fn resolve_and_override_workspace(cwd: Option<PathBuf>) -> Result<()> {
+pub(crate) fn resolve_and_override_workspace(cwd: Option<PathBuf>) -> Result<()> {
     let Some(cwd) = cwd else {
         return Ok(());
     };
@@ -65,7 +65,7 @@ pub fn resolve_and_override_workspace(cwd: Option<PathBuf>) -> Result<()> {
     override_workspace_dir(absolute)
 }
 
-pub fn get_workspace_dir() -> Result<PathBuf> {
+pub(crate) fn get_workspace_dir() -> Result<PathBuf> {
     WORKSPACE_DIR
         .get_or_init(|| {
             let current = match env::current_dir() {
@@ -78,7 +78,7 @@ pub fn get_workspace_dir() -> Result<PathBuf> {
         .map_err(|e| anyhow!(e.clone()))
 }
 
-pub fn get_config_dir() -> Result<PathBuf> {
+pub(crate) fn get_config_dir() -> Result<PathBuf> {
     let base =
         dirs::config_dir().ok_or_else(|| anyhow!("failed to locate user config directory"))?;
     let config_dir = base.join("dotagents");
@@ -92,18 +92,18 @@ pub fn get_config_dir() -> Result<PathBuf> {
     Ok(config_dir)
 }
 
-pub fn get_application_dir() -> Result<PathBuf> {
+pub(crate) fn get_application_dir() -> Result<PathBuf> {
     let app_dir = get_workspace_dir()?.join(ROOT_DIR);
     get_dir_or_die(app_dir)
 }
 
-pub fn get_commands_dir() -> Result<PathBuf> {
+pub(crate) fn get_commands_dir() -> Result<PathBuf> {
     let commands_dir = get_application_dir()?.join("commands");
     get_dir_or_die(commands_dir)
 }
 
 /// Returns the user-level template source cache directory, creating it if necessary.
-pub fn get_global_template_cache_dir() -> Result<PathBuf> {
+pub(crate) fn get_global_template_cache_dir() -> Result<PathBuf> {
     let config_base = get_config_dir()?;
     let dir = config_base.join(CACHE_DIR).join(TEMPLATE_CACHE_SUBDIR);
     std::fs::create_dir_all(&dir).map_err(|e| {
@@ -116,7 +116,7 @@ pub fn get_global_template_cache_dir() -> Result<PathBuf> {
     Ok(dir)
 }
 
-pub fn get_skills_dir() -> Result<PathBuf> {
+pub(crate) fn get_skills_dir() -> Result<PathBuf> {
     let skills_dir = get_application_dir()?.join("skills");
     get_dir_or_die(skills_dir)
 }

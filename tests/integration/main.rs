@@ -24,6 +24,7 @@ use tempfile::TempDir;
 
 mod cache;
 mod config;
+mod dedup;
 mod features;
 mod gitignore;
 mod render;

@@ -10,7 +10,7 @@ use crate::utils::{
     path::get_application_dir,
 };
 
-/// Sentinel key used in place of item name for singleton features (mcp, instructions).
+/// Sentinel key used in place of item name for singleton features.
 pub(crate) const CACHE_SINGLETON_KEY: &str = "_";
 
 /// A single cached deploy entry for one (provider, feature, item) tuple.

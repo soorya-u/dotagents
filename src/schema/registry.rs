@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use anyhow::{Result, anyhow};
 use serde::Deserialize;
 
-use crate::utils::http::do_get;
+use crate::utils::http::fetch_template;
 
 /// The full provider registry, deserialised from `registry.json`.
 #[derive(Debug, Clone, Deserialize)]
@@ -30,8 +30,8 @@ pub(crate) struct ProviderRegistryEntry {
 impl Registry {
     /// Fetches and deserialises the registry from `url`.
     pub(crate) fn fetch(url: &str) -> Result<Self> {
-        let body =
-            do_get(url).map_err(|e| anyhow!("Failed to fetch registry from {}: {}", url, e))?;
+        let body = fetch_template(url)
+            .map_err(|e| anyhow!("Failed to fetch registry from {}: {}", url, e))?;
         serde_json::from_str(&body)
             .map_err(|e| anyhow!("Failed to parse registry JSON from {}: {}", url, e))
     }

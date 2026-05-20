@@ -75,11 +75,11 @@ impl Default for GlobalConfig {
 
 impl TomlConfig for GlobalConfig {}
 
+#[cfg(feature = "skills-add")]
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[cfg(feature = "skills-add")]
     #[test]
     fn package_runner_field_deserialises_in_global_config() {
         for (toml_val, expected) in [
@@ -94,14 +94,12 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "skills-add")]
     #[test]
     fn package_runner_absent_yields_none_in_global_config() {
         let config: GlobalConfig = toml::from_str("features = []\n").unwrap();
         assert_eq!(config.package_runner, None);
     }
 
-    #[cfg(feature = "skills-add")]
     #[test]
     fn invalid_package_runner_value_fails_deserialisation() {
         let result: Result<GlobalConfig, _> = toml::from_str("package-runner = \"cargo\"\n");

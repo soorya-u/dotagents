@@ -10,5 +10,5 @@ mod skills;
 pub(crate) mod ui;
 mod undeploy;
 
-pub(crate) use options::get_options;
+pub(crate) use options::Options;
 pub(crate) use runner::run;

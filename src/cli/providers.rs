@@ -4,7 +4,7 @@ use serde::Serialize;
 use crate::constants::domain::registry_url;
 use crate::prelude::*;
 use crate::schema::registry::Registry;
-use crate::utils::tui::is_tui_enabled;
+use crate::utils::{http::fetch_template, tui::is_tui_enabled};
 
 use super::options::ProvidersLsOptions;
 
@@ -20,8 +20,8 @@ struct DisplayProvider {
 fn fetch_registry() -> Result<Registry> {
     let url = registry_url();
     debug!("Fetching provider registry from {}", url);
-    let body = crate::utils::http::do_get(url)
-        .with_context(|| format!("Failed to fetch registry from {}", url))?;
+    let body =
+        fetch_template(url).with_context(|| format!("Failed to fetch registry from {}", url))?;
 
     let registry: Registry = serde_json::from_str(&body)
         .with_context(|| format!("Failed to parse registry JSON from {}", url))?;

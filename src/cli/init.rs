@@ -1,25 +1,27 @@
 use crate::prelude::*;
+use anyhow::{Context, Result};
 use std::{
     fs,
     path::{Path, PathBuf},
 };
 
 use super::options::{Feature, InitOptions, InitTemplate};
-use crate::cli::ui;
-use crate::constants::{
-    dir::{COMMANDS_DIR, ROOT_DIR, SKILLS_DIR},
-    file::{
-        ENV_EXAMPLE_FILE, ENV_FILE, GITIGNORE_FILE, GLOBAL_CONFIG_FILE, INSTRUCTIONS_FILE,
-        LOCAL_CONFIG_FILE, MCP_FILE, SKILL_FILE,
+use crate::{
+    cli::ui,
+    constants::{
+        dir::{COMMANDS_DIR, ROOT_DIR, SKILLS_DIR},
+        file::{
+            ENV_EXAMPLE_FILE, ENV_FILE, GITIGNORE_FILE, GLOBAL_CONFIG_FILE, INSTRUCTIONS_FILE,
+            LOCAL_CONFIG_FILE, MCP_FILE, SKILL_FILE,
+        },
+        mocks,
     },
-    mocks,
+    core::features::{
+        command::CommandFeature, instruction::InstructionFeature, mcp::McpFeature,
+        skill::SkillFeature,
+    },
+    utils::{fs::write_file, tui::is_tui_enabled},
 };
-use crate::core::features::{
-    command::CommandFeature, instruction::InstructionFeature, mcp::McpFeature, skill::SkillFeature,
-};
-use crate::utils::fs::write_file;
-use crate::utils::tui::is_tui_enabled;
-use anyhow::{Context, Result};
 
 /// Represents a file to write during init, with an optional condition to skip it.
 struct InitFile {

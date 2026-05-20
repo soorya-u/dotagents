@@ -1,5 +1,3 @@
-// Static content used to scaffold workspace files during `dotagents init`.
-
 /// Starter hello.md command mock content used during `init`.
 pub(crate) const COMMAND_MOCK: &str = "\
 ---

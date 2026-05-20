@@ -3,11 +3,12 @@ use std::path::PathBuf;
 use crate::prelude::*;
 
 use crate::utils::{
-    fs::{hash_content, read_file, write_file},
+    fs::{read_file, write_file},
+    hash::hash_content,
     path::get_global_template_cache_dir,
 };
 
-/// User-level on-disk cache for downloaded provider template files at `<config_dir>/dotagents/cache/templates/<provider>/<filename>`, validated against `registry.json` SHA-256 checksums.
+/// User-level on-disk cache for downloaded provider template files
 pub(crate) struct TemplateCache {
     base_dir: PathBuf,
 }

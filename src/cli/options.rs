@@ -400,14 +400,6 @@ pub(crate) struct ConfigOptions {
     pub edit: bool,
 }
 
-pub fn get_options() -> Options {
-    let mut opt = Options::parse();
-
-    opt.verbosity = std::cmp::min(2, opt.verbosity);
-
-    opt
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

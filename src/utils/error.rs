@@ -4,8 +4,7 @@ use std::fmt::Write;
 use crate::prelude::*;
 
 /// Formats an anyhow error chain into a display string.
-/// The outermost message gets "Failed to " prefix; inner causes appear under "Caused by:".
-pub(crate) fn format_error_chain(error: &Error) -> String {
+fn format_error_chain(error: &Error) -> String {
     let mut chain = error.chain();
     let mut error_message = format!("Failed to {}\nCaused by:\n", chain.next().unwrap());
 

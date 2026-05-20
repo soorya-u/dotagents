@@ -16,10 +16,6 @@ fn read_gitignore(path: &PathBuf) -> Result<String> {
 }
 
 /// Collapse generated paths into directory patterns where possible.
-///
-/// Walks the directory tree bottom-up: if every entry in a directory on disk is
-/// a generated path (or a recursively collapsible subdirectory), the directory
-/// is collapsed to a single trailing-slash pattern (e.g. `.claude/commands/`).
 pub(crate) fn collapse_paths(paths: &[String], workspace_root: &Path) -> Vec<String> {
     if paths.is_empty() {
         return vec![];

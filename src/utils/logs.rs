@@ -18,8 +18,9 @@ pub(crate) fn log_config() -> Option<&'static LogConfig> {
 }
 
 /// Initialises logging: TTY → cliclack backend; non-TTY → simplelog backend.
-pub(crate) fn set_log_config(quiet: bool, verbosity: u8) {
+pub(crate) fn set_log_config(quiet: bool, mut verbosity: u8) {
     let tty = is_tui_enabled();
+    verbosity = std::cmp::min(2, verbosity);
 
     let level = if quiet {
         LevelFilter::Error

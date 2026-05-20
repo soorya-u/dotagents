@@ -41,7 +41,7 @@ fn validate_url(url: &str) -> Result<()> {
 }
 
 /// Perform an HTTP GET and return the response body as a `String`.
-pub(crate) fn do_get(url: &str) -> Result<String> {
+fn do_get(url: &str) -> Result<String> {
     let agent = ureq::Agent::config_builder()
         .timeout_global(Some(HTTP_TIMEOUT))
         .build()
