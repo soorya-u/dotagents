@@ -3,18 +3,23 @@ use std::path::{Path, PathBuf};
 
 use crate::prelude::*;
 
-use crate::cli::options::UndeployOptions;
-use crate::cli::ui::dry_run::{
-    DryRunUndeployEntry, UndeployDryRunStatus, print_dry_run_undeploy_summary,
+use crate::{
+    cli::{
+        options::UndeployOptions,
+        ui::{
+            dry_run::{DryRunUndeployEntry, UndeployDryRunStatus, print_dry_run_undeploy_summary},
+            undeploy::{print_undeploy_summary, prompt_confirm_undeploy, prompt_delete_edited},
+        },
+    },
+    core::config::CacheConfig,
+    utils::{
+        fs::{delete_file, prune_empty_dir},
+        gitignore::{clear_gitignore_fence, rebuild_fence_from_cache},
+        hash::hash_file,
+        path::{get_workspace_dir, override_workspace_dir},
+        tui::is_tui_enabled,
+    },
 };
-use crate::cli::ui::undeploy::{
-    print_undeploy_summary, prompt_confirm_undeploy, prompt_delete_edited,
-};
-use crate::core::config::CacheConfig;
-use crate::utils::fs::{delete_file, hash_file, prune_empty_dir};
-use crate::utils::gitignore::{clear_gitignore_fence, rebuild_fence_from_cache};
-use crate::utils::path::{get_workspace_dir, override_workspace_dir};
-use crate::utils::tui::is_tui_enabled;
 
 pub(super) fn undeploy(mut opts: UndeployOptions) -> Result<()> {
     // Override workspace root before any path resolution is triggered.

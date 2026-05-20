@@ -43,6 +43,15 @@ impl Feature {
             Feature::Skill,
         ]
     }
+
+    pub(crate) fn feature_filename(&self) -> &'static str {
+        match self {
+            Feature::Command => "command.hbs",
+            Feature::Instruction => "instruction.hbs",
+            Feature::Mcp => "mcp.hbs",
+            Feature::Skill => "skill.hbs",
+        }
+    }
 }
 
 impl fmt::Display for Feature {

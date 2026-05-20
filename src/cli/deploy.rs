@@ -21,8 +21,8 @@ use crate::templates::{
     TemplateCache, Templater, get_templater, registry_url, render_feature_with_settings,
     resolve_provider_defaults,
 };
-use crate::utils::fs::{hash_content, hash_file};
 use crate::utils::gitignore::rebuild_fence_from_cache;
+use crate::utils::hash::{hash_content, hash_file};
 use crate::utils::path::{get_workspace_dir, override_workspace_dir};
 use crate::utils::tui::is_tui_enabled;
 use cliclack::{outro, spinner};

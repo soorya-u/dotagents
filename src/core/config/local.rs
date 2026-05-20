@@ -90,11 +90,11 @@ impl Default for LocalConfig {
 
 impl TomlConfig for LocalConfig {}
 
+#[cfg(feature = "skills-add")]
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[cfg(feature = "skills-add")]
     #[test]
     fn package_runner_field_deserialises_in_local_config() {
         for (toml_val, expected) in [
@@ -109,7 +109,6 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "skills-add")]
     #[test]
     fn package_runner_absent_yields_none_in_local_config() {
         let config: LocalConfig = toml::from_str("").unwrap();

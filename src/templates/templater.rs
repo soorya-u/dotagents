@@ -17,7 +17,7 @@ use crate::{
         file::{GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE},
         helpers::IF_EQ_HELPER,
     },
-    utils::{merge_json, merge_many_json},
+    utils::json::{merge_json, merge_many_json},
 };
 
 static TEMPLATER: OnceLock<Templater> = OnceLock::new();
@@ -35,7 +35,6 @@ pub fn get_templater() -> Result<&'static Templater> {
 
 pub enum TemplateSource {
     File(String),
-    #[allow(dead_code)]
     Text(String),
 }
 

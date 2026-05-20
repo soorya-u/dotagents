@@ -11,8 +11,9 @@ use crate::{
     templates::{RenderType, Templater, variables::get_user_defined_variables},
     utils::http::fetch_template,
     utils::{
-        fs::{hash_content, hash_file, read_file, write_file},
-        merge_json,
+        fs::{read_file, write_file},
+        hash::{hash_content, hash_file},
+        json::merge_json,
     },
 };
 

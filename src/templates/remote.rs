@@ -7,20 +7,10 @@ use crate::core::config::{AppConfig, FeatureSettings, GlobalConfig, Providers, T
 use crate::core::features::Feature;
 use crate::schema::registry::Registry;
 use crate::templates::TemplateCache;
-use crate::utils::fs::hash_content;
+use crate::utils::hash::hash_content;
 use crate::utils::http::fetch_template;
 
 pub(crate) use crate::constants::domain::registry_url;
-
-/// Maps a `Feature` to the `.hbs` filename used in a provider directory.
-fn feature_filename(feature: &Feature) -> &'static str {
-    match feature {
-        Feature::Command => "command.hbs",
-        Feature::Instruction => "instruction.hbs",
-        Feature::Mcp => "mcp.hbs",
-        Feature::Skill => "skill.hbs",
-    }
-}
 
 /// Fetches `url` or serves from cache; bypasses cache entirely when `no_cache` is `true`.
 pub(crate) fn fetch_or_cache_file(
@@ -238,7 +228,7 @@ fn resolve_for_provider(
     // Step 3: pre-warm the .hbs cache and rewrite `template` to the local cache path.
     // This lets subsequent deploys read the template from disk rather than fetching it again.
     if let Some(template_url) = feature_settings.template.as_deref() {
-        let filename = feature_filename(feature);
+        let filename = feature.feature_filename();
         let hbs_checksum = registry
             .and_then(|r| r.providers.get(provider))
             .and_then(|e| e.checksums.as_ref())
@@ -446,7 +436,7 @@ mod tests {
         let (_dir, cache) = make_cache_dir();
         let content = "{{command.content}}";
         cache.write("claude", "command.hbs", content).unwrap();
-        let expected = crate::utils::fs::hash_content(content);
+        let expected = hash_content(content);
 
         // Pass a bad URL — if it tries to fetch, it will fail
         let result = fetch_or_cache_file(

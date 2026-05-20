@@ -1,5 +1,6 @@
 pub(crate) mod dir;
 pub(crate) mod domain;
+pub(crate) mod env;
 pub(crate) mod file;
 pub(crate) mod helpers;
 pub(crate) mod mocks;
