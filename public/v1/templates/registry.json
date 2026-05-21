@@ -7,7 +7,7 @@
         "provider.toml": "ad672960227c2d098e0c36496ddcc858ec1192a62804d3d5ea7d10bb9369aa74",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
-        "mcp.hbs": "d5b3317da3005d270aa1b75c12fec5505de442a7eac43628107665bfd32cec4b",
+        "mcp.hbs": "8067a59d594cb8bb0d960e9571ecae6d974579d2dfc5d1092dc923a415826230",
         "skill.hbs": "0bc2f0d9b91f35f297e7239d2f86207a25a1e75cf97c0e7ec25dfe409452f227"
       },
       "name": "Amp Code",
@@ -19,7 +19,7 @@
         "provider.toml": "b7dca94e41a18d5a0ff326aa72d93ffe946f1665f530c98f3386db2d0fbb09b0",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
-        "mcp.hbs": "eba8dfe30838e871482a187136bd1bb0f3bb07e653106ab09b43e4271bbe9219",
+        "mcp.hbs": "0eb39fe6be1e07a6f1cee8b8f70b7e6ccdc2f4c7d026a18e464f3ac1682483e2",
         "skill.hbs": "0bc2f0d9b91f35f297e7239d2f86207a25a1e75cf97c0e7ec25dfe409452f227"
       },
       "name": "Auggie CLI",
@@ -30,7 +30,7 @@
       "checksums": {
         "provider.toml": "f470be8bc9c71d712501d8e7a64e705a8c7e761800ef42dbfd51902ff84a75e1",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
-        "mcp.hbs": "a60a9ee61bc113facc57dbe0f018f6479c593bcc82515c8ff871d18c1c6771fc",
+        "mcp.hbs": "80583db5c6814500111d486ea54bda34d97d78bd1b9f3569df36d8f4d22ae1de",
         "skill.hbs": "31df9a3d9d48b3c2573d6c6add5db503f9de6b9bca65a749ef0cf677affd934e"
       },
       "name": "AutoHand Code",
@@ -42,7 +42,7 @@
         "provider.toml": "ea7bd3b4cdd1eb57819f73316c12004952205e22704440e773ad9c4e24a87546",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
-        "mcp.hbs": "37ae65f1b32b20a17a11afc452c4c9d1eeffcfc16627519110ae34356140d380",
+        "mcp.hbs": "3586dc4529835afac0441857e889f23fe92e9bb6893fd21bd541c609cd939d4f",
         "skill.hbs": "2355c97c50ed9b2f74a5de44869f2a72ba1cd4323b58050ee46a5d1ceb778eb4"
       },
       "name": "Claude Code",
@@ -65,7 +65,7 @@
         "provider.toml": "305c0a32a928e40831773631e25e8407af1c6e126d920f1485c040a8fcfacf49",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
-        "mcp.hbs": "76146907cede8254a66d5a9cad958059e12f547243caa20de93dcea2fa969491",
+        "mcp.hbs": "5270fde45325fa16278394291b80e8915b4df5548fa93ce4e3c36e8f4df58441",
         "skill.hbs": "2184ae9cf4ac313416313e314a0a5660622e83b8bdee7b6bce0e2bac0cbab996"
       },
       "name": "Codex CLI",
@@ -77,7 +77,7 @@
         "provider.toml": "2215c23870a308ac70cb6eb45a9fe3e1b52a03b02ab1eb6dec72877ac1e82ee7",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instructions.hbs": "b222124d15921246abc76e3ec91e7968ad85f436632adb47ce777ce8eafcd1d3",
-        "mcp.hbs": "54bc8b6dda17e65322eb16a4edee638a0f487107a983bbffc3f9cd55f7857aaa",
+        "mcp.hbs": "6b08add44e795f27e3e7fc48f4ef65930442da74cb8273718157a586289cc187",
         "skill.hbs": "378cfb9a49f8f059add74e34080ab88db5990bd064d2fb9bdccaf40a45442eb0"
       },
       "name": "Copilot CLI",
@@ -89,7 +89,7 @@
         "provider.toml": "551bda72202573d14486bfc504d30cc8f15a3ebf450d63d4eac6fda5e5aeaab9",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
-        "mcp.hbs": "66c815bd39cd9fa4eaacd63568ebb1e696d283422afa935b80c464d7df5da8f6",
+        "mcp.hbs": "0ead69a7a6b3fb273fd4d9fbfee6f2159353dc894d14153cf693a0a49b73f5c3",
         "skill.hbs": "50dfe5f77fe66467fe524d55920d806bde4e519a942cb307d780128dc4451878"
       },
       "name": "Cursor CLI",
@@ -100,7 +100,7 @@
       "checksums": {
         "provider.toml": "3e25c79c33e591a84b54350338621f5712c81b6691207db8d95e238fbdec7b4c",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
-        "mcp.hbs": "37ae65f1b32b20a17a11afc452c4c9d1eeffcfc16627519110ae34356140d380",
+        "mcp.hbs": "6ff01b6526e6a891a16a3735b9f1ab9072a7776973c5810b0aa1dd8ba912b57c",
         "skill.hbs": "378cfb9a49f8f059add74e34080ab88db5990bd064d2fb9bdccaf40a45442eb0"
       },
       "name": "Deep Agents CLI",
@@ -112,7 +112,7 @@
         "provider.toml": "df5bfb94f7def062c3f581c32898f10f440e35bc8fad922c9953a267d60ded15",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
-        "mcp.hbs": "02845c0660e6d31b7908b3370ae144b79d2175e8dc2fede931e826f84126ac45",
+        "mcp.hbs": "28c6aa2b4bfbe0ecf14292c399777d5850b1593d1f9af7c8c2e01483d0a78f5f",
         "skill.hbs": "b209ee730660a57952b3f91c0c063f6dc539e5f6ede657ac4c2727c39ece611d"
       },
       "name": "Factory CLI",
@@ -124,7 +124,7 @@
         "provider.toml": "fa0fab94e69e579d36fb71bbf94e813658df4f78e3eb454e1e6ca936a97ff6a1",
         "command.hbs": "009ad4a010c91f439c62ea47cd5fcc71d276d100bb9174b79d56bb4c3b7b6df3",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
-        "mcp.hbs": "fbb971bb237ff0996718968a1fb2eccef56a64e315c76a8796b8f0da29e3ae2c",
+        "mcp.hbs": "095b4d5453773d07856e2228fbf527492c5c18d0530c7f0be4bc2285070a161a",
         "skill.hbs": "378cfb9a49f8f059add74e34080ab88db5990bd064d2fb9bdccaf40a45442eb0"
       },
       "name": "Gemini CLI",
@@ -136,7 +136,7 @@
         "provider.toml": "e2560d1eba7fb4091e90bfe5c1b55520f5fa0e048e29ec46cb755a18808f61ca",
         "command.hbs": "27da9b4869cfb52fe8ac303b4e80b0146e094f123a92f670b96eb9614c403fd4",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
-        "mcp.hbs": "2b8a672ecee27503275962f91b58b43b8374047aa4c1a3d4aa065e8220c5f273",
+        "mcp.hbs": "8140cc3175389301e9c6b5058340e693799e0b880826aa4653ed49fdd447d914",
         "skill.hbs": "378cfb9a49f8f059add74e34080ab88db5990bd064d2fb9bdccaf40a45442eb0"
       },
       "name": "Goose",
@@ -148,7 +148,7 @@
         "provider.toml": "b2e06ededc8b460451e76a353c237624a18a5c886fc45df9f1e0af9d007cf439",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
-        "mcp.hbs": "fbb971bb237ff0996718968a1fb2eccef56a64e315c76a8796b8f0da29e3ae2c",
+        "mcp.hbs": "f3652009a56d2ae104947fc22124f191590d2c14bbbc9d76e4f761a8e5db5714",
         "skill.hbs": "378cfb9a49f8f059add74e34080ab88db5990bd064d2fb9bdccaf40a45442eb0"
       },
       "name": "Junie CLI",
@@ -160,7 +160,7 @@
         "provider.toml": "3a2d7c173072f1f888176ccd0211adb5fa35630eb19ab27faa52391b19d51616",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
-        "mcp.hbs": "9adfcc19ade3ee7dfdae646f98e631af4259181f7728f7f9cdb1069ea3c847f7",
+        "mcp.hbs": "82d6683b1f2771d7f8d696587638e819aaaa877596eac21ba63386dce39c9417",
         "skill.hbs": "fca3e57742c075cb3d86ace37c1ee92927129f3597ebee8916389f2ea929bc9c"
       },
       "name": "Kilo Code",
@@ -171,7 +171,7 @@
       "checksums": {
         "provider.toml": "7a998f4e4dc4550fbc9632e57399af7cc1bac9baa1a95ef359021e1c56ea6575",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
-        "mcp.hbs": "fbb971bb237ff0996718968a1fb2eccef56a64e315c76a8796b8f0da29e3ae2c",
+        "mcp.hbs": "f3652009a56d2ae104947fc22124f191590d2c14bbbc9d76e4f761a8e5db5714",
         "skill.hbs": "fca3e57742c075cb3d86ace37c1ee92927129f3597ebee8916389f2ea929bc9c"
       },
       "name": "Kimi Code",
@@ -182,7 +182,7 @@
       "checksums": {
         "provider.toml": "943f9d458e5ec35ecacfcede414f6582a9f2f2818650d21736ba6f03773f4640",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
-        "mcp.hbs": "a307c969bb8d542372250eed7d778c6625d36e1f80a27daa5e7a89a5984e993c",
+        "mcp.hbs": "0199a47e2f10298557ebd3ede53b3093f4c3abb19afc193fbdf45888622400bf",
         "skill.hbs": "06f32b85a93e98674b337b4df077cad5930112501acf1c20c3c81c24926adf77"
       },
       "name": "Mistral Vibe",
@@ -194,7 +194,7 @@
         "provider.toml": "d7e1c987d6f6e4494da278fb5042125866e6bc1af6fa62ada83ba984dc7c2b6c",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
-        "mcp.hbs": "8b00064f89fc32858a2f25be0302bfc7a15813f776facdfa906710526147b4d3",
+        "mcp.hbs": "a7c14e658bcff8f926c73a7ebf0ca0675a0a7db884fbd939928ea4aa97ed12f2",
         "skill.hbs": "fca3e57742c075cb3d86ace37c1ee92927129f3597ebee8916389f2ea929bc9c"
       },
       "name": "OpenCode",
@@ -216,7 +216,7 @@
         "provider.toml": "3890e91c0c3bf9ff1e478938ab3622188d9dc65ba77f0599d7fec1a836b3ecb4",
         "command.hbs": "6650ba27e033d911b3ea2dd264c2a5ed1a7724630bc16a08e36d4423c3beb48f",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
-        "mcp.hbs": "fbb971bb237ff0996718968a1fb2eccef56a64e315c76a8796b8f0da29e3ae2c",
+        "mcp.hbs": "bf776db19285c184c4054ad213b5424b61b532a4d77bad4b967fc7e6ccb28360",
         "skill.hbs": "fca3e57742c075cb3d86ace37c1ee92927129f3597ebee8916389f2ea929bc9c"
       },
       "name": "Qoder CLI",
@@ -227,7 +227,7 @@
       "checksums": {
         "provider.toml": "13f76ef8bc4d088b7c83ef99f9ce3d01ec4df825475793abb3ea3a9e4e02293a",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
-        "mcp.hbs": "a2db678dba2dc70469b504891aa0080c794b42a616a7b3676f15781d9aadd928",
+        "mcp.hbs": "92979317e5d81bf95f30bd9119d4e030520d28673cdd9acf5a6885ed626c556f",
         "skill.hbs": "0bc2f0d9b91f35f297e7239d2f86207a25a1e75cf97c0e7ec25dfe409452f227"
       },
       "name": "Qwen CLI",
