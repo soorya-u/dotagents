@@ -5,7 +5,7 @@ description: {{json skill.description}}
 {{/if}}{{#if skill.compatibility}}compatibility: {{json skill.compatibility}}
 {{/if}}{{#if skill.[allowed-tools]}}allowed-tools: {{json skill.[allowed-tools]}}
 {{/if}}{{#if skill.metadata}}metadata:
-{{#each skill.metadata}}  {{@key}}: {{json this}}
+{{#each skill.metadata}}  {{json @key}}: {{json this}}
 {{/each}}
 {{/if}}---
 

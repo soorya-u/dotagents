@@ -2,7 +2,7 @@
 name: {{skill.name}}
 description: {{skill.description}}
 {{#if skill.metadata}}metadata:
-{{#each skill.metadata}}  {{@key}}: {{json this}}
+{{#each skill.metadata}}  {{json @key}}: {{json this}}
 {{/each}}
 {{/if}}---
 
