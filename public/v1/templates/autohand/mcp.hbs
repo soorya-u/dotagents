@@ -5,16 +5,19 @@
       {
         "name": "{{@key}}",
         "transport": "{{this.type}}",
-        {{#ifEq this.type "http"}}
-        "url": "{{this.url}}"{{#if this.headers}},
-        "headers": {{json this.headers}}{{/if}}
-        {{else}}
+        {{#ifEq this.type "stdio"}}
         "command": "{{this.command}}",
         "args": {{json this.args}}{{#if this.env}},
         "env": {{json this.env}}{{/if}}{{#if this.cwd}},
-        "cwd": {{json this.cwd}}{{/if}}{{#if this.env_file}},
-        "env_file": {{json this.env_file}}{{/if}}
-        {{/ifEq}}
+        "cwd": {{json this.cwd}}{{/if}}{{#if this.envFile}},
+        "env_file": {{json this.envFile}}{{/if}}
+        {{else}}
+        "url": "{{this.url}}"{{#if this.headers}},
+        "headers": {{json this.headers}}{{/if}}
+        {{/ifEq}}{{#if this.autoConnect}},
+        "autoConnect": {{json this.autoConnect}}{{/if}}{{#if this.disabled}},
+        "disabled": {{json this.disabled}}{{/if}}{{#if this.disabledTools}},
+        "disabledTools": {{json this.disabledTools}}{{/if}}
       }{{#unless @last}},{{/unless}}
       {{/each}}
     ]

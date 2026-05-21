@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { expect, test } from "@microsoft/tui-test";
 import {
 	cleanup,
@@ -105,6 +105,94 @@ test.describe("deploy CLI – rendered content", () => {
 			const raw = readFileSync(join(d, ".mycode/mcp.json"), "utf8");
 			const parsed = JSON.parse(raw);
 			expect(parsed).toHaveProperty("mcpServers");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	test("expanded MCP config renders mapped provider fields", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			const appDir = join(d, ".dotagents");
+			const configPath = join(appDir, "local.config.toml");
+			const codexTemplate = resolve(
+				process.cwd(),
+				"../../public/v1/templates/codex/mcp.hbs",
+			);
+			const geminiTemplate = resolve(
+				process.cwd(),
+				"../../public/v1/templates/gemini/mcp.hbs",
+			);
+			writeFileSync(
+				configPath,
+				`${readFileSync(configPath, "utf8")}
+
+[providers.codex.mcp]
+template = "${codexTemplate}"
+target = "{{ dir.workspace }}/.codex/config.toml"
+
+[providers.gemini.mcp]
+template = "${geminiTemplate}"
+target = "{{ dir.workspace }}/.gemini/settings.json"
+`,
+			);
+			writeFileSync(
+				join(appDir, "mcp.jsonc"),
+				JSON.stringify(
+					{
+						$schema:
+							"https://dotagents.soorya-u.dev/v1/schemas/mcp.schema.json",
+						servers: {
+							"stdio-server": {
+								type: "stdio",
+								command: "node",
+								args: ["server.js"],
+								enabledTools: ["read"],
+								disabledTools: ["delete"],
+								required: true,
+								startupTimeoutSec: 11,
+								toolTimeoutSec: 22,
+								bearerTokenEnvVar: "TOKEN",
+								envVars: ["TOKEN"],
+							},
+							"http-server": {
+								type: "http",
+								url: "https://example.com/mcp",
+								headers: { Authorization: "Bearer token" },
+							},
+							"sse-server": {
+								type: "sse",
+								url: "https://example.com/sse",
+								headers: { "X-Test": "1" },
+							},
+						},
+					},
+					null,
+					2,
+				),
+			);
+
+			const { exitCode } = run(["deploy", "--offline", "--no-gitignore"], d);
+			expect(exitCode).toBe(0);
+
+			const codex = readFileSync(join(d, ".codex/config.toml"), "utf8");
+			expect(codex).toContain('enabled_tools = ["read"]');
+			expect(codex).toContain('disabled_tools = ["delete"]');
+			expect(codex).toContain("startup_timeout_sec = 11");
+			expect(codex).toContain("tool_timeout_sec = 22");
+			expect(codex).toContain('bearer_token_env_var = "TOKEN"');
+			expect(codex).toContain('env_vars = ["TOKEN"]');
+
+			const gemini = JSON.parse(
+				readFileSync(join(d, ".gemini/settings.json"), "utf8"),
+			);
+			expect(gemini.mcpServers["http-server"].httpUrl).toBe(
+				"https://example.com/mcp",
+			);
+			expect(gemini.mcpServers["sse-server"].url).toBe(
+				"https://example.com/sse",
+			);
 		} finally {
 			cleanup(d);
 		}

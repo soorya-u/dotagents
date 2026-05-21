@@ -3,16 +3,17 @@
     "servers": {
       {{#each mcp.servers}}
       "{{@key}}": {
-        {{#ifEq this.type "http"}}
-        "type": "remote",
-        "url": "{{this.url}}",
-        "enabled": true
-        {{else}}
+        {{#ifEq this.type "stdio"}}
         "type": "local",
         "command": ["{{this.command}}"{{#each this.args}}, {{json this}}{{/each}}],
-        "enabled": true{{#if this.env}},
+        "enabled": {{#if this.disabled}}false{{else}}true{{/if}}{{#if this.env}},
         "environment": {{json this.env}}{{/if}}
-        {{/ifEq}}
+        {{else}}
+        "type": "{{#ifEq this.type "sse"}}sse{{else}}remote{{/ifEq}}",
+        "url": "{{this.url}}",
+        "enabled": {{#if this.disabled}}false{{else}}true{{/if}}
+        {{/ifEq}}{{#if this.disabledTools}},
+        "disabledTools": {{json this.disabledTools}}{{/if}}
       }{{#unless @last}},{{/unless}}
       {{/each}}
     }

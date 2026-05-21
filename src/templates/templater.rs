@@ -3,22 +3,22 @@ use handlebars::Handlebars;
 use serde_json::Value;
 use std::sync::OnceLock;
 
-use crate::templates::variables::{get_dir_variables, get_env_variables};
-use crate::utils::path::get_application_dir;
+use crate::templates::variables::get_env_variables;
 use crate::{
     constants::file::{GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE},
-    utils::json::{merge_json, merge_many_json},
-};
-use crate::{
     constants::helpers::{
-        IF_DEFINED_HELPER, IF_EQ_HELPER, JSON_HELPER, TOML_HELPER, TOML_INLINE_HELPER, YAML_HELPER,
+        IF_DEFINED_HELPER, IF_EQ_HELPER, JSON_HELPER, SNAKE_CASE_HELPER, TOML_HELPER,
+        TOML_INLINE_HELPER, YAML_HELPER,
     },
     templates::{
         helpers::{
-            IfDefinedHelper, IfEqHelper, JsonHelper, TomlHelper, TomlInlineHelper, YamlHelper,
+            IfDefinedHelper, IfEqHelper, JsonHelper, SnakeCaseHelper, TomlHelper, TomlInlineHelper,
+            YamlHelper,
         },
-        variables::{get_command_name_variable, get_skill_name_variable},
+        variables::{get_command_name_variable, get_dir_variables, get_skill_name_variable},
     },
+    utils::json::{merge_json, merge_many_json},
+    utils::path::get_application_dir,
 };
 
 static TEMPLATER: OnceLock<Templater> = OnceLock::new();
@@ -94,6 +94,7 @@ impl Templater {
         handlebar.register_helper(TOML_HELPER, Box::new(TomlHelper));
         handlebar.register_helper(TOML_INLINE_HELPER, Box::new(TomlInlineHelper));
         handlebar.register_helper(YAML_HELPER, Box::new(YamlHelper));
+        handlebar.register_helper(SNAKE_CASE_HELPER, Box::new(SnakeCaseHelper));
         let mut templater = Self { handlebar, globals };
         templater.register_default_templates()?;
         Ok(templater)

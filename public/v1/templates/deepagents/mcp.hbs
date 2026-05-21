@@ -2,16 +2,16 @@
   "mcpServers": {
     {{#each mcp.servers}}
     "{{@key}}": {
-      {{#ifEq this.type "http"}}
-      "type": "http",
-      "url": "{{this.url}}"{{#if this.headers}},
-      "headers": {{json this.headers}}{{/if}}
-      {{else}}
+      {{#ifEq this.type "stdio"}}
       "command": "{{this.command}}",
       "args": {{json this.args}}{{#if this.env}},
       "env": {{json this.env}}{{/if}}{{#if this.cwd}},
-      "cwd": {{json this.cwd}}{{/if}}{{#if this.env_file}},
-      "env_file": {{json this.env_file}}{{/if}}
+      "cwd": {{json this.cwd}}{{/if}}{{#if this.envFile}},
+      "env_file": {{json this.envFile}}{{/if}}
+      {{else}}
+      "type": "{{this.type}}",
+      "url": "{{this.url}}"{{#if this.headers}},
+      "headers": {{json this.headers}}{{/if}}
       {{/ifEq}}
     }{{#unless @last}},{{/unless}}
     {{/each}}
