@@ -27,6 +27,15 @@ pub(crate) struct SkillMetadata {
     pub metadata: Option<HashMap<String, String>>,
     #[serde(rename = "allowed-tools", skip_serializing_if = "Option::is_none")]
     pub allowed_tools: Option<String>,
+    #[serde(
+        rename = "disable-model-invocation",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub disable_model_invocation: Option<bool>,
+    #[serde(rename = "user-invocable", skip_serializing_if = "Option::is_none")]
+    pub user_invocable: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub paths: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -68,6 +77,8 @@ impl SkillFeature {
         description: &str,
         license: &str,
         compatibility: &str,
+        disable_model_invocation: Option<bool>,
+        user_invocable: Option<bool>,
     ) -> Result<String> {
         let mut metadata_map = HashMap::new();
         metadata_map.insert("version".to_string(), "1.0".to_string());
@@ -88,6 +99,9 @@ impl SkillFeature {
                 },
                 metadata: Some(metadata_map),
                 allowed_tools: None,
+                disable_model_invocation,
+                user_invocable,
+                paths: None,
             },
             content: render_starter(SKILL_STARTER, name),
         };
@@ -227,6 +241,9 @@ Minimal body"#;
                 compatibility: None,
                 metadata: None,
                 allowed_tools: None,
+                disable_model_invocation: None,
+                user_invocable: None,
+                paths: None,
             },
             content: "Body".to_string(),
         };
@@ -238,6 +255,9 @@ Minimal body"#;
         assert!(!md.contains("compatibility"));
         assert!(!md.contains("metadata"));
         assert!(!md.contains("allowed-tools"));
+        assert!(!md.contains("disable-model-invocation"));
+        assert!(!md.contains("user-invocable"));
+        assert!(!md.contains("paths"));
         assert!(!md.contains("null"));
     }
 
@@ -254,6 +274,9 @@ Minimal body"#;
                 compatibility: Some("Claude, Codex".to_string()),
                 metadata: Some(metadata_map),
                 allowed_tools: Some("Read Write".to_string()),
+                disable_model_invocation: Some(true),
+                user_invocable: Some(false),
+                paths: Some(vec!["src/**/*.rs".to_string()]),
             },
             content: "Multi\nline\ncontent".to_string(),
         };
@@ -273,6 +296,15 @@ Minimal body"#;
             original.metadata.allowed_tools
         );
         assert_eq!(parsed.metadata.metadata, original.metadata.metadata);
+        assert_eq!(
+            parsed.metadata.disable_model_invocation,
+            original.metadata.disable_model_invocation
+        );
+        assert_eq!(
+            parsed.metadata.user_invocable,
+            original.metadata.user_invocable
+        );
+        assert_eq!(parsed.metadata.paths, original.metadata.paths);
         assert_eq!(parsed.content, original.content);
     }
 
@@ -289,6 +321,9 @@ Minimal body"#;
                 compatibility: Some("Claude, Codex".to_string()),
                 metadata: Some(meta_map),
                 allowed_tools: Some("Read Write".to_string()),
+                disable_model_invocation: Some(true),
+                user_invocable: Some(false),
+                paths: Some(vec!["src/**/*.rs".to_string()]),
             },
             content: "Skill body".to_string(),
         };
@@ -304,6 +339,9 @@ Minimal body"#;
                     "compatibility": "Claude, Codex",
                     "metadata": { "author": "tester" },
                     "allowed-tools": "Read Write",
+                    "disable-model-invocation": true,
+                    "user-invocable": false,
+                    "paths": ["src/**/*.rs"],
                     "content": "Skill body"
                 }
             })
@@ -320,6 +358,9 @@ Minimal body"#;
                 compatibility: None,
                 metadata: None,
                 allowed_tools: None,
+                disable_model_invocation: None,
+                user_invocable: None,
+                paths: None,
             },
             content: "Body".to_string(),
         };
@@ -332,6 +373,9 @@ Minimal body"#;
         assert!(skill_obj.get("compatibility").is_none());
         assert!(skill_obj.get("metadata").is_none());
         assert!(skill_obj.get("allowed-tools").is_none());
+        assert!(skill_obj.get("disable-model-invocation").is_none());
+        assert!(skill_obj.get("user-invocable").is_none());
+        assert!(skill_obj.get("paths").is_none());
     }
 
     #[test]
@@ -344,6 +388,9 @@ Minimal body"#;
                 compatibility: None,
                 metadata: None,
                 allowed_tools: None,
+                disable_model_invocation: None,
+                user_invocable: None,
+                paths: None,
             },
             content: "Body".to_string(),
         };
@@ -376,6 +423,9 @@ Body"#;
                 compatibility: None,
                 metadata: None,
                 allowed_tools: None,
+                disable_model_invocation: None,
+                user_invocable: None,
+                paths: None,
             },
             content: "Body".to_string(),
         };
@@ -407,7 +457,8 @@ Body"#;
     #[test]
     fn test_scaffold_produces_valid_markdown() {
         // scaffold returns markdown with all provided fields
-        let content = SkillFeature::scaffold("my-skill", "Does stuff", "MIT", "Claude").unwrap();
+        let content =
+            SkillFeature::scaffold("my-skill", "Does stuff", "MIT", "Claude", None, None).unwrap();
         assert!(content.starts_with("---"));
         assert!(content.contains("name: my-skill"));
         assert!(content.contains("description: Does stuff"));
@@ -419,7 +470,7 @@ Body"#;
     #[test]
     fn test_scaffold_empty_optional_fields_omitted() {
         // scaffold omits license and compatibility when empty
-        let content = SkillFeature::scaffold("sk", "desc", "", "").unwrap();
+        let content = SkillFeature::scaffold("sk", "desc", "", "", None, None).unwrap();
         assert!(!content.contains("license:"));
         assert!(!content.contains("compatibility:"));
     }
@@ -434,11 +485,104 @@ Body"#;
                 compatibility: None,
                 metadata: None,
                 allowed_tools: None,
+                disable_model_invocation: None,
+                user_invocable: None,
+                paths: None,
             },
             content: "Body".to_string(),
         };
 
         let value = skill.get_name_variable("my-skill").unwrap();
         assert_eq!(value, Some(json!({"skill": {"name": "my-skill"}})));
+    }
+
+    #[test]
+    fn test_parse_disable_model_invocation() {
+        let md = r#"---
+name: dmi-skill
+description: Disable model invocation test
+disable-model-invocation: true
+---
+
+Body"#;
+
+        let skill = SkillFeature::from_markdown(md).unwrap();
+        assert_eq!(skill.metadata.disable_model_invocation, Some(true));
+    }
+
+    #[test]
+    fn test_parse_user_invocable() {
+        let md = r#"---
+name: ui-skill
+description: User invocable test
+user-invocable: false
+---
+
+Body"#;
+
+        let skill = SkillFeature::from_markdown(md).unwrap();
+        assert_eq!(skill.metadata.user_invocable, Some(false));
+    }
+
+    #[test]
+    fn test_parse_paths() {
+        let md = r#"---
+name: paths-skill
+description: Paths test
+paths:
+  - src/**/*.rs
+  - tests/**
+---
+
+Body"#;
+
+        let skill = SkillFeature::from_markdown(md).unwrap();
+        assert_eq!(
+            skill.metadata.paths,
+            Some(vec!["src/**/*.rs".to_string(), "tests/**".to_string()])
+        );
+    }
+
+    #[test]
+    fn test_serialize_new_fields_when_present() {
+        let skill = SkillFeature {
+            metadata: SkillMetadata {
+                name: "new-fields".to_string(),
+                description: "Has new fields".to_string(),
+                license: None,
+                compatibility: None,
+                metadata: None,
+                allowed_tools: None,
+                disable_model_invocation: Some(true),
+                user_invocable: Some(false),
+                paths: Some(vec!["src/**".to_string()]),
+            },
+            content: "Body".to_string(),
+        };
+
+        let md = skill.to_markdown().unwrap();
+        assert!(md.contains("disable-model-invocation: true"));
+        assert!(md.contains("user-invocable: false"));
+        assert!(md.contains("paths:"));
+        assert!(md.contains("- src/**"));
+    }
+
+    #[test]
+    fn test_parse_all_extension_fields_together() {
+        let md = r#"---
+name: full-extensions
+description: All extension fields
+disable-model-invocation: true
+user-invocable: false
+paths:
+  - "**/*.rs"
+---
+
+Body"#;
+
+        let skill = SkillFeature::from_markdown(md).unwrap();
+        assert_eq!(skill.metadata.disable_model_invocation, Some(true));
+        assert_eq!(skill.metadata.user_invocable, Some(false));
+        assert_eq!(skill.metadata.paths, Some(vec!["**/*.rs".to_string()]));
     }
 }

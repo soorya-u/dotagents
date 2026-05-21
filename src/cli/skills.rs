@@ -154,8 +154,15 @@ pub(crate) fn new_skill(opts: AddSkillOptions) -> Result<bool> {
         "e.g. Requires openspec CLI.",
     )?;
 
-    let content = SkillFeature::scaffold(&opts.name, &description, &license, &compatibility)
-        .context("failed to scaffold skill")?;
+    let content = SkillFeature::scaffold(
+        &opts.name,
+        &description,
+        &license,
+        &compatibility,
+        None,
+        None,
+    )
+    .context("failed to scaffold skill")?;
 
     write_file(&target, &content).context("failed to write SKILL.md")?;
 

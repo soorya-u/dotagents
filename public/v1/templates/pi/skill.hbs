@@ -1,6 +1,10 @@
 ---
 name: {{json skill.name}}
 description: {{json skill.description}}
----
+{{#if skill.metadata}}metadata:
+{{#each skill.metadata}}  {{@key}}: {{this}}
+{{/each}}
+{{/if}}{{#if skill.disable-model-invocation}}disable-model-invocation: {{skill.disable-model-invocation}}
+{{/if}}---
 
 {{{skill.content}}}

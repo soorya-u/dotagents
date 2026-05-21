@@ -1,6 +1,9 @@
 ---
 name: {{json skill.name}}
 description: {{json skill.description}}
----
+{{#if skill.metadata}}metadata:
+{{#each skill.metadata}}  {{@key}}: {{this}}
+{{/each}}
+{{/if}}---
 
 {{{skill.content}}}

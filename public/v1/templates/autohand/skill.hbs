@@ -2,6 +2,9 @@
 name: {{json skill.name}}
 description: {{json skill.description}}
 {{#if skill.[allowed-tools]}}allowed-tools: {{json skill.[allowed-tools]}}
+{{/if}}{{#if skill.metadata}}metadata:
+{{#each skill.metadata}}  {{@key}}: {{this}}
+{{/each}}
 {{/if}}---
 
 {{{skill.content}}}

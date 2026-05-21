@@ -95,8 +95,20 @@ metadata:
   {{@key}}: {{this}}
 {{/each}}
 {{/if}}
+{{#if skill.disable-model-invocation}}
+disable-model-invocation: {{skill.disable-model-invocation}}
+{{/if}}
+{{#if skill.user-invocable}}
+user-invocable: {{skill.user-invocable}}
+{{/if}}
 {{#if skill.[allowed-tools]}}
 allowed-tools: {{skill.[allowed-tools]}}
+{{/if}}
+{{#if skill.paths}}
+paths:
+{{#each skill.paths}}
+  - {{this}}
+{{/each}}
 {{/if}}
 ---
 
