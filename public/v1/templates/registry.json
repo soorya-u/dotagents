@@ -8,7 +8,7 @@
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
         "mcp.hbs": "d5b3317da3005d270aa1b75c12fec5505de442a7eac43628107665bfd32cec4b",
-        "skill.hbs": "814666d863bd99d84f7c517656524509e63094a0fb85cde7b69bd6b8178b20f5"
+        "skill.hbs": "0bc2f0d9b91f35f297e7239d2f86207a25a1e75cf97c0e7ec25dfe409452f227"
       },
       "name": "Amp Code",
       "url": "https://ampcode.com/manual"
@@ -20,7 +20,7 @@
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
         "mcp.hbs": "eba8dfe30838e871482a187136bd1bb0f3bb07e653106ab09b43e4271bbe9219",
-        "skill.hbs": "814666d863bd99d84f7c517656524509e63094a0fb85cde7b69bd6b8178b20f5"
+        "skill.hbs": "0bc2f0d9b91f35f297e7239d2f86207a25a1e75cf97c0e7ec25dfe409452f227"
       },
       "name": "Auggie CLI",
       "url": "https://docs.augmentcode.com/cli/overview"
@@ -31,7 +31,7 @@
         "provider.toml": "f470be8bc9c71d712501d8e7a64e705a8c7e761800ef42dbfd51902ff84a75e1",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
         "mcp.hbs": "a60a9ee61bc113facc57dbe0f018f6479c593bcc82515c8ff871d18c1c6771fc",
-        "skill.hbs": "6cda56132d8e42dee8c0f5c48e95b2ee1ee4866dbbdb9e4a850d9601f0bc2b7f"
+        "skill.hbs": "31df9a3d9d48b3c2573d6c6add5db503f9de6b9bca65a749ef0cf677affd934e"
       },
       "name": "AutoHand Code",
       "url": "https://autohand.ai/docs"
@@ -43,7 +43,7 @@
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
         "mcp.hbs": "37ae65f1b32b20a17a11afc452c4c9d1eeffcfc16627519110ae34356140d380",
-        "skill.hbs": "97c513cc69fb333560f19a90ec7b9ccf932bfb69e19960849a115cec1a875b21"
+        "skill.hbs": "2355c97c50ed9b2f74a5de44869f2a72ba1cd4323b58050ee46a5d1ceb778eb4"
       },
       "name": "Claude Code",
       "url": "https://docs.anthropic.com/en/docs/claude-code"
@@ -54,7 +54,7 @@
         "provider.toml": "f17037fb04531a534b4e2347821b8e9575fd9fd55d6e3cc55256c5e24692df94",
         "command.hbs": "2ff2983122964767e8a8d98702fbaf57d1e392d5e4cbc8d21b9f494f92b90e94",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
-        "skill.hbs": "814666d863bd99d84f7c517656524509e63094a0fb85cde7b69bd6b8178b20f5"
+        "skill.hbs": "0bc2f0d9b91f35f297e7239d2f86207a25a1e75cf97c0e7ec25dfe409452f227"
       },
       "name": "Cline CLI",
       "url": "https://docs.cline.bot/usage/cli-overview"
@@ -66,7 +66,7 @@
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
         "mcp.hbs": "76146907cede8254a66d5a9cad958059e12f547243caa20de93dcea2fa969491",
-        "skill.hbs": "5d80e6f18c0b4c8006ae73a3c78d788a6443f93f85f4ffc779029b7da571bce5"
+        "skill.hbs": "2184ae9cf4ac313416313e314a0a5660622e83b8bdee7b6bce0e2bac0cbab996"
       },
       "name": "Codex CLI",
       "url": "https://developers.openai.com/codex/cli"
@@ -78,7 +78,7 @@
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instructions.hbs": "b222124d15921246abc76e3ec91e7968ad85f436632adb47ce777ce8eafcd1d3",
         "mcp.hbs": "54bc8b6dda17e65322eb16a4edee638a0f487107a983bbffc3f9cd55f7857aaa",
-        "skill.hbs": "ffeba830939b06b1e911b5d3132a33c932cd427bd0a5c6f9bf201cb95a69d598"
+        "skill.hbs": "378cfb9a49f8f059add74e34080ab88db5990bd064d2fb9bdccaf40a45442eb0"
       },
       "name": "Copilot CLI",
       "url": "https://docs.github.com/en/copilot/how-tos/copilot-cli"
@@ -90,7 +90,7 @@
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "66c815bd39cd9fa4eaacd63568ebb1e696d283422afa935b80c464d7df5da8f6",
-        "skill.hbs": "cd7d332b53c929a4d244cfedbe9bc7920e3874394e9e490e62998c391afba48c"
+        "skill.hbs": "50dfe5f77fe66467fe524d55920d806bde4e519a942cb307d780128dc4451878"
       },
       "name": "Cursor CLI",
       "url": "https://cursor.com/docs/cli/overview"
@@ -101,7 +101,7 @@
         "provider.toml": "3e25c79c33e591a84b54350338621f5712c81b6691207db8d95e238fbdec7b4c",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "37ae65f1b32b20a17a11afc452c4c9d1eeffcfc16627519110ae34356140d380",
-        "skill.hbs": "ffeba830939b06b1e911b5d3132a33c932cd427bd0a5c6f9bf201cb95a69d598"
+        "skill.hbs": "378cfb9a49f8f059add74e34080ab88db5990bd064d2fb9bdccaf40a45442eb0"
       },
       "name": "Deep Agents CLI",
       "url": "https://docs.langchain.com/oss/python/deepagents/cli/overview"
@@ -113,7 +113,7 @@
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "02845c0660e6d31b7908b3370ae144b79d2175e8dc2fede931e826f84126ac45",
-        "skill.hbs": "814666d863bd99d84f7c517656524509e63094a0fb85cde7b69bd6b8178b20f5"
+        "skill.hbs": "b209ee730660a57952b3f91c0c063f6dc539e5f6ede657ac4c2727c39ece611d"
       },
       "name": "Factory CLI",
       "url": "https://docs.factory.ai/cli/getting-started/overview"
@@ -125,7 +125,7 @@
         "command.hbs": "009ad4a010c91f439c62ea47cd5fcc71d276d100bb9174b79d56bb4c3b7b6df3",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "fbb971bb237ff0996718968a1fb2eccef56a64e315c76a8796b8f0da29e3ae2c",
-        "skill.hbs": "ffeba830939b06b1e911b5d3132a33c932cd427bd0a5c6f9bf201cb95a69d598"
+        "skill.hbs": "378cfb9a49f8f059add74e34080ab88db5990bd064d2fb9bdccaf40a45442eb0"
       },
       "name": "Gemini CLI",
       "url": "https://geminicli.com/docs/"
@@ -137,7 +137,7 @@
         "command.hbs": "27da9b4869cfb52fe8ac303b4e80b0146e094f123a92f670b96eb9614c403fd4",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "2b8a672ecee27503275962f91b58b43b8374047aa4c1a3d4aa065e8220c5f273",
-        "skill.hbs": "ffeba830939b06b1e911b5d3132a33c932cd427bd0a5c6f9bf201cb95a69d598"
+        "skill.hbs": "378cfb9a49f8f059add74e34080ab88db5990bd064d2fb9bdccaf40a45442eb0"
       },
       "name": "Goose",
       "url": "https://goose-docs.ai/docs/quickstart"
@@ -149,7 +149,7 @@
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "fbb971bb237ff0996718968a1fb2eccef56a64e315c76a8796b8f0da29e3ae2c",
-        "skill.hbs": "ffeba830939b06b1e911b5d3132a33c932cd427bd0a5c6f9bf201cb95a69d598"
+        "skill.hbs": "378cfb9a49f8f059add74e34080ab88db5990bd064d2fb9bdccaf40a45442eb0"
       },
       "name": "Junie CLI",
       "url": "https://junie.jetbrains.com/docs/junie-cli.html"
@@ -161,7 +161,7 @@
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "9adfcc19ade3ee7dfdae646f98e631af4259181f7728f7f9cdb1069ea3c847f7",
-        "skill.hbs": "cd7d332b53c929a4d244cfedbe9bc7920e3874394e9e490e62998c391afba48c"
+        "skill.hbs": "fca3e57742c075cb3d86ace37c1ee92927129f3597ebee8916389f2ea929bc9c"
       },
       "name": "Kilo Code",
       "url": "https://kilo.ai/docs/getting-started"
@@ -172,7 +172,7 @@
         "provider.toml": "7a998f4e4dc4550fbc9632e57399af7cc1bac9baa1a95ef359021e1c56ea6575",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "fbb971bb237ff0996718968a1fb2eccef56a64e315c76a8796b8f0da29e3ae2c",
-        "skill.hbs": "cd7d332b53c929a4d244cfedbe9bc7920e3874394e9e490e62998c391afba48c"
+        "skill.hbs": "fca3e57742c075cb3d86ace37c1ee92927129f3597ebee8916389f2ea929bc9c"
       },
       "name": "Kimi Code",
       "url": "https://www.kimi.com/code/docs/en/"
@@ -183,7 +183,7 @@
         "provider.toml": "943f9d458e5ec35ecacfcede414f6582a9f2f2818650d21736ba6f03773f4640",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "a307c969bb8d542372250eed7d778c6625d36e1f80a27daa5e7a89a5984e993c",
-        "skill.hbs": "ffeba830939b06b1e911b5d3132a33c932cd427bd0a5c6f9bf201cb95a69d598"
+        "skill.hbs": "06f32b85a93e98674b337b4df077cad5930112501acf1c20c3c81c24926adf77"
       },
       "name": "Mistral Vibe",
       "url": "https://docs.mistral.ai/mistral-vibe/terminal"
@@ -195,7 +195,7 @@
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "8b00064f89fc32858a2f25be0302bfc7a15813f776facdfa906710526147b4d3",
-        "skill.hbs": "cd7d332b53c929a4d244cfedbe9bc7920e3874394e9e490e62998c391afba48c"
+        "skill.hbs": "fca3e57742c075cb3d86ace37c1ee92927129f3597ebee8916389f2ea929bc9c"
       },
       "name": "OpenCode",
       "url": "https://opencode.ai/docs"
@@ -205,7 +205,7 @@
       "checksums": {
         "provider.toml": "059469a76d62e8e40fb3e7eb08de8dc17e921a1ca66fda21b7d8e4881fd8e7c9",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
-        "skill.hbs": "814666d863bd99d84f7c517656524509e63094a0fb85cde7b69bd6b8178b20f5"
+        "skill.hbs": "d244f2eecf8c6e8b4711f4050f4ae2ba4712097fb78c6a3ed6e736323a9f287a"
       },
       "name": "Pi",
       "url": "https://pi.dev/docs/latest"
@@ -217,7 +217,7 @@
         "command.hbs": "6650ba27e033d911b3ea2dd264c2a5ed1a7724630bc16a08e36d4423c3beb48f",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "fbb971bb237ff0996718968a1fb2eccef56a64e315c76a8796b8f0da29e3ae2c",
-        "skill.hbs": "9b20e09b2e49203e992f933cbfafc7f5b3e88c3239427d37181477650a70cd7c"
+        "skill.hbs": "fca3e57742c075cb3d86ace37c1ee92927129f3597ebee8916389f2ea929bc9c"
       },
       "name": "Qoder CLI",
       "url": "https://docs.qoder.com/cli/quick-start"
@@ -228,7 +228,7 @@
         "provider.toml": "13f76ef8bc4d088b7c83ef99f9ce3d01ec4df825475793abb3ea3a9e4e02293a",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
         "mcp.hbs": "a2db678dba2dc70469b504891aa0080c794b42a616a7b3676f15781d9aadd928",
-        "skill.hbs": "814666d863bd99d84f7c517656524509e63094a0fb85cde7b69bd6b8178b20f5"
+        "skill.hbs": "0bc2f0d9b91f35f297e7239d2f86207a25a1e75cf97c0e7ec25dfe409452f227"
       },
       "name": "Qwen CLI",
       "url": "https://qwenlm.github.io/qwen-code-docs/en/users/overview/"
