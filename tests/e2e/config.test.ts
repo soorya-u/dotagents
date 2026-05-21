@@ -365,7 +365,7 @@ test.describe("config TUI – T-CG01 global --edit", () => {
 				terminal.getByText("Which providers would you like to target?"),
 			).toBeVisible();
 			terminal.keyPress("Enter");
-			await expect(terminal.getByText("Global config updated")).toBeVisible();
+			await expect(terminal.getByText("Done.")).toBeVisible();
 		} finally {
 			cleanup(d);
 		}
@@ -391,7 +391,7 @@ test.describe("config TUI – T-CL01 local --edit", () => {
 				terminal.getByText("Which providers would you like to target?"),
 			).toBeVisible();
 			terminal.keyPress("Enter");
-			await expect(terminal.getByText("Local config updated")).toBeVisible();
+			await expect(terminal.getByText("Done.")).toBeVisible();
 			// local config should still exist
 			expect(existsSync(join(d, ".dotagents/local.config.toml"))).toBe(true);
 		} finally {

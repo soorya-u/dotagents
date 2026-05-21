@@ -1,21 +1,26 @@
 {{#each mcp.servers}}
-{{#ifEq this.type "http"}}
 [mcp_servers.{{@key}}]
-url = "{{this.url}}"
-{{#if this.headers}}
-[mcp_servers.{{@key}}.http_headers]
-{{#each this.headers}}{{@key}} = "{{this}}"
-{{/each}}
-{{/if}}
-{{else}}
-[mcp_servers.{{@key}}]
+{{#ifEq this.type "stdio"}}
 command = "{{this.command}}"
 args = {{json this.args}}
 {{#if this.cwd}}cwd = "{{this.cwd}}"
-{{/if}}{{#if this.env_file}}env_file = "{{this.env_file}}"
+{{/if}}{{#if this.envFile}}env_file = "{{this.envFile}}"
+{{/if}}{{else}}
+url = "{{this.url}}"
+{{/ifEq}}{{#if this.disabled}}disabled = {{json this.disabled}}
+{{/if}}{{#if this.required}}required = {{json this.required}}
+{{/if}}{{#if this.enabledTools}}{{snake-case "enabledTools"}} = {{json this.enabledTools}}
+{{/if}}{{#if this.disabledTools}}{{snake-case "disabledTools"}} = {{json this.disabledTools}}
+{{/if}}{{#if this.startupTimeoutSec}}{{snake-case "startupTimeoutSec"}} = {{json this.startupTimeoutSec}}
+{{/if}}{{#if this.toolTimeoutSec}}{{snake-case "toolTimeoutSec"}} = {{json this.toolTimeoutSec}}
+{{/if}}{{#if this.bearerTokenEnvVar}}{{snake-case "bearerTokenEnvVar"}} = "{{this.bearerTokenEnvVar}}"
+{{/if}}{{#if this.envVars}}{{snake-case "envVars"}} = {{json this.envVars}}
+{{/if}}{{#if this.headers}}
+[mcp_servers.{{@key}}.http_headers]
+{{#each this.headers}}{{@key}} = "{{this}}"
+{{/each}}
 {{/if}}{{#if this.env}}
 [mcp_servers.{{@key}}.env]
 {{toml this.env}}
 {{/if}}
-{{/ifEq}}
 {{/each}}

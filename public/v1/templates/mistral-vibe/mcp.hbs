@@ -1,13 +1,14 @@
 {{#each mcp.servers}}
 [[mcp_servers]]
 name = "{{@key}}"
-{{#ifEq this.type "http"}}
-transport = "http"
-url = "{{this.url}}"
-{{else}}
+{{#ifEq this.type "stdio"}}
 transport = "stdio"
 command = "{{this.command}}"
 args = {{json this.args}}
 {{#if this.env}}env = {{toml-inline this.env}}
+{{/if}}{{else}}
+transport = "{{#ifEq this.type "http"}}streamable-http{{else}}http{{/ifEq}}"
+url = "{{this.url}}"
+{{#if this.headers}}headers = {{toml-inline this.headers}}
 {{/if}}{{/ifEq}}
 {{/each}}

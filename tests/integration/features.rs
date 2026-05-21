@@ -123,6 +123,65 @@ fn mcp_source_file_is_non_empty() {
     );
 }
 
+#[test]
+fn mcp_source_supports_expanded_server_fields() {
+    // Expanded MCP source fields should deploy through the local provider.
+    let ws = TestWorkspace::new();
+    init_with_mycode_provider(&ws);
+    let d = ws.root_dir_name();
+    ws.write_file(
+        format!("{d}/mcp.jsonc"),
+        r#"{
+          "$schema": "https://dotagents.soorya-u.dev/v1/schemas/mcp.schema.json",
+          "servers": {
+            "stdio-server": {
+              "type": "stdio",
+              "command": "node",
+              "args": ["server.js"],
+              "enabledTools": ["read"],
+              "disabledTools": ["delete"],
+              "required": true,
+              "startupTimeoutSec": 11,
+              "toolTimeoutSec": 22,
+              "bearerTokenEnvVar": "TOKEN",
+              "envVars": ["TOKEN"]
+            },
+            "http-server": {
+              "type": "http",
+              "url": "https://example.com/mcp",
+              "headers": {"Authorization": "Bearer token"},
+              "enabledTools": ["search"],
+              "disabled": true
+            },
+            "sse-server": {
+              "type": "sse",
+              "url": "https://example.com/sse",
+              "headers": {"X-Test": "1"}
+            }
+          }
+        }"#,
+    );
+
+    ws.run_command(&["deploy", "--offline", "--no-gitignore"])
+        .assert_success();
+
+    let content = ws.read_file(".mycode/mcp.json");
+    let parsed: serde_json::Value =
+        serde_json::from_str(&content).expect("deployed mcp.json should be valid JSON");
+    assert_eq!(
+        parsed["mcpServers"]["sse-server"]["type"],
+        serde_json::json!("sse")
+    );
+    assert_eq!(
+        parsed["mcpServers"]["stdio-server"]["tools"],
+        serde_json::json!(["read"])
+    );
+    assert_eq!(
+        parsed["mcpServers"]["stdio-server"]["disabledTools"],
+        serde_json::json!(["delete"])
+    );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Deploy output — one file per feature item
 // ─────────────────────────────────────────────────────────────────────────────

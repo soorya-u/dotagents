@@ -21,16 +21,16 @@
             "type": {
               "type": "string",
               "enum": ["http", "stdio", "sse"],
-              "description": "Type of the server connection."
+              "description": "Type of the server connection. http represents current MCP Streamable HTTP; sse represents legacy HTTP+SSE."
             },
             "url": {
               "type": "string",
-              "description": "URL of the HTTP server (required if type = 'http').",
+              "description": "URL of the remote MCP server (required if type = 'http' or type = 'sse').",
               "format": "uri"
             },
             "headers": {
               "type": "object",
-              "description": "HTTP headers to send with the request (only for type = 'http').",
+              "description": "HTTP headers to send with remote MCP requests.",
               "additionalProperties": { "type": "string" }
             },
             "args": {
@@ -54,13 +54,58 @@
             "envFile": {
               "type": "string",
               "description": "Path to environment file (only for type = 'stdio')."
+            },
+            "disabled": {
+              "type": "boolean",
+              "description": "Whether this MCP server is disabled."
+            },
+            "disabledTools": {
+              "type": "array",
+              "description": "Generic list of tools disabled for this server.",
+              "items": { "type": "string" }
+            },
+            "enabledTools": {
+              "type": "array",
+              "description": "Generic list of tools enabled for this server.",
+              "items": { "type": "string" }
+            },
+            "required": {
+              "type": "boolean",
+              "description": "Whether this MCP server is required by providers that support required servers."
+            },
+            "startupTimeoutSec": {
+              "type": "number",
+              "description": "Startup timeout in seconds for providers that support startup timeouts."
+            },
+            "toolTimeoutSec": {
+              "type": "number",
+              "description": "Tool invocation timeout in seconds for providers that support tool timeouts."
+            },
+            "bearerTokenEnvVar": {
+              "type": "string",
+              "description": "Environment variable name containing a bearer token for providers that support this setting."
+            },
+            "envVars": {
+              "type": "array",
+              "description": "Environment variable names that providers should expose to this server.",
+              "items": { "type": "string" }
+            },
+            "alwaysAllow": {
+              "type": "array",
+              "description": "Tools auto-approved for providers that support always-allow lists.",
+              "items": { "type": "string" }
+            },
+            "autoConnect": {
+              "type": "boolean",
+              "description": "Whether providers that support connection behavior should auto-connect this server."
             }
           },
           "required": ["type"],
           "allOf": [
             {
               "if": {
-                "properties": { "type": { "const": "http" } }
+                "properties": { "type": { "const": "http" } },
+                "required": ["type"]
               },
               "then": {
                 "required": ["url"],
@@ -75,10 +120,27 @@
             },
             {
               "if": {
-                "properties": { "type": { "const": "stdio" } }
+                "properties": { "type": { "const": "sse" } },
+                "required": ["type"]
               },
               "then": {
-                "required": ["command"],
+                "required": ["url"],
+                "properties": {
+                  "args": false,
+                  "command": false,
+                  "cwd": false,
+                  "env": false,
+                  "envFile": false
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": { "type": { "const": "stdio" } },
+                "required": ["type"]
+              },
+              "then": {
+                "required": ["command", "args"],
                 "properties": {
                   "url": false,
                   "headers": false

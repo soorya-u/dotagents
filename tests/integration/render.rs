@@ -110,6 +110,85 @@ fn mcp_output_is_valid_json_with_servers_key() {
         .expect("deployed mcp.json should be valid JSON");
 }
 
+#[test]
+fn mcp_expanded_fields_render_to_toml_and_json_providers() {
+    // Expanded MCP fields should map to representative TOML and JSON provider outputs.
+    let ws = TestWorkspace::new();
+    init_with_mycode_provider(&ws);
+    let d = ws.root_dir_name();
+    let root = env!("CARGO_MANIFEST_DIR");
+    let config_path = ws.active_root_dir().join("local.config.toml");
+    let mut config =
+        std::fs::read_to_string(&config_path).expect("failed to read local.config.toml");
+    config.push_str(&format!(
+        r#"
+
+[providers.codex.mcp]
+template = "{root}/public/v1/templates/codex/mcp.hbs"
+target = "{{{{ dir.workspace }}}}/.codex/config.toml"
+
+[providers.gemini.mcp]
+template = "{root}/public/v1/templates/gemini/mcp.hbs"
+target = "{{{{ dir.workspace }}}}/.gemini/settings.json"
+"#
+    ));
+    std::fs::write(&config_path, config).expect("failed to write local.config.toml");
+    ws.write_file(
+        format!("{d}/mcp.jsonc"),
+        r#"{
+          "$schema": "https://dotagents.soorya-u.dev/v1/schemas/mcp.schema.json",
+          "servers": {
+            "stdio-server": {
+              "type": "stdio",
+              "command": "node",
+              "args": ["server.js"],
+              "enabledTools": ["read"],
+              "disabledTools": ["delete"],
+              "required": true,
+              "startupTimeoutSec": 11,
+              "toolTimeoutSec": 22,
+              "bearerTokenEnvVar": "TOKEN",
+              "envVars": ["TOKEN"]
+            },
+            "http-server": {
+              "type": "http",
+              "url": "https://example.com/mcp",
+              "headers": {"Authorization": "Bearer token"}
+            },
+            "sse-server": {
+              "type": "sse",
+              "url": "https://example.com/sse",
+              "headers": {"X-Test": "1"}
+            }
+          }
+        }"#,
+    );
+
+    ws.run_command(&["deploy", "--offline", "--no-gitignore"])
+        .assert_success();
+
+    let codex = ws.read_file(".codex/config.toml");
+    assert!(codex.contains("enabled_tools = [\"read\"]"));
+    assert!(codex.contains("disabled_tools = [\"delete\"]"));
+    assert!(codex.contains("startup_timeout_sec = 11"));
+    assert!(codex.contains("tool_timeout_sec = 22"));
+    assert!(codex.contains("bearer_token_env_var = \"TOKEN\""));
+    assert!(codex.contains("env_vars = [\"TOKEN\"]"));
+    toml::from_str::<toml::Value>(&codex).expect("codex output should be valid TOML");
+
+    let gemini = ws.read_file(".gemini/settings.json");
+    let parsed: serde_json::Value =
+        serde_json::from_str(&gemini).expect("gemini output should be valid JSON");
+    assert_eq!(
+        parsed["mcpServers"]["http-server"]["httpUrl"],
+        serde_json::json!("https://example.com/mcp")
+    );
+    assert_eq!(
+        parsed["mcpServers"]["sse-server"]["url"],
+        serde_json::json!("https://example.com/sse")
+    );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Skill output
 // ─────────────────────────────────────────────────────────────────────────────

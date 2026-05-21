@@ -174,6 +174,78 @@ impl HelperDef for YamlHelper {
     }
 }
 
+#[derive(Clone, Copy)]
+pub struct SnakeCaseHelper;
+
+impl HelperDef for SnakeCaseHelper {
+    fn call<'reg: 'rc, 'rc>(
+        &self,
+        h: &Helper<'rc>,
+        _: &'reg Handlebars<'reg>,
+        _: &'rc Context,
+        _: &mut RenderContext<'reg, 'rc>,
+        out: &mut dyn Output,
+    ) -> HelperResult {
+        let param = h.param(0).ok_or_else(|| {
+            RenderError::from(RenderErrorReason::ParamNotFoundForIndex("snake-case", 0))
+        })?;
+
+        let value = param.value().as_str().ok_or_else(|| {
+            RenderError::from(RenderErrorReason::NestedError(Box::new(
+                std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    "{{snake-case}} helper only supports strings",
+                ),
+            )))
+        })?;
+
+        out.write(&to_snake_case(value))?;
+        Ok(())
+    }
+}
+
+fn to_snake_case(value: &str) -> String {
+    let chars: Vec<char> = value.chars().collect();
+    let mut result = String::new();
+
+    for (index, ch) in chars.iter().copied().enumerate() {
+        if ch == '-' || ch == ' ' {
+            if !result.ends_with('_') && !result.is_empty() {
+                result.push('_');
+            }
+            continue;
+        }
+
+        if ch == '_' {
+            if !result.ends_with('_') {
+                result.push('_');
+            }
+            continue;
+        }
+
+        if ch.is_uppercase() {
+            let previous = index.checked_sub(1).and_then(|i| chars.get(i)).copied();
+            let next = chars.get(index + 1).copied();
+            let needs_separator = previous.is_some_and(|prev| {
+                (prev.is_lowercase() || prev.is_ascii_digit())
+                    || (prev.is_uppercase() && next.is_some_and(|next| next.is_lowercase()))
+            });
+
+            if needs_separator && !result.ends_with('_') {
+                result.push('_');
+            }
+
+            for lower in ch.to_lowercase() {
+                result.push(lower);
+            }
+        } else {
+            result.push(ch);
+        }
+    }
+
+    result.trim_matches('_').to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -514,5 +586,65 @@ mod tests {
         let data = json!({"name": ""});
         let result = handlebars.render("test", &data).unwrap();
         assert_eq!(result, "name: ");
+    }
+
+    #[test]
+    fn test_snake_case_helper_camel_case() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("snake-case", Box::new(SnakeCaseHelper));
+
+        let template = "{{snake-case field}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"field": "startupTimeoutSec"});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, "startup_timeout_sec");
+    }
+
+    #[test]
+    fn test_snake_case_helper_pascal_case() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("snake-case", Box::new(SnakeCaseHelper));
+
+        let template = "{{snake-case field}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"field": "BearerTokenEnvVar"});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, "bearer_token_env_var");
+    }
+
+    #[test]
+    fn test_snake_case_helper_preserves_snake_case() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("snake-case", Box::new(SnakeCaseHelper));
+
+        let template = "{{snake-case field}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"field": "tool_timeout_sec"});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, "tool_timeout_sec");
+    }
+
+    #[test]
+    fn test_snake_case_helper_errors_on_non_string() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("snake-case", Box::new(SnakeCaseHelper));
+
+        let template = "{{snake-case value}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"value": 42});
+        let result = handlebars.render("test", &data);
+        assert!(result.is_err());
     }
 }

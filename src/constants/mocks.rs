@@ -123,16 +123,19 @@ pub(crate) const TEMPLATE_MYCODE_MCP: &str = r#"{
   "mcpServers": {
     {{#each mcp.servers}}
     "{{@key}}": {
-      "type": {{#ifEq this.type "stdio"}}"local"{{else}}"{{this.type}}"{{/ifEq}},
-      {{#ifEq this.type "http"}}
-      "url": "{{this.url}}",
-      "headers": {{json this.headers}},
-      {{else}}
+      {{#ifEq this.type "stdio"}}
+      "type": "local",
       "command": "{{this.command}}",
-      "args": {{json this.args}},
-      "env": {{json this.env}},
-      {{/ifEq}}
-      "tools": {{json this.enabledTools}}
+      "args": {{json this.args}}{{#if this.env}},
+      "env": {{json this.env}}{{/if}}
+      {{else}}
+      "type": "{{this.type}}",
+      "url": "{{this.url}}"{{#if this.headers}},
+      "headers": {{json this.headers}}{{/if}}
+      {{/ifEq}}{{#if this.enabledTools}},
+      "tools": {{json this.enabledTools}}{{/if}}{{#if this.disabledTools}},
+      "disabledTools": {{json this.disabledTools}}{{/if}}{{#if this.disabled}},
+      "disabled": {{json this.disabled}}{{/if}}
     }{{#unless @last}},{{/unless}}
     {{/each}}
   }

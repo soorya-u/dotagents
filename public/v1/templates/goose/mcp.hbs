@@ -2,16 +2,16 @@ extensions:
 {{#each mcp.servers}}
   {{@key}}:
     name: {{@key}}
-    enabled: true
+    enabled: {{#if this.disabled}}false{{else}}true{{/if}}
     timeout: 300
     bundled: false
-    {{#ifEq this.type "http"}}
-    type: streamable_http
-    uri: {{json this.url}}
-    {{else}}
+    {{#ifEq this.type "stdio"}}
     type: stdio
     cmd: {{json this.command}}
     args: {{json this.args}}
     {{#if this.env}}envs: {{json this.env}}{{/if}}
+    {{else}}
+    type: {{#ifEq this.type "sse"}}sse{{else}}streamable_http{{/ifEq}}
+    uri: {{json this.url}}
     {{/ifEq}}
 {{/each}}

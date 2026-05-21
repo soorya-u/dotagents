@@ -2,16 +2,17 @@
   "amp.mcpServers": {
     {{#each mcp.servers}}
     "{{@key}}": {
-      {{#ifEq this.type "http"}}
-      "url": {{json this.url}}{{#if this.headers}},
-      "headers": {{json this.headers}}{{/if}}
-      {{else}}
+      {{#ifEq this.type "stdio"}}
       "command": {{json this.command}},
       "args": {{json this.args}}{{#if this.env}},
       "env": {{json this.env}}{{/if}}{{#if this.cwd}},
-      "cwd": {{json this.cwd}}{{/if}}{{#if this.env_file}},
-      "env_file": {{json this.env_file}}{{/if}}
-      {{/ifEq}}
+      "cwd": {{json this.cwd}}{{/if}}{{#if this.envFile}},
+      "env_file": {{json this.envFile}}{{/if}}
+      {{else}}
+      "url": {{json this.url}}{{#if this.headers}},
+      "headers": {{json this.headers}}{{/if}}
+      {{/ifEq}}{{#if this.enabledTools}},
+      "includeTools": {{json this.enabledTools}}{{/if}}
     }{{#unless @last}},{{/unless}}
     {{/each}}
   }
