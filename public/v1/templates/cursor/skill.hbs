@@ -6,7 +6,7 @@ description: {{json skill.description}}
 {{/if}}{{#if skill.metadata}}metadata:
 {{#each skill.metadata}}  {{@key}}: {{this}}
 {{/each}}
-{{/if}}{{#if skill.disable-model-invocation}}disable-model-invocation: {{skill.disable-model-invocation}}
-{{/if}}---
+{{/if}}{{#ifDefined skill.disable-model-invocation}}disable-model-invocation: {{skill.disable-model-invocation}}
+{{/ifDefined}}---
 
 {{{skill.content}}}

@@ -1,7 +1,9 @@
 ---
 name: {{json skill.name}}
 description: {{json skill.description}}
-{{#if skill.metadata}}metadata:
+{{#if skill.license}}license: {{json skill.license}}
+{{/if}}{{#if skill.compatibility}}compatibility: {{json skill.compatibility}}
+{{/if}}{{#if skill.metadata}}metadata:
 {{#each skill.metadata}}  {{@key}}: {{this}}
 {{/each}}
 {{/if}}---

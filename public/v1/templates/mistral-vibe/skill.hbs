@@ -7,7 +7,7 @@ description: {{json skill.description}}
 {{/if}}{{#if skill.metadata}}metadata:
 {{#each skill.metadata}}  {{@key}}: {{this}}
 {{/each}}
-{{/if}}{{#if skill.user-invocable}}user-invocable: {{skill.user-invocable}}
-{{/if}}---
+{{/if}}{{#ifDefined skill.user-invocable}}user-invocable: {{skill.user-invocable}}
+{{/ifDefined}}---
 
 {{{skill.content}}}

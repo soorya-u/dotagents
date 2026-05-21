@@ -98,7 +98,7 @@ The system SHALL support Claude Code's skill frontmatter extensions: `disable-mo
 
 #### Scenario: Parse paths as list
 - **WHEN** a skill file has `paths: ["src/**/*.rs", "tests/**"]` in frontmatter
-- **THEN** the system SHALL parse it as `Some(vec!["src/**/*.rs".to_string(), "tests/**.to_string()])` on `SkillMetadata.paths`
+- **THEN** the system SHALL parse it as `Some(vec!["src/**/*.rs".to_string(), "tests/**".to_string()])` on `SkillMetadata.paths`
 
 #### Scenario: Deploy disable-model-invocation to claude
 - **WHEN** a skill with `disable-model-invocation: true` is deployed to the claude provider

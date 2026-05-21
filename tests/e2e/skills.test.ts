@@ -1,4 +1,10 @@
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@microsoft/tui-test";
 import {
@@ -813,6 +819,44 @@ Body`,
 		}
 	});
 
+	// deployed output contains disable-model-invocation when false
+	test("deployed output contains disable-model-invocation when false", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
+			const skillDir = join(d, ".dotagents/skills/dmi-false");
+			mkdirSync(skillDir, { recursive: true });
+			writeFileSync(
+				join(skillDir, "SKILL.md"),
+				`---
+name: dmi-false
+description: Has disable-model-invocation false
+disable-model-invocation: false
+---
+
+Body`,
+			);
+			run(["deploy", "--offline"], d);
+			const deployed = readFileSync(
+				join(d, ".mycode/skills/dmi-false/SKILL.md"),
+				"utf8",
+			);
+			expect(deployed).toContain("disable-model-invocation: false");
+		} finally {
+			cleanup(d);
+		}
+	});
+
 	// deployed output contains user-invocable when set
 	test("deployed output contains user-invocable when set", async () => {
 		const d = makeTmpDir();
@@ -883,6 +927,44 @@ Body`,
 				"utf8",
 			);
 			expect(deployed).not.toContain("user-invocable");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// deployed output contains user-invocable when false
+	test("deployed output contains user-invocable when false", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
+			const skillDir = join(d, ".dotagents/skills/ui-false");
+			mkdirSync(skillDir, { recursive: true });
+			writeFileSync(
+				join(skillDir, "SKILL.md"),
+				`---
+name: ui-false
+description: Has user-invocable false
+user-invocable: false
+---
+
+Body`,
+			);
+			run(["deploy", "--offline"], d);
+			const deployed = readFileSync(
+				join(d, ".mycode/skills/ui-false/SKILL.md"),
+				"utf8",
+			);
+			expect(deployed).toContain("user-invocable: false");
 		} finally {
 			cleanup(d);
 		}

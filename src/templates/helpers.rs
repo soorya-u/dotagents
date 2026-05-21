@@ -31,6 +31,33 @@ impl HelperDef for IfEqHelper {
 }
 
 #[derive(Clone, Copy)]
+pub struct IfDefinedHelper;
+
+impl HelperDef for IfDefinedHelper {
+    fn call<'reg: 'rc, 'rc>(
+        &self,
+        h: &Helper<'rc>,
+        r: &'reg Handlebars<'reg>,
+        ctx: &'rc Context,
+        rc: &mut RenderContext<'reg, 'rc>,
+        out: &mut dyn Output,
+    ) -> HelperResult {
+        let param = h.param(0).map(|v| v.value());
+        let is_defined = param.map(|v| !v.is_null()).unwrap_or(false);
+
+        if is_defined {
+            if let Some(template) = h.template() {
+                template.render(r, ctx, rc, out)?;
+            }
+        } else if let Some(inverse) = h.inverse() {
+            inverse.render(r, ctx, rc, out)?;
+        }
+
+        Ok(())
+    }
+}
+
+#[derive(Clone, Copy)]
 pub struct JsonHelper;
 
 impl HelperDef for JsonHelper {
@@ -397,5 +424,95 @@ mod tests {
         let data = json!({"name": "hello"});
         let result = handlebars.render("test", &data).unwrap();
         assert_eq!(result.trim(), "hello");
+    }
+
+    #[test]
+    fn test_if_defined_helper_true_value() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("ifDefined", Box::new(IfDefinedHelper));
+
+        let template = "{{#ifDefined flag}}yes{{else}}no{{/ifDefined}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"flag": true});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, "yes");
+    }
+
+    #[test]
+    fn test_if_defined_helper_false_value() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("ifDefined", Box::new(IfDefinedHelper));
+
+        let template = "{{#ifDefined flag}}flag: {{flag}}{{else}}omitted{{/ifDefined}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"flag": false});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, "flag: false");
+    }
+
+    #[test]
+    fn test_if_defined_helper_undefined() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("ifDefined", Box::new(IfDefinedHelper));
+
+        let template = "{{#ifDefined missing}}yes{{else}}no{{/ifDefined}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, "no");
+    }
+
+    #[test]
+    fn test_if_defined_helper_null() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("ifDefined", Box::new(IfDefinedHelper));
+
+        let template = "{{#ifDefined value}}yes{{else}}no{{/ifDefined}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"value": null});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, "no");
+    }
+
+    #[test]
+    fn test_if_defined_helper_zero() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("ifDefined", Box::new(IfDefinedHelper));
+
+        let template = "{{#ifDefined count}}count: {{count}}{{else}}omitted{{/ifDefined}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"count": 0});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, "count: 0");
+    }
+
+    #[test]
+    fn test_if_defined_helper_empty_string() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("ifDefined", Box::new(IfDefinedHelper));
+
+        let template = "{{#ifDefined name}}name: {{name}}{{else}}omitted{{/ifDefined}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"name": ""});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, "name: ");
     }
 }
