@@ -1,4 +1,10 @@
-import { existsSync, readFileSync, rmSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@microsoft/tui-test";
 import {
@@ -650,6 +656,394 @@ test.describe("skills deploy-default", () => {
 			expect(existsSync(join(d, ".mycode/skills/hello-skill/SKILL.md"))).toBe(
 				false,
 			);
+		} finally {
+			cleanup(d);
+		}
+	});
+});
+
+// ── skills deploy – new fields ─────────────────────────────────────────────────
+
+test.describe("skills deploy new fields", () => {
+	// deployed output contains metadata field when present
+	test("deployed output contains metadata when present", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
+			const skillDir = join(d, ".dotagents/skills/meta-skill");
+			mkdirSync(skillDir, { recursive: true });
+			writeFileSync(
+				join(skillDir, "SKILL.md"),
+				`---
+name: meta-skill
+description: Has metadata
+metadata:
+  author: tester
+  version: "2.0"
+---
+
+Body content`,
+			);
+			run(["deploy", "--offline"], d);
+			const deployed = readFileSync(
+				join(d, ".mycode/skills/meta-skill/SKILL.md"),
+				"utf8",
+			);
+			expect(deployed).toContain("metadata:");
+			expect(deployed).toContain("author: tester");
+			expect(deployed).toContain("version:");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// deployed output omits metadata when absent
+	test("deployed output omits metadata when absent", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
+			const skillDir = join(d, ".dotagents/skills/no-meta");
+			mkdirSync(skillDir, { recursive: true });
+			writeFileSync(
+				join(skillDir, "SKILL.md"),
+				`---
+name: no-meta
+description: No metadata
+---
+
+Body`,
+			);
+			run(["deploy", "--offline"], d);
+			const deployed = readFileSync(
+				join(d, ".mycode/skills/no-meta/SKILL.md"),
+				"utf8",
+			);
+			expect(deployed).not.toContain("metadata:");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// deployed output contains disable-model-invocation when true
+	test("deployed output contains disable-model-invocation when true", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
+			const skillDir = join(d, ".dotagents/skills/dmi-skill");
+			mkdirSync(skillDir, { recursive: true });
+			writeFileSync(
+				join(skillDir, "SKILL.md"),
+				`---
+name: dmi-skill
+description: Has disable-model-invocation
+disable-model-invocation: true
+---
+
+Body`,
+			);
+			run(["deploy", "--offline"], d);
+			const deployed = readFileSync(
+				join(d, ".mycode/skills/dmi-skill/SKILL.md"),
+				"utf8",
+			);
+			expect(deployed).toContain("disable-model-invocation: true");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// deployed output omits disable-model-invocation when absent
+	test("deployed output omits disable-model-invocation when absent", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
+			const skillDir = join(d, ".dotagents/skills/no-dmi");
+			mkdirSync(skillDir, { recursive: true });
+			writeFileSync(
+				join(skillDir, "SKILL.md"),
+				`---
+name: no-dmi
+description: No dmi
+---
+
+Body`,
+			);
+			run(["deploy", "--offline"], d);
+			const deployed = readFileSync(
+				join(d, ".mycode/skills/no-dmi/SKILL.md"),
+				"utf8",
+			);
+			expect(deployed).not.toContain("disable-model-invocation");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// deployed output contains disable-model-invocation when false
+	test("deployed output contains disable-model-invocation when false", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
+			const skillDir = join(d, ".dotagents/skills/dmi-false");
+			mkdirSync(skillDir, { recursive: true });
+			writeFileSync(
+				join(skillDir, "SKILL.md"),
+				`---
+name: dmi-false
+description: Has disable-model-invocation false
+disable-model-invocation: false
+---
+
+Body`,
+			);
+			run(["deploy", "--offline"], d);
+			const deployed = readFileSync(
+				join(d, ".mycode/skills/dmi-false/SKILL.md"),
+				"utf8",
+			);
+			expect(deployed).toContain("disable-model-invocation: false");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// deployed output contains user-invocable when set
+	test("deployed output contains user-invocable when set", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
+			const skillDir = join(d, ".dotagents/skills/ui-skill");
+			mkdirSync(skillDir, { recursive: true });
+			writeFileSync(
+				join(skillDir, "SKILL.md"),
+				`---
+name: ui-skill
+description: Has user-invocable
+user-invocable: true
+---
+
+Body`,
+			);
+			run(["deploy", "--offline"], d);
+			const deployed = readFileSync(
+				join(d, ".mycode/skills/ui-skill/SKILL.md"),
+				"utf8",
+			);
+			expect(deployed).toContain("user-invocable: true");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// deployed output omits user-invocable when absent
+	test("deployed output omits user-invocable when absent", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
+			const skillDir = join(d, ".dotagents/skills/no-ui");
+			mkdirSync(skillDir, { recursive: true });
+			writeFileSync(
+				join(skillDir, "SKILL.md"),
+				`---
+name: no-ui
+description: No ui
+---
+
+Body`,
+			);
+			run(["deploy", "--offline"], d);
+			const deployed = readFileSync(
+				join(d, ".mycode/skills/no-ui/SKILL.md"),
+				"utf8",
+			);
+			expect(deployed).not.toContain("user-invocable");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// deployed output contains user-invocable when false
+	test("deployed output contains user-invocable when false", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
+			const skillDir = join(d, ".dotagents/skills/ui-false");
+			mkdirSync(skillDir, { recursive: true });
+			writeFileSync(
+				join(skillDir, "SKILL.md"),
+				`---
+name: ui-false
+description: Has user-invocable false
+user-invocable: false
+---
+
+Body`,
+			);
+			run(["deploy", "--offline"], d);
+			const deployed = readFileSync(
+				join(d, ".mycode/skills/ui-false/SKILL.md"),
+				"utf8",
+			);
+			expect(deployed).toContain("user-invocable: false");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// deployed output contains paths when set
+	test("deployed output contains paths when set", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
+			const skillDir = join(d, ".dotagents/skills/paths-skill");
+			mkdirSync(skillDir, { recursive: true });
+			writeFileSync(
+				join(skillDir, "SKILL.md"),
+				`---
+name: paths-skill
+description: Has paths
+paths:
+  - src/**/*.rs
+  - tests/**
+---
+
+Body`,
+			);
+			run(["deploy", "--offline"], d);
+			const deployed = readFileSync(
+				join(d, ".mycode/skills/paths-skill/SKILL.md"),
+				"utf8",
+			);
+			expect(deployed).toContain("paths:");
+			expect(deployed).toContain("- src/**/*.rs");
+			expect(deployed).toContain("- tests/**");
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// deployed output omits paths when absent
+	test("deployed output omits paths when absent", async () => {
+		const d = makeTmpDir();
+		try {
+			initWithLocalProvider(d);
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"commands,instructions,mcp,skills",
+				],
+				d,
+			);
+			const skillDir = join(d, ".dotagents/skills/no-paths");
+			mkdirSync(skillDir, { recursive: true });
+			writeFileSync(
+				join(skillDir, "SKILL.md"),
+				`---
+name: no-paths
+description: No paths
+---
+
+Body`,
+			);
+			run(["deploy", "--offline"], d);
+			const deployed = readFileSync(
+				join(d, ".mycode/skills/no-paths/SKILL.md"),
+				"utf8",
+			);
+			expect(deployed).not.toMatch(/^paths:/m);
 		} finally {
 			cleanup(d);
 		}

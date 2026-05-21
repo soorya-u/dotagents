@@ -4,6 +4,10 @@ description: {{json skill.description}}
 {{#if skill.license}}license: {{json skill.license}}
 {{/if}}{{#if skill.compatibility}}compatibility: {{json skill.compatibility}}
 {{/if}}{{#if skill.[allowed-tools]}}allowed-tools: {{json skill.[allowed-tools]}}
-{{/if}}---
+{{/if}}{{#if skill.metadata}}metadata:
+{{#each skill.metadata}}  {{json @key}}: {{json this}}
+{{/each}}
+{{/if}}{{#ifDefined skill.user-invocable}}user-invocable: {{skill.user-invocable}}
+{{/ifDefined}}---
 
 {{{skill.content}}}

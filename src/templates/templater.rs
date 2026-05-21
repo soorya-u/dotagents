@@ -3,21 +3,22 @@ use handlebars::Handlebars;
 use serde_json::Value;
 use std::sync::OnceLock;
 
-use crate::templates::variables::get_env_variables;
+use crate::templates::variables::{get_dir_variables, get_env_variables};
 use crate::utils::path::get_application_dir;
 use crate::{
-    constants::helpers::{JSON_HELPER, TOML_HELPER, TOML_INLINE_HELPER, YAML_HELPER},
-    templates::{
-        helpers::{IfEqHelper, JsonHelper, TomlHelper, TomlInlineHelper, YamlHelper},
-        variables::{get_command_name_variable, get_dir_variables, get_skill_name_variable},
-    },
+    constants::file::{GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE},
+    utils::json::{merge_json, merge_many_json},
 };
 use crate::{
-    constants::{
-        file::{GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE},
-        helpers::IF_EQ_HELPER,
+    constants::helpers::{
+        IF_DEFINED_HELPER, IF_EQ_HELPER, JSON_HELPER, TOML_HELPER, TOML_INLINE_HELPER, YAML_HELPER,
     },
-    utils::json::{merge_json, merge_many_json},
+    templates::{
+        helpers::{
+            IfDefinedHelper, IfEqHelper, JsonHelper, TomlHelper, TomlInlineHelper, YamlHelper,
+        },
+        variables::{get_command_name_variable, get_skill_name_variable},
+    },
 };
 
 static TEMPLATER: OnceLock<Templater> = OnceLock::new();
@@ -88,6 +89,7 @@ impl Templater {
         let globals = Self::load_default_variables()?;
         let mut handlebar = Handlebars::new();
         handlebar.register_helper(IF_EQ_HELPER, Box::new(IfEqHelper));
+        handlebar.register_helper(IF_DEFINED_HELPER, Box::new(IfDefinedHelper));
         handlebar.register_helper(JSON_HELPER, Box::new(JsonHelper));
         handlebar.register_helper(TOML_HELPER, Box::new(TomlHelper));
         handlebar.register_helper(TOML_INLINE_HELPER, Box::new(TomlInlineHelper));
