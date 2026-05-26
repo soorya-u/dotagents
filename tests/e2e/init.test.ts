@@ -14,7 +14,7 @@ test.describe("init CLI – file tree", () => {
 					"--template",
 					"blank",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -46,7 +46,7 @@ test.describe("init CLI – file tree", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -77,7 +77,7 @@ test.describe("init CLI – file tree", () => {
 					"--template",
 					"advanced",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -104,7 +104,7 @@ test.describe("init CLI – file tree", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -115,7 +115,7 @@ test.describe("init CLI – file tree", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -136,7 +136,7 @@ test.describe("init CLI – file tree", () => {
 					"--template",
 					"starter",
 					"--features",
-					"instructions,mcp,skills",
+					"instruction,mcp,skill",
 				],
 				d,
 			);
@@ -157,7 +157,7 @@ test.describe("init CLI – file tree", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp",
+					"command,instruction,mcp",
 				],
 				d,
 			);
@@ -178,7 +178,7 @@ test.describe("init CLI – file tree", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,skills",
+					"command,instruction,skill",
 				],
 				d,
 			);
@@ -194,7 +194,7 @@ test.describe("init CLI – file tree", () => {
 		const d = makeTmpDir();
 		try {
 			const { exitCode } = run(
-				["init", "--template", "starter", "--features", "commands,mcp,skills"],
+				["init", "--template", "starter", "--features", "command,mcp,skill"],
 				d,
 			);
 			expect(exitCode).toBe(0);
@@ -215,16 +215,16 @@ test.describe("init CLI – config content", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
 			const config = readFileSync(join(d, ".dotagents/config.toml"), "utf8");
 			expect(config).toContain("features");
-			expect(config).toContain('"commands"');
-			expect(config).toContain('"instructions"');
+			expect(config).toContain('"command"');
+			expect(config).toContain('"instruction"');
 			expect(config).toContain('"mcp"');
-			expect(config).toContain('"skills"');
+			expect(config).toContain('"skill"');
 		} finally {
 			cleanup(d);
 		}
@@ -235,15 +235,16 @@ test.describe("init CLI – config content", () => {
 		const d = makeTmpDir();
 		try {
 			const { exitCode } = run(
-				["init", "--template", "starter", "--features", "commands,mcp"],
+				["init", "--template", "starter", "--features", "command,mcp"],
 				d,
 			);
 			expect(exitCode).toBe(0);
 			const config = readFileSync(join(d, ".dotagents/config.toml"), "utf8");
-			expect(config).toContain('"commands"');
+			expect(config).toContain('"command"');
 			expect(config).toContain('"mcp"');
-			expect(config).not.toContain('"instructions"');
-			expect(config).not.toContain('"skills"');
+			expect(config).not.toContain('"instruction"');
+			expect(config).not.toContain('"skill"');
+			expect(config).not.toContain('"agent-ignore"');
 		} finally {
 			cleanup(d);
 		}
@@ -271,7 +272,7 @@ test.describe("init CLI – config content", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -292,7 +293,7 @@ test.describe("init CLI – config content", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -321,7 +322,7 @@ test.describe("init CLI – PATH argument", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				cwd,
 			);
@@ -346,7 +347,7 @@ test.describe("init CLI – PATH argument", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				cwd,
 			);
@@ -371,7 +372,7 @@ test.describe("init CLI – PATH argument", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				cwd,
 			);
@@ -572,7 +573,7 @@ test.describe("init TUI – T05 overwrite cancel", () => {
 			"--template",
 			"starter",
 			"--features",
-			"commands,instructions,mcp,skills",
+			"command,instruction,mcp,skill",
 		],
 		d,
 	);
@@ -641,18 +642,18 @@ test.describe("init CLI – validation errors", () => {
 			);
 			expect(exitCode).toBe(2);
 			expect(stderr).toContain("invalid value");
-			expect(stderr).toContain("commands");
+			expect(stderr).toContain("command");
 		} finally {
 			cleanup(d);
 		}
 	});
 
-	// TC-INIT-07: --features none,commands rejected (none is not a valid feature)
-	test("--features none,commands exits 2 with invalid value error", async () => {
+	// TC-INIT-07: --features none,command rejected (none is not a valid feature)
+	test("--features none,command exits 2 with invalid value error", async () => {
 		const d = makeTmpDir();
 		try {
 			const { exitCode, stderr } = run(
-				["init", "--features", "none,commands", "--ci"],
+				["init", "--features", "none,command", "--ci"],
 				d,
 			);
 			expect(exitCode).toBe(2);

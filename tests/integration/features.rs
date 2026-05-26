@@ -10,7 +10,7 @@ use super::{TestWorkspace, init_with_mycode_provider};
 fn add_command_source_has_yaml_frontmatter() {
     // `add command` should create a markdown file with YAML frontmatter.
     let ws = TestWorkspace::new();
-    ws.run_command(&["init", "--features", "commands,instructions,mcp,skills"])
+    ws.run_command(&["init", "--features", "command,instruction,mcp,skill"])
         .assert_success();
     ws.run_command(&[
         "commands",
@@ -44,7 +44,7 @@ fn add_command_source_has_yaml_frontmatter() {
 fn add_command_with_category_and_tags_includes_them_in_source() {
     // Flags --category and --tags should appear in the generated frontmatter.
     let ws = TestWorkspace::new();
-    ws.run_command(&["init", "--features", "commands,instructions,mcp,skills"])
+    ws.run_command(&["init", "--features", "command,instruction,mcp,skill"])
         .assert_success();
     ws.run_command(&[
         "commands",
@@ -79,7 +79,7 @@ fn add_command_with_category_and_tags_includes_them_in_source() {
 fn add_skill_source_has_expected_metadata() {
     // `add skill` should create SKILL.md with YAML frontmatter inside a subdirectory.
     let ws = TestWorkspace::new();
-    ws.run_command(&["init", "--features", "commands,instructions,mcp,skills"])
+    ws.run_command(&["init", "--features", "command,instruction,mcp,skill"])
         .assert_success();
     ws.run_command(&["skills", "new", "my-skill", "--description", "A test skill"])
         .assert_success();
@@ -111,7 +111,7 @@ fn add_skill_source_has_expected_metadata() {
 fn mcp_source_file_is_non_empty() {
     // `init` creates a non-empty mcp.jsonc source file.
     let ws = TestWorkspace::new();
-    ws.run_command(&["init", "--features", "commands,instructions,mcp,skills"])
+    ws.run_command(&["init", "--features", "command,instruction,mcp,skill"])
         .assert_success();
 
     let d = ws.root_dir_name();

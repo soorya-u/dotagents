@@ -16,7 +16,8 @@
     "auggie": {
       "path": "/v1/templates/auggie/provider.toml",
       "checksums": {
-        "provider.toml": "b7dca94e41a18d5a0ff326aa72d93ffe946f1665f530c98f3386db2d0fbb09b0",
+        "provider.toml": "55b3f912047bfa2c48c68360c0bdecf9cf2f512c6219f15d1c5c2172391fcab4",
+        "agent-ignore.hbs": "fcbb87d7e98ff9354ef78a9d12ee3ab4be20bacfc6077c0c7dec79a893e3cc16",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
         "mcp.hbs": "0eb39fe6be1e07a6f1cee8b8f70b7e6ccdc2f4c7d026a18e464f3ac1682483e2",
@@ -28,7 +29,8 @@
     "autohand": {
       "path": "/v1/templates/autohand/provider.toml",
       "checksums": {
-        "provider.toml": "f470be8bc9c71d712501d8e7a64e705a8c7e761800ef42dbfd51902ff84a75e1",
+        "provider.toml": "91c7cef6d81086b9fa59cff2c713e6a1b78711c8736f91a29dd32b96d8a10697",
+        "agent-ignore.hbs": "fcbb87d7e98ff9354ef78a9d12ee3ab4be20bacfc6077c0c7dec79a893e3cc16",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
         "mcp.hbs": "80583db5c6814500111d486ea54bda34d97d78bd1b9f3569df36d8f4d22ae1de",
         "skill.hbs": "31df9a3d9d48b3c2573d6c6add5db503f9de6b9bca65a749ef0cf677affd934e"
@@ -51,7 +53,8 @@
     "cline": {
       "path": "/v1/templates/cline/provider.toml",
       "checksums": {
-        "provider.toml": "f17037fb04531a534b4e2347821b8e9575fd9fd55d6e3cc55256c5e24692df94",
+        "provider.toml": "82760a72e03e03286e0cce87eb5d44a7dfb9501eb3eb82777e7de38ce89fe832",
+        "agent-ignore.hbs": "fcbb87d7e98ff9354ef78a9d12ee3ab4be20bacfc6077c0c7dec79a893e3cc16",
         "command.hbs": "2ff2983122964767e8a8d98702fbaf57d1e392d5e4cbc8d21b9f494f92b90e94",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
         "skill.hbs": "0bc2f0d9b91f35f297e7239d2f86207a25a1e75cf97c0e7ec25dfe409452f227"
@@ -86,7 +89,8 @@
     "cursor": {
       "path": "/v1/templates/cursor/provider.toml",
       "checksums": {
-        "provider.toml": "551bda72202573d14486bfc504d30cc8f15a3ebf450d63d4eac6fda5e5aeaab9",
+        "provider.toml": "0f45a16ca93f73cb6e91e178a3cd9ded134be6962d7747390831c666a7054dd3",
+        "agent-ignore.hbs": "fcbb87d7e98ff9354ef78a9d12ee3ab4be20bacfc6077c0c7dec79a893e3cc16",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "0ead69a7a6b3fb273fd4d9fbfee6f2159353dc894d14153cf693a0a49b73f5c3",
@@ -121,7 +125,8 @@
     "gemini": {
       "path": "/v1/templates/gemini/provider.toml",
       "checksums": {
-        "provider.toml": "fa0fab94e69e579d36fb71bbf94e813658df4f78e3eb454e1e6ca936a97ff6a1",
+        "provider.toml": "00068a88afd71515d7613d4cd0822f0792eecd67d807719659b7b9d728ed8183",
+        "agent-ignore.hbs": "fcbb87d7e98ff9354ef78a9d12ee3ab4be20bacfc6077c0c7dec79a893e3cc16",
         "command.hbs": "009ad4a010c91f439c62ea47cd5fcc71d276d100bb9174b79d56bb4c3b7b6df3",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "095b4d5453773d07856e2228fbf527492c5c18d0530c7f0be4bc2285070a161a",
@@ -133,7 +138,8 @@
     "goose": {
       "path": "/v1/templates/goose/provider.toml",
       "checksums": {
-        "provider.toml": "e2560d1eba7fb4091e90bfe5c1b55520f5fa0e048e29ec46cb755a18808f61ca",
+        "provider.toml": "a950906a87d8e9e5bf7d35c6b2d7fea642aa051295a85422776a9585230f7692",
+        "agent-ignore.hbs": "fcbb87d7e98ff9354ef78a9d12ee3ab4be20bacfc6077c0c7dec79a893e3cc16",
         "command.hbs": "27da9b4869cfb52fe8ac303b4e80b0146e094f123a92f670b96eb9614c403fd4",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "8140cc3175389301e9c6b5058340e693799e0b880826aa4653ed49fdd447d914",
@@ -145,7 +151,8 @@
     "junie": {
       "path": "/v1/templates/junie/provider.toml",
       "checksums": {
-        "provider.toml": "b2e06ededc8b460451e76a353c237624a18a5c886fc45df9f1e0af9d007cf439",
+        "provider.toml": "4854567cf6098b6ef65cccf56f3328b681c324aa2c3fc6ddcd2b48d2e26a6d66",
+        "agent-ignore.hbs": "fcbb87d7e98ff9354ef78a9d12ee3ab4be20bacfc6077c0c7dec79a893e3cc16",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "f3652009a56d2ae104947fc22124f191590d2c14bbbc9d76e4f761a8e5db5714",
@@ -157,7 +164,8 @@
     "kilocode": {
       "path": "/v1/templates/kilocode/provider.toml",
       "checksums": {
-        "provider.toml": "3a2d7c173072f1f888176ccd0211adb5fa35630eb19ab27faa52391b19d51616",
+        "provider.toml": "897bdd84bb1255c197e73a18c01dec9bb2b04122c26f143d8512e36c4bbbad18",
+        "agent-ignore.hbs": "fcbb87d7e98ff9354ef78a9d12ee3ab4be20bacfc6077c0c7dec79a893e3cc16",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "82d6683b1f2771d7f8d696587638e819aaaa877596eac21ba63386dce39c9417",
@@ -191,7 +199,8 @@
     "opencode": {
       "path": "/v1/templates/opencode/provider.toml",
       "checksums": {
-        "provider.toml": "d7e1c987d6f6e4494da278fb5042125866e6bc1af6fa62ada83ba984dc7c2b6c",
+        "provider.toml": "ec136c4425410b83b1f7f8e9d1f8c8caf8460b56fd0d3235b6bd819db26e2d63",
+        "agent-ignore.hbs": "fcbb87d7e98ff9354ef78a9d12ee3ab4be20bacfc6077c0c7dec79a893e3cc16",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "a7c14e658bcff8f926c73a7ebf0ca0675a0a7db884fbd939928ea4aa97ed12f2",
@@ -203,7 +212,8 @@
     "pi": {
       "path": "/v1/templates/pi/provider.toml",
       "checksums": {
-        "provider.toml": "059469a76d62e8e40fb3e7eb08de8dc17e921a1ca66fda21b7d8e4881fd8e7c9",
+        "provider.toml": "95cffdb6e9dd7f051e0a12806399242b8858a2879e07f5164cbee409fdc35e52",
+        "agent-ignore.hbs": "fcbb87d7e98ff9354ef78a9d12ee3ab4be20bacfc6077c0c7dec79a893e3cc16",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
         "skill.hbs": "d244f2eecf8c6e8b4711f4050f4ae2ba4712097fb78c6a3ed6e736323a9f287a"
       },
@@ -225,7 +235,8 @@
     "qwen": {
       "path": "/v1/templates/qwen/provider.toml",
       "checksums": {
-        "provider.toml": "13f76ef8bc4d088b7c83ef99f9ce3d01ec4df825475793abb3ea3a9e4e02293a",
+        "provider.toml": "02d367c8448740362250c58aa7ced53c1ef8c911f2fcc75a87fa08705f2f7b91",
+        "agent-ignore.hbs": "fcbb87d7e98ff9354ef78a9d12ee3ab4be20bacfc6077c0c7dec79a893e3cc16",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
         "mcp.hbs": "92979317e5d81bf95f30bd9119d4e030520d28673cdd9acf5a6885ed626c556f",
         "skill.hbs": "0bc2f0d9b91f35f297e7239d2f86207a25a1e75cf97c0e7ec25dfe409452f227"

@@ -64,21 +64,21 @@ fn dedup_cache_has_one_entry_per_unique_path() {
     let cache: toml::Value =
         toml::from_str(&cache_content).expect("cache.toml should be valid TOML");
 
-    // Cache structure: [providers.<name>.instructions.<item_key>]
-    // Count how many top-level provider keys contain an "instructions" sub-table.
-    let instructions_count = cache
+    // Cache structure: [providers.<name>.instruction.<item_key>]
+    // Count how many top-level provider keys contain an "instruction" sub-table.
+    let instruction_count = cache
         .get("providers")
         .and_then(|p| p.as_table())
         .map(|providers| {
             providers
                 .values()
-                .filter(|provider_table| provider_table.get("instructions").is_some())
+                .filter(|provider_table| provider_table.get("instruction").is_some())
                 .count()
         })
         .unwrap_or(0);
     assert_eq!(
-        instructions_count, 1,
-        "cache should have exactly 1 provider with 'instructions' entry; got {instructions_count} in:\n{cache_content}"
+        instruction_count, 1,
+        "cache should have exactly 1 provider with 'instruction' entry; got {instruction_count} in:\n{cache_content}"
     );
 }
 

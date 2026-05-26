@@ -15,6 +15,7 @@ use crate::core::config::CacheConfig;
 use crate::core::config::app::AppConfig;
 #[cfg(feature = "skills-add")]
 use crate::core::config::common::PackageRunner;
+use crate::core::features::Feature;
 use crate::core::features::skill::SkillFeature;
 use crate::prelude::*;
 use crate::schema::list_item::ListItem;
@@ -234,9 +235,12 @@ pub(crate) fn rm_skill(opts: RmSkillOptions) -> Result<bool> {
     if let Some(mut cache) = cache_opt {
         match get_workspace_dir() {
             Ok(workspace_dir) => {
-                if let Err(e) =
-                    super::undeploy::undeploy_item("skills", &opts.name, &mut cache, &workspace_dir)
-                {
+                if let Err(e) = super::undeploy::undeploy_item(
+                    Feature::Skill.as_ref(),
+                    &opts.name,
+                    &mut cache,
+                    &workspace_dir,
+                ) {
                     warn!("Failed to clean up deployed files: {}", e);
                 }
                 if let Err(e) = cache.save() {

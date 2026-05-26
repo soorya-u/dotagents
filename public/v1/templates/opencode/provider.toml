@@ -20,3 +20,7 @@ target = "{{dir.workspace}}/.opencode/commands/{{command.name}}.md"
 [providers.opencode.mcp]
 template = "https://dotagents.soorya-u.dev/v1/templates/opencode/mcp.hbs"
 target = "{{dir.workspace}}/opencode.json"
+
+[providers.opencode.ignore]
+template = "https://dotagents.soorya-u.dev/v1/templates/opencode/agent-ignore.hbs"
+target = "{{dir.workspace}}/.ignore"

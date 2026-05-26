@@ -5,6 +5,7 @@ use std::path::Path;
 use anyhow::{Context, Result, bail};
 use cliclack::{intro, multiselect, note, outro, spinner};
 use serde::Serialize;
+use strum::VariantNames;
 
 use crate::cli::options::{ConfigOptions, ConfigTarget};
 use crate::cli::ui::init::prompt_targets;
@@ -89,8 +90,6 @@ pub(crate) fn handle(opts: ConfigOptions) -> Result<bool> {
     Ok(true)
 }
 
-// ── App config handlers ──────────────────────────────────────────────
-
 fn handle_app_json() -> Result<()> {
     let config = load_app_config()?;
     let display = AppDisplay::from_app_config(&config);
@@ -111,8 +110,6 @@ fn handle_app_tui() -> Result<()> {
     display_tui_config(&config)?;
     Ok(())
 }
-
-// ── Global config handlers ──────────────────────────────────────────
 
 fn handle_global_json(path: &Path) -> Result<()> {
     if !path.exists() {
@@ -541,10 +538,11 @@ fn features_has_overrides(feats: &Features) -> bool {
         || feats.instructions.is_some()
         || feats.mcp.is_some()
         || feats.skills.is_some()
+        || feats.ignore.is_some()
 }
 
 fn edit_global_config(config: &mut GlobalConfig) -> Result<()> {
-    let all_features = Feature::all_names();
+    let all_features = Feature::VARIANTS;
 
     let current_features: Vec<&str> = all_features
         .iter()
@@ -608,7 +606,7 @@ fn edit_global_config(config: &mut GlobalConfig) -> Result<()> {
 }
 
 fn edit_local_config(config: &mut LocalConfig) -> Result<()> {
-    let all_features = Feature::all_names();
+    let all_features = Feature::VARIANTS;
 
     let current_features: Vec<&str> = all_features
         .iter()

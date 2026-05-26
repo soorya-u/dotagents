@@ -72,7 +72,7 @@ test.describe("J03-J04: CRUD – add, list, remove", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -104,7 +104,7 @@ test.describe("J03-J04: CRUD – add, list, remove", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -218,7 +218,7 @@ test.describe("J08: full CRUD both types", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);

@@ -2,15 +2,14 @@ use crate::prelude::*;
 use anyhow::{Context, Result};
 use cliclack::{multiselect, outro, outro_cancel, select, spinner};
 use std::io::Write;
+use std::str::FromStr;
 
 use crate::cli::options::{Feature, InitOptions, InitTemplate};
 use crate::schema::registry::Registry;
 use crate::templates::registry_url;
 
 /// Runs the interactive init wizard, populating `opts` from user input.
-/// Returns true if init should proceed, false if the user chose to cancel.
 pub(crate) fn run_init_wizard(opts: &mut InitOptions, dir_exists: bool) -> Result<bool> {
-    // Overwrite confirmation — only shown when the directory exists and --force was not passed.
     if dir_exists && !opts.force {
         let mut sel = select("A .dotagents directory already exists. Overwrite?")
             .item(false, "No, cancel", "")
@@ -27,30 +26,39 @@ pub(crate) fn run_init_wizard(opts: &mut InitOptions, dir_exists: bool) -> Resul
     if opts.features.is_none() {
         let mut ms = multiselect("Which features do you want to enable?")
             .item(
-                "commands",
+                Feature::Command.as_ref(),
                 "Custom Commands",
                 "Sync slash commands to your AI tools",
             )
             .item(
-                "instructions",
+                Feature::Instruction.as_ref(),
                 "INSTRUCTIONS.md",
                 "Sync a global INSTRUCTIONS.md",
             )
-            .item("mcp", "MCP Configuration", "Sync MCP server configuration")
-            .item("skills", "Skills", "Sync skills")
-            .initial_values(vec!["commands", "instructions", "mcp", "skills"])
+            .item(
+                Feature::Mcp.as_ref(),
+                "MCP Configuration",
+                "Sync MCP server configuration",
+            )
+            .item(Feature::Skill.as_ref(), "Skills", "Sync skills")
+            .item(
+                Feature::AgentIgnore.as_ref(),
+                ".agentignore",
+                "Sync ignore patterns to AI tools",
+            )
+            .initial_values(vec![
+                Feature::Command.as_ref(),
+                Feature::Instruction.as_ref(),
+                Feature::Mcp.as_ref(),
+                Feature::Skill.as_ref(),
+                Feature::AgentIgnore.as_ref(),
+            ])
             .required(false);
         let features = ms.interact().context("unable to get feature selection")?;
 
         let feature_list: Vec<Feature> = features
             .iter()
-            .filter_map(|&f| match f {
-                "commands" => Some(Feature::Commands),
-                "instructions" => Some(Feature::Instructions),
-                "mcp" => Some(Feature::Mcp),
-                "skills" => Some(Feature::Skills),
-                _ => None,
-            })
+            .filter_map(|&f| Feature::from_str(f).ok())
             .collect();
         opts.features = Some(feature_list);
     }
@@ -84,9 +92,6 @@ pub(crate) fn run_init_wizard(opts: &mut InitOptions, dir_exists: bool) -> Resul
 }
 
 /// Fetches the provider registry and prompts the user to select deployment targets.
-/// Returns `Some(selected)` with the chosen provider names, or `None` if the registry
-/// could not be reached (so callers can distinguish failure from an empty selection).
-/// `initial` lists provider names that should be pre-checked in the multiselect.
 pub(crate) fn prompt_targets(initial: &[String]) -> Result<Option<Vec<String>>> {
     let sp = spinner();
     sp.start("Fetching provider registry…");

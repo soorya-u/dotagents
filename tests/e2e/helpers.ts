@@ -100,7 +100,7 @@ export function initWithLocalProvider(dir: string): void {
 			"--template",
 			"advanced",
 			"--features",
-			"commands,instructions,mcp,skills",
+			"command,instruction,mcp,skill",
 		],
 		dir,
 	);

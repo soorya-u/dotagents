@@ -44,7 +44,7 @@ impl AppConfig {
     }
 
     pub fn has_feature(&self, feature: &Feature) -> bool {
-        self.features.contains(feature.as_str())
+        self.features.contains(feature.as_ref())
     }
 
     pub fn get_provider_feature_settings(

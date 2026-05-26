@@ -17,3 +17,7 @@ target = "{{ dir.workspace }}/AGENTS.md"
 [providers.auggie.mcp]
 template = "https://dotagents.soorya-u.dev/v1/templates/auggie/mcp.hbs"
 target = "{{ dir.workspace }}/.augment/settings.json"
+
+[providers.auggie.ignore]
+template = "https://dotagents.soorya-u.dev/v1/templates/auggie/agent-ignore.hbs"
+target = "{{ dir.workspace }}/.augmentignore"

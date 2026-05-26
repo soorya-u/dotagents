@@ -23,7 +23,7 @@ test.describe("commands new CLI", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -65,7 +65,7 @@ test.describe("commands new CLI", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -91,7 +91,7 @@ test.describe("commands new CLI", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -121,7 +121,7 @@ test.describe("commands new CLI", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -180,7 +180,7 @@ test.describe("commands ls CLI", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -202,7 +202,7 @@ test.describe("commands ls CLI", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -224,7 +224,7 @@ test.describe("commands ls CLI", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -245,7 +245,7 @@ test.describe("commands ls CLI", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -271,7 +271,7 @@ test.describe("commands ls CLI", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -294,7 +294,7 @@ test.describe("commands ls CLI", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -322,7 +322,7 @@ test.describe("commands ls CLI", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -344,7 +344,7 @@ test.describe("commands ls CLI", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -366,7 +366,7 @@ test.describe("commands ls CLI", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -390,7 +390,7 @@ test.describe("commands ls CLI", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -413,7 +413,7 @@ test.describe("commands ls CLI", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -440,7 +440,7 @@ test.describe("commands ls CLI", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -465,7 +465,7 @@ test.describe("commands ls CLI", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -496,7 +496,7 @@ test.describe("commands rm CLI", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -543,7 +543,7 @@ test.describe("commands rm CLI", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -654,7 +654,7 @@ test.describe("commands --cwd", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				workspace,
 			);
@@ -697,7 +697,7 @@ test.describe("commands --cwd", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				workspace,
 			);
@@ -734,7 +734,7 @@ test.describe("commands --cwd", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				workspace,
 			);
@@ -765,7 +765,7 @@ test.describe("commands --cwd", () => {
 				"--template",
 				"starter",
 				"--features",
-				"commands,instructions,mcp,skills",
+				"command,instruction,mcp,skill",
 			]);
 			const { exitCode, stdout } = run(["commands", "ls", "--cwd", "sub"], d);
 			expect(exitCode).toBe(0);
@@ -785,7 +785,7 @@ test.describe("commands --cwd", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -832,7 +832,7 @@ test.describe("commands new TUI – T06 interactive prompts", () => {
 			"--template",
 			"starter",
 			"--features",
-			"commands,instructions,mcp,skills",
+			"command,instruction,mcp,skill",
 		],
 		d,
 	);
@@ -888,7 +888,7 @@ test.describe("commands new TUI – T07 deploy on Yes", () => {
 			"--template",
 			"advanced",
 			"--features",
-			"commands,instructions,mcp,skills",
+			"command,instruction,mcp,skill",
 		],
 		d,
 	);
@@ -943,7 +943,7 @@ test.describe("commands rm TUI – T10 confirm Yes", () => {
 			"--template",
 			"starter",
 			"--features",
-			"commands,instructions,mcp,skills",
+			"command,instruction,mcp,skill",
 		],
 		d,
 	);
@@ -975,7 +975,7 @@ test.describe("commands rm TUI – T11 confirm No", () => {
 			"--template",
 			"starter",
 			"--features",
-			"commands,instructions,mcp,skills",
+			"command,instruction,mcp,skill",
 		],
 		d,
 	);

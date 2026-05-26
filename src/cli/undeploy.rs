@@ -207,16 +207,16 @@ mod tests {
         let file_str = file.to_str().unwrap().to_string();
         cache.set(
             "mycode",
-            "commands",
+            "command",
             "hello",
             CacheEntry {
                 hash: "abc".to_string(),
                 target: file_str,
             },
         );
-        undeploy_item("commands", "hello", &mut cache, tmp.path()).unwrap();
+        undeploy_item("command", "hello", &mut cache, tmp.path()).unwrap();
         assert!(!file.exists(), "deployed file should be deleted");
-        assert!(cache.get("mycode", "commands", "hello").is_none());
+        assert!(cache.get("mycode", "command", "hello").is_none());
     }
 
     // file is missing but cache entry exists → Ok, cache entry removed, no panic
@@ -233,15 +233,15 @@ mod tests {
             .to_string();
         cache.set(
             "mycode",
-            "commands",
+            "command",
             "hello",
             CacheEntry {
                 hash: "abc".to_string(),
                 target: file_str,
             },
         );
-        let result = undeploy_item("commands", "hello", &mut cache, tmp.path());
+        let result = undeploy_item("command", "hello", &mut cache, tmp.path());
         assert!(result.is_ok(), "should not fail when file is missing");
-        assert!(cache.get("mycode", "commands", "hello").is_none());
+        assert!(cache.get("mycode", "command", "hello").is_none());
     }
 }

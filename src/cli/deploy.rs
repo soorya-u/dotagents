@@ -4,6 +4,7 @@ use serde_json::{Value, to_value};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
+use strum::IntoEnumIterator;
 
 use crate::cli::options::DeployOptions;
 use crate::cli::ui::deploy::{
@@ -16,8 +17,8 @@ use crate::core::config::{
     AppConfig, CACHE_SINGLETON_KEY, CacheConfig, CacheEntry, CacheUpdate, FeatureSettings,
 };
 use crate::core::features::{
-    Feature, command::CommandFeature, instruction::InstructionFeature, mcp::McpFeature,
-    skill::SkillFeature, traits::FeatureTrait,
+    Feature, command::CommandFeature, ignore::IgnoreFeature, instruction::InstructionFeature,
+    mcp::McpFeature, skill::SkillFeature, traits::FeatureTrait,
 };
 use crate::schema::registry::Registry;
 use crate::templates::variables::set_env_paths;
@@ -295,7 +296,7 @@ where
 
     let work_list = build_work_list(&items, &providers, ctx.templater, ctx.variables)?;
 
-    let feature_name = feature.as_str();
+    let feature_name = feature.as_ref();
     let cache_ref = ctx.cache.clone();
 
     let stats: DeployStats = work_list
@@ -444,6 +445,18 @@ fn deploy_all_features(ctx: &DeployContext<'_>) -> Result<DeployStats> {
         || InstructionFeature::from_application().map(|inst| vec![inst]),
     )?);
 
+    stats = stats.merge(deploy_feature::<IgnoreFeature>(
+        ctx,
+        &Feature::AgentIgnore,
+        || {
+            let ignore = IgnoreFeature::from_application()?;
+            if ignore.to_string()?.trim().is_empty() {
+                return Ok(vec![]);
+            }
+            Ok(vec![ignore])
+        },
+    )?);
+
     Ok(stats)
 }
 
@@ -491,9 +504,8 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
         .map(|v| to_value(v).context("unable to extract variables"))
         .transpose()?;
 
-    let has_any_provider = Feature::all()
-        .iter()
-        .any(|f| !app_config.get_provider_feature_settings(f).is_empty());
+    let has_any_provider =
+        Feature::iter().any(|f| !app_config.get_provider_feature_settings(&f).is_empty());
     if !has_any_provider {
         warn!("No providers configured — nothing to deploy. Add providers to config.toml.");
     }

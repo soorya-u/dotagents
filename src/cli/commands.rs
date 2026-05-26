@@ -8,6 +8,7 @@ use crate::cli::deploy::deploy;
 use crate::cli::options::{AddCommandOptions, DeployOptions, RmCommandOptions, SubLsOptions};
 use crate::cli::ui::ls::render_commands;
 use crate::core::config::CacheConfig;
+use crate::core::features::Feature;
 use crate::core::features::command::CommandFeature;
 use crate::prelude::*;
 use crate::schema::list_item::ListItem;
@@ -159,7 +160,7 @@ pub(crate) fn rm_command(opts: RmCommandOptions) -> Result<bool> {
         match get_workspace_dir() {
             Ok(workspace_dir) => {
                 if let Err(e) = super::undeploy::undeploy_item(
-                    "commands",
+                    Feature::Command.as_ref(),
                     &opts.name,
                     &mut cache,
                     &workspace_dir,
@@ -237,7 +238,6 @@ mod tests {
     use super::*;
     use crate::utils::tui::set_ci_mode;
     use std::fs;
-    use std::io::Write;
     use tempfile::TempDir;
 
     fn make_command(dir: &std::path::Path, name: &str, description: &str) {

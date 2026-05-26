@@ -18,12 +18,12 @@ fn feature_subset_limits_deployed_artifacts() {
     let original = fs::read_to_string(&config_path).unwrap();
     let restricted = original.replace(
         r#"features = [
-    "commands",
-    "instructions",
+    "command",
+    "instruction",
     "mcp",
-    "skills",
+    "skill",
 ]"#,
-        r#"features = ["commands"]"#,
+        r#"features = ["command"]"#,
     );
     fs::write(&config_path, restricted).unwrap();
 
