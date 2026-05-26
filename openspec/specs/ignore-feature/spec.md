@@ -47,7 +47,7 @@ The system SHALL load ignore patterns from `.dotagents/.agentignore` — a newli
 
 #### Scenario: Load patterns from .agentignore
 - **WHEN** `.dotagents/.agentignore` contains:
-  ```
+  ```text
   node_modules/
   *.log
   .env

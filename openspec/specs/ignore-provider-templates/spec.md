@@ -62,41 +62,10 @@ Each provider SHALL have an `[providers.<slug>.ignore]` section in its `provider
 - **WHEN** the cursor provider.toml is parsed
 - **THEN** it SHALL include `[providers.cursor.ignore]` with `template` pointing to `ignore.hbs` and `target` resolving to `{{ dir.workspace }}/.cursorignore`
 
-#### Scenario: Claude provider has ignore config
-- **WHEN** the claude provider.toml is parsed
-- **THEN** it SHALL include `[providers.claude.ignore]` with `template` pointing to `ignore.hbs` and `target` resolving to `{{ dir.workspace }}/.claudeignore`
-
-#### Scenario: Copilot provider has ignore config
-- **WHEN** the copilot provider.toml is parsed
-- **THEN** it SHALL include `[providers.copilot.ignore]` with `template` pointing to `ignore.hbs` and `target` resolving to `{{ dir.workspace }}/.github/copilotignore`
-
-#### Scenario: Codex provider has ignore config
-- **WHEN** the codex provider.toml is parsed
-- **THEN** it SHALL include `[providers.codex.ignore]` with `template` pointing to `ignore.hbs` and `target` resolving to `{{ dir.workspace }}/.codexignore`
-
-#### Scenario: Factory-droid provider has ignore config
-- **WHEN** the factory-droid provider.toml is parsed
-- **THEN** it SHALL include `[providers.factory-droid.ignore]` with `template` pointing to `ignore.hbs` and `target` resolving to `{{ dir.workspace }}/.factoryignore`
-
-#### Scenario: Deepagents provider has ignore config
-- **WHEN** the deepagents provider.toml is parsed
-- **THEN** it SHALL include `[providers.deepagents.ignore]` with `template` pointing to `ignore.hbs` and `target` resolving to `{{ dir.workspace }}/.deepagentsignore`
-
-#### Scenario: Kimi provider has ignore config
-- **WHEN** the kimi provider.toml is parsed
-- **THEN** it SHALL include `[providers.kimi.ignore]` with `template` pointing to `ignore.hbs` and `target` resolving to `{{ dir.workspace }}/.kimiignore`
-
-#### Scenario: Mistral-vibe provider has ignore config
-- **WHEN** the mistral-vibe provider.toml is parsed
-- **THEN** it SHALL include `[providers.mistral-vibe.ignore]` with `template` pointing to `ignore.hbs` and `target` resolving to `{{ dir.workspace }}/.mistralignore`
-
-#### Scenario: Qoder-cli provider has ignore config
-- **WHEN** the qoder-cli provider.toml is parsed
-- **THEN** it SHALL include `[providers.qoder-cli.ignore]` with `template` pointing to `ignore.hbs` and `target` resolving to `{{ dir.workspace }}/.qoderignore`
-
-#### Scenario: Amp provider has ignore config
-- **WHEN** the amp provider.toml is parsed
-- **THEN** it SHALL include `[providers.amp.ignore]` with `template` pointing to `ignore.hbs` and `target` resolving to `{{ dir.workspace }}/.ampignore`
+> **Note**: Only providers with documented ignore-file support receive ignore templates.
+> Supported providers: opencode, auggie, autohand, cline, cursor, gemini, goose, junie, kilocode, pi, qwen.
+> The following providers do NOT have valid ignore file formats and are excluded:
+> claude, copilot, codex, factory-droid, deepagents, kimi, mistral-vibe, qoder-cli, amp.
 
 ### Requirement: Registry includes ignore template checksums
 The system SHALL update `registry.json` with SHA-256 checksums for all new `ignore.hbs` template files.

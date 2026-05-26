@@ -458,6 +458,7 @@ mod tests {
         assert!(!opts.has_feature(Feature::Instruction));
         assert!(!opts.has_feature(Feature::Mcp));
         assert!(!opts.has_feature(Feature::Skill));
+        assert!(!opts.has_feature(Feature::AgentIgnore));
     }
 
     #[test]
@@ -473,6 +474,7 @@ mod tests {
         assert!(!opts.has_feature(Feature::Mcp));
         assert!(!opts.has_feature(Feature::Instruction));
         assert!(!opts.has_feature(Feature::Skill));
+        assert!(!opts.has_feature(Feature::AgentIgnore));
     }
 
     #[test]
@@ -484,6 +486,7 @@ mod tests {
                 Feature::Instruction,
                 Feature::Mcp,
                 Feature::Skill,
+                Feature::AgentIgnore,
             ]),
             force: false,
             template: None,
@@ -493,6 +496,7 @@ mod tests {
         assert!(opts.has_feature(Feature::Instruction));
         assert!(opts.has_feature(Feature::Mcp));
         assert!(opts.has_feature(Feature::Skill));
+        assert!(opts.has_feature(Feature::AgentIgnore));
     }
 
     #[test]

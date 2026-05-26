@@ -538,6 +538,7 @@ fn features_has_overrides(feats: &Features) -> bool {
         || feats.instructions.is_some()
         || feats.mcp.is_some()
         || feats.skills.is_some()
+        || feats.ignore.is_some()
 }
 
 fn edit_global_config(config: &mut GlobalConfig) -> Result<()> {
