@@ -20,3 +20,7 @@ target = "{{dir.workspace}}/.goose/recipes/{{command.name}}.yaml"
 [providers.goose.mcp]
 template = "https://dotagents.soorya-u.dev/v1/templates/goose/mcp.hbs"
 target = "{{dir.workspace}}/.goose/extensions.yaml"
+
+[providers.goose.ignore]
+template = "https://dotagents.soorya-u.dev/v1/templates/goose/ignore.hbs"
+target = "{{dir.workspace}}/.gooseignore"

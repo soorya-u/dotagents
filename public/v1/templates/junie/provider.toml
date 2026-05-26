@@ -20,3 +20,7 @@ target = "{{dir.workspace}}/.junie/commands/{{command.name}}.md"
 [providers.junie.mcp]
 template = "https://dotagents.soorya-u.dev/v1/templates/junie/mcp.hbs"
 target = "{{dir.workspace}}/.junie/mcp/mcp.json"
+
+[providers.junie.ignore]
+template = "https://dotagents.soorya-u.dev/v1/templates/junie/ignore.hbs"
+target = "{{dir.workspace}}/.aiignore"

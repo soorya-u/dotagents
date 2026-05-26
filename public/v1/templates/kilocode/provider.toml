@@ -20,3 +20,7 @@ target = "{{dir.workspace}}/.kilo/commands/{{command.name}}.md"
 [providers.kilocode.mcp]
 template = "https://dotagents.soorya-u.dev/v1/templates/kilocode/mcp.hbs"
 target = "{{dir.workspace}}/.kilo/mcp.json"
+
+[providers.kilocode.ignore]
+template = "https://dotagents.soorya-u.dev/v1/templates/kilocode/ignore.hbs"
+target = "{{dir.workspace}}/.kilocodeignore"

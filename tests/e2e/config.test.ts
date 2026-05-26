@@ -290,7 +290,7 @@ test.describe("config --cwd", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				workspace,
 			);
@@ -313,7 +313,7 @@ test.describe("config --cwd", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				workspace,
 			);

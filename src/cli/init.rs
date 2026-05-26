@@ -11,14 +11,14 @@ use crate::{
     constants::{
         dir::{COMMANDS_DIR, ROOT_DIR, SKILLS_DIR},
         file::{
-            ENV_EXAMPLE_FILE, ENV_FILE, GITIGNORE_FILE, GLOBAL_CONFIG_FILE, INSTRUCTIONS_FILE,
-            LOCAL_CONFIG_FILE, MCP_FILE, SKILL_FILE,
+            AGENTIGNORE_FILE, ENV_EXAMPLE_FILE, ENV_FILE, GITIGNORE_FILE, GLOBAL_CONFIG_FILE,
+            INSTRUCTIONS_FILE, LOCAL_CONFIG_FILE, MCP_FILE, SKILL_FILE,
         },
         mocks,
     },
     core::features::{
-        command::CommandFeature, instruction::InstructionFeature, mcp::McpFeature,
-        skill::SkillFeature,
+        command::CommandFeature, ignore::IgnoreFeature, instruction::InstructionFeature,
+        mcp::McpFeature, skill::SkillFeature,
     },
     utils::{fs::write_file, tui::is_tui_enabled},
 };
@@ -54,7 +54,7 @@ fn build_config_content(opts: &InitOptions, template: InitTemplate) -> (String, 
     let config_features: Vec<&str> = opts
         .features
         .as_ref()
-        .map(|fs| fs.iter().map(|f| f.as_str()).collect())
+        .map(|fs| fs.iter().map(|f| f.as_ref()).collect())
         .unwrap_or_default();
     let config_targets: Vec<&str> = opts
         .targets
@@ -134,19 +134,21 @@ pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
             .with_skip_if(|opts| matches!(opts.template, Some(InitTemplate::Blank) | None)),
         InitFile::new(GITIGNORE_FILE, mocks::GITIGNORE),
         InitFile::new(INSTRUCTIONS_FILE, InstructionFeature::mock())
-            .with_skip_if(|opts| !opts.has_feature(Feature::Instructions)),
+            .with_skip_if(|opts| !opts.has_feature(Feature::Instruction)),
         InitFile::new(MCP_FILE, McpFeature::mock())
             .with_skip_if(|opts| !opts.has_feature(Feature::Mcp)),
         InitFile::new(
             Path::new(COMMANDS_DIR).join("hello.md"),
             CommandFeature::mock(),
         )
-        .with_skip_if(|opts| !opts.has_feature(Feature::Commands)),
+        .with_skip_if(|opts| !opts.has_feature(Feature::Command)),
         InitFile::new(
             Path::new(SKILLS_DIR).join("hello-skill").join(SKILL_FILE),
             SkillFeature::mock(),
         )
-        .with_skip_if(|opts| !opts.has_feature(Feature::Skills)),
+        .with_skip_if(|opts| !opts.has_feature(Feature::Skill)),
+        InitFile::new(AGENTIGNORE_FILE, IgnoreFeature::mock())
+            .with_skip_if(|opts| !opts.has_feature(Feature::AgentIgnore)),
         // Template files — only written for the Advanced template.
         InitFile::new(
             Path::new("templates").join("mycode").join("command.hbs"),
@@ -220,7 +222,7 @@ mod tests {
         let file =
             InitFile::new("some.txt", "content").with_skip_if(|o| !o.has_feature(Feature::Mcp));
         assert!(file.should_skip(&InitOptions {
-            features: Some(vec![Feature::Commands]),
+            features: Some(vec![Feature::Command]),
             ..default_opts()
         }));
     }
@@ -259,14 +261,15 @@ mod tests {
     #[test]
     fn build_config_content_writes_selected_features() {
         let opts = InitOptions {
-            features: Some(vec![Feature::Commands, Feature::Instructions]),
+            features: Some(vec![Feature::Command, Feature::Instruction]),
             ..default_opts()
         };
         let (global, _) = build_config_content(&opts, InitTemplate::Blank);
-        assert!(global.contains("commands"));
-        assert!(global.contains("instructions"));
+        assert!(global.contains("\"command\""));
+        assert!(global.contains("\"instruction\""));
         assert!(!global.contains("\"mcp\""));
-        assert!(!global.contains("\"skills\""));
+        assert!(!global.contains("\"skill\""));
+        assert!(!global.contains("\"agent-ignore\""));
     }
 
     #[test]
@@ -303,10 +306,10 @@ mod tests {
             template: Some(InitTemplate::Starter),
             force: true,
             features: Some(vec![
-                Feature::Commands,
-                Feature::Instructions,
+                Feature::Command,
+                Feature::Instruction,
                 Feature::Mcp,
-                Feature::Skills,
+                Feature::Skill,
             ]),
             ..default_opts()
         };
@@ -327,10 +330,10 @@ mod tests {
             template: Some(InitTemplate::Starter),
             force: true,
             features: Some(vec![
-                Feature::Commands,
-                Feature::Instructions,
+                Feature::Command,
+                Feature::Instruction,
                 Feature::Mcp,
-                Feature::Skills,
+                Feature::Skill,
             ]),
             ..default_opts()
         };

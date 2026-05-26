@@ -58,7 +58,7 @@ test.describe("error flows – missing targets", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -83,7 +83,7 @@ test.describe("error flows – missing targets", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);
@@ -105,7 +105,7 @@ test.describe("error flows – missing targets", () => {
 					"--template",
 					"starter",
 					"--features",
-					"commands,instructions,mcp,skills",
+					"command,instruction,mcp,skill",
 				],
 				d,
 			);

@@ -219,7 +219,7 @@ fn resolve_for_provider(
             warn!(
                 "Provider '{}' does not support the '{}' feature — skipping",
                 provider,
-                feature.as_str()
+                feature.as_ref()
             );
             return Ok(None);
         }
@@ -232,12 +232,12 @@ fn resolve_for_provider(
         let hbs_checksum = registry
             .and_then(|r| r.providers.get(provider))
             .and_then(|e| e.checksums.as_ref())
-            .and_then(|c| c.get(filename))
+            .and_then(|c| c.get(&filename))
             .map(|s| s.as_str());
 
         match fetch_or_cache_file(
             provider,
-            filename,
+            &filename,
             template_url,
             hbs_checksum,
             cache,
@@ -245,7 +245,7 @@ fn resolve_for_provider(
         ) {
             Ok(Some(_)) => {
                 // Point template at the cached local file so the renderer reads from disk.
-                let local_path = cache.path_of(provider, filename);
+                let local_path = cache.path_of(provider, &filename);
                 feature_settings.template = Some(local_path.to_string_lossy().into_owned());
             }
             Ok(None) => {}
@@ -254,7 +254,7 @@ fn resolve_for_provider(
                 warn!(
                     "Failed to pre-warm .hbs cache for provider '{}' feature '{}': {}",
                     provider,
-                    feature.as_str(),
+                    feature.as_ref(),
                     e
                 );
             }
@@ -347,6 +347,7 @@ fn set_feature_settings(
         Feature::Instruction => features.instructions = Some(settings),
         Feature::Mcp => features.mcp = Some(settings),
         Feature::Skill => features.skills = Some(settings),
+        Feature::AgentIgnore => features.ignore = Some(settings),
     }
 }
 

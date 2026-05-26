@@ -1,4 +1,8 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    str::FromStr,
+};
+use strum::VariantNames;
 
 #[cfg(feature = "skills-add")]
 use super::common::PackageRunner;
@@ -54,11 +58,11 @@ impl GlobalConfig {
 
     pub fn validate(&self) -> anyhow::Result<()> {
         for feature in &self.features {
-            if Feature::from_str(feature).is_none() {
+            if Feature::from_str(feature.as_str()).is_err() {
                 anyhow::bail!(
                     "Invalid feature: {}. Valid features are: {}",
                     feature,
-                    Feature::all_names().join(", ")
+                    Feature::VARIANTS.join(", ")
                 );
             }
         }

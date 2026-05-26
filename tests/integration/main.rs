@@ -164,7 +164,7 @@ pub fn init_with_mycode_provider(ws: &TestWorkspace) {
         "--template",
         "advanced",
         "--features",
-        "commands,instructions,mcp,skills",
+        "command,instruction,mcp,skill",
     ])
     .assert_success();
     let config_path = ws.active_root_dir().join("local.config.toml");

@@ -10,3 +10,7 @@ target = "{{dir.workspace}}/.pi/prompts/{{command.name}}.md"
 [providers.pi.skills]
 template = "https://dotagents.soorya-u.dev/v1/templates/pi/skill.hbs"
 target = "{{dir.workspace}}/.pi/skills/{{skill.name}}/SKILL.md"
+
+[providers.pi.ignore]
+template = "https://dotagents.soorya-u.dev/v1/templates/pi/ignore.hbs"
+target = "{{dir.workspace}}/.piignore"

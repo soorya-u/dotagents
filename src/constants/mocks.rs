@@ -70,6 +70,8 @@ pub(crate) const MCP_MOCK: &str = r#"{
 }
 "#;
 
+pub(crate) const AGENTIGNORE_MOCK: &str = ".env.prod";
+
 /// Default .env.example content.
 pub(crate) const ENV_EXAMPLE: &str = "APP_NAME=dotagents\n";
 

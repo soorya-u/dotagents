@@ -1,5 +1,6 @@
 pub(crate) mod command;
 pub(crate) mod common;
+pub(crate) mod ignore;
 pub(crate) mod instruction;
 pub(crate) mod mcp;
 pub(crate) mod skill;

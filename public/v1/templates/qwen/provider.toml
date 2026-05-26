@@ -15,3 +15,7 @@ target = "{{dir.workspace}}/.qwen/skills/{{skill.name}}/SKILL.md"
 [providers.qwen.mcp]
 template = "https://dotagents.soorya-u.dev/v1/templates/qwen/mcp.hbs"
 target = "{{dir.workspace}}/.qwen/mcp.json"
+
+[providers.qwen.ignore]
+template = "https://dotagents.soorya-u.dev/v1/templates/qwen/ignore.hbs"
+target = "{{dir.workspace}}/.qwenignore"

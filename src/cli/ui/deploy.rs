@@ -4,7 +4,6 @@ use crate::cli::deploy::DeployStats;
 use crate::utils::tui::is_tui_enabled;
 
 /// Prompts whether to run deploy in offline mode using a cliclack select.
-/// Returns false (online) immediately in non-TTY environments or on error.
 pub(crate) fn prompt_offline() -> bool {
     if !is_tui_enabled() {
         return false;

@@ -1,6 +1,7 @@
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use clap_complete::Shell;
 use std::path::PathBuf;
+use strum_macros::{AsRefStr, EnumString};
 
 #[cfg(feature = "skills-add")]
 use crate::core::config::common::PackageRunner;
@@ -66,27 +67,19 @@ pub(crate) enum Action {
 }
 
 /// Features that can be scaffolded by `dotagents init`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum, EnumString, AsRefStr)]
+#[strum(serialize_all = "kebab-case")]
 pub(crate) enum Feature {
     /// Enable custom slash commands.
-    Commands,
+    Command,
     /// Enable global instruction.
-    Instructions,
+    Instruction,
     /// Enable MCP configurations.
     Mcp,
     /// Enable skills.
-    Skills,
-}
-
-impl Feature {
-    pub(crate) fn as_str(&self) -> &'static str {
-        match self {
-            Feature::Commands => "commands",
-            Feature::Instructions => "instructions",
-            Feature::Mcp => "mcp",
-            Feature::Skills => "skills",
-        }
-    }
+    Skill,
+    /// Enable Agent Ignore Files.
+    AgentIgnore,
 }
 
 /// Subcommands for `dotagents skills`.
@@ -461,25 +454,25 @@ mod tests {
             template: None,
             targets: None,
         };
-        assert!(!opts.has_feature(Feature::Commands));
-        assert!(!opts.has_feature(Feature::Instructions));
+        assert!(!opts.has_feature(Feature::Command));
+        assert!(!opts.has_feature(Feature::Instruction));
         assert!(!opts.has_feature(Feature::Mcp));
-        assert!(!opts.has_feature(Feature::Skills));
+        assert!(!opts.has_feature(Feature::Skill));
     }
 
     #[test]
     fn has_feature_returns_false_for_unlisted_feature() {
         let opts = InitOptions {
             dir: None,
-            features: Some(vec![Feature::Commands]),
+            features: Some(vec![Feature::Command]),
             force: false,
             template: None,
             targets: None,
         };
-        assert!(opts.has_feature(Feature::Commands));
+        assert!(opts.has_feature(Feature::Command));
         assert!(!opts.has_feature(Feature::Mcp));
-        assert!(!opts.has_feature(Feature::Instructions));
-        assert!(!opts.has_feature(Feature::Skills));
+        assert!(!opts.has_feature(Feature::Instruction));
+        assert!(!opts.has_feature(Feature::Skill));
     }
 
     #[test]
@@ -487,19 +480,19 @@ mod tests {
         let opts = InitOptions {
             dir: None,
             features: Some(vec![
-                Feature::Commands,
-                Feature::Instructions,
+                Feature::Command,
+                Feature::Instruction,
                 Feature::Mcp,
-                Feature::Skills,
+                Feature::Skill,
             ]),
             force: false,
             template: None,
             targets: None,
         };
-        assert!(opts.has_feature(Feature::Commands));
-        assert!(opts.has_feature(Feature::Instructions));
+        assert!(opts.has_feature(Feature::Command));
+        assert!(opts.has_feature(Feature::Instruction));
         assert!(opts.has_feature(Feature::Mcp));
-        assert!(opts.has_feature(Feature::Skills));
+        assert!(opts.has_feature(Feature::Skill));
     }
 
     #[test]

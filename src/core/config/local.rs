@@ -1,4 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    str::FromStr,
+};
 
 #[cfg(feature = "skills-add")]
 use super::common::PackageRunner;
@@ -7,6 +10,7 @@ use super::traits::TomlConfig;
 use crate::constants::schema::CONFIG_SCHEMA;
 use crate::core::features::Feature;
 use serde::{Deserialize, Serialize};
+use strum::VariantNames;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
@@ -68,11 +72,11 @@ impl LocalConfig {
     pub fn validate(&self) -> anyhow::Result<()> {
         if let Some(features) = &self.features {
             for feature in features {
-                if Feature::from_str(feature).is_none() {
+                if Feature::from_str(feature.as_str()).is_err() {
                     anyhow::bail!(
                         "Invalid feature: {}. Valid features are: {}",
                         feature,
-                        Feature::all_names().join(", ")
+                        Feature::VARIANTS.join(", ")
                     );
                 }
             }

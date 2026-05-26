@@ -235,7 +235,7 @@ pub(crate) fn rm_skill(opts: RmSkillOptions) -> Result<bool> {
         match get_workspace_dir() {
             Ok(workspace_dir) => {
                 if let Err(e) =
-                    super::undeploy::undeploy_item("skills", &opts.name, &mut cache, &workspace_dir)
+                    super::undeploy::undeploy_item("skill", &opts.name, &mut cache, &workspace_dir)
                 {
                     warn!("Failed to clean up deployed files: {}", e);
                 }
