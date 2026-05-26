@@ -2,7 +2,7 @@
 rust = "1.92"
 bun = "1.3"
 "npm:tui-devtools" = "0.1"
-"cargo:dotagents" = "0.1.0"
+"cargo:dotagents" = "0.1.1"
 
 [settings.npm]
 package_manager = "bun"

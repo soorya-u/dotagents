@@ -5,6 +5,7 @@ tests/e2e/.tui-test/
 .agents/
 .claude/
 .codex/
+.cursor/
 .opencode/commands/
 .opencode/skills/
 AGENTS.md
