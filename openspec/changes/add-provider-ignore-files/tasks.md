@@ -6,7 +6,8 @@
 - [ ] 1.4 Add `ignore: Option<FeatureSettings>` to `Features` struct in `src/core/config/common.rs`
 - [ ] 1.5 Update `Features::get_config()` to handle `Feature::Ignore`
 - [ ] 1.6 Update `Features::merge()` to include ignore field
-- [ ] 1.7 Add `[ignore]` config parsing with `patterns` field
+- [ ] 1.7 Add `.agentignore` file loading (newline-separated patterns from `.dotagents/.agentignore`)
+- [ ] 1.8 Add per-provider `[providers.<name>.ignore].disabled` config parsing
 
 ## 2. Deploy Pipeline Integration
 
@@ -38,26 +39,26 @@
 - [ ] 3.19 Create `public/v1/templates/qoder-cli/ignore.hbs` with target `.qoderignore`
 - [ ] 3.20 Create `public/v1/templates/amp/ignore.hbs` with target `.ampignore`
 - [ ] 3.21 Update `provider.toml` for each provider with `[providers.<slug>.ignore]` section
+- [ ] 3.22 Update provider registry checksums in `registry.json` for all new `ignore.hbs` files
 
 ## 4. Init Integration
 
 - [ ] 4.1 Add `Ignore` variant to `Feature` enum in `src/cli/options.rs`
 - [ ] 4.2 Add `Feature::Ignore` → `"ignore"` mapping in `Feature::as_str()`
 - [ ] 4.3 Add "Ignore Patterns" option to TUI init wizard in `src/cli/ui/init.rs` multiselect
-- [ ] 4.4 Add `--no-ignore` flag support in `InitOptions` (parallel to `--no-mcp`, `--no-command`, etc.)
-- [ ] 4.5 Create default ignore patterns mock file in `src/constants/mocks.rs`
-- [ ] 4.6 Wire ignore file scaffolding into `initialize_agents_dir()` in `src/cli/init.rs` with skip condition
-- [ ] 4.7 Add `IGNORE_FILE` constant in `src/constants/file.rs`
+- [ ] 4.4 Create default `.agentignore` mock file in `src/constants/mocks.rs`
+- [ ] 4.5 Wire `.agentignore` scaffolding into `initialize_agents_dir()` in `src/cli/init.rs`
+- [ ] 4.6 Add `AGENTIGNORE_FILE` constant in `src/constants/file.rs`
 
 ## 5. Testing
 
 - [ ] 5.1 Add unit tests for `IgnoreFeature` in `src/core/features/ignore.rs`
 - [ ] 5.2 Add unit tests for config parsing and merging in `src/core/config/common.rs`
-- [ ] 5.3 Add unit tests for init skip conditions with ignore feature
-- [ ] 5.4 Manually test deploy with tui-devtools for all 20 providers
+- [ ] 5.3 Add unit tests for init with ignore feature selected/deselected
+- [ ] 5.4 Manually test deploy with tui-devtools for all supported providers
 - [ ] 5.5 Manually test init wizard with ignore feature selected/deselected
 - [ ] 5.6 Add e2e tests for ignore feature deploy flow
-- [ ] 5.7 Add e2e tests for init with `--no-ignore` flag
+- [ ] 5.7 Add e2e tests for init with `--features ignore` flag
 
 ## 6. Verification
 

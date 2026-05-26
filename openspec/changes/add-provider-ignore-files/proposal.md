@@ -5,7 +5,7 @@ Many AI coding agents support ignore files that control which files the agent re
 ## What Changes
 
 - New `ignore` feature added to the feature system (alongside `commands`, `instructions`, `mcp`, `skills`)
-- New `Ignore` option in `dotagents init` feature selection (TUI wizard + `--features` flag + `--no-ignore` flag)
+- New `Ignore` option in `dotagents init` feature selection (TUI wizard + `--features` flag)
 - Provider templates updated for all 20 providers that support ignore files:
   - **opencode**: `.ignore`
   - **auggie**: `.augmentignore`
@@ -47,6 +47,7 @@ Many AI coding agents support ignore files that control which files the agent re
 
 - **New code**: `src/core/features/ignore.rs` (new `IgnoreFeature` implementation), provider template files under `public/v1/templates/<provider>/ignore.hbs`
 - **Modified code**: `src/core/features/common.rs` (add `Ignore` to `Feature` enum), `src/core/config/common.rs` (add `ignore` to `Features`), `src/cli/options.rs` (add `Ignore` to init `Feature` enum), `src/cli/init.rs` (wire ignore scaffolding), `src/cli/ui/init.rs` (add ignore to TUI multiselect), `src/cli/deploy.rs` (wire ignore feature into deploy loop), `src/utils/gitignore.rs` (include ignore files in fence)
-- **Config schema**: `Features` struct gains `ignore: Option<FeatureSettings>`
+- **Config schema**: `Features` struct gains `ignore: Option<FeatureSettings>`; per-provider `[providers.<name>.ignore]` supports `disabled = true`
+- **Source file**: `.dotagents/.agentignore` — newline-separated ignore patterns, loaded and templated to all providers during deploy
 - **Templates**: 20 new `.hbs` template files for provider-specific ignore formats
 - **Registry**: `registry.json` updated with new template checksums

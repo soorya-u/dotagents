@@ -38,35 +38,43 @@ The system SHALL provide an `IgnoreFeature` struct that implements `FeatureTrait
 - **WHEN** an `IgnoreFeature` is serialized with `to_string()` then parsed with `from_string()`
 - **THEN** the resulting patterns SHALL be identical to the original
 
-### Requirement: Ignore patterns from config
-The system SHALL load ignore patterns from an `[ignore]` table in `config.toml` with a `patterns` array field.
+### Requirement: Ignore patterns from `.agentignore` file
+The system SHALL load ignore patterns from `.dotagents/.agentignore` — a newline-separated file (one pattern per line), similar to `INSTRUCTIONS.md` and `mcp.jsonc`.
 
-#### Scenario: Load patterns from config
-- **WHEN** `config.toml` contains:
-  ```toml
-  [ignore]
-  patterns = ["node_modules/", "*.log", ".env"]
+#### Scenario: Load patterns from .agentignore
+- **WHEN** `.dotagents/.agentignore` contains:
+  ```
+  node_modules/
+  *.log
+  .env
   ```
 - **THEN** the deploy pipeline SHALL load these patterns into an `IgnoreFeature`
 
-#### Scenario: Empty patterns list is valid
-- **WHEN** `config.toml` contains:
-  ```toml
-  [ignore]
-  patterns = []
-  ```
-- **THEN** the deploy pipeline SHALL load an `IgnoreFeature` with zero patterns (no file written)
+#### Scenario: Missing .agentignore is valid
+- **WHEN** `.dotagents/.agentignore` does not exist
+- **THEN** the deploy pipeline SHALL load an `IgnoreFeature` with zero patterns (no error)
 
-#### Scenario: Missing ignore section is valid
-- **WHEN** `config.toml` has no `[ignore]` table
-- **THEN** the deploy pipeline SHALL skip the ignore feature without error
+#### Scenario: Empty .agentignore is valid
+- **WHEN** `.dotagents/.agentignore` exists but is empty
+- **THEN** the deploy pipeline SHALL load an `IgnoreFeature` with zero patterns
+
+### Requirement: Per-provider ignore disable
+The system SHALL support `[providers.<name>.ignore]` in `config.toml` with `disabled = true/false` to skip ignore file generation for specific providers.
+
+#### Scenario: Provider disables ignore feature
+- **WHEN** `[providers.claude.ignore]` has `disabled = true`
+- **THEN** the deploy pipeline SHALL NOT write any ignore file for the claude provider
+
+#### Scenario: Provider omits ignore section
+- **WHEN** a provider has no `[providers.<name>.ignore]` section
+- **THEN** the deploy pipeline SHALL write the ignore file using patterns from `.agentignore`
 
 ### Requirement: Ignore feature in Features config struct
 The system SHALL add an `ignore: Option<FeatureSettings>` field to the `Features` struct in `src/core/config/common.rs`.
 
 #### Scenario: Features struct includes ignore field
 - **WHEN** a `Features` struct is serialized to TOML
-- **THEN** it SHALL include an `[ignore]` section if `ignore` is `Some`
+- **THEN** it SHALL include an `[features.ignore]` section if `ignore` is `Some`
 
 #### Scenario: Features::get_config returns ignore settings
 - **WHEN** `get_config(&Feature::Ignore)` is called on a `Features` instance

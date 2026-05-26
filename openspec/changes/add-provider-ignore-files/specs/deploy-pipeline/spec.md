@@ -16,14 +16,14 @@ The system SHALL process the `ignore` feature in the deploy pipeline alongside `
 - **THEN** the system SHALL create all parent directories before writing the file
 
 ### Requirement: Deploy pipeline handles empty patterns
-The system SHALL gracefully handle the case where ignore patterns are defined but the list is empty.
+The system SHALL gracefully handle the case where `.agentignore` is empty or missing.
 
-#### Scenario: Empty patterns produces no file
-- **WHEN** `[ignore]` section exists but `patterns = []`
+#### Scenario: Empty .agentignore produces no file
+- **WHEN** `.dotagents/.agentignore` exists but is empty
 - **THEN** the deploy pipeline SHALL NOT write any ignore files
 
-#### Scenario: Missing patterns field is treated as empty
-- **WHEN** `[ignore]` section exists but has no `patterns` field
+#### Scenario: Missing .agentignore produces no file
+- **WHEN** `.dotagents/.agentignore` does not exist
 - **THEN** the deploy pipeline SHALL NOT write any ignore files
 
 ### Requirement: Ignore files tracked in gitignore fence

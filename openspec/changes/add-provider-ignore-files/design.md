@@ -6,9 +6,9 @@ Dotagents currently deploys commands, instructions, MCP configs, and skills to 2
 
 **Goals:**
 - Add `ignore` as a first-class feature alongside `commands`, `instructions`, `mcp`, `skills`
-- Support all 20 providers with ignore file templates (each follows the `.<name>ignore` convention)
+- Support all supported providers with ignore file templates (each follows the `.<name>ignore` convention)
 - Each provider gets a template (`ignore.hbs`) that renders a list of ignore patterns
-- Ignore patterns are sourced from a configurable list in `config.toml` (global + per-provider)
+- Ignore patterns are sourced from `.dotagents/.agentignore` (newline-separated, like `INSTRUCTIONS.md`) and merged with per-provider `patterns` from config
 - Deployed ignore files are tracked in the gitignore fence
 - `init` scaffolds a default ignore patterns file when the ignore feature is selected
 - TUI wizard includes "Ignore Patterns" as a selectable feature
@@ -27,12 +27,12 @@ Dotagents currently deploys commands, instructions, MCP configs, and skills to 2
 - Structured patterns with comments/metadata — overkill for current use case
 - Single string blob — harder to manipulate in templates and tests
 
-### 2. Global patterns + per-provider overrides via config
-**Decision:** Users define `[ignore]` table in config with `patterns = [...]`. Per-provider overrides via `[providers.<name>.ignore.variables]` or a dedicated `patterns` field.
-**Rationale:** Matches existing pattern for per-provider feature settings. Keeps config familiar.
+### 2. Patterns sourced from `.agentignore` file only
+**Decision:** All ignore patterns come from `.dotagents/.agentignore` (one pattern per line). No config-based pattern overrides.
+**Rationale:** Follows the established pattern for `INSTRUCTIONS.md` and `mcp.jsonc` — a single source file that users edit. Keeps config clean and avoids ambiguity.
 **Alternatives considered:**
-- Separate `.dotagents/ignore` file — adds complexity, config.toml already handles this
-- Only global patterns — too inflexible for provider-specific needs
+- Global `[ignore]` table in config.toml — duplicates what a source file already does
+- Per-provider `patterns` arrays — adds complexity for a use case that variables already solve
 
 ### 3. Template renders patterns directly (no two-phase rendering)
 **Decision:** Unlike commands/instructions, ignore templates skip the two-phase content rendering and render directly against `var.*` and `ignore.patterns`.
@@ -53,14 +53,14 @@ Dotagents currently deploys commands, instructions, MCP configs, and skills to 2
 **Alternatives considered:**
 - Shared template with provider-specific variables — harder to maintain, less flexible
 
-### 6. Init scaffolds a default ignore patterns file
-**Decision:** When the user selects the ignore feature during `init`, a default `ignore` file is created in `.dotagents/` with common patterns (e.g., `node_modules/`, `.git/`, `target/`).
-**Rationale:** Matches the existing pattern for commands, instructions, MCP, and skills — each feature gets a mock file during init.
+### 6. Init scaffolds `.agentignore` with common patterns
+**Decision:** When the user selects the ignore feature during `init`, a default `.dotagents/.agentignore` file is created with common patterns (e.g., `node_modules/`, `.git/`, `target/`).
+**Rationale:** Matches the existing pattern for `INSTRUCTIONS.md` and `mcp.jsonc` — each feature gets a mock file during init.
 **Alternatives considered:**
 - No default file — leaves users with no starting point
 - Empty file — less helpful than a sensible default
 
-### 7. All 20 providers get ignore templates
+### 7. All supported providers get ignore templates
 **Decision:** Every provider in the registry gets an `ignore.hbs` template, even if the ignore file format is not well-documented.
 **Rationale:** Most providers follow the `.<name>ignore` convention. Users can customize templates later. Better to provide a starting point than leave providers unsupported.
 **Alternatives considered:**

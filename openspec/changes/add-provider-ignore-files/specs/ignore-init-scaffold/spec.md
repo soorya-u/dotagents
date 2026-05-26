@@ -22,23 +22,19 @@ The TUI init wizard SHALL present "Ignore Patterns" as a selectable feature in t
 - **WHEN** the TUI feature multiselect is displayed
 - **THEN** "Ignore Patterns" SHALL be pre-selected alongside "Custom Commands", "INSTRUCTIONS.md", and "MCP Configuration"
 
-### Requirement: Init scaffolds ignore patterns file
-The system SHALL create a default ignore patterns file in `.dotagents/` when the ignore feature is selected during `init`.
+### Requirement: Init scaffolds `.agentignore` file
+The system SHALL create a default `.dotagents/.agentignore` file when the ignore feature is selected during `init`.
 
-#### Scenario: Init creates ignore file when feature is enabled
+#### Scenario: Init creates .agentignore when feature is enabled
 - **WHEN** `dotagents init --features commands,ignore` is run
-- **THEN** a default ignore patterns file SHALL be created at `.dotagents/ignore`
+- **THEN** a default ignore patterns file SHALL be created at `.dotagents/.agentignore`
 
-#### Scenario: Init skips ignore file when feature is not selected
+#### Scenario: Init skips .agentignore when feature is not selected
 - **WHEN** `dotagents init --features commands,instructions` is run
-- **THEN** no ignore patterns file SHALL be created
+- **THEN** no `.agentignore` file SHALL be created
 
-#### Scenario: Init with --no-ignore flag skips ignore file
-- **WHEN** `dotagents init --no-ignore` is run
-- **THEN** no ignore patterns file SHALL be created
-
-#### Scenario: Default ignore file contains common patterns
-- **WHEN** the default ignore file is created during init
+#### Scenario: Default .agentignore contains common patterns
+- **WHEN** the default `.agentignore` file is created during init
 - **THEN** it SHALL contain common patterns: `node_modules/`, `.git/`, `target/`, `.env`
 
 ### Requirement: Default ignore patterns mock content
@@ -49,7 +45,7 @@ The system SHALL embed default ignore patterns as a compile-time mock string, so
 - **THEN** it SHALL be a valid newline-separated list of glob patterns
 
 ### Requirement: InitOptions supports ignore feature flag
-The `InitOptions` struct SHALL support the ignore feature in the `--features` flag and provide a `--no-ignore` convenience flag.
+The `InitOptions` struct SHALL support the ignore feature in the `--features` flag.
 
 #### Scenario: --features accepts ignore
 - **WHEN** `dotagents init --features ignore` is run
