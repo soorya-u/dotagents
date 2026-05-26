@@ -17,5 +17,5 @@ template = "https://dotagents.soorya-u.dev/v1/templates/qwen/mcp.hbs"
 target = "{{dir.workspace}}/.qwen/mcp.json"
 
 [providers.qwen.ignore]
-template = "https://dotagents.soorya-u.dev/v1/templates/qwen/ignore.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/qwen/agent-ignore.hbs"
 target = "{{dir.workspace}}/.qwenignore"

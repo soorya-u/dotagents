@@ -12,5 +12,5 @@ template = "https://dotagents.soorya-u.dev/v1/templates/pi/skill.hbs"
 target = "{{dir.workspace}}/.pi/skills/{{skill.name}}/SKILL.md"
 
 [providers.pi.ignore]
-template = "https://dotagents.soorya-u.dev/v1/templates/pi/ignore.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/pi/agent-ignore.hbs"
 target = "{{dir.workspace}}/.piignore"

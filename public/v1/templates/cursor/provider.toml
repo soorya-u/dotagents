@@ -20,5 +20,5 @@ template = "https://dotagents.soorya-u.dev/v1/templates/cursor/mcp.hbs"
 target = "{{dir.workspace}}/.cursor/mcp.json"
 
 [providers.cursor.ignore]
-template = "https://dotagents.soorya-u.dev/v1/templates/cursor/ignore.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/cursor/agent-ignore.hbs"
 target = "{{dir.workspace}}/.cursorignore"

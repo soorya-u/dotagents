@@ -22,5 +22,5 @@ template = "https://dotagents.soorya-u.dev/v1/templates/gemini/mcp.hbs"
 target = "{{ dir.workspace }}/.gemini/settings.json"
 
 [providers.gemini.ignore]
-template = "https://dotagents.soorya-u.dev/v1/templates/gemini/ignore.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/gemini/agent-ignore.hbs"
 target = "{{ dir.workspace }}/.geminiignore"

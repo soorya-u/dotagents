@@ -14,5 +14,5 @@ template = "https://dotagents.soorya-u.dev/v1/templates/autohand/mcp.hbs"
 target = "{{ dir.workspace }}/.autohand/config.json"
 
 [providers.autohand.ignore]
-template = "https://dotagents.soorya-u.dev/v1/templates/autohand/ignore.hbs"
+template = "https://dotagents.soorya-u.dev/v1/templates/autohand/agent-ignore.hbs"
 target = "{{ dir.workspace }}/.autohandignore"

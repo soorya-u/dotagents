@@ -172,6 +172,13 @@ pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
             mocks::TEMPLATE_MYCODE_MCP,
         )
         .with_skip_if(|opts| opts.template != Some(InitTemplate::Advanced)),
+        InitFile::new(
+            Path::new("templates")
+                .join("mycode")
+                .join("agent-ignore.hbs"),
+            mocks::TEMPLATE_MYCODE_AGENT_IGNORE,
+        )
+        .with_skip_if(|opts| opts.template != Some(InitTemplate::Advanced)),
     ];
 
     for file in init_files {

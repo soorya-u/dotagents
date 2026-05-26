@@ -144,6 +144,10 @@ pub(crate) const TEMPLATE_MYCODE_MCP: &str = r#"{
 }
 "#;
 
+/// Mycode custom-provider agent-ignore template.
+pub(crate) const TEMPLATE_MYCODE_AGENT_IGNORE: &str =
+    "{{#each ignore.patterns}}{{this}}\n{{/each}}";
+
 /// Provider config block appended to `local.config.toml` when using the `advanced` template.
 pub(crate) const MYCODE_PROVIDER_CONFIG: &str = r#"
 [providers.mycode.mcp]
@@ -164,6 +168,10 @@ variables = {agent_name = "Mycode"}
 template = "{{ dir.application }}/templates/mycode/skill.hbs"
 target = "{{ dir.workspace }}/.mycode/skills/{{ skill.name }}/SKILL.md"
 variables = {agent_name = "Mycode"}
+
+[providers.mycode.ignore]
+template = "{{ dir.application }}/templates/mycode/agent-ignore.hbs"
+target = "{{ dir.workspace }}/.mycode/.agentignore"
 "#;
 
 /// Generates a starter `config.toml` / `local.config.toml` with the given features and targets.
