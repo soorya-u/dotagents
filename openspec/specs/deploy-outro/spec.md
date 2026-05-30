@@ -43,11 +43,11 @@ If no providers are configured in the workspace config at deploy time, `dotagent
 - **THEN** no missing-providers warning is emitted
 
 ### Requirement: Deploy is framed with cliclack intro and outro in TTY mode
-When `dotagents deploy` runs interactively, it SHALL open with a cliclack `intro` banner and close with a cliclack `outro` message. The intro SHALL appear before the offline prompt. The outro SHALL appear after the gitignore step completes (or is skipped), at all TTY exit paths. In non-TTY mode neither intro nor outro is printed.
+When `dotagents deploy` runs interactively, it SHALL open with a cliclack `intro` banner and close with a cliclack `outro` message. The intro SHALL appear before the registry fetch. The outro SHALL appear after the gitignore step completes (or is skipped), at all TTY exit paths. In non-TTY mode neither intro nor outro is printed.
 
-#### Scenario: Intro printed before first prompt
+#### Scenario: Intro printed before registry fetch
 - **WHEN** `dotagents deploy` runs in a TTY
-- **THEN** a `┌ …` intro line is printed before the offline mode select prompt
+- **THEN** a `┌ …` intro line is printed before the registry fetch step
 
 #### Scenario: Outro printed after gitignore step
 - **WHEN** deploy completes and the gitignore step finishes (accepted, declined, or skipped)
