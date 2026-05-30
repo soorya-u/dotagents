@@ -292,31 +292,9 @@ test.describe("deploy CLI – CI mode summary", () => {
 // ── TUI flows ────────────────────────────────────────────────────────────────
 // Each TUI test has its own describe block so test.use() is at describe level.
 
-// T14: offline prompt (No) + no-gitignore
-test.describe("deploy TUI – T14 offline prompt", () => {
-	const d = makeTmpDir();
-	initWithLocalProvider(d);
-	test.use({ program: shellProgram(d, ["deploy", "--no-gitignore"]) });
-
-	test("pressing Enter accepts offline=No default", async ({ terminal }) => {
-		try {
-			// offline prompt appears — Enter accepts the default (No = online mode)
-			await expect(terminal.getByText("Run in offline mode?")).toBeVisible();
-			await expect(
-				terminal.getByText("No, fetch latest templates"),
-			).toBeVisible();
-			terminal.keyPress("Enter"); // accept No (online)
-			// Deploy runs silently (no output text to await); just verifying the
-			// prompt appeared and the keypress was accepted without error.
-		} finally {
-			cleanup(d);
-		}
-	});
-});
-
-// T15: --offline flag skips the interactive offline prompt (CLI test, no TUI needed)
-test.describe("deploy CLI – T15 offline flag suppresses prompt", () => {
-	test("--offline flag suppresses offline prompt", async () => {
+// T15: --offline flag uses cached templates (CLI test, no TUI needed)
+test.describe("deploy CLI – T15 offline flag", () => {
+	test("--offline flag deploys from cache", async () => {
 		const d = makeTmpDir();
 		try {
 			initWithLocalProvider(d);
@@ -880,47 +858,16 @@ test.describe("deploy CLI – untrusted URL rejection", () => {
 
 // ── Deploy TUI prompts ───────────────────────────────────────────────────────
 
-// TC-DEPLOY-16: offline prompt Yes selects offline mode
-test.describe("deploy TUI – TC-DEPLOY-16 offline prompt Yes", () => {
-	const d = makeTmpDir();
-	initWithLocalProvider(d);
-	test.use({ program: shellProgram(d, ["deploy"]) });
-
-	test("navigating to Yes on offline prompt enables offline mode", async ({
-		terminal,
-	}) => {
-		try {
-			await expect(terminal.getByText("Run in offline mode?")).toBeVisible();
-			terminal.keyDown();
-			terminal.keyPress("Enter");
-			await expect(
-				terminal.getByText("deployed path(s) to .gitignore?"),
-			).toBeVisible();
-			terminal.keyPress("Enter");
-			await expect(terminal.getByText("written")).toBeVisible();
-			expect(existsSync(join(d, ".mycode/commands/hello.md"))).toBe(true);
-		} finally {
-			cleanup(d);
-		}
-	});
-});
-
 // TC-DEPLOY-01: full TUI deploy journey
 test.describe("deploy TUI – TC-DEPLOY-01 full deploy journey", () => {
 	const d = makeTmpDir();
 	initWithLocalProvider(d);
 	test.use({ program: shellProgram(d, ["deploy"]) });
 
-	test("full interactive deploy: offline No → gitignore No → summary → Done", async ({
+	test("full interactive deploy: gitignore No → summary → Done", async ({
 		terminal,
 	}) => {
 		try {
-			await expect(terminal.getByText("Run in offline mode?")).toBeVisible();
-			await expect(
-				terminal.getByText("No, fetch latest templates"),
-			).toBeVisible();
-			terminal.keyPress("Enter");
-
 			await expect(
 				terminal.getByText("deployed path(s) to .gitignore?"),
 			).toBeVisible();

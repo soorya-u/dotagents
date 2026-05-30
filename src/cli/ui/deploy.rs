@@ -3,21 +3,6 @@ use cliclack::select;
 use crate::cli::deploy::DeployStats;
 use crate::utils::tui::is_tui_enabled;
 
-/// Prompts whether to run deploy in offline mode using a cliclack select.
-pub(crate) fn prompt_offline() -> bool {
-    if !is_tui_enabled() {
-        return false;
-    }
-    let mut sel = select("Run in offline mode?")
-        .item(false, "No, fetch latest templates", "")
-        .item(
-            true,
-            "Yes, use cached templates only",
-            "skips registry fetch",
-        );
-    sel.interact().unwrap_or(false)
-}
-
 /// Prints deploy completion summary to stdout; in TTY uses `"✓ "` prefix, in non-TTY uses plain text.
 pub(crate) fn print_deploy_summary(stats: &DeployStats) {
     let stdout = std::io::stdout();
