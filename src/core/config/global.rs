@@ -28,6 +28,8 @@ pub struct GlobalConfig {
     #[cfg(feature = "skills-add")]
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub package_runner: Option<PackageRunner>,
+    #[serde(flatten)]
+    pub extra: HashMap<String, toml::Value>,
 }
 
 impl GlobalConfig {
@@ -40,6 +42,7 @@ impl GlobalConfig {
             variables: None,
             #[cfg(feature = "skills-add")]
             package_runner: None,
+            extra: HashMap::new(),
         }
     }
 
@@ -53,6 +56,7 @@ impl GlobalConfig {
             variables: None,
             #[cfg(feature = "skills-add")]
             package_runner: None,
+            extra: HashMap::new(),
         }
     }
 
@@ -108,5 +112,46 @@ mod tests {
     fn invalid_package_runner_value_fails_deserialisation() {
         let result: Result<GlobalConfig, _> = toml::from_str("package-runner = \"cargo\"\n");
         assert!(result.is_err());
+    }
+}
+
+#[cfg(test)]
+mod extra_tests {
+    use super::*;
+
+    // unknown string key survives parse/serialize round-trip
+    #[test]
+    fn unknown_string_key_roundtrip() {
+        let toml_str = "features = []\nmy-custom-key = \"hello\"\n";
+        let config: GlobalConfig = TomlConfig::from_toml(toml_str).unwrap();
+        assert_eq!(
+            config.extra.get("my-custom-key"),
+            Some(&toml::Value::String("hello".into()))
+        );
+        let serialized = config.to_toml().unwrap();
+        assert!(serialized.contains("my-custom-key"));
+        assert!(serialized.contains("hello"));
+    }
+
+    // unknown table survives parse/serialize round-trip
+    #[test]
+    fn unknown_table_roundtrip() {
+        let toml_str = "features = []\n\n[metadata]\nauthor = \"alice\"\n";
+        let config: GlobalConfig = TomlConfig::from_toml(toml_str).unwrap();
+        assert!(config.extra.contains_key("metadata"));
+        let serialized = config.to_toml().unwrap();
+        assert!(serialized.contains("metadata"));
+        assert!(serialized.contains("alice"));
+    }
+
+    // unknown array survives parse/serialize round-trip
+    #[test]
+    fn unknown_array_roundtrip() {
+        let toml_str = "features = []\ntags = [\"rust\", \"cli\"]\n";
+        let config: GlobalConfig = TomlConfig::from_toml(toml_str).unwrap();
+        assert!(config.extra.contains_key("tags"));
+        let serialized = config.to_toml().unwrap();
+        assert!(serialized.contains("tags"));
+        assert!(serialized.contains("rust"));
     }
 }

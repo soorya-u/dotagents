@@ -28,6 +28,8 @@ pub struct LocalConfig {
     #[cfg(feature = "skills-add")]
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub package_runner: Option<PackageRunner>,
+    #[serde(flatten)]
+    pub extra: HashMap<String, toml::Value>,
 }
 
 impl LocalConfig {
@@ -40,6 +42,7 @@ impl LocalConfig {
             variables: None,
             #[cfg(feature = "skills-add")]
             package_runner: None,
+            extra: HashMap::new(),
         }
     }
 
@@ -53,6 +56,7 @@ impl LocalConfig {
             variables: None,
             #[cfg(feature = "skills-add")]
             package_runner: None,
+            extra: HashMap::new(),
         }
     }
 
@@ -66,6 +70,7 @@ impl LocalConfig {
             variables: None,
             #[cfg(feature = "skills-add")]
             package_runner: None,
+            extra: HashMap::new(),
         }
     }
 

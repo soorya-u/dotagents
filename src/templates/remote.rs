@@ -373,6 +373,7 @@ mod tests {
             variables: None,
             #[cfg(feature = "skills-add")]
             package_runner: None,
+            extra: std::collections::HashMap::new(),
         }
     }
 
