@@ -46,15 +46,15 @@ If `registry.json` cannot be fetched due to a network error and `--offline` has 
 - **THEN** a warning is logged for the registry failure and a second warning is logged identifying the provider/feature as skipped; deploy continues for other providers
 
 ### Requirement: `--offline` flag skips registry fetch and resolves from cache only
-When `dotagents deploy --offline` is specified, `dotagents deploy` SHALL NOT make any network request for registry or template resolution. Missing fields SHALL be resolved from the template-source cache only. If the cache is cold for a required provider/feature, deploy SHALL error with a clear message.
+When `dotagents deploy --offline` is specified, `dotagents deploy` SHALL NOT make any network request for registry or template resolution. Missing fields SHALL be resolved from the template-source cache only. If the cache is cold for a required provider/feature, a warning SHALL be emitted and that provider SHALL be skipped. The deploy SHALL NOT hard-error.
 
 #### Scenario: Offline mode, cache warm — resolves without network
 - **WHEN** `--offline` is passed and the provider's `provider.toml` is in the template-source cache
 - **THEN** no network request is made; resolution uses the cached `provider.toml`; deploy proceeds
 
-#### Scenario: Offline mode, cache cold — hard error
+#### Scenario: Offline mode, cache cold — provider skipped with warning
 - **WHEN** `--offline` is passed and no cached `provider.toml` exists for a provider that requires auto-resolution
-- **THEN** deploy stops with an error identifying the provider and instructing the user to run without `--offline` first to populate the cache
+- **THEN** a warning is logged identifying the provider as skipped and instructing the user to run without `--offline` first to populate the cache; deploy continues for other providers
 
 ### Requirement: Registry entries MAY include name and url display fields
 Each provider entry in `registry.json` MAY include a `name` field (human-readable display label) and a `url` field (documentation hyperlink). Both fields SHALL be strings when present. Absence of these fields SHALL NOT cause parsing failures; the fields are purely additive for display purposes.

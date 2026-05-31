@@ -62,7 +62,7 @@ When `--no-gitignore` is passed to `dotagents deploy`, the gitignore update step
 - **THEN** `.gitignore` is not modified regardless of what was deployed
 
 ### Requirement: Default mode prompts the user interactively
-When neither `--gitignore` nor `--no-gitignore` is passed, `dotagents deploy` SHALL prompt the user after deploy completes with the count of new paths using a cliclack `select` prompt with `Yes` and `No` options. Default selection is `No`.
+When neither `--gitignore` nor `--no-gitignore` is passed, `dotagents deploy` SHALL prompt the user after deploy completes with the count of collapsed gitignore patterns using a cliclack `select` prompt with `Yes` and `No` options. The count SHALL reflect the number of patterns after the collapse algorithm has run (e.g., 4 files in `.opencode/` collapse to 1 directory pattern), not the raw number of cached target paths. Default selection is `No`.
 
 #### Scenario: User selects Yes — update runs
 - **WHEN** the cliclack select prompt is shown and the user selects `Yes`

@@ -1,15 +1,13 @@
 use crate::prelude::*;
 use rayon::prelude::*;
 use serde_json::{Value, to_value};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use strum::IntoEnumIterator;
 
 use crate::cli::options::DeployOptions;
-use crate::cli::ui::deploy::{
-    deploy_outro, print_deploy_summary, prompt_gitignore_update, prompt_offline,
-};
+use crate::cli::ui::deploy::{deploy_outro, print_deploy_summary, prompt_gitignore_update};
 use crate::cli::ui::dry_run::{
     DeployDryRunStatus, DryRunDeployEntry, print_dry_run_deploy_summary,
 };
@@ -26,10 +24,10 @@ use crate::templates::{
     TemplateCache, Templater, get_templater, registry_url, render_feature_with_settings,
     resolve_provider_defaults, resolve_target_path,
 };
-use crate::utils::gitignore::rebuild_fence_from_cache;
+use crate::utils::gitignore::{collapse_paths, rebuild_fence_from_cache};
 use crate::utils::hash::{hash_content, hash_file};
 use crate::utils::json::merge_json;
-use crate::utils::path::{get_workspace_dir, override_workspace_dir};
+use crate::utils::path::{get_workspace_dir, make_workspace_relative, override_workspace_dir};
 use crate::utils::tui::is_tui_enabled;
 use cliclack::{outro, spinner};
 use std::io::Write;
@@ -395,10 +393,18 @@ fn finalize_deploy(
         return Ok(());
     }
 
+    let relative_paths: Vec<String> = cache_targets
+        .iter()
+        .filter_map(|p| make_workspace_relative(p, &workspace_root))
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect();
+    let pattern_count = collapse_paths(&relative_paths, &workspace_root).len();
+
     let should_update = if opts.gitignore {
         true
     } else {
-        stats.written > 0 && prompt_gitignore_update(cache_targets.len())
+        stats.written > 0 && prompt_gitignore_update(pattern_count)
     };
 
     if should_update && let Err(e) = rebuild_fence_from_cache(&cache_targets, &workspace_root) {
@@ -481,10 +487,6 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
     let templater = get_templater().context("unable to initialise templater")?;
     let mut app_config =
         AppConfig::from_application(templater).context("unable to load application config")?;
-
-    if !opts.offline && is_tui_enabled() {
-        opts.offline = prompt_offline();
-    }
 
     let template_cache = TemplateCache::new().context("unable to initialise template cache")?;
     let registry = fetch_registry(opts.offline);

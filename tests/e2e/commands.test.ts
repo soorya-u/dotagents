@@ -876,10 +876,6 @@ test.describe("commands new TUI – T06 interactive prompts", () => {
 });
 
 // T07: answering Yes to "Deploy now?" triggers deploy.
-// Skipped: the embedded deploy call shows its own offline-mode prompt, making
-// the terminal interaction flow too complex for reliable TUI testing. The
-// deploy functionality is covered by the deploy CLI tests (T15) and journey
-// tests (J07).
 test.describe("commands new TUI – T07 deploy on Yes", () => {
 	const d = makeTmpDir();
 	run(
@@ -916,8 +912,6 @@ test.describe("commands new TUI – T07 deploy on Yes", () => {
 			await expect(terminal.getByText("Deploy now?")).toBeVisible();
 			terminal.keyUp();
 			terminal.keyPress("Enter"); // Yes to deploy
-			await expect(terminal.getByText("Run in offline mode?")).toBeVisible();
-			terminal.keyPress("Enter"); // accept online
 			await expect(
 				terminal.getByText("deployed path(s) to .gitignore?"),
 			).toBeVisible();
