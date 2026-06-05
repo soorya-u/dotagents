@@ -148,6 +148,15 @@ impl Providers {
 }
 
 impl Features {
+    /// Returns true when at least one feature override is configured.
+    pub fn has_configured_overrides(&self) -> bool {
+        self.mcp.is_some()
+            || self.instructions.is_some()
+            || self.commands.is_some()
+            || self.skills.is_some()
+            || self.ignore.is_some()
+    }
+
     pub fn merge(&self, other: &Features) -> Features {
         Features {
             mcp: Self::merge_settings(self.mcp.as_ref(), other.mcp.as_ref()),
@@ -258,6 +267,22 @@ mod tests {
 
         let skill_config = settings.get_config(&Feature::Skill);
         assert!(skill_config.is_none());
+    }
+
+    #[test]
+    fn test_features_has_configured_overrides_false_when_empty() {
+        // empty feature overrides are reported as absent
+        assert!(!Features::default().has_configured_overrides());
+    }
+
+    #[test]
+    fn test_features_has_configured_overrides_true_when_any_override_present() {
+        // any configured feature override is reported as present
+        let features = Features {
+            commands: Some(FeatureSettings::default()),
+            ..Default::default()
+        };
+        assert!(features.has_configured_overrides());
     }
 
     #[cfg(feature = "skills-add")]
