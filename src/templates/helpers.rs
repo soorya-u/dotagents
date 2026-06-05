@@ -324,7 +324,7 @@ mod tests {
 
         let data = json!({"user": {"name": "Alice", "age": 30}});
         let result = handlebars.render("test", &data).unwrap();
-        assert_eq!(result, r#"{"age":30,"name":"Alice"}"#);
+        assert_eq!(result, r#"{"name":"Alice","age":30}"#);
     }
 
     #[test]

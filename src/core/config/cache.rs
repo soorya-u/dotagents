@@ -28,12 +28,11 @@ pub(crate) enum CacheUpdate {
     /// File was skipped because rendered content is identical to the last deploy.
     Skipped,
     /// File was skipped because the user manually edited the target.
-    UserEditedSkipped {
-        #[allow(dead_code)]
-        path: PathBuf,
-    },
+    UserEditedSkipped { path: PathBuf },
     /// Dry-run mode: file was not written; carries path and rendered content for classification.
     DryRun { target: PathBuf, content: String },
+    /// Merge skipped because the existing file could not be parsed.
+    MergeSkipped { path: PathBuf, reason: String },
 }
 
 /// In-memory representation of `cache.toml`; keyed by `(provider, feature, item)`.

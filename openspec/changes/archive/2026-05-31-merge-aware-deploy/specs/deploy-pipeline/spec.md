@@ -1,8 +1,4 @@
-## Purpose
-
-Defines the deploy pipeline's processing of all feature types including the ignore feature.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Deploy pipeline processes ignore feature
 The system SHALL process the `ignore` feature in the deploy pipeline alongside `commands`, `instructions`, `mcp`, and `skills`. When `"ignore"` is in the `features` list, the pipeline SHALL load patterns from config, build an `IgnoreFeature`, and render it once per active provider.
@@ -30,36 +26,3 @@ When the deploy pipeline writes output to a target file that is a structured con
 #### Scenario: Deploy merges MCP into existing shared config file
 - **WHEN** deploying MCP to `.gemini/settings.json` and the file already exists with user settings
 - **THEN** the system SHALL merge the rendered MCP output into the existing file, preserving user settings outside the `mcpServers` key
-
-### Requirement: Deploy pipeline handles empty patterns
-The system SHALL gracefully handle the case where `.agentignore` is empty or missing.
-
-#### Scenario: Empty .agentignore produces no file
-- **WHEN** `.dotagents/.agentignore` exists but is empty
-- **THEN** the deploy pipeline SHALL NOT write any ignore files
-
-#### Scenario: Missing .agentignore produces no file
-- **WHEN** `.dotagents/.agentignore` does not exist
-- **THEN** the deploy pipeline SHALL NOT write any ignore files
-
-### Requirement: Ignore files tracked in gitignore fence
-The system SHALL include deployed ignore file paths in the `.gitignore` fence section managed by dotagents.
-
-#### Scenario: Ignore files added to gitignore fence
-- **WHEN** deploy writes `.ignore` and `.aiignore` files
-- **THEN** `rebuild_fence_from_cache()` SHALL include these paths in the `#region dotagents` section of `.gitignore`
-
-#### Scenario: Undeploy removes ignore files from gitignore fence
-- **WHEN** `dotagents undeploy` is run
-- **THEN** `clear_gitignore_fence()` SHALL remove ignore file paths from the `.gitignore` fence section
-
-### Requirement: Deploy pipeline uses single-phase rendering for ignore
-The system SHALL render ignore templates in a single phase (no two-phase content rendering) since ignore files have no frontmatter or complex structure.
-
-#### Scenario: Single-phase rendering for ignore
-- **WHEN** the deploy pipeline processes the ignore feature
-- **THEN** it SHALL skip the content pre-rendering phase and render the template directly against `var.*` and `ignore.patterns`
-
-#### Scenario: Variables available in ignore templates
-- **WHEN** an ignore template references `{{ var.workspace_exclude }}`
-- **THEN** the rendered output SHALL contain the value of that variable

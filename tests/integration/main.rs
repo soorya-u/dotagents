@@ -27,6 +27,7 @@ mod config;
 mod dedup;
 mod features;
 mod gitignore;
+mod merge;
 mod render;
 mod undeploy;
 

@@ -9,7 +9,9 @@ use crate::{
         features::traits::FeatureTrait,
     },
     templates::{RenderType, Templater, variables::get_user_defined_variables},
+    utils::format::MergeFormat,
     utils::http::fetch_template,
+    utils::merge::merge_into_existing,
     utils::{
         fs::{read_file, write_file},
         hash::{hash_content, hash_file},
@@ -101,49 +103,63 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
             provider_name
         ))?;
 
-    let rendered_hash = hash_content(&content);
+    let is_mergeable = target_path.exists() && MergeFormat::from_extension(&target_path).is_some();
+
+    let final_content = if is_mergeable {
+        let existing = read_file(&target_path).context(format!(
+            "failed to read existing file at {}",
+            target_path.display()
+        ))?;
+        match merge_into_existing(&target_path, &existing, &content) {
+            Ok(merged) => merged,
+            Err(e) => {
+                let reason = e.to_string();
+                warn!("Skipping merge for {}: {}", target_path.display(), reason);
+                return Ok(CacheUpdate::MergeSkipped {
+                    path: target_path,
+                    reason,
+                });
+            }
+        }
+    } else {
+        content
+    };
+
+    let final_hash = hash_content(&final_content);
 
     // Cache-aware skip / user-edit detection (bypassed when --force)
     if !force
         && let Some(entry) = cache
-        && rendered_hash == entry.hash
+        && final_hash == entry.hash
     {
-        // Rendered content is identical to what was last written.
-        // Check the on-disk file to detect user edits.
         match hash_file(&target_path)? {
-            None => {
-                // File is missing despite a valid cache entry → re-write it.
-            }
+            None => {}
             Some(disk_hash) if disk_hash == entry.hash => {
-                // On-disk file still matches the cache → nothing to do.
                 return Ok(CacheUpdate::Skipped);
             }
-            Some(_) => {
-                // On-disk file differs from cache → user manually edited it.
+            Some(_) if !is_mergeable => {
                 warn!(
                     "Target file {} was manually edited; skipping",
                     target_path.display()
                 );
                 return Ok(CacheUpdate::UserEditedSkipped { path: target_path });
             }
+            Some(_) => {}
         }
-        // rendered_hash == entry.hash but file was missing → fall through to write.
     }
-    // No cache entry, force=true, or inputs changed → fall through to write.
 
-    // In dry-run mode skip the actual write; return content for caller classification.
     if dry_run {
         return Ok(CacheUpdate::DryRun {
             target: target_path,
-            content,
+            content: final_content,
         });
     }
 
-    write_file(&target_path, &content)
+    write_file(&target_path, &final_content)
         .context(format!("failed to write file in {}", target_path.display()))?;
 
     Ok(CacheUpdate::Written {
-        hash: rendered_hash,
+        hash: final_hash,
         target: target_path.to_string_lossy().into_owned(),
     })
 }

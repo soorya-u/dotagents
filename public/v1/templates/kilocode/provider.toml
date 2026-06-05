@@ -16,10 +16,10 @@ target = "{{dir.workspace}}/.kilo/skills/{{skill.name}}/SKILL.md"
 template = "https://dotagents.soorya-u.dev/v1/templates/kilocode/command.hbs"
 target = "{{dir.workspace}}/.kilo/commands/{{command.name}}.md"
 
-# KiloCode MCP (requires manual merge into .kilo/kilo.jsonc under the "mcp" key)
+# KiloCode MCP (merge-aware: preserves existing keys and comments in kilo.jsonc)
 [providers.kilocode.mcp]
 template = "https://dotagents.soorya-u.dev/v1/templates/kilocode/mcp.hbs"
-target = "{{dir.workspace}}/.kilo/mcp.json"
+target = "{{dir.workspace}}/.kilo/kilo.jsonc"
 
 [providers.kilocode.ignore]
 template = "https://dotagents.soorya-u.dev/v1/templates/kilocode/agent-ignore.hbs"

@@ -1,4 +1,5 @@
 pub(crate) mod error;
+pub(crate) mod format;
 pub(crate) mod fs;
 pub(crate) mod gitignore;
 pub(crate) mod hash;
