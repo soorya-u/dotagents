@@ -44,14 +44,17 @@ fn merge_json(existing_content: &str, rendered_content: &str) -> Result<String> 
     let rendered: Value =
         serde_json::from_str(rendered_content).context("failed to parse rendered JSON")?;
 
+    let (existing_map, rendered_map) = match (&mut existing, &rendered) {
+        (Value::Object(existing_map), Value::Object(rendered_map)) => (existing_map, rendered_map),
+        _ => return Err(anyhow!("top-level JSON merge requires objects")),
+    };
+
     let mut changed = false;
-    if let (Value::Object(existing_map), Value::Object(rendered_map)) = (&mut existing, &rendered) {
-        for (key, value) in rendered_map {
-            let needs_update = existing_map.get(key).map(|v| v != value).unwrap_or(true);
-            if needs_update {
-                existing_map.insert(key.clone(), value.clone());
-                changed = true;
-            }
+    for (key, value) in rendered_map {
+        let needs_update = existing_map.get(key).map(|v| v != value).unwrap_or(true);
+        if needs_update {
+            existing_map.insert(key.clone(), value.clone());
+            changed = true;
         }
     }
 
@@ -65,20 +68,24 @@ fn merge_json(existing_content: &str, rendered_content: &str) -> Result<String> 
 fn merge_jsonc(existing_content: &str, rendered_content: &str) -> Result<String> {
     let rendered: Value =
         serde_json::from_str(rendered_content).context("failed to parse rendered JSON")?;
+    let rendered_map = match &rendered {
+        Value::Object(rendered_map) => rendered_map,
+        _ => return Err(anyhow!("top-level JSONC merge requires objects")),
+    };
 
     let root = CstRootNode::parse(existing_content, &Default::default())
         .map_err(|e| anyhow!("failed to parse existing JSONC: {}", e))?;
+    let root_obj = root
+        .value()
+        .and_then(|value| value.as_object())
+        .ok_or_else(|| anyhow!("top-level JSONC merge requires objects"))?;
 
-    let root_obj = root.object_value_or_set();
-
-    if let Value::Object(rendered_map) = &rendered {
-        for (key, value) in rendered_map {
-            let cst_value = serde_value_to_cst(value);
-            if let Some(existing_prop) = root_obj.get(key) {
-                existing_prop.set_value(cst_value);
-            } else {
-                root_obj.append(key, cst_value);
-            }
+    for (key, value) in rendered_map {
+        let cst_value = serde_value_to_cst(value);
+        if let Some(existing_prop) = root_obj.get(key) {
+            existing_prop.set_value(cst_value);
+        } else {
+            root_obj.append(key, cst_value);
         }
     }
 
@@ -89,15 +96,7 @@ fn serde_value_to_cst(value: &Value) -> CstInputValue {
     match value {
         Value::Null => CstInputValue::Null,
         Value::Bool(b) => CstInputValue::Bool(*b),
-        Value::Number(n) => {
-            if let Some(i) = n.as_i64() {
-                CstInputValue::Number(i.to_string())
-            } else if let Some(f) = n.as_f64() {
-                CstInputValue::Number(f.to_string())
-            } else {
-                CstInputValue::Null
-            }
-        }
+        Value::Number(n) => CstInputValue::Number(n.to_string()),
         Value::String(s) => CstInputValue::String(s.clone()),
         Value::Array(arr) => {
             let items: Vec<CstInputValue> = arr.iter().map(serde_value_to_cst).collect();
@@ -135,16 +134,19 @@ fn merge_yaml(existing_content: &str, rendered_content: &str) -> Result<String> 
     let rendered: serde_yaml::Value =
         serde_yaml::from_str(rendered_content).context("failed to parse rendered YAML")?;
 
+    let (existing_map, rendered_map) = match (&mut existing, &rendered) {
+        (serde_yaml::Value::Mapping(existing_map), serde_yaml::Value::Mapping(rendered_map)) => {
+            (existing_map, rendered_map)
+        }
+        _ => return Err(anyhow!("top-level YAML merge requires mappings")),
+    };
+
     let mut changed = false;
-    if let (serde_yaml::Value::Mapping(existing_map), serde_yaml::Value::Mapping(rendered_map)) =
-        (&mut existing, &rendered)
-    {
-        for (key, value) in rendered_map {
-            let needs_update = existing_map.get(key).map(|v| v != value).unwrap_or(true);
-            if needs_update {
-                existing_map.insert(key.clone(), value.clone());
-                changed = true;
-            }
+    for (key, value) in rendered_map {
+        let needs_update = existing_map.get(key).map(|v| v != value).unwrap_or(true);
+        if needs_update {
+            existing_map.insert(key.clone(), value.clone());
+            changed = true;
         }
     }
 
@@ -244,6 +246,19 @@ mod tests {
         let result = merge_json(existing, rendered).unwrap();
         let parsed: Value = serde_json::from_str(&result).unwrap();
         assert_eq!(parsed["key"], "value");
+    }
+
+    // non-object top-level JSON content returns an error
+    #[test]
+    fn merge_json_rejects_non_object_top_level_values() {
+        let existing = r#"[]"#;
+        let rendered = r#"{"key": "value"}"#;
+        let result = merge_json(existing, rendered);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "top-level JSON merge requires objects"
+        );
     }
 
     // TOML sections preserved

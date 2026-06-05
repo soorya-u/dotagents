@@ -5,7 +5,7 @@ The system SHALL process the `ignore` feature in the deploy pipeline alongside `
 
 List-typed fields in the deploy config (`features`, `targets`) SHALL use whole-list replacement during config layering — the local config value completely replaces the global value with no union or element-wise merge.
 
-When the deploy pipeline writes output to a target file that is a structured config format (JSON, JSONC, TOML, YAML) and the file already exists, the system SHALL perform a read-modify-write merge instead of a pure overwrite. The rendered output is deep-merged on top of the existing file, with rendered values winning on key conflicts. See the `deploy-merge-write` capability for full merge semantics.
+When the deploy pipeline writes output to a target file that is a structured config format (JSON, JSONC, TOML, YAML) and the file already exists, the system SHALL perform a read-modify-write merge instead of a pure overwrite. The rendered output is merged at the top level on top of the existing file, with rendered values winning on key conflicts. Nested objects are replaced rather than recursively merged. See the `deploy-merge-write` capability for full merge semantics.
 
 #### Scenario: Deploy writes ignore file for each provider
 - **WHEN** `features = ["commands", "ignore"]` and `targets = ["opencode", "junie"]` with patterns `["node_modules/"]`
