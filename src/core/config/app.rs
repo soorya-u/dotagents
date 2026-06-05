@@ -28,8 +28,6 @@ pub struct AppConfig {
     #[cfg(feature = "skills-add")]
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub package_runner: Option<PackageRunner>,
-    #[serde(flatten)]
-    pub extra: HashMap<String, toml::Value>,
 }
 
 impl AppConfig {
@@ -42,7 +40,6 @@ impl AppConfig {
             variables: None,
             #[cfg(feature = "skills-add")]
             package_runner: None,
-            extra: HashMap::new(),
         }
     }
 
@@ -148,9 +145,6 @@ impl From<(&GlobalConfig, &LocalConfig)> for AppConfig {
             .clone()
             .or_else(|| global.package_runner.clone());
 
-        let mut extra = global.extra.clone();
-        extra.extend(local.extra.clone());
-
         Self {
             schema,
             features,
@@ -159,7 +153,6 @@ impl From<(&GlobalConfig, &LocalConfig)> for AppConfig {
             variables,
             #[cfg(feature = "skills-add")]
             package_runner,
-            extra,
         }
     }
 }
@@ -186,7 +179,6 @@ mod tests {
             providers: None,
             variables: None,
             package_runner: runner,
-            extra: std::collections::HashMap::new(),
         }
     }
 
@@ -198,7 +190,6 @@ mod tests {
             providers: None,
             variables: None,
             package_runner: runner,
-            extra: std::collections::HashMap::new(),
         }
     }
 
@@ -234,7 +225,6 @@ mod tests {
             providers: None,
             variables: None,
             package_runner: None,
-            extra: HashMap::new(),
         }
     }
 
@@ -246,7 +236,6 @@ mod tests {
             providers: None,
             variables: None,
             package_runner: None,
-            extra: HashMap::new(),
         }
     }
 
@@ -272,165 +261,5 @@ mod tests {
         let local = make_local_with_targets(None);
         let app = AppConfig::from((&global, &local));
         assert!(app.targets.is_empty());
-    }
-}
-
-#[cfg(test)]
-mod extra_tests {
-    use super::*;
-
-    fn make_global_with_extra(extra: HashMap<String, toml::Value>) -> GlobalConfig {
-        GlobalConfig {
-            schema: None,
-            features: HashSet::new(),
-            targets: None,
-            providers: None,
-            variables: None,
-            #[cfg(feature = "skills-add")]
-            package_runner: None,
-            extra,
-        }
-    }
-
-    fn make_local_with_extra(extra: HashMap<String, toml::Value>) -> LocalConfig {
-        LocalConfig {
-            schema: None,
-            features: None,
-            targets: None,
-            providers: None,
-            variables: None,
-            #[cfg(feature = "skills-add")]
-            package_runner: None,
-            extra,
-        }
-    }
-
-    // unknown key only in global is preserved in merged AppConfig
-    #[test]
-    fn extra_key_only_in_global_preserved() {
-        let mut extra = HashMap::new();
-        extra.insert("custom".into(), toml::Value::String("global".into()));
-        let global = make_global_with_extra(extra);
-        let local = make_local_with_extra(HashMap::new());
-        let app = AppConfig::from((&global, &local));
-        assert_eq!(
-            app.extra.get("custom"),
-            Some(&toml::Value::String("global".into()))
-        );
-    }
-
-    // unknown key only in local is preserved in merged AppConfig
-    #[test]
-    fn extra_key_only_in_local_preserved() {
-        let global = make_global_with_extra(HashMap::new());
-        let mut extra = HashMap::new();
-        extra.insert("custom".into(), toml::Value::String("local".into()));
-        let local = make_local_with_extra(extra);
-        let app = AppConfig::from((&global, &local));
-        assert_eq!(
-            app.extra.get("custom"),
-            Some(&toml::Value::String("local".into()))
-        );
-    }
-
-    // unknown key in both global and local uses local value
-    #[test]
-    fn extra_key_in_both_uses_local() {
-        let mut global_extra = HashMap::new();
-        global_extra.insert("custom".into(), toml::Value::String("global".into()));
-        let global = make_global_with_extra(global_extra);
-        let mut local_extra = HashMap::new();
-        local_extra.insert("custom".into(), toml::Value::String("local".into()));
-        let local = make_local_with_extra(local_extra);
-        let app = AppConfig::from((&global, &local));
-        assert_eq!(
-            app.extra.get("custom"),
-            Some(&toml::Value::String("local".into()))
-        );
-    }
-
-    fn make_global_with_features(features: HashSet<String>) -> GlobalConfig {
-        GlobalConfig {
-            schema: None,
-            features,
-            targets: None,
-            providers: None,
-            variables: None,
-            #[cfg(feature = "skills-add")]
-            package_runner: None,
-            extra: HashMap::new(),
-        }
-    }
-
-    fn make_local_with_features(features: Option<HashSet<String>>) -> LocalConfig {
-        LocalConfig {
-            schema: None,
-            features,
-            targets: None,
-            providers: None,
-            variables: None,
-            #[cfg(feature = "skills-add")]
-            package_runner: None,
-            extra: HashMap::new(),
-        }
-    }
-
-    // local features completely replaces global features (no union)
-    #[test]
-    fn local_features_replaces_global() {
-        let global =
-            make_global_with_features(["commands".into(), "mcp".into()].into_iter().collect());
-        let local = make_local_with_features(Some(["instructions".into()].into_iter().collect()));
-        let app = AppConfig::from((&global, &local));
-        assert_eq!(
-            app.features,
-            ["instructions".to_string()].into_iter().collect()
-        );
-    }
-
-    fn make_global_with_targets_set(targets: Option<HashSet<String>>) -> GlobalConfig {
-        GlobalConfig {
-            schema: None,
-            features: HashSet::new(),
-            targets,
-            providers: None,
-            variables: None,
-            #[cfg(feature = "skills-add")]
-            package_runner: None,
-            extra: HashMap::new(),
-        }
-    }
-
-    fn make_local_with_targets_set(targets: Option<HashSet<String>>) -> LocalConfig {
-        LocalConfig {
-            schema: None,
-            features: None,
-            targets,
-            providers: None,
-            variables: None,
-            #[cfg(feature = "skills-add")]
-            package_runner: None,
-            extra: HashMap::new(),
-        }
-    }
-
-    // local targets completely replaces global targets (no union)
-    #[test]
-    fn local_targets_replaces_global() {
-        let global = make_global_with_targets_set(Some(
-            ["claude".into(), "codex".into()].into_iter().collect(),
-        ));
-        let local = make_local_with_targets_set(Some(["cursor".into()].into_iter().collect()));
-        let app = AppConfig::from((&global, &local));
-        assert_eq!(app.targets, ["cursor".to_string()].into_iter().collect());
-    }
-
-    // omitted local list field falls back to global value
-    #[test]
-    fn omitted_local_features_falls_back_to_global() {
-        let global = make_global_with_features(["commands".into()].into_iter().collect());
-        let local = make_local_with_features(None);
-        let app = AppConfig::from((&global, &local));
-        assert_eq!(app.features, ["commands".to_string()].into_iter().collect());
     }
 }
