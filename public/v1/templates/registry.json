@@ -164,7 +164,7 @@
     "kilocode": {
       "path": "/v1/templates/kilocode/provider.toml",
       "checksums": {
-        "provider.toml": "897bdd84bb1255c197e73a18c01dec9bb2b04122c26f143d8512e36c4bbbad18",
+        "provider.toml": "7837eb9095ca33edb82c15024dfe3d99affe555ce7cee4b6b9965adb56bdc856",
         "agent-ignore.hbs": "aa852fbda7734cf85aff8e67b05f10cb2a3bd4633521a7a1e848e0c33f2c2231",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
@@ -188,7 +188,7 @@
     "mistral-vibe": {
       "path": "/v1/templates/mistral-vibe/provider.toml",
       "checksums": {
-        "provider.toml": "943f9d458e5ec35ecacfcede414f6582a9f2f2818650d21736ba6f03773f4640",
+        "provider.toml": "f1f40e0df70683dd4448f2d0fabdd68676bce601e418e43433366c3c07187c6b",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "0199a47e2f10298557ebd3ede53b3093f4c3abb19afc193fbdf45888622400bf",
         "skill.hbs": "06f32b85a93e98674b337b4df077cad5930112501acf1c20c3c81c24926adf77"
@@ -235,7 +235,7 @@
     "qwen": {
       "path": "/v1/templates/qwen/provider.toml",
       "checksums": {
-        "provider.toml": "02d367c8448740362250c58aa7ced53c1ef8c911f2fcc75a87fa08705f2f7b91",
+        "provider.toml": "89c6a6f68a9d174a528339014f685cb24348a7e4b8471b8d207845c3725a2df6",
         "agent-ignore.hbs": "aa852fbda7734cf85aff8e67b05f10cb2a3bd4633521a7a1e848e0c33f2c2231",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
         "mcp.hbs": "92979317e5d81bf95f30bd9119d4e030520d28673cdd9acf5a6885ed626c556f",
