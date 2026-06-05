@@ -11,7 +11,7 @@ target = "{{dir.workspace}}/AGENTS.md"
 template = "https://dotagents.soorya-u.dev/v1/templates/mistral-vibe/skill.hbs"
 target = "{{dir.workspace}}/.vibe/skills/{{skill.name}}/SKILL.md"
 
-# Mistral Vibe MCP (requires manual merge into .vibe/config.toml under [[mcp_servers]])
+# Mistral Vibe MCP (merge-aware: preserves existing sections in config.toml)
 [providers.mistral-vibe.mcp]
 template = "https://dotagents.soorya-u.dev/v1/templates/mistral-vibe/mcp.hbs"
-target = "{{dir.workspace}}/.vibe/mcp.toml"
+target = "{{dir.workspace}}/.vibe/config.toml"

@@ -265,7 +265,15 @@ fn process_cache_update<T: FeatureTrait>(
                 }
             }
         }
-        CacheUpdate::Skipped | CacheUpdate::UserEditedSkipped { .. } => {
+        CacheUpdate::Skipped => {
+            stats.skipped += 1;
+        }
+        CacheUpdate::UserEditedSkipped { path } => {
+            debug!("user-edited skip: path={}", path.display());
+            stats.skipped += 1;
+        }
+        CacheUpdate::MergeSkipped { path, reason } => {
+            debug!("merge skipped: path={}, reason={}", path.display(), reason);
             stats.skipped += 1;
         }
     }

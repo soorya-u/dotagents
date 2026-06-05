@@ -27,10 +27,11 @@ gray_matter = "0.3.2"
 handlebars = "6.3.2"
 hex = "0.4.3"
 home = "0.5.11"
+jsonc-parser = { version = "0.32.4", features = ["cst", "preserve_order", "serde_json"] }
 log = "0.4.28"
 rayon = "1.11.0"
 serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.145"
+serde_json = { version = "1.0.145", features = ["preserve_order"] }
 serde_json5 = "0.2.1"
 serde_yaml = "0.9.34"
 sha2 = "0.11.0"
@@ -39,6 +40,7 @@ smallvec = "1.15.1"
 strum = "0.28.0"
 strum_macros = "0.28.0"
 toml = "0.9.8"
+toml_edit = "0.25.12"
 ureq = { version = "3.3.0", features = ["rustls"] }
 
 [dev-dependencies]

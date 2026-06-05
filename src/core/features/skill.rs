@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fs;
 
 use crate::prelude::*;
@@ -24,7 +24,7 @@ pub(crate) struct SkillMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub compatibility: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub metadata: Option<HashMap<String, String>>,
+    pub metadata: Option<BTreeMap<String, String>>,
     #[serde(rename = "allowed-tools", skip_serializing_if = "Option::is_none")]
     pub allowed_tools: Option<String>,
     #[serde(
@@ -80,7 +80,7 @@ impl SkillFeature {
         disable_model_invocation: Option<bool>,
         user_invocable: Option<bool>,
     ) -> Result<String> {
-        let mut metadata_map = HashMap::new();
+        let mut metadata_map = BTreeMap::new();
         metadata_map.insert("version".to_string(), "1.0".to_string());
 
         let feature = SkillFeature {
@@ -263,7 +263,7 @@ Minimal body"#;
 
     #[test]
     fn test_roundtrip() {
-        let mut metadata_map = HashMap::new();
+        let mut metadata_map = BTreeMap::new();
         metadata_map.insert("key".to_string(), "value".to_string());
 
         let original = SkillFeature {
@@ -310,7 +310,7 @@ Minimal body"#;
 
     #[test]
     fn test_to_value_includes_all_metadata_fields() {
-        let mut meta_map = HashMap::new();
+        let mut meta_map = BTreeMap::new();
         meta_map.insert("author".to_string(), "tester".to_string());
 
         let skill = SkillFeature {
