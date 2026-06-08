@@ -3,6 +3,7 @@ import {
 	mkdirSync,
 	mkdtempSync,
 	readFileSync,
+	existsSync,
 	rmSync,
 	writeFileSync,
 } from "node:fs";
@@ -103,6 +104,17 @@ export function initWithLocalProvider(dir: string): void {
 			"command,instruction,mcp,skill",
 		],
 		dir,
+	);
+	// Enable template mode for Type 2 features so variable/var injection works.
+	const rootDir = existsSync(join(dir, ".dotagents-debug"))
+		? ".dotagents-debug"
+		: ".dotagents";
+	const localConfig = join(dir, rootDir, "local.config.toml");
+	writeFileSync(
+		localConfig,
+		readFileSync(localConfig, "utf8") +
+			'\n[feature-maps.instruction]\nmode = "template"\n' +
+			'[feature-maps.command]\nmode = "template"\n',
 	);
 }
 

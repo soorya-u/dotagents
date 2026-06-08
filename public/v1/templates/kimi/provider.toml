@@ -8,7 +8,6 @@ target = "{{dir.workspace}}/AGENTS.md"
 
 # Kimi Skills
 [providers.kimi.skills]
-template = "https://dotagents.soorya-u.dev/v1/templates/kimi/skill.hbs"
 target = "{{dir.workspace}}/.kimi/skills/{{skill.name}}/SKILL.md"
 
 # Kimi MCP

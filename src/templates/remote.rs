@@ -113,7 +113,9 @@ pub(crate) fn resolve_provider_defaults(
                     .and_then(|p| p.0.as_ref())
                     .and_then(|m| m.get(&provider_name))
                     .and_then(|fs| fs.get_config(f));
-                s.is_none_or(|s| s.template.is_none() || s.target.is_none())
+                s.is_none_or(|s| {
+                    s.target.is_none() || (!f.is_provider_agnostic() && s.template.is_none())
+                })
             });
             if needs_any {
                 warn!(
@@ -135,7 +137,9 @@ pub(crate) fn resolve_provider_defaults(
                 .and_then(|p| p.0.as_ref())
                 .and_then(|m| m.get(&provider_name))
                 .and_then(|fs| fs.get_config(f));
-            s.is_none_or(|s| s.template.is_none() || s.target.is_none())
+            s.is_none_or(|s| {
+                s.target.is_none() || (!f.is_provider_agnostic() && s.template.is_none())
+            })
         });
         if !needs_any {
             continue;
@@ -162,6 +166,7 @@ pub(crate) fn resolve_provider_defaults(
             }
 
             // Check whether this (provider, feature) already has both template and target.
+            // Type 1 (provider-agnostic) features don't need a template — they use symlinks.
             let existing: Option<FeatureSettings> = app_config
                 .providers
                 .as_ref()
@@ -169,7 +174,11 @@ pub(crate) fn resolve_provider_defaults(
                 .and_then(|map| map.get(&provider_name))
                 .and_then(|f| f.get_config(feature));
 
-            let needs_template = existing.as_ref().is_none_or(|s| s.template.is_none());
+            let needs_template = if feature.is_provider_agnostic() {
+                false
+            } else {
+                existing.as_ref().is_none_or(|s| s.template.is_none())
+            };
             let needs_target = existing.as_ref().is_none_or(|s| s.target.is_none());
 
             if !needs_template && !needs_target {
@@ -373,6 +382,7 @@ mod tests {
             variables: None,
             #[cfg(feature = "skills-add")]
             package_runner: None,
+            feature_maps: None,
         }
     }
 

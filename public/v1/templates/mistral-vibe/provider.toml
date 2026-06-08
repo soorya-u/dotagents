@@ -8,7 +8,6 @@ target = "{{dir.workspace}}/AGENTS.md"
 
 # Mistral Vibe Skills
 [providers.mistral-vibe.skills]
-template = "https://dotagents.soorya-u.dev/v1/templates/mistral-vibe/skill.hbs"
 target = "{{dir.workspace}}/.vibe/skills/{{skill.name}}/SKILL.md"
 
 # Mistral Vibe MCP (merge-aware: preserves existing sections in config.toml)

@@ -8,7 +8,6 @@ target = "{{dir.workspace}}/.claude/commands/{{command.name}}.md"
 
 # Claude Skills
 [providers.claude.skills]
-template = "https://dotagents.soorya-u.dev/v1/templates/claude/skill.hbs"
 target = "{{dir.workspace}}/.claude/skills/{{skill.name}}/SKILL.md"
 
 [providers.claude.instructions]

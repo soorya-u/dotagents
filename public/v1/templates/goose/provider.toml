@@ -8,7 +8,6 @@ target = "{{dir.workspace}}/AGENTS.md"
 
 # Goose Skills
 [providers.goose.skills]
-template = "https://dotagents.soorya-u.dev/v1/templates/goose/skill.hbs"
 target = "{{dir.workspace}}/.agents/skills/{{skill.name}}/SKILL.md"
 
 # Goose Commands (as Recipes)
@@ -22,5 +21,4 @@ template = "https://dotagents.soorya-u.dev/v1/templates/goose/mcp.hbs"
 target = "{{dir.workspace}}/.goose/extensions.yaml"
 
 [providers.goose.ignore]
-template = "https://dotagents.soorya-u.dev/v1/templates/goose/agent-ignore.hbs"
 target = "{{dir.workspace}}/.gooseignore"

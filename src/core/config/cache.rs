@@ -33,6 +33,8 @@ pub(crate) enum CacheUpdate {
     DryRun { target: PathBuf, content: String },
     /// Merge skipped because the existing file could not be parsed.
     MergeSkipped { path: PathBuf, reason: String },
+    /// Symlink was created; no cache entry.
+    Linked { target: PathBuf },
 }
 
 /// In-memory representation of `cache.toml`; keyed by `(provider, feature, item)`.

@@ -18,10 +18,13 @@ fn dedup_single_path_multiple_providers_only_winner_writes() {
     // with a distinct agent_name so we can identify the winner by file content.
     let config_path = ws.active_root_dir().join("local.config.toml");
     let original = fs::read_to_string(&config_path).unwrap();
-    let patched = original.replace(
+    let mut patched = original.replace(
         "\n[providers.mycode.instructions]\ntemplate = \"{{ dir.application }}/templates/mycode/instructions.hbs\"\ntarget = \"{{ dir.workspace }}/.mycode/instructions.md\"\nvariables = {agent_name = \"Mycode\"}",
         "\n[providers.aaa.instructions]\ntemplate = \"{{ dir.application }}/templates/mycode/instructions.hbs\"\ntarget = \"{{ dir.workspace }}/.mycode/instructions.md\"\nvariables = {agent_name = \"aaa-provider\"}\n\n[providers.mycode.instructions]\ntemplate = \"{{ dir.application }}/templates/mycode/instructions.hbs\"\ntarget = \"{{ dir.workspace }}/.mycode/instructions.md\"\nvariables = {agent_name = \"mycode-provider\"}",
     );
+    // Enable template mode so provider variables are substituted.
+    patched.push_str("\n[feature-maps.instruction]\nmode = \"template\"\n");
+    patched.push_str("[feature-maps.command]\nmode = \"template\"\n");
     fs::write(&config_path, patched).unwrap();
 
     ws.run_command(&["deploy", "--offline", "--no-gitignore", "--force"])

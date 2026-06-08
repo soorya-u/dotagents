@@ -8,7 +8,6 @@ target = "{{dir.workspace}}/.qwen/commands/{{command.name}}.md"
 
 # Qwen Code Skills
 [providers.qwen.skills]
-template = "https://dotagents.soorya-u.dev/v1/templates/qwen/skill.hbs"
 target = "{{dir.workspace}}/.qwen/skills/{{skill.name}}/SKILL.md"
 
 # Qwen Code MCP (merge-aware: preserves existing keys in settings.json)
@@ -17,5 +16,4 @@ template = "https://dotagents.soorya-u.dev/v1/templates/qwen/mcp.hbs"
 target = "{{dir.workspace}}/.qwen/settings.json"
 
 [providers.qwen.ignore]
-template = "https://dotagents.soorya-u.dev/v1/templates/qwen/agent-ignore.hbs"
 target = "{{dir.workspace}}/.qwenignore"

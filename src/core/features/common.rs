@@ -16,4 +16,8 @@ impl Feature {
     pub(crate) fn feature_filename(&self) -> String {
         format!("{}.hbs", self.as_ref())
     }
+
+    pub(crate) fn is_provider_agnostic(&self) -> bool {
+        matches!(self, Feature::Skill | Feature::AgentIgnore)
+    }
 }

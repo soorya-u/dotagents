@@ -81,42 +81,6 @@ pub(crate) const GITIGNORE: &str = "cache.toml\nlocal.config.toml\n.env\n";
 /// Mycode custom-provider command template.
 pub(crate) const TEMPLATE_MYCODE_COMMAND: &str = "{{command.content}}";
 
-/// Mycode custom-provider skill template.
-pub(crate) const TEMPLATE_MYCODE_SKILL: &str = r#"---
-name: {{skill.name}}
-description: {{skill.description}}
-{{#if skill.license}}
-license: {{skill.license}}
-{{/if}}
-{{#if skill.compatibility}}
-compatibility: {{skill.compatibility}}
-{{/if}}
-{{#if skill.metadata}}
-metadata:
-{{#each skill.metadata}}
-  {{@key}}: {{this}}
-{{/each}}
-{{/if}}
-{{#ifDefined skill.disable-model-invocation}}
-disable-model-invocation: {{skill.disable-model-invocation}}
-{{/ifDefined}}
-{{#ifDefined skill.user-invocable}}
-user-invocable: {{skill.user-invocable}}
-{{/ifDefined}}
-{{#if skill.[allowed-tools]}}
-allowed-tools: {{skill.[allowed-tools]}}
-{{/if}}
-{{#if skill.paths}}
-paths:
-{{#each skill.paths}}
-  - {{this}}
-{{/each}}
-{{/if}}
----
-
-{{{skill.content}}}
-"#;
-
 /// Mycode custom-provider instructions template.
 pub(crate) const TEMPLATE_MYCODE_INSTRUCTIONS: &str = "{{instruction.content}}";
 
@@ -144,10 +108,6 @@ pub(crate) const TEMPLATE_MYCODE_MCP: &str = r#"{
 }
 "#;
 
-/// Mycode custom-provider agent-ignore template.
-pub(crate) const TEMPLATE_MYCODE_AGENT_IGNORE: &str =
-    "{{#each ignore.patterns}}{{this}}\n{{/each}}";
-
 /// Provider config block appended to `local.config.toml` when using the `advanced` template.
 pub(crate) const MYCODE_PROVIDER_CONFIG: &str = r#"
 [providers.mycode.mcp]
@@ -165,12 +125,10 @@ target = "{{ dir.workspace }}/.mycode/commands/{{ command.name }}.md"
 variables = {agent_name = "Mycode"}
 
 [providers.mycode.skills]
-template = "{{ dir.application }}/templates/mycode/skill.hbs"
 target = "{{ dir.workspace }}/.mycode/skills/{{ skill.name }}/SKILL.md"
 variables = {agent_name = "Mycode"}
 
 [providers.mycode.ignore]
-template = "{{ dir.application }}/templates/mycode/agent-ignore.hbs"
 target = "{{ dir.workspace }}/.mycode/.agentignore"
 "#;
 

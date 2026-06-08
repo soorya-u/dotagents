@@ -116,6 +116,13 @@ fn force_flag_overwrites_user_modified_output() {
     let ws = TestWorkspace::new();
     init_with_mycode_provider(&ws);
 
+    // Enable template mode so variables are substituted.
+    let config_path = ws.active_root_dir().join("local.config.toml");
+    let mut config = fs::read_to_string(&config_path).unwrap();
+    config.push_str("\n[feature-maps.instruction]\nmode = \"template\"\n");
+    config.push_str("[feature-maps.command]\nmode = \"template\"\n");
+    fs::write(&config_path, config).unwrap();
+
     ws.run_command(&["deploy", "--offline", "--no-gitignore"])
         .assert_success();
 

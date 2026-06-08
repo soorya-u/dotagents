@@ -13,7 +13,6 @@ target = "{{dir.workspace}}/.github/prompts/{{command.name}}.prompt.md"
 
 # Copilot Skills
 [providers.copilot.skills]
-template = "https://dotagents.soorya-u.dev/v1/templates/copilot/skill.hbs"
 target = "{{dir.workspace}}/.github/skills/{{skill.name}}/SKILL.md"
 
 # Copilot MCP

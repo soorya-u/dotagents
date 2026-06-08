@@ -1,50 +1,33 @@
 use crate::prelude::*;
 use rayon::prelude::*;
 use serde_json::{Value, to_value};
-use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
+use std::fs;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use strum::IntoEnumIterator;
 
 use crate::cli::options::DeployOptions;
-use crate::cli::ui::deploy::{deploy_outro, print_deploy_summary, prompt_gitignore_update};
+use crate::cli::ui::deploy::{fetch_registry, finalize_deploy};
 use crate::cli::ui::dry_run::{
     DeployDryRunStatus, DryRunDeployEntry, print_dry_run_deploy_summary,
 };
 use crate::core::config::{
-    AppConfig, CACHE_SINGLETON_KEY, CacheConfig, CacheEntry, CacheUpdate, FeatureSettings,
+    AppConfig, CACHE_SINGLETON_KEY, CacheConfig, CacheEntry, CacheUpdate, FeatureMode,
 };
 use crate::core::features::{
     Feature, command::CommandFeature, ignore::IgnoreFeature, instruction::InstructionFeature,
     mcp::McpFeature, skill::SkillFeature, traits::FeatureTrait,
 };
-use crate::schema::registry::Registry;
 use crate::templates::variables::set_env_paths;
 use crate::templates::{
-    TemplateCache, Templater, get_templater, registry_url, render_feature_with_settings,
-    resolve_provider_defaults, resolve_target_path,
+    TemplateCache, Templater, get_templater, link_feature_with_settings,
+    render_feature_with_settings, resolve_provider_defaults, resolve_target_path,
 };
-use crate::utils::gitignore::{collapse_paths, rebuild_fence_from_cache};
+use crate::utils::dedup::{DeployWorkItem, build_work_list};
+use crate::utils::fs::write_symlink;
 use crate::utils::hash::{hash_content, hash_file};
 use crate::utils::json::merge_json;
-use crate::utils::path::{get_workspace_dir, make_workspace_relative, override_workspace_dir};
-use crate::utils::tui::is_tui_enabled;
-use cliclack::{outro, spinner};
-use std::io::Write;
-
-/// Tracks deduplication info for a skipped provider.
-#[derive(Debug, Clone)]
-struct DedupInfo {
-    winner: String,
-}
-
-/// A single unit of work for deploy_feature: one (provider, item) pair.
-struct DeployWorkItem<'a, T: FeatureTrait> {
-    provider_name: String,
-    settings: &'a FeatureSettings,
-    item: &'a T,
-    dedup: Option<DedupInfo>,
-}
+use crate::utils::path::override_workspace_dir;
 
 /// Aggregated result of deploying one feature across all providers.
 #[derive(Debug, Default)]
@@ -53,6 +36,8 @@ pub(crate) struct DeployStats {
     pub skipped: usize,
     /// Populated only during `--dry-run`; empty in normal deploys.
     pub dry_run_entries: Vec<DryRunDeployEntry>,
+    /// Target paths of symlinked items (for .gitignore fence).
+    pub linked_targets: Vec<PathBuf>,
 }
 
 impl DeployStats {
@@ -61,6 +46,7 @@ impl DeployStats {
         self.written += other.written;
         self.skipped += other.skipped;
         self.dry_run_entries.extend(other.dry_run_entries);
+        self.linked_targets.extend(other.linked_targets);
         self
     }
 }
@@ -74,121 +60,6 @@ struct DeployContext<'a> {
     force: bool,
     no_cache: bool,
     dry_run: bool,
-}
-
-/// Resolves target paths for all providers for a single item, grouping by path.
-fn resolve_provider_paths<'a, T: FeatureTrait>(
-    item: &'a T,
-    providers: &'a HashMap<String, FeatureSettings>,
-    templater: &Templater,
-    variables: Option<&Value>,
-) -> Result<HashMap<PathBuf, Vec<(&'a String, &'a FeatureSettings)>>> {
-    let name_var: Option<Value> = item
-        .get_file_name()
-        .map(|filename| item.get_name_variable(&filename))
-        .transpose()?
-        .flatten();
-    let item_base_vars = merge_json(variables, name_var.as_ref());
-
-    let mut path_groups: HashMap<PathBuf, Vec<(&String, &FeatureSettings)>> = HashMap::new();
-    for (provider_name, settings) in providers {
-        let target_str = settings
-            .target
-            .as_deref()
-            .ok_or_else(|| anyhow!("Target config not found for provider {}", provider_name))?;
-        let target_path = resolve_target_path(templater, target_str, Some(&item_base_vars))?;
-        path_groups
-            .entry(target_path)
-            .or_default()
-            .push((provider_name, settings));
-    }
-    Ok(path_groups)
-}
-
-/// Groups providers by resolved target path and marks dedup winners/losers.
-/// Returns `(target_path, winner, losers)` for each unique path.
-pub(crate) fn dedup_by_path(
-    providers: &[(String, PathBuf)],
-) -> Vec<(PathBuf, String, Vec<String>)> {
-    let mut path_groups: HashMap<PathBuf, Vec<String>> = HashMap::new();
-    for (provider_name, target_path) in providers {
-        path_groups
-            .entry(target_path.clone())
-            .or_default()
-            .push(provider_name.clone());
-    }
-
-    let mut result: Vec<(PathBuf, String, Vec<String>)> = path_groups
-        .into_iter()
-        .map(|(path, mut group)| {
-            group.sort();
-            let winner = group.remove(0);
-            (path, winner, group)
-        })
-        .collect();
-    result.sort_by(|a, b| a.0.cmp(&b.0));
-    result
-}
-
-/// Builds the dedup-aware work list for a single item across all providers.
-fn build_item_work_items<'a, T: FeatureTrait>(
-    item: &'a T,
-    providers: &'a HashMap<String, FeatureSettings>,
-    templater: &Templater,
-    variables: Option<&Value>,
-) -> Result<Vec<DeployWorkItem<'a, T>>> {
-    let path_groups = resolve_provider_paths(item, providers, templater, variables)?;
-
-    let provider_pairs: Vec<(String, PathBuf)> = path_groups
-        .into_iter()
-        .flat_map(|(path, group)| {
-            group
-                .into_iter()
-                .map(|(name, _)| (name.clone(), path.clone()))
-                .collect::<Vec<_>>()
-        })
-        .collect();
-
-    let dedup_results = dedup_by_path(&provider_pairs);
-
-    let mut work_list = Vec::new();
-    for (_path, winner, losers) in dedup_results {
-        let settings = providers.get(&winner).unwrap();
-        work_list.push(DeployWorkItem {
-            provider_name: winner.clone(),
-            settings,
-            item,
-            dedup: None,
-        });
-        for loser in losers {
-            let settings = providers.get(&loser).unwrap();
-            work_list.push(DeployWorkItem {
-                provider_name: loser,
-                settings,
-                item,
-                dedup: Some(DedupInfo {
-                    winner: winner.clone(),
-                }),
-            });
-        }
-    }
-    Ok(work_list)
-}
-
-/// Builds the full dedup-aware work list for all items.
-fn build_work_list<'a, T: FeatureTrait>(
-    items: &'a [T],
-    providers: &'a HashMap<String, FeatureSettings>,
-    templater: &Templater,
-    variables: Option<&Value>,
-) -> Result<Vec<DeployWorkItem<'a, T>>> {
-    let mut all_work = Vec::new();
-    for item in items {
-        all_work.extend(build_item_work_items(
-            item, providers, templater, variables,
-        )?);
-    }
-    Ok(all_work)
 }
 
 /// Handles a dedup-skipped work item: logs, increments skip count, and records dry-run entry.
@@ -246,6 +117,10 @@ fn process_cache_update<T: FeatureTrait>(
                 CacheEntry { hash, target },
             );
         }
+        CacheUpdate::Linked { target } => {
+            stats.written += 1;
+            stats.linked_targets.push(target);
+        }
         CacheUpdate::DryRun { target, content } => {
             let rendered_hash = hash_content(&content);
             if !target.exists() {
@@ -280,6 +155,83 @@ fn process_cache_update<T: FeatureTrait>(
     Ok(())
 }
 
+/// Walks `source_dir` recursively and symlinks every file except `skip_name`
+/// into the corresponding location under `target_dir`.
+fn deploy_extra_files(
+    source_dir: &Path,
+    target_dir: &Path,
+    skip_name: &str,
+    dry_run: bool,
+) -> Result<Vec<PathBuf>> {
+    let canonical = source_dir
+        .canonicalize()
+        .with_context(|| format!("unable to canonicalize source dir {}", source_dir.display()))?;
+    let mut linked = Vec::new();
+    deploy_extra_files_recursive(
+        &canonical,
+        &canonical,
+        target_dir,
+        skip_name,
+        dry_run,
+        &mut linked,
+    )?;
+    Ok(linked)
+}
+
+fn deploy_extra_files_recursive(
+    base_source: &Path,
+    current_source: &Path,
+    target_base: &Path,
+    skip_name: &str,
+    dry_run: bool,
+    linked: &mut Vec<PathBuf>,
+) -> Result<()> {
+    for entry in fs::read_dir(current_source)? {
+        let entry = entry?;
+        let src_path = entry.path();
+        if src_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .map(|n| n == skip_name)
+            .unwrap_or(false)
+        {
+            continue;
+        }
+        let relative = src_path
+            .strip_prefix(base_source)
+            .context("unable to compute relative path for extra file")?;
+        let target_path = target_base.join(relative);
+
+        if src_path.is_dir() {
+            if !dry_run {
+                fs::create_dir_all(&target_path).with_context(|| {
+                    format!("unable to create target dir {}", target_path.display())
+                })?;
+            }
+            deploy_extra_files_recursive(
+                base_source,
+                &src_path,
+                target_base,
+                skip_name,
+                dry_run,
+                linked,
+            )?;
+        } else if src_path.is_file() {
+            if !dry_run {
+                write_symlink(&src_path, &target_path).with_context(|| {
+                    format!(
+                        "unable to symlink extra file {} -> {}",
+                        src_path.display(),
+                        target_path.display()
+                    )
+                })?;
+            }
+            linked.push(target_path);
+        }
+    }
+    Ok(())
+}
+
 /// Deploys one feature across all enabled providers, collecting gitignore entries and updating cache.
 fn deploy_feature<T>(
     ctx: &DeployContext<'_>,
@@ -303,6 +255,7 @@ where
     let work_list = build_work_list(&items, &providers, ctx.templater, ctx.variables)?;
 
     let feature_name = feature.as_ref();
+    let provider_agnostic = T::is_provider_agnostic();
     let cache_ref = ctx.cache.clone();
 
     let stats: DeployStats = work_list
@@ -318,6 +271,52 @@ where
             let file_name = work.item.get_file_name();
             let item_key = file_name.as_deref().unwrap_or(CACHE_SINGLETON_KEY);
 
+            let mode = ctx
+                .app_config
+                .resolve_mode(feature_name, file_name.as_deref());
+
+            if provider_agnostic && work.item.is_symlinkable() && mode == FeatureMode::Link {
+                let source_path = T::resolve_source_path(file_name.as_deref())
+                    .context("unable to resolve source path for symlink")?;
+
+                let update = link_feature_with_settings(
+                    &work.provider_name,
+                    work.item,
+                    work.settings,
+                    ctx.templater,
+                    ctx.variables,
+                    ctx.dry_run,
+                    &source_path,
+                )?;
+
+                // Extract target path for extra file resolution
+                let main_target = match &update {
+                    CacheUpdate::Linked { target } => target.clone(),
+                    _ => unreachable!(),
+                };
+
+                process_cache_update(work, feature_name, item_key, update, &cache_ref, &mut stats)?;
+
+                // Symlink additional files from the source directory (skills only)
+                if let Some(source_dir) = T::source_dir(file_name.as_deref()) {
+                    let skip_name = source_path
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("");
+                    let target_dir = main_target
+                        .parent()
+                        .with_context(|| "symlink target path has no parent directory")?;
+                    let extra_targets =
+                        deploy_extra_files(&source_dir, target_dir, skip_name, ctx.dry_run)?;
+                    if !ctx.dry_run || !extra_targets.is_empty() {
+                        stats.written += extra_targets.len();
+                        stats.linked_targets.extend(extra_targets);
+                    }
+                }
+
+                return Ok(stats);
+            }
+
             let cached_entry: Option<CacheEntry> = if ctx.no_cache {
                 None
             } else {
@@ -332,6 +331,7 @@ where
                 &work.provider_name,
                 work.item,
                 work.settings,
+                mode,
                 ctx.templater,
                 ctx.variables,
                 cached_entry.as_ref(),
@@ -346,91 +346,6 @@ where
         .try_reduce(DeployStats::default, |a, b| Ok(a.merge(b)))?;
 
     Ok(stats)
-}
-
-/// Fetches the provider registry, showing a spinner in TUI mode. Returns None on failure or when offline.
-fn fetch_registry(offline: bool) -> Option<Registry> {
-    if offline {
-        return None;
-    }
-
-    let sp = if is_tui_enabled() {
-        let s = spinner();
-        s.start("Fetching provider registry…");
-        Some(s)
-    } else {
-        None
-    };
-
-    match Registry::fetch(registry_url()) {
-        Ok(r) => {
-            if let Some(s) = sp {
-                s.clear();
-            }
-            Some(r)
-        }
-        Err(e) => {
-            if let Some(s) = sp {
-                s.error(format!("Could not reach registry: {}", e));
-            }
-            warn!(
-                "Failed to fetch provider registry: {} — falling back to local cache",
-                e
-            );
-            None
-        }
-    }
-}
-
-/// Prints the deploy summary and optionally updates .gitignore from cache targets.
-fn finalize_deploy(
-    opts: &DeployOptions,
-    stats: &DeployStats,
-    cache: &Arc<Mutex<CacheConfig>>,
-) -> Result<()> {
-    if opts.no_gitignore {
-        print_summary(stats);
-        return Ok(());
-    }
-
-    let workspace_root = get_workspace_dir().context("unable to get workspace directory")?;
-    let cache_targets = cache.lock().unwrap().all_targets();
-
-    if cache_targets.is_empty() {
-        print_summary(stats);
-        return Ok(());
-    }
-
-    let relative_paths: Vec<String> = cache_targets
-        .iter()
-        .filter_map(|p| make_workspace_relative(p, &workspace_root))
-        .collect::<HashSet<_>>()
-        .into_iter()
-        .collect();
-    let pattern_count = collapse_paths(&relative_paths, &workspace_root).len();
-
-    let should_update = if opts.gitignore {
-        true
-    } else {
-        stats.written > 0 && prompt_gitignore_update(pattern_count)
-    };
-
-    if should_update && let Err(e) = rebuild_fence_from_cache(&cache_targets, &workspace_root) {
-        warn!("Failed to update .gitignore: {}", e);
-    }
-
-    print_summary(stats);
-    Ok(())
-}
-
-/// Prints the deploy summary using TUI or plain output depending on context.
-fn print_summary(stats: &DeployStats) {
-    if is_tui_enabled() {
-        outro(deploy_outro(stats)).ok();
-        let _ = std::io::stdout().flush();
-    } else {
-        print_deploy_summary(stats);
-    }
 }
 
 /// Deploys all enabled features and returns aggregated stats.
@@ -548,62 +463,4 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
         .context("unable to save cache")?;
 
     finalize_deploy(&opts, &stats, &cache)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::dedup_by_path;
-    use std::path::PathBuf;
-
-    // alphabetical winner selected when 3 providers target same path
-    #[test]
-    fn dedup_alphabetical_winner_three_providers() {
-        let providers = vec![
-            ("zebra".to_string(), PathBuf::from("AGENTS.md")),
-            ("alpha".to_string(), PathBuf::from("AGENTS.md")),
-            ("middle".to_string(), PathBuf::from("AGENTS.md")),
-        ];
-        let result = dedup_by_path(&providers);
-        assert_eq!(result.len(), 1);
-        let (path, winner, losers) = &result[0];
-        assert_eq!(path, &PathBuf::from("AGENTS.md"));
-        assert_eq!(winner, "alpha");
-        assert_eq!(losers, &vec!["middle".to_string(), "zebra".to_string()]);
-    }
-
-    // no dedup when providers target different paths
-    #[test]
-    fn dedup_no_collision_different_paths() {
-        let providers = vec![
-            ("claude".to_string(), PathBuf::from(".claude/AGENTS.md")),
-            ("codex".to_string(), PathBuf::from(".openai/AGENTS.md")),
-        ];
-        let result = dedup_by_path(&providers);
-        assert_eq!(result.len(), 2);
-        assert!(result.iter().all(|(_, _, losers)| losers.is_empty()));
-    }
-
-    // mixed: some providers share path, others don't
-    #[test]
-    fn dedup_mixed_some_collide() {
-        let providers = vec![
-            ("a".to_string(), PathBuf::from("shared.md")),
-            ("b".to_string(), PathBuf::from("shared.md")),
-            ("c".to_string(), PathBuf::from("unique.md")),
-        ];
-        let result = dedup_by_path(&providers);
-        assert_eq!(result.len(), 2);
-        let shared = result
-            .iter()
-            .find(|(p, _, _)| p == &PathBuf::from("shared.md"))
-            .unwrap();
-        let unique = result
-            .iter()
-            .find(|(p, _, _)| p == &PathBuf::from("unique.md"))
-            .unwrap();
-        assert_eq!(shared.1, "a");
-        assert_eq!(shared.2, vec!["b"]);
-        assert_eq!(unique.1, "c");
-        assert_eq!(unique.2, Vec::<String>::new());
-    }
 }

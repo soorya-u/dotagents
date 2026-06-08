@@ -454,7 +454,7 @@ test.describe("undeploy TUI – T-U3 edited file No", () => {
 		try {
 			// First prompt: confirm undeploy — navigate to Yes
 			await expect(
-				terminal.getByText("Remove 4 deployed file(s)?"),
+				terminal.getByText("Remove 3 deployed file(s)?"),
 			).toBeVisible();
 			terminal.keyDown(); // navigate from No to Yes
 			terminal.keyPress("Enter");
@@ -484,7 +484,7 @@ test.describe("undeploy TUI – T-U4 edited file Yes", () => {
 	}) => {
 		try {
 			await expect(
-				terminal.getByText("Remove 4 deployed file(s)?"),
+				terminal.getByText("Remove 3 deployed file(s)?"),
 			).toBeVisible();
 			terminal.keyDown(); // Yes for undeploy
 			terminal.keyPress("Enter");

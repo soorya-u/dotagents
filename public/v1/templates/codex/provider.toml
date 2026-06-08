@@ -8,7 +8,6 @@ target = "{{dir.workspace}}/.codex/prompts/{{command.name}}.md"
 
 # Codex Skills
 [providers.codex.skills]
-template = "https://dotagents.soorya-u.dev/v1/templates/codex/skill.hbs"
 target = "{{dir.workspace}}/.agents/skills/{{skill.name}}/SKILL.md"
 
 [providers.codex.instructions]

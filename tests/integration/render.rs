@@ -1,6 +1,16 @@
 //! Integration tests for the render pipeline.
 
 use super::{TestWorkspace, init_with_mycode_provider};
+use std::fs;
+
+/// Adds template mode for instruction and command features to the local config.
+fn enable_template_mode_for_type2(ws: &TestWorkspace) {
+    let config_path = ws.active_root_dir().join("local.config.toml");
+    let mut config = fs::read_to_string(&config_path).unwrap();
+    config.push_str("\n[feature-maps.instruction]\nmode = \"template\"\n");
+    config.push_str("[feature-maps.command]\nmode = \"template\"\n");
+    fs::write(&config_path, config).unwrap();
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Variable interpolation
@@ -12,6 +22,7 @@ fn provider_variable_interpolated_in_instructions_output() {
     // Deployed output should contain the resolved value.
     let ws = TestWorkspace::new();
     init_with_mycode_provider(&ws);
+    enable_template_mode_for_type2(&ws);
 
     ws.run_command(&["deploy", "--offline", "--no-gitignore"])
         .assert_success();
@@ -29,6 +40,7 @@ fn env_variable_interpolated_in_instructions_output() {
     // Deployed output should contain the resolved env value.
     let ws = TestWorkspace::new();
     init_with_mycode_provider(&ws);
+    enable_template_mode_for_type2(&ws);
 
     ws.run_command(&["deploy", "--offline", "--no-gitignore"])
         .assert_success();
@@ -72,6 +84,7 @@ fn command_content_body_preserved_in_deployed_output() {
     // contain "Mycode" and the static prose from the source file.
     let ws = TestWorkspace::new();
     init_with_mycode_provider(&ws);
+    enable_template_mode_for_type2(&ws);
 
     ws.run_command(&["deploy", "--offline", "--no-gitignore"])
         .assert_success();
@@ -195,7 +208,7 @@ target = "{{{{ dir.workspace }}}}/.gemini/settings.json"
 
 #[test]
 fn deployed_skill_output_retains_frontmatter_from_template() {
-    // The skill.hbs template re-emits frontmatter with name/description fields.
+    // Skill output is provider-agnostic — rendered directly with frontmatter from to_markdown().
     let ws = TestWorkspace::new();
     init_with_mycode_provider(&ws);
 

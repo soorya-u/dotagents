@@ -8,7 +8,6 @@ target = "{{dir.workspace}}/.junie/guidelines.md"
 
 # Junie Skills
 [providers.junie.skills]
-template = "https://dotagents.soorya-u.dev/v1/templates/junie/skill.hbs"
 target = "{{dir.workspace}}/.junie/skills/{{skill.name}}/SKILL.md"
 
 # Junie Commands (Custom Slash Commands)
@@ -22,5 +21,4 @@ template = "https://dotagents.soorya-u.dev/v1/templates/junie/mcp.hbs"
 target = "{{dir.workspace}}/.junie/mcp/mcp.json"
 
 [providers.junie.ignore]
-template = "https://dotagents.soorya-u.dev/v1/templates/junie/agent-ignore.hbs"
 target = "{{dir.workspace}}/.aiignore"
