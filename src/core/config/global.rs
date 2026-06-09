@@ -7,6 +7,7 @@ use strum::VariantNames;
 #[cfg(feature = "skills-add")]
 use super::common::PackageRunner;
 use super::common::Providers;
+use super::mode::FeatureModeConfig;
 use super::traits::TomlConfig;
 use crate::constants::schema::CONFIG_SCHEMA;
 use crate::core::features::Feature;
@@ -28,6 +29,8 @@ pub struct GlobalConfig {
     #[cfg(feature = "skills-add")]
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub package_runner: Option<PackageRunner>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub feature_maps: Option<HashMap<String, FeatureModeConfig>>,
 }
 
 impl GlobalConfig {
@@ -40,6 +43,7 @@ impl GlobalConfig {
             variables: None,
             #[cfg(feature = "skills-add")]
             package_runner: None,
+            feature_maps: None,
         }
     }
 
@@ -53,6 +57,7 @@ impl GlobalConfig {
             variables: None,
             #[cfg(feature = "skills-add")]
             package_runner: None,
+            feature_maps: None,
         }
     }
 

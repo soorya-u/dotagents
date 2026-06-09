@@ -115,6 +115,13 @@ fn local_provider_variables_override_global_variables() {
     let ws = TestWorkspace::new();
     init_with_mycode_provider(&ws);
 
+    // Enable template mode for instruction/command so variables are substituted.
+    let config_path = ws.active_root_dir().join("local.config.toml");
+    let mut original = fs::read_to_string(&config_path).unwrap();
+    original.push_str("\n[feature-maps.instruction]\nmode = \"template\"\n");
+    original.push_str("[feature-maps.command]\nmode = \"template\"\n");
+    fs::write(&config_path, original).unwrap();
+
     ws.run_command(&["deploy", "--offline", "--no-gitignore"])
         .assert_success();
 
@@ -138,12 +145,15 @@ fn global_variable_used_when_no_provider_override() {
     let config_path = ws.active_root_dir().join("local.config.toml");
     let original = fs::read_to_string(&config_path).unwrap();
     // Remove provider-level variable overrides from all sections.
-    let patched = original
+    let mut patched = original
         .replace("variables = {agent_name = \"Mycode\"}", "")
         .replace(
             "variables = { \"agent_name\" = \"my agent\" }",
             "variables = { \"agent_name\" = \"GlobalAgent\" }",
         );
+    // Enable template mode for instruction so variables are substituted.
+    patched.push_str("\n[feature-maps.instruction]\nmode = \"template\"\n");
+    patched.push_str("[feature-maps.command]\nmode = \"template\"\n");
     fs::write(&config_path, patched).unwrap();
 
     ws.run_command(&["deploy", "--offline", "--no-gitignore"])

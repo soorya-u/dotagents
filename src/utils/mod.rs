@@ -1,3 +1,4 @@
+pub(crate) mod dedup;
 pub(crate) mod error;
 pub(crate) mod format;
 pub(crate) mod fs;

@@ -8,7 +8,6 @@ target = "{{dir.workspace}}/AGENTS.md"
 
 # KiloCode Skills
 [providers.kilocode.skills]
-template = "https://dotagents.soorya-u.dev/v1/templates/kilocode/skill.hbs"
 target = "{{dir.workspace}}/.kilo/skills/{{skill.name}}/SKILL.md"
 
 # KiloCode Commands (Workflows / Slash Commands)
@@ -22,5 +21,4 @@ template = "https://dotagents.soorya-u.dev/v1/templates/kilocode/mcp.hbs"
 target = "{{dir.workspace}}/.kilo/kilo.jsonc"
 
 [providers.kilocode.ignore]
-template = "https://dotagents.soorya-u.dev/v1/templates/kilocode/agent-ignore.hbs"
 target = "{{dir.workspace}}/.kilocodeignore"

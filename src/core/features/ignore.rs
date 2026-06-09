@@ -1,4 +1,5 @@
 use std::fs;
+use std::path::PathBuf;
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -23,7 +24,7 @@ impl IgnoreFeature {
         let dir = get_application_dir()?;
         let path = dir.join(AGENTIGNORE_FILE);
         let content = if path.exists() {
-            fs::read_to_string(path)?
+            fs::read_to_string(&path)?
         } else {
             String::new()
         };
@@ -56,6 +57,18 @@ impl FeatureTrait for IgnoreFeature {
                 "patterns": self.patterns
             }
         })
+    }
+
+    fn is_symlinkable(&self) -> bool {
+        true
+    }
+
+    fn is_provider_agnostic() -> bool {
+        true
+    }
+
+    fn resolve_source_path(_name: Option<&str>) -> Result<PathBuf> {
+        Ok(get_application_dir()?.join(AGENTIGNORE_FILE))
     }
 }
 

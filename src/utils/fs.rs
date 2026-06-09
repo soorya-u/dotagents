@@ -40,6 +40,53 @@ pub fn prune_empty_dir(path: &Path) -> Result<()> {
     Ok(())
 }
 
+/// Creates a symbolic link at `target` pointing to `source`.
+/// Creates parent directories if needed and overwrites the target if it already exists.
+#[cfg(unix)]
+pub fn write_symlink(source: &Path, target: &Path) -> Result<()> {
+    if let Some(parent) = target.parent() {
+        fs::create_dir_all(parent)
+            .with_context(|| format!("unable to create parent dirs for {}", target.display()))?;
+    }
+    if target.exists() || target.is_symlink() {
+        fs::remove_file(target)
+            .with_context(|| format!("unable to remove existing target {}", target.display()))?;
+    }
+    std::os::unix::fs::symlink(source, target).with_context(|| {
+        format!(
+            "unable to symlink {} -> {}",
+            source.display(),
+            target.display()
+        )
+    })
+}
+
+/// Creates a symbolic link at `target` pointing to `source`.
+/// Creates parent directories if needed and overwrites the target if it already exists.
+#[cfg(windows)]
+pub fn write_symlink(source: &Path, target: &Path) -> Result<()> {
+    if let Some(parent) = target.parent() {
+        fs::create_dir_all(parent)
+            .with_context(|| format!("unable to create parent dirs for {}", target.display()))?;
+    }
+    if target.exists() || target.is_symlink() {
+        fs::remove_file(target)
+            .with_context(|| format!("unable to remove existing target {}", target.display()))?;
+    }
+    if source.is_dir() {
+        std::os::windows::fs::symlink_dir(source, target)
+    } else {
+        std::os::windows::fs::symlink_file(source, target)
+    }
+    .with_context(|| {
+        format!(
+            "unable to symlink {} -> {}",
+            source.display(),
+            target.display()
+        )
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

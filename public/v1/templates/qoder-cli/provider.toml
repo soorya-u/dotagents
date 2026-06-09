@@ -8,7 +8,6 @@ target = "{{dir.workspace}}/AGENTS.md"
 
 # Qoder CLI Skills
 [providers.qoder-cli.skills]
-template = "https://dotagents.soorya-u.dev/v1/templates/qoder-cli/skill.hbs"
 target = "{{dir.workspace}}/.qoder/skills/{{skill.name}}/SKILL.md"
 
 # Qoder CLI Commands

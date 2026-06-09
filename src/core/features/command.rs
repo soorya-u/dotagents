@@ -1,4 +1,5 @@
 use std::fs;
+use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use gray_matter::Matter;
@@ -9,7 +10,6 @@ use serde_json::{Value, json};
 use crate::{
     constants::templates::{COMMAND_STARTER, render_starter},
     core::features::traits::FeatureTrait,
-    templates::variables::get_command_name_variable,
     utils::path::get_commands_dir,
 };
 
@@ -124,8 +124,12 @@ impl FeatureTrait for CommandFeature {
         Some(self.metadata.name.clone())
     }
 
-    fn get_name_variable(&self, filename: &str) -> Result<Option<Value>> {
-        Ok(Some(get_command_name_variable(filename)?))
+    fn resolve_source_path(name: Option<&str>) -> Result<PathBuf> {
+        let name = name.ok_or_else(|| anyhow::anyhow!("command name required for source path"))?;
+        if name.contains('/') || name.contains('\\') || name.contains("..") {
+            anyhow::bail!("invalid command name for source path");
+        }
+        Ok(get_commands_dir()?.join(format!("{}.md", name)))
     }
 }
 

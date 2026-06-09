@@ -88,7 +88,6 @@ test.describe("init CLI – file tree", () => {
 				true,
 			);
 			expect(existsSync(join(root, "templates/mycode/mcp.hbs"))).toBe(true);
-			expect(existsSync(join(root, "templates/mycode/skill.hbs"))).toBe(true);
 		} finally {
 			cleanup(d);
 		}

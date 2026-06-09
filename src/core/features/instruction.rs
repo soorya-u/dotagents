@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, path::PathBuf};
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -45,6 +45,10 @@ impl FeatureTrait for InstructionFeature {
                 "content": self.content
             }
         })
+    }
+
+    fn resolve_source_path(_name: Option<&str>) -> Result<PathBuf> {
+        Ok(get_application_dir()?.join(INSTRUCTIONS_FILE))
     }
 }
 

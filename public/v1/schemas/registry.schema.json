@@ -37,6 +37,14 @@
             "description": "Hex-encoded SHA-256 digest of the file contents.",
             "pattern": "^[0-9a-f]{64}$"
           }
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable display name for the provider (e.g. 'Claude Code')."
+        },
+        "url": {
+          "type": "string",
+          "description": "URL to the provider's documentation or homepage."
         }
       },
       "additionalProperties": false

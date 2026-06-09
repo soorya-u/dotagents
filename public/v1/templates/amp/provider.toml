@@ -6,7 +6,6 @@ template = "https://dotagents.soorya-u.dev/v1/templates/amp/command.hbs"
 target = "{{dir.workspace}}/.agents/commands/{{command.name}}.md"
 
 [providers.amp.skills]
-template = "https://dotagents.soorya-u.dev/v1/templates/amp/skill.hbs"
 target = "{{dir.workspace}}/.agents/skills/{{skill.name}}/SKILL.md"
 
 [providers.amp.instructions]

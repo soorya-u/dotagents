@@ -7,6 +7,7 @@ use super::common::PackageRunner;
 use super::common::Providers;
 use super::global::GlobalConfig;
 use super::local::LocalConfig;
+use super::mode::{FeatureMode, FeatureModeConfig};
 use crate::constants::file::{GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE};
 use crate::constants::schema::CONFIG_SCHEMA;
 use crate::core::config::{FeatureSettings, TomlConfig};
@@ -28,6 +29,8 @@ pub struct AppConfig {
     #[cfg(feature = "skills-add")]
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub package_runner: Option<PackageRunner>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub feature_maps: Option<HashMap<String, FeatureModeConfig>>,
 }
 
 impl AppConfig {
@@ -40,6 +43,7 @@ impl AppConfig {
             variables: None,
             #[cfg(feature = "skills-add")]
             package_runner: None,
+            feature_maps: None,
         }
     }
 
@@ -74,6 +78,27 @@ impl AppConfig {
                 }
             })
             .collect()
+    }
+
+    /// Resolves the deploy mode for a (feature, item) pair.
+    /// Priority: item override → feature-level → feature-appropriate default.
+    pub fn resolve_mode(&self, feature: &str, item_name: Option<&str>) -> FeatureMode {
+        let feature_config = self.feature_maps.as_ref().and_then(|fm| fm.get(feature));
+
+        if let Some(item) = item_name
+            && let Some(config) = feature_config
+            && let Some(overrides) = &config.mode_override
+            && let Some(mode) = overrides.get(item)
+        {
+            return *mode;
+        }
+
+        feature_config
+            .and_then(|c| c.mode)
+            .unwrap_or(match feature {
+                "skill" | "agent-ignore" => FeatureMode::Link,
+                _ => FeatureMode::Template,
+            })
     }
 
     pub fn from_application(templater: &Templater) -> Result<Self> {
@@ -145,6 +170,21 @@ impl From<(&GlobalConfig, &LocalConfig)> for AppConfig {
             .clone()
             .or_else(|| global.package_runner.clone());
 
+        let feature_maps = merge_optional(
+            global.feature_maps.as_ref(),
+            local.feature_maps.as_ref(),
+            |g, l| {
+                let mut merged = g.clone();
+                for (key, local_config) in l {
+                    merged
+                        .entry(key.clone())
+                        .and_modify(|existing| *existing = existing.merge(local_config))
+                        .or_insert_with(|| local_config.clone());
+                }
+                merged
+            },
+        );
+
         Self {
             schema,
             features,
@@ -153,6 +193,7 @@ impl From<(&GlobalConfig, &LocalConfig)> for AppConfig {
             variables,
             #[cfg(feature = "skills-add")]
             package_runner,
+            feature_maps,
         }
     }
 }
@@ -165,6 +206,104 @@ impl Default for AppConfig {
 
 #[cfg(debug_assertions)]
 impl TomlConfig for AppConfig {}
+
+#[cfg(test)]
+mod mode_tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    fn config_with_feature_maps(maps: HashMap<String, FeatureModeConfig>) -> AppConfig {
+        AppConfig {
+            feature_maps: Some(maps),
+            ..AppConfig::new()
+        }
+    }
+
+    // defaults to Link for skill when feature_maps is None
+    #[test]
+    fn resolve_mode_defaults_to_link() {
+        let config = AppConfig::new();
+        assert_eq!(config.resolve_mode("skill", None), FeatureMode::Link);
+    }
+
+    // uses feature-level mode when set
+    #[test]
+    fn resolve_mode_uses_feature_level() {
+        let maps = HashMap::from([(
+            "skill".to_string(),
+            FeatureModeConfig {
+                mode: Some(FeatureMode::Template),
+                mode_override: None,
+            },
+        )]);
+        let config = config_with_feature_maps(maps);
+        assert_eq!(config.resolve_mode("skill", None), FeatureMode::Template);
+    }
+
+    // item override wins over feature-level mode
+    #[test]
+    fn resolve_mode_item_override_wins() {
+        let mut overrides = HashMap::new();
+        overrides.insert("my-skill".to_string(), FeatureMode::Template);
+        let maps = HashMap::from([(
+            "skill".to_string(),
+            FeatureModeConfig {
+                mode: Some(FeatureMode::Link),
+                mode_override: Some(overrides),
+            },
+        )]);
+        let config = config_with_feature_maps(maps);
+        assert_eq!(
+            config.resolve_mode("skill", Some("my-skill")),
+            FeatureMode::Template
+        );
+    }
+
+    // falls back to feature-level when item not in overrides
+    #[test]
+    fn resolve_mode_falls_back_to_feature_level() {
+        let mut overrides = HashMap::new();
+        overrides.insert("other-skill".to_string(), FeatureMode::Template);
+        let maps = HashMap::from([(
+            "skill".to_string(),
+            FeatureModeConfig {
+                mode: Some(FeatureMode::Link),
+                mode_override: Some(overrides),
+            },
+        )]);
+        let config = config_with_feature_maps(maps);
+        assert_eq!(
+            config.resolve_mode("skill", Some("my-skill")),
+            FeatureMode::Link
+        );
+    }
+
+    // unknown feature defaults to Template
+    #[test]
+    fn resolve_mode_unknown_feature_defaults_to_template() {
+        let config = AppConfig::new();
+        assert_eq!(
+            config.resolve_mode("nonexistent", None),
+            FeatureMode::Template
+        );
+    }
+
+    // item override with None item returns feature-level
+    #[test]
+    fn resolve_mode_none_item_returns_feature_level() {
+        let mut overrides = HashMap::new();
+        overrides.insert("my-skill".to_string(), FeatureMode::Template);
+        let maps = HashMap::from([(
+            "skill".to_string(),
+            FeatureModeConfig {
+                mode: Some(FeatureMode::Link),
+                mode_override: Some(overrides),
+            },
+        )]);
+        let config = config_with_feature_maps(maps);
+        assert_eq!(config.resolve_mode("skill", None), FeatureMode::Link);
+    }
+}
 
 #[cfg(all(test, feature = "skills-add"))]
 mod tests {
@@ -179,6 +318,7 @@ mod tests {
             providers: None,
             variables: None,
             package_runner: runner,
+            feature_maps: None,
         }
     }
 
@@ -190,6 +330,7 @@ mod tests {
             providers: None,
             variables: None,
             package_runner: runner,
+            feature_maps: None,
         }
     }
 
@@ -225,6 +366,7 @@ mod tests {
             providers: None,
             variables: None,
             package_runner: None,
+            feature_maps: None,
         }
     }
 
@@ -236,6 +378,7 @@ mod tests {
             providers: None,
             variables: None,
             package_runner: None,
+            feature_maps: None,
         }
     }
 

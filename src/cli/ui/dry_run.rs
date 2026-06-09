@@ -10,6 +10,8 @@ pub(crate) enum DeployDryRunStatus {
     Modified,
     /// Provider was dedup-skipped — another provider will write to this path.
     DedupSkipped { winner: String },
+    /// Would be created as a symlink to the source file.
+    Linked,
 }
 
 /// A single file entry produced by `deploy --dry-run`.
@@ -48,6 +50,9 @@ pub(crate) fn print_dry_run_deploy_summary(entries: &[DryRunDeployEntry]) {
             }
             DeployDryRunStatus::DedupSkipped { ref winner } => {
                 println!("  [x] {} (skipped: {} wins)", entry.path.display(), winner);
+            }
+            DeployDryRunStatus::Linked => {
+                println!("  [@] {} (symlink)", entry.path.display());
             }
         }
     }

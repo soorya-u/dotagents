@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
-use std::{collections::HashMap, fs};
+use std::{collections::HashMap, fs, path::PathBuf};
 
 use crate::{
     constants::file::MCP_FILE, core::features::traits::FeatureTrait,
@@ -120,6 +120,10 @@ impl FeatureTrait for McpFeature {
         json!({
             "mcp": self,
         })
+    }
+
+    fn resolve_source_path(_name: Option<&str>) -> Result<PathBuf> {
+        Ok(get_application_dir()?.join(MCP_FILE))
     }
 }
 

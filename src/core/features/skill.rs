@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 use std::fs;
+use std::path::PathBuf;
 
 use crate::prelude::*;
 use gray_matter::Matter;
@@ -11,7 +12,6 @@ use crate::{
     constants::file::SKILL_FILE,
     constants::templates::{SKILL_STARTER, render_starter},
     core::features::traits::FeatureTrait,
-    templates::variables::get_skill_name_variable,
     utils::path::get_skills_dir,
 };
 
@@ -173,8 +173,25 @@ impl FeatureTrait for SkillFeature {
         Some(self.metadata.name.clone())
     }
 
-    fn get_name_variable(&self, filename: &str) -> Result<Option<Value>> {
-        Ok(Some(get_skill_name_variable(filename)?))
+    fn is_symlinkable(&self) -> bool {
+        true
+    }
+
+    fn is_provider_agnostic() -> bool {
+        true
+    }
+
+    fn resolve_source_path(name: Option<&str>) -> Result<PathBuf> {
+        let name = name.ok_or_else(|| anyhow::anyhow!("skill name required for source path"))?;
+        if name.contains('/') || name.contains('\\') || name.contains("..") {
+            anyhow::bail!("invalid skill name for source path");
+        }
+        Ok(get_skills_dir()?.join(name).join(SKILL_FILE))
+    }
+
+    fn source_dir(name: Option<&str>) -> Option<PathBuf> {
+        let name = name?;
+        get_skills_dir().ok().map(|d| d.join(name))
     }
 }
 

@@ -1,11 +1,11 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::prelude::*;
 use serde_json::{Value, to_value};
 
 use crate::{
     core::{
-        config::{CacheEntry, CacheUpdate, FeatureSettings},
+        config::{CacheEntry, CacheUpdate, FeatureMode, FeatureSettings},
         features::traits::FeatureTrait,
     },
     templates::{RenderType, Templater, variables::get_user_defined_variables},
@@ -13,7 +13,7 @@ use crate::{
     utils::http::fetch_template,
     utils::merge::merge_into_existing,
     utils::{
-        fs::{read_file, write_file},
+        fs::{read_file, write_file, write_symlink},
         hash::{hash_content, hash_file},
         json::merge_json,
     },
@@ -32,23 +32,61 @@ pub(crate) fn resolve_target_path(
     ))
 }
 
+/// Symlinks a feature's source file to the resolved target path.
+#[allow(clippy::too_many_arguments)]
+pub fn link_feature_with_settings<T: FeatureTrait>(
+    provider_name: &str,
+    feature: &T,
+    feature_settings: &FeatureSettings,
+    templater: &Templater,
+    variables: Option<&Value>,
+    dry_run: bool,
+    source_path: &Path,
+) -> Result<CacheUpdate> {
+    let target_str = feature_settings
+        .target
+        .as_deref()
+        .ok_or_else(|| anyhow!("Target config not found for provider {}", provider_name))?;
+
+    let name_var: Option<Value> = feature
+        .get_file_name()
+        .map(|filename| feature.get_name_variable(&filename))
+        .transpose()?
+        .flatten();
+    let target_vars = merge_json(variables, name_var.as_ref());
+    let target_path = resolve_target_path(templater, target_str, Some(&target_vars))
+        .context("unable to render target path")?;
+
+    if dry_run {
+        return Ok(CacheUpdate::Linked {
+            target: target_path,
+        });
+    }
+
+    write_symlink(source_path, &target_path).context(format!(
+        "unable to symlink {} -> {}",
+        source_path.display(),
+        target_path.display()
+    ))?;
+
+    Ok(CacheUpdate::Linked {
+        target: target_path,
+    })
+}
+
 /// Renders a feature for a provider, applying cache skip/detect logic.
 #[allow(clippy::too_many_arguments)]
 pub fn render_feature_with_settings<T: FeatureTrait>(
     provider_name: &str,
     feature: &T,
     feature_settings: &FeatureSettings,
+    mode: FeatureMode,
     templater: &Templater,
     variables: Option<&Value>,
     cache: Option<&CacheEntry>,
     force: bool,
     dry_run: bool,
 ) -> Result<CacheUpdate> {
-    let template_str = feature_settings
-        .template
-        .as_deref()
-        .ok_or_else(|| anyhow!("Template config not found for provider {}", provider_name))?;
-
     let target_str = feature_settings
         .target
         .as_deref()
@@ -71,37 +109,57 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
 
     let user_vars = get_user_defined_variables(Some(merge_json(variables, local_vars.as_ref())))?;
 
-    let populate_config = feature
-        .populate_with_values(templater, Some(&user_vars))
-        .context("unable to render feature variables")?;
+    // Phase 2: populate feature with variables (skip in link mode)
+    let content_to_render = if mode == FeatureMode::Link {
+        feature.to_value()
+    } else {
+        let populate_config = feature
+            .populate_with_values(templater, Some(&user_vars))
+            .context("unable to render feature variables")?;
+        populate_config.to_value()
+    };
 
-    let feature_as_variables = populate_config.to_value();
+    // Phase 3: template rendering (skip for provider-agnostic features in link mode)
+    let feature_as_variables = content_to_render;
+    let provider_agnostic = T::is_provider_agnostic();
 
-    let template_file_content =
-        if template_str.starts_with("https://") || template_str.starts_with("http://") {
-            fetch_template(template_str)?
-        } else {
-            let template_path = PathBuf::from(template_str);
-            if !template_path.exists() {
-                return Err(anyhow!(
-                    "Template file not found for {} provider at {}",
-                    provider_name,
+    let content = if provider_agnostic && mode == FeatureMode::Link {
+        // Provider-agnostic features have no .hbs template; content is the source rendered with vars
+        feature.to_string()?
+    } else {
+        let template_str = feature_settings.template.as_deref().ok_or_else(|| {
+            anyhow!(
+                "Template config not found for provider {} (template mode requires a template)",
+                provider_name
+            )
+        })?;
+
+        let template_file_content =
+            if template_str.starts_with("https://") || template_str.starts_with("http://") {
+                fetch_template(template_str)?
+            } else {
+                let template_path = PathBuf::from(template_str);
+                if !template_path.exists() {
+                    return Err(anyhow!(
+                        "Template file not found for {} provider at {}",
+                        provider_name,
+                        template_path.display()
+                    ));
+                }
+                read_file(&template_path).context(format!(
+                    "failed to read file in {}",
                     template_path.display()
-                ));
-            }
-            read_file(&template_path).context(format!(
-                "failed to read file in {}",
-                template_path.display()
-            ))?
-        };
+                ))?
+            };
 
-    let vars = merge_json(Some(&user_vars), Some(&feature_as_variables));
-    let content = templater
-        .render_template(RenderType::Content(template_file_content), Some(&vars))
-        .context(format!(
-            "unable to render template content for provider '{}'",
-            provider_name
-        ))?;
+        let vars = merge_json(Some(&user_vars), Some(&feature_as_variables));
+        templater
+            .render_template(RenderType::Content(template_file_content), Some(&vars))
+            .context(format!(
+                "unable to render template content for provider '{}'",
+                provider_name
+            ))?
+    };
 
     let is_mergeable = target_path.exists() && MergeFormat::from_extension(&target_path).is_some();
 
@@ -211,6 +269,7 @@ mod tests {
             "test-provider",
             &feature,
             &settings,
+            FeatureMode::Template,
             &templater,
             None,
             None,
@@ -247,6 +306,7 @@ mod tests {
             "my-provider",
             &feature,
             &settings,
+            FeatureMode::Template,
             &templater,
             None,
             None,

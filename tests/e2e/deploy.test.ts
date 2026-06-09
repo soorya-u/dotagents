@@ -534,17 +534,19 @@ test.describe("deploy --dry-run – output format", () => {
 		}
 	});
 
-	// D-DR06: unchanged files are hidden from dry-run output
+	// D-DR06: unchanged template-rendered files are hidden; symlinks still appear
 	test("unchanged files do not appear in dry-run output", async () => {
 		const d = makeTmpDir();
 		try {
 			initWithLocalProvider(d);
 			// Deploy for real so all files are up-to-date
 			run(["deploy", "--offline", "--no-gitignore"], d);
-			// Dry-run again — nothing should appear as [+] or [~]
+			// Dry-run again — template-rendered files should not appear as [+] or [~];
+			// symlinked files (skills) are always shown.
 			const { stdout, exitCode } = run(["deploy", "--dry-run", "--offline"], d);
 			expect(exitCode).toBe(0);
-			expect(stdout).toContain("0 files would be affected");
+			expect(stdout).not.toContain("[+]");
+			expect(stdout).not.toContain("[~]");
 		} finally {
 			cleanup(d);
 		}
