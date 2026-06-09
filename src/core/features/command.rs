@@ -126,6 +126,9 @@ impl FeatureTrait for CommandFeature {
 
     fn resolve_source_path(name: Option<&str>) -> Result<PathBuf> {
         let name = name.ok_or_else(|| anyhow::anyhow!("command name required for source path"))?;
+        if name.contains('/') || name.contains('\\') || name.contains("..") {
+            anyhow::bail!("invalid command name for source path");
+        }
         Ok(get_commands_dir()?.join(format!("{}.md", name)))
     }
 }

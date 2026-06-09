@@ -183,6 +183,9 @@ impl FeatureTrait for SkillFeature {
 
     fn resolve_source_path(name: Option<&str>) -> Result<PathBuf> {
         let name = name.ok_or_else(|| anyhow::anyhow!("skill name required for source path"))?;
+        if name.contains('/') || name.contains('\\') || name.contains("..") {
+            anyhow::bail!("invalid skill name for source path");
+        }
         Ok(get_skills_dir()?.join(name).join(SKILL_FILE))
     }
 

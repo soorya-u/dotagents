@@ -105,6 +105,7 @@ fn process_cache_update<T: FeatureTrait>(
     item_key: &str,
     update: CacheUpdate,
     cache: &Arc<Mutex<CacheConfig>>,
+    dry_run: bool,
     stats: &mut DeployStats,
 ) -> Result<()> {
     match update {
@@ -119,7 +120,13 @@ fn process_cache_update<T: FeatureTrait>(
         }
         CacheUpdate::Linked { target } => {
             stats.written += 1;
-            stats.linked_targets.push(target);
+            stats.linked_targets.push(target.clone());
+            if dry_run {
+                stats.dry_run_entries.push(DryRunDeployEntry {
+                    path: target,
+                    status: DeployDryRunStatus::Linked,
+                });
+            }
         }
         CacheUpdate::DryRun { target, content } => {
             let rendered_hash = hash_content(&content);
@@ -155,23 +162,26 @@ fn process_cache_update<T: FeatureTrait>(
     Ok(())
 }
 
-/// Walks `source_dir` recursively and symlinks every file except `skip_name`
+/// Walks `source_dir` recursively and symlinks every file except the `skip_path`
 /// into the corresponding location under `target_dir`.
 fn deploy_extra_files(
     source_dir: &Path,
     target_dir: &Path,
-    skip_name: &str,
+    skip_path: &Path,
     dry_run: bool,
 ) -> Result<Vec<PathBuf>> {
     let canonical = source_dir
         .canonicalize()
         .with_context(|| format!("unable to canonicalize source dir {}", source_dir.display()))?;
+    let canonical_skip = skip_path
+        .canonicalize()
+        .with_context(|| format!("unable to canonicalize skip path {}", skip_path.display()))?;
     let mut linked = Vec::new();
     deploy_extra_files_recursive(
         &canonical,
         &canonical,
         target_dir,
-        skip_name,
+        &canonical_skip,
         dry_run,
         &mut linked,
     )?;
@@ -182,19 +192,14 @@ fn deploy_extra_files_recursive(
     base_source: &Path,
     current_source: &Path,
     target_base: &Path,
-    skip_name: &str,
+    skip_path: &Path,
     dry_run: bool,
     linked: &mut Vec<PathBuf>,
 ) -> Result<()> {
     for entry in fs::read_dir(current_source)? {
         let entry = entry?;
         let src_path = entry.path();
-        if src_path
-            .file_name()
-            .and_then(|n| n.to_str())
-            .map(|n| n == skip_name)
-            .unwrap_or(false)
-        {
+        if src_path == skip_path {
             continue;
         }
         let relative = src_path
@@ -212,7 +217,7 @@ fn deploy_extra_files_recursive(
                 base_source,
                 &src_path,
                 target_base,
-                skip_name,
+                skip_path,
                 dry_run,
                 linked,
             )?;
@@ -295,22 +300,32 @@ where
                     _ => unreachable!(),
                 };
 
-                process_cache_update(work, feature_name, item_key, update, &cache_ref, &mut stats)?;
-
-                // Symlink additional files from the source directory (skills only)
+                process_cache_update(
+                    work,
+                    feature_name,
+                    item_key,
+                    update,
+                    &cache_ref,
+                    ctx.dry_run,
+                    &mut stats,
+                )?;
                 if let Some(source_dir) = T::source_dir(file_name.as_deref()) {
-                    let skip_name = source_path
-                        .file_name()
-                        .and_then(|n| n.to_str())
-                        .unwrap_or("");
                     let target_dir = main_target
                         .parent()
                         .with_context(|| "symlink target path has no parent directory")?;
                     let extra_targets =
-                        deploy_extra_files(&source_dir, target_dir, skip_name, ctx.dry_run)?;
+                        deploy_extra_files(&source_dir, target_dir, &source_path, ctx.dry_run)?;
                     if !ctx.dry_run || !extra_targets.is_empty() {
                         stats.written += extra_targets.len();
-                        stats.linked_targets.extend(extra_targets);
+                        stats.linked_targets.extend(extra_targets.clone());
+                        if ctx.dry_run {
+                            for target in extra_targets {
+                                stats.dry_run_entries.push(DryRunDeployEntry {
+                                    path: target,
+                                    status: DeployDryRunStatus::Linked,
+                                });
+                            }
+                        }
                     }
                 }
 
@@ -339,8 +354,15 @@ where
                 ctx.dry_run,
             )?;
 
-            process_cache_update(work, feature_name, item_key, update, &cache_ref, &mut stats)?;
-
+            process_cache_update(
+                work,
+                feature_name,
+                item_key,
+                update,
+                &cache_ref,
+                ctx.dry_run,
+                &mut stats,
+            )?;
             Ok(stats)
         })
         .try_reduce(DeployStats::default, |a, b| Ok(a.merge(b)))?;

@@ -81,7 +81,7 @@ impl AppConfig {
     }
 
     /// Resolves the deploy mode for a (feature, item) pair.
-    /// Priority: item override → feature-level → hardcoded `Link` default.
+    /// Priority: item override → feature-level → feature-appropriate default.
     pub fn resolve_mode(&self, feature: &str, item_name: Option<&str>) -> FeatureMode {
         let feature_config = self.feature_maps.as_ref().and_then(|fm| fm.get(feature));
 
@@ -95,7 +95,10 @@ impl AppConfig {
 
         feature_config
             .and_then(|c| c.mode)
-            .unwrap_or(FeatureMode::Link)
+            .unwrap_or(match feature {
+                "skill" | "agent-ignore" => FeatureMode::Link,
+                _ => FeatureMode::Template,
+            })
     }
 
     pub fn from_application(templater: &Templater) -> Result<Self> {
@@ -216,25 +219,25 @@ mod mode_tests {
         }
     }
 
-    // defaults to Link when feature_maps is None
+    // defaults to Link for skill when feature_maps is None
     #[test]
     fn resolve_mode_defaults_to_link() {
         let config = AppConfig::new();
-        assert_eq!(config.resolve_mode("skills", None), FeatureMode::Link);
+        assert_eq!(config.resolve_mode("skill", None), FeatureMode::Link);
     }
 
     // uses feature-level mode when set
     #[test]
     fn resolve_mode_uses_feature_level() {
         let maps = HashMap::from([(
-            "skills".to_string(),
+            "skill".to_string(),
             FeatureModeConfig {
                 mode: Some(FeatureMode::Template),
                 mode_override: None,
             },
         )]);
         let config = config_with_feature_maps(maps);
-        assert_eq!(config.resolve_mode("skills", None), FeatureMode::Template);
+        assert_eq!(config.resolve_mode("skill", None), FeatureMode::Template);
     }
 
     // item override wins over feature-level mode
@@ -243,7 +246,7 @@ mod mode_tests {
         let mut overrides = HashMap::new();
         overrides.insert("my-skill".to_string(), FeatureMode::Template);
         let maps = HashMap::from([(
-            "skills".to_string(),
+            "skill".to_string(),
             FeatureModeConfig {
                 mode: Some(FeatureMode::Link),
                 mode_override: Some(overrides),
@@ -251,7 +254,7 @@ mod mode_tests {
         )]);
         let config = config_with_feature_maps(maps);
         assert_eq!(
-            config.resolve_mode("skills", Some("my-skill")),
+            config.resolve_mode("skill", Some("my-skill")),
             FeatureMode::Template
         );
     }
@@ -262,7 +265,7 @@ mod mode_tests {
         let mut overrides = HashMap::new();
         overrides.insert("other-skill".to_string(), FeatureMode::Template);
         let maps = HashMap::from([(
-            "skills".to_string(),
+            "skill".to_string(),
             FeatureModeConfig {
                 mode: Some(FeatureMode::Link),
                 mode_override: Some(overrides),
@@ -270,16 +273,19 @@ mod mode_tests {
         )]);
         let config = config_with_feature_maps(maps);
         assert_eq!(
-            config.resolve_mode("skills", Some("my-skill")),
+            config.resolve_mode("skill", Some("my-skill")),
             FeatureMode::Link
         );
     }
 
-    // unknown feature defaults to Link
+    // unknown feature defaults to Template
     #[test]
-    fn resolve_mode_unknown_feature_defaults_to_link() {
+    fn resolve_mode_unknown_feature_defaults_to_template() {
         let config = AppConfig::new();
-        assert_eq!(config.resolve_mode("nonexistent", None), FeatureMode::Link);
+        assert_eq!(
+            config.resolve_mode("nonexistent", None),
+            FeatureMode::Template
+        );
     }
 
     // item override with None item returns feature-level
@@ -288,14 +294,14 @@ mod mode_tests {
         let mut overrides = HashMap::new();
         overrides.insert("my-skill".to_string(), FeatureMode::Template);
         let maps = HashMap::from([(
-            "skills".to_string(),
+            "skill".to_string(),
             FeatureModeConfig {
                 mode: Some(FeatureMode::Link),
                 mode_override: Some(overrides),
             },
         )]);
         let config = config_with_feature_maps(maps);
-        assert_eq!(config.resolve_mode("skills", None), FeatureMode::Link);
+        assert_eq!(config.resolve_mode("skill", None), FeatureMode::Link);
     }
 }
 

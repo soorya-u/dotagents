@@ -119,17 +119,17 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
         populate_config.to_value()
     };
 
-    // Phase 3: template rendering (skip for provider-agnostic features with no .hbs template)
+    // Phase 3: template rendering (skip for provider-agnostic features in link mode)
     let feature_as_variables = content_to_render;
     let provider_agnostic = T::is_provider_agnostic();
 
-    let content = if provider_agnostic {
+    let content = if provider_agnostic && mode == FeatureMode::Link {
         // Provider-agnostic features have no .hbs template; content is the source rendered with vars
         feature.to_string()?
     } else {
         let template_str = feature_settings.template.as_deref().ok_or_else(|| {
             anyhow!(
-                "Template config not found for provider {} (non-agnostic feature requires a template)",
+                "Template config not found for provider {} (template mode requires a template)",
                 provider_name
             )
         })?;
