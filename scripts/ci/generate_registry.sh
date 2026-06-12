@@ -7,14 +7,18 @@ TMP_FILE="$ROOT/registry.tmp.json"
 
 SCHEME_URL="https://dotagents.soorya-u.dev/v1/schemas/registry.schema.json"
 
-jq -n \
-  --arg scheme "$SCHEME_URL" \
-  '
-  {
-    "$schema": $scheme,
-    "providers": {}
-  }
-  ' > "$TMP_FILE"
+if [ -f "$REGISTRY" ]; then
+  cp "$REGISTRY" "$TMP_FILE"
+else
+  jq -n \
+    --arg scheme "$SCHEME_URL" \
+    '
+    {
+      "$schema": $scheme,
+      "providers": {}
+    }
+    ' > "$TMP_FILE"
+fi
 
 # Fill providers from flat layout
 for d in "$ROOT"/*; do
@@ -43,7 +47,8 @@ for d in "$ROOT"/*; do
       --argjson checksums "$checksums" \
       --arg display_name "$display_name" \
       --arg provider_url "$provider_url" \
-      '.providers[$name] = { "path": $path, "checksums": $checksums }
+      '.providers[$name].path = $path
+       | .providers[$name].checksums = $checksums
        | if $display_name != "" then .providers[$name].name = $display_name else . end
        | if $provider_url != "" then .providers[$name].url = $provider_url else . end' \
       "$TMP_FILE" > "${TMP_FILE}.new"
