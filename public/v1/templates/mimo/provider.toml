@@ -1,0 +1,21 @@
+# Mimo Instructions
+[providers.mimo.instructions]
+template = "https://dotagents.soorya-u.dev/v1/templates/mimo/instruction.hbs"
+target = "{{dir.workspace}}/AGENTS.md"
+
+# Mimo Skills
+[providers.mimo.skills]
+target = "{{dir.workspace}}/.mimocode/skills/{{skill.name}}/SKILL.md"
+
+# Mimo Commands
+[providers.mimo.commands]
+template = "https://dotagents.soorya-u.dev/v1/templates/mimo/command.hbs"
+target = "{{dir.workspace}}/.mimocode/commands/{{command.name}}.md"
+
+# Mimo MCP
+[providers.mimo.mcp]
+template = "https://dotagents.soorya-u.dev/v1/templates/mimo/mcp.hbs"
+target = "{{dir.workspace}}/.mimocode/mimocode.jsonc"
+
+[providers.mimo.ignore]
+target = "{{dir.workspace}}/.ignore"

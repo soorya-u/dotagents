@@ -255,6 +255,10 @@
         "mcp.hbs": "0199a47e2f10298557ebd3ede53b3093f4c3abb19afc193fbdf45888622400bf"
       }
     },
+    "mimo": {
+      "path": "/v1/templates/mimo/provider.toml",
+      "checksums": {}
+    },
     "mux": {
       "path": "/v1/templates/mux/provider.toml",
       "checksums": {

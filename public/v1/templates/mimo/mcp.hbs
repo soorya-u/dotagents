@@ -1,0 +1,20 @@
+{
+  "$schema": "https://mimo.xiaomi.com/config.json",
+  "mcp": {
+    {{#each mcp.servers}}
+    "{{@key}}": {
+      {{#ifEq this.type "stdio"}}
+      "type": "local",
+      "command": ["{{this.command}}"{{#each this.args}}, {{json this}}{{/each}}],
+      "enabled": {{#if this.disabled}}false{{else}}true{{/if}}{{#if this.env}},
+      "environment": {{json this.env}}{{/if}}
+      {{else}}
+      "type": "remote",
+      "url": "{{this.url}}",
+      "enabled": {{#if this.disabled}}false{{else}}true{{/if}}{{#if this.headers}},
+      "headers": {{json this.headers}}{{/if}}
+      {{/ifEq}}
+    }{{#unless @last}},{{/unless}}
+    {{/each}}
+  }
+}
