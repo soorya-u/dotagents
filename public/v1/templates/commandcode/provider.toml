@@ -1,0 +1,18 @@
+# Command Code Commands
+[providers.commandcode.commands]
+template = "https://dotagents.soorya-u.dev/v1/templates/commandcode/command.hbs"
+target = "{{dir.workspace}}/.commandcode/commands/{{command.name}}.md"
+
+# Command Code Skills
+[providers.commandcode.skills]
+target = "{{dir.workspace}}/.commandcode/skills/{{skill.name}}/SKILL.md"
+
+# Command Code Instructions
+[providers.commandcode.instructions]
+template = "https://dotagents.soorya-u.dev/v1/templates/commandcode/instruction.hbs"
+target = "{{dir.workspace}}/AGENTS.md"
+
+# Command Code MCP
+[providers.commandcode.mcp]
+template = "https://dotagents.soorya-u.dev/v1/templates/commandcode/mcp.hbs"
+target = "{{dir.workspace}}/.commandcode/mcp.json"

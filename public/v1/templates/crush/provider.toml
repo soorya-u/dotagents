@@ -1,0 +1,8 @@
+# Crush Skills
+[providers.crush.skills]
+target = "{{dir.workspace}}/.agents/skills/{{skill.name}}/SKILL.md"
+
+# Crush Instructions
+[providers.crush.instructions]
+template = "https://dotagents.soorya-u.dev/v1/templates/crush/instruction.hbs"
+target = "{{dir.workspace}}/AGENTS.md"

@@ -1,0 +1,8 @@
+# Kode Skills
+[providers.kode.skills]
+target = "{{dir.workspace}}/.kode/skills/{{skill.name}}/SKILL.md"
+
+# Kode Instructions
+[providers.kode.instructions]
+template = "https://dotagents.soorya-u.dev/v1/templates/kode/instruction.hbs"
+target = "{{dir.workspace}}/AGENTS.md"

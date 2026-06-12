@@ -1,0 +1,8 @@
+# OpenHands Skills
+[providers.openhands.skills]
+target = "{{dir.workspace}}/.openhands/skills/{{skill.name}}/SKILL.md"
+
+# OpenHands Instructions
+[providers.openhands.instructions]
+template = "https://dotagents.soorya-u.dev/v1/templates/openhands/instruction.hbs"
+target = "{{dir.workspace}}/AGENTS.md"

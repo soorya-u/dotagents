@@ -4,7 +4,6 @@
 command = "{{this.command}}"
 args = {{json this.args}}
 {{#if this.cwd}}cwd = "{{this.cwd}}"
-{{/if}}{{#if this.envFile}}env_file = "{{this.envFile}}"
 {{/if}}{{else}}
 url = "{{this.url}}"
 {{/ifEq}}{{#if this.disabled}}disabled = {{json this.disabled}}

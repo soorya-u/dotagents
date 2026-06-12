@@ -1,0 +1,18 @@
+# Qoder CLI Instructions
+[providers.qoder.instructions]
+template = "https://dotagents.soorya-u.dev/v1/templates/qoder/instruction.hbs"
+target = "{{dir.workspace}}/AGENTS.md"
+
+# Qoder CLI Skills
+[providers.qoder.skills]
+target = "{{dir.workspace}}/.qoder/skills/{{skill.name}}/SKILL.md"
+
+# Qoder CLI Commands
+[providers.qoder.commands]
+template = "https://dotagents.soorya-u.dev/v1/templates/qoder/command.hbs"
+target = "{{dir.workspace}}/.qoder/commands/{{command.name}}.md"
+
+# Qoder CLI MCP
+[providers.qoder.mcp]
+template = "https://dotagents.soorya-u.dev/v1/templates/qoder/mcp.hbs"
+target = "{{dir.workspace}}/.mcp.json"

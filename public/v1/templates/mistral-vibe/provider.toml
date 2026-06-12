@@ -1,6 +1,3 @@
-name = "Mistral Vibe"
-url = "https://docs.mistral.ai/mistral-vibe/terminal"
-
 # Mistral Vibe Instructions
 [providers.mistral-vibe.instructions]
 template = "https://dotagents.soorya-u.dev/v1/templates/mistral-vibe/instruction.hbs"

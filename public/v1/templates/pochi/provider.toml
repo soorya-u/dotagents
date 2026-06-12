@@ -1,0 +1,13 @@
+# Pochi Instructions
+[providers.pochi.instructions]
+template = "https://dotagents.soorya-u.dev/v1/templates/pochi/instruction.hbs"
+target = "{{dir.workspace}}/AGENTS.md"
+
+# Pochi Skills
+[providers.pochi.skills]
+target = "{{dir.workspace}}/.pochi/skills/{{skill.name}}/SKILL.md"
+
+# Pochi MCP
+[providers.pochi.mcp]
+template = "https://dotagents.soorya-u.dev/v1/templates/pochi/mcp.hbs"
+target = "{{dir.workspace}}/.pochi/config.jsonc"

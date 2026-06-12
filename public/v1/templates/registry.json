@@ -1,217 +1,378 @@
 {
   "$schema": "https://dotagents.soorya-u.dev/v1/schemas/registry.schema.json",
   "providers": {
+    "adal": {
+      "path": "/v1/templates/adal/provider.toml",
+      "checksums": {
+        "provider.toml": "f76f7d305935bf8754eabde17d9d1cd9a94f2cdbb31a622d39fe82bec9f731e6"
+      }
+    },
+    "aider-desk": {
+      "path": "/v1/templates/aider-desk/provider.toml",
+      "checksums": {
+        "provider.toml": "0a78119a04d4fcce23d2fdda3a4111c575ed74d08b282d942e67d0963f258a03"
+      }
+    },
     "amp": {
       "path": "/v1/templates/amp/provider.toml",
       "checksums": {
-        "provider.toml": "7dcfd7726533af7a9fbf93c685c01c877621d72e5372164a59eb37baab9ee703",
+        "provider.toml": "9b416bd600ec3cf2db68539ef632dafb7ad9086c8b25108865d3892a5d99e873",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
         "mcp.hbs": "8067a59d594cb8bb0d960e9571ecae6d974579d2dfc5d1092dc923a415826230"
-      },
-      "name": "Amp Code",
-      "url": "https://ampcode.com/manual"
+      }
+    },
+    "antigravity": {
+      "path": "/v1/templates/antigravity/provider.toml",
+      "checksums": {
+        "provider.toml": "ccdfbf3cc514ae7ae7ea637be229e343b7c91aa2babdeeeb26a7e7b68b16f832"
+      }
     },
     "auggie": {
       "path": "/v1/templates/auggie/provider.toml",
       "checksums": {
-        "provider.toml": "c6012e7992893bd1b6b9a5d6cce61185c763a87f370169b7a0d48d1d410e2e51",
+        "provider.toml": "b0ca6aa719b438260e9c777f665abe90deed276e2907aa62e0ea16655261c716",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
         "mcp.hbs": "0eb39fe6be1e07a6f1cee8b8f70b7e6ccdc2f4c7d026a18e464f3ac1682483e2"
-      },
-      "name": "Auggie CLI",
-      "url": "https://docs.augmentcode.com/cli/overview"
+      }
     },
     "autohand": {
       "path": "/v1/templates/autohand/provider.toml",
       "checksums": {
-        "provider.toml": "558a139e2be3f782304351676674664aa52060fa616cc9f61d0e3b0d8a25b3fe",
+        "provider.toml": "1dab9b141f03bff60d97e864ef60631e6660159602ec5bbf0cd2a97bc0a4fd52",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
         "mcp.hbs": "80583db5c6814500111d486ea54bda34d97d78bd1b9f3569df36d8f4d22ae1de"
-      },
-      "name": "AutoHand Code",
-      "url": "https://autohand.ai/docs"
+      }
+    },
+    "bob": {
+      "path": "/v1/templates/bob/provider.toml",
+      "checksums": {
+        "provider.toml": "84bfdcc20a79a266982e9bf83df0d72d29c39e3879bc5b607f128fdd99e0695b",
+        "command.hbs": "9a25fa1263338ee310d3452585a40b221776e8384ee6a181fe9521d76228870e",
+        "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
+        "mcp.hbs": "601fb0e84fabb9751f58126e3bb8d17cd2d0ea5122cbd7509b0f87c41f141921"
+      }
     },
     "claude": {
       "path": "/v1/templates/claude/provider.toml",
       "checksums": {
-        "provider.toml": "dfb1f7e3d78de5f85c09ecc100e13e6f2ee72b74eba3432531c220b6f907c1e4",
+        "provider.toml": "6ed31ed2dc500306d342a1e48e554f6071d233cb81236b503a8d1f6de49e5870",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
         "mcp.hbs": "3586dc4529835afac0441857e889f23fe92e9bb6893fd21bd541c609cd939d4f"
-      },
-      "name": "Claude Code",
-      "url": "https://docs.anthropic.com/en/docs/claude-code"
+      }
     },
     "cline": {
       "path": "/v1/templates/cline/provider.toml",
       "checksums": {
-        "provider.toml": "76d75717d00010c1dae79120f53b1aa596f756c3d5a1322effacc48036b48ac9",
-        "command.hbs": "2ff2983122964767e8a8d98702fbaf57d1e392d5e4cbc8d21b9f494f92b90e94",
+        "provider.toml": "41922e8079f72de7ed6fa6fc991fa53516dcf9768332ffdb7fbcb38fd3a0d909",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49"
-      },
-      "name": "Cline CLI",
-      "url": "https://docs.cline.bot/usage/cli-overview"
+      }
+    },
+    "code-arts": {
+      "path": "/v1/templates/code-arts/provider.toml",
+      "checksums": {
+        "provider.toml": "e091bad2f091af088aa53d9466014ffc9a74cd6b5f5fc7c15313a5c85831378b"
+      }
+    },
+    "codebuddy": {
+      "path": "/v1/templates/codebuddy/provider.toml",
+      "checksums": {
+        "provider.toml": "d5a623253aa1a7d1eea8e230ac666b3e6f4ec0a3a8a6664390893228456407c1"
+      }
+    },
+    "codemaker": {
+      "path": "/v1/templates/codemaker/provider.toml",
+      "checksums": {
+        "provider.toml": "45fa56fc54374c6cbf1dcd34caeb8d75e68a4fec394ed6b328b7ec402785edee"
+      }
+    },
+    "codestudio": {
+      "path": "/v1/templates/codestudio/provider.toml",
+      "checksums": {
+        "provider.toml": "78e0054b8e6bd69705d509396902ee3da7179a038ab36c31f857118db3bb11ea"
+      }
     },
     "codex": {
       "path": "/v1/templates/codex/provider.toml",
       "checksums": {
-        "provider.toml": "a0ad8d282d8f09ca0a5c6aa0ebc97d29e178b4dfed921877a9dada4deae02d8a",
+        "provider.toml": "b66bc4ff7cb8e93c2d56919ad628cd235300670bd06fa712a9c0eac9b60af03d",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
-        "mcp.hbs": "5270fde45325fa16278394291b80e8915b4df5548fa93ce4e3c36e8f4df58441"
-      },
-      "name": "Codex CLI",
-      "url": "https://developers.openai.com/codex/cli"
+        "mcp.hbs": "0e43e8979f90c41cf0bdaeb8af9c0d9201b975c6b5f27ee8794b69f6eb3d3fd5"
+      }
+    },
+    "commandcode": {
+      "path": "/v1/templates/commandcode/provider.toml",
+      "checksums": {
+        "provider.toml": "fa8a72f27e832134319c65c0b1f556e44ff258f07d4fe88d7d12ecab2ef3a3ad",
+        "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
+        "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
+        "mcp.hbs": "fea48de66e6c5b25393e7fc169fe5aa47832d9d37dddee6ef3822b49eb44fc72"
+      }
+    },
+    "continue": {
+      "path": "/v1/templates/continue/provider.toml",
+      "checksums": {
+        "provider.toml": "0ee935682f6f9f225e8057dc40cf8161cbba38912bdb8c5615e7ccb09bc2a113"
+      }
     },
     "copilot": {
       "path": "/v1/templates/copilot/provider.toml",
       "checksums": {
-        "provider.toml": "d202de79da6ba9ca8c7ab917059030543cb093d8b928d0229de0650fcf993e56",
+        "provider.toml": "bfdf8eef835af9bf797a5ac7bc942160c324c05890fd3be1d4dfc0cfc04cdc43",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
-        "instructions.hbs": "b222124d15921246abc76e3ec91e7968ad85f436632adb47ce777ce8eafcd1d3",
+        "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
         "mcp.hbs": "6b08add44e795f27e3e7fc48f4ef65930442da74cb8273718157a586289cc187"
-      },
-      "name": "Copilot CLI",
-      "url": "https://docs.github.com/en/copilot/how-tos/copilot-cli"
+      }
+    },
+    "cortex": {
+      "path": "/v1/templates/cortex/provider.toml",
+      "checksums": {
+        "provider.toml": "b88d6fc15dd9f93fb5fc8108b048569cb4002da92662551640db8f085b1edc9e"
+      }
+    },
+    "crush": {
+      "path": "/v1/templates/crush/provider.toml",
+      "checksums": {
+        "provider.toml": "36769b9e86a31790bc4e78d986931fdbcaf897de267c59e0ebbdf723902f71c0",
+        "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67"
+      }
     },
     "cursor": {
       "path": "/v1/templates/cursor/provider.toml",
       "checksums": {
-        "provider.toml": "8871827980e94beec31d92f794761c1c26e8c22c17b8da0dc2c62af6320a2f91",
+        "provider.toml": "d701086192a292bf1871b6b12cae1f1f98bf5a43fa57f260c90af4a793b3d179",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "0ead69a7a6b3fb273fd4d9fbfee6f2159353dc894d14153cf693a0a49b73f5c3"
-      },
-      "name": "Cursor CLI",
-      "url": "https://cursor.com/docs/cli/overview"
+      }
     },
     "deepagents": {
       "path": "/v1/templates/deepagents/provider.toml",
       "checksums": {
-        "provider.toml": "0506015ce8dc270af9fdceafb30f2e9efe57a81e5acd41f9f4cdaa2560aaf500",
+        "provider.toml": "5b526dc1b69aeecbd0fcbc96e669f1455e8ebefc2585bac93af2bb43d312bd63",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "6ff01b6526e6a891a16a3735b9f1ab9072a7776973c5810b0aa1dd8ba912b57c"
-      },
-      "name": "Deep Agents CLI",
-      "url": "https://docs.langchain.com/oss/python/deepagents/cli/overview"
+      }
+    },
+    "devin": {
+      "path": "/v1/templates/devin/provider.toml",
+      "checksums": {
+        "provider.toml": "31159f6f70908e51462f68619ffc61b5d4fd380b6491f27b96b84208c1d6d95e",
+        "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67"
+      }
     },
     "factory-droid": {
       "path": "/v1/templates/factory-droid/provider.toml",
       "checksums": {
-        "provider.toml": "e7ba8d7e063dd8c8ce971de2f6a56b6f864c701e929e88bebc3325754b7a9f08",
+        "provider.toml": "450d8566bf9fe913c66a5fe30ea52bb500e6321b0c10a18c4235658153d05d01",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "28c6aa2b4bfbe0ecf14292c399777d5850b1593d1f9af7c8c2e01483d0a78f5f"
-      },
-      "name": "Factory CLI",
-      "url": "https://docs.factory.ai/cli/getting-started/overview"
+      }
+    },
+    "forge": {
+      "path": "/v1/templates/forge/provider.toml",
+      "checksums": {
+        "provider.toml": "c013c07f5bd7283e3de2df56e654fdd96ac523cf3f1fba8e442c071eb20b6ec9",
+        "command.hbs": "b087022ef11eb4c3095a3f4294b1a4b96486981c3260492e6cee5167dde673d1",
+        "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
+        "mcp.hbs": "76283cfc6e931154b3f41a4c42f05a5614059c45faf791bd88eacda930881cb8"
+      }
     },
     "gemini": {
       "path": "/v1/templates/gemini/provider.toml",
       "checksums": {
-        "provider.toml": "f6658a113889ff7c383e793b9083bc2f4c1079ab70019a9c3b39be512d7b3a56",
+        "provider.toml": "9776afa29f46a09181ee150fe811662b105c15706efa196a63b95f48bf3c4770",
         "command.hbs": "009ad4a010c91f439c62ea47cd5fcc71d276d100bb9174b79d56bb4c3b7b6df3",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
-        "mcp.hbs": "095b4d5453773d07856e2228fbf527492c5c18d0530c7f0be4bc2285070a161a"
-      },
-      "name": "Gemini CLI",
-      "url": "https://geminicli.com/docs/"
+        "mcp.hbs": "16ce9ded2876d8b41b744344c180c9963c17a7e12220738babf206bf25a579ae"
+      }
     },
     "goose": {
       "path": "/v1/templates/goose/provider.toml",
       "checksums": {
-        "provider.toml": "0f684224e884f408db701b4f184550613fa0bd84b751ddc1a64d02e0b8d5a71d",
+        "provider.toml": "f8a20efad8924aeb1cfb8ab09f15aafe97437ebe0e020712ba27e589d30b8b9c",
         "command.hbs": "27da9b4869cfb52fe8ac303b4e80b0146e094f123a92f670b96eb9614c403fd4",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "8140cc3175389301e9c6b5058340e693799e0b880826aa4653ed49fdd447d914"
-      },
-      "name": "Goose",
-      "url": "https://goose-docs.ai/docs/quickstart"
+      }
+    },
+    "iflow": {
+      "path": "/v1/templates/iflow/provider.toml",
+      "checksums": {
+        "provider.toml": "d7853474be309aa31f7b145b33110167a6fba92bff21b2dd4c5b048e5a956ac8",
+        "command.hbs": "4070f1c7bb5eaed9cd32406c1cbc918b8a1f4615f4ee4744890ec0c05c398fec",
+        "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67"
+      }
     },
     "junie": {
       "path": "/v1/templates/junie/provider.toml",
       "checksums": {
-        "provider.toml": "182c24e7d64578fe95733aa07ef0b366e1f1b6d8a2ae3f8e7ea8c18e429d74f7",
+        "provider.toml": "adbfd5d70d13e94c00dd8e12ca4de17d015fcbd1ad7b48ea34a60b1a8bb4d3da",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "f3652009a56d2ae104947fc22124f191590d2c14bbbc9d76e4f761a8e5db5714"
-      },
-      "name": "Junie CLI",
-      "url": "https://junie.jetbrains.com/docs/junie-cli.html"
+      }
     },
     "kilocode": {
       "path": "/v1/templates/kilocode/provider.toml",
       "checksums": {
-        "provider.toml": "ae553d437486c1dba63dcea77ffb42f6df894905fe4269356c321ac1f0bd1f05",
+        "provider.toml": "c1b707c7120133db3e824d905739d391dbe70c3b36fd9c1196bd2ab58722bb62",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "82d6683b1f2771d7f8d696587638e819aaaa877596eac21ba63386dce39c9417"
-      },
-      "name": "Kilo Code",
-      "url": "https://kilo.ai/docs/getting-started"
+      }
     },
     "kimi": {
       "path": "/v1/templates/kimi/provider.toml",
       "checksums": {
-        "provider.toml": "54632021cb35dae8a25aa929721f7a72d3e4dc8c80ffdee5440e8758b51f2bbd",
+        "provider.toml": "518228f5f8a4357104e4827e2eea339e2ee11670bf792930e776e3353af25e45",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "f3652009a56d2ae104947fc22124f191590d2c14bbbc9d76e4f761a8e5db5714"
-      },
-      "name": "Kimi Code",
-      "url": "https://www.kimi.com/code/docs/en/"
+      }
+    },
+    "kode": {
+      "path": "/v1/templates/kode/provider.toml",
+      "checksums": {
+        "provider.toml": "6e2d5752ce5fe24ae29be1f1d44610d5d9c8bfeb2ebb2e4d3fd40f45a7f37179",
+        "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67"
+      }
+    },
+    "mcpjam": {
+      "path": "/v1/templates/mcpjam/provider.toml",
+      "checksums": {
+        "provider.toml": "6633867f92d33587ab646e7a6a3f3e186fcf39bb4ccd54ceb95026984eadd009"
+      }
     },
     "mistral-vibe": {
       "path": "/v1/templates/mistral-vibe/provider.toml",
       "checksums": {
-        "provider.toml": "c4aa1237b75f40ba7ed54bbe9e1c5b3e84a9d8d46e7ca228515cd2ba9e266232",
+        "provider.toml": "288bfb729a4e7dd0de98261343fa52ee3cdb2a2755b9c8157941eccde0020cfb",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "0199a47e2f10298557ebd3ede53b3093f4c3abb19afc193fbdf45888622400bf"
-      },
-      "name": "Mistral Vibe",
-      "url": "https://docs.mistral.ai/mistral-vibe/terminal"
+      }
+    },
+    "mux": {
+      "path": "/v1/templates/mux/provider.toml",
+      "checksums": {
+        "provider.toml": "912164ff4b673236ab3dd17fa87aa9aa8368ad6d9eef77b7e867a7f6a9298f62",
+        "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
+        "mcp.hbs": "e468a5b2090cc1afe67d29bd7cd182124010d72c4080a27faa8ef473998f9e32"
+      }
+    },
+    "neovate": {
+      "path": "/v1/templates/neovate/provider.toml",
+      "checksums": {
+        "provider.toml": "642be718f37f56e8a62e6b2e98a31a741372462e924fc9355ac5db00ce753b7d"
+      }
+    },
+    "omp": {
+      "path": "/v1/templates/omp/provider.toml",
+      "checksums": {
+        "provider.toml": "5e6ef2f86d15b3371c3cc3841a70feaa39701f8cf7751ddb09a0040ded3a73b0",
+        "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
+        "mcp.hbs": "0eebc4108b8b10eb6429b06b8ee9c9cf9d9ba067dc724a37da7ddcc721162c8e"
+      }
     },
     "opencode": {
       "path": "/v1/templates/opencode/provider.toml",
       "checksums": {
-        "provider.toml": "8a80483eb92a51bbd7b8d706d38dbe58d0957c5fb8ca6e9bf5d3e9ae61dfe677",
+        "provider.toml": "1411e531e47a22489aef7d8916ac2ccf3c8e4b880bdde3a348e2423cdf8b9252",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "a7c14e658bcff8f926c73a7ebf0ca0675a0a7db884fbd939928ea4aa97ed12f2"
-      },
-      "name": "OpenCode",
-      "url": "https://opencode.ai/docs"
+      }
+    },
+    "openhands": {
+      "path": "/v1/templates/openhands/provider.toml",
+      "checksums": {
+        "provider.toml": "1e0e96e30504735d43e68bff94b28bb2c7a96d7a1a55f6826024f6fd379d45f8",
+        "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67"
+      }
     },
     "pi": {
       "path": "/v1/templates/pi/provider.toml",
       "checksums": {
-        "provider.toml": "ecc0c353b541da4d92bef5c33b6223cc0899f4d248a575dac25d1c13e74b52d1",
+        "provider.toml": "fa1406d75ceadb0d59d38a0ac5bd274982c1080cc3f7611265d42e03dd7bb7bc",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6"
-      },
-      "name": "Pi",
-      "url": "https://pi.dev/docs/latest"
+      }
     },
-    "qoder-cli": {
-      "path": "/v1/templates/qoder-cli/provider.toml",
+    "pochi": {
+      "path": "/v1/templates/pochi/provider.toml",
       "checksums": {
-        "provider.toml": "7ab9c80ab8c3fc0974af9c88d829e97e6f805cf9126949d80d17c01147f5b785",
+        "provider.toml": "db1f3344b78cf952c6fde1921299ef9a0b2add9401c275eede914673617a1e50",
+        "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
+        "mcp.hbs": "e2021da04c0555620cb94aedefb5c6f593e3acd5852cb95c4d2ee382fabac094"
+      }
+    },
+    "qoder": {
+      "path": "/v1/templates/qoder/provider.toml",
+      "checksums": {
+        "provider.toml": "058d7dac2a70c73a7190beb1efd4fc4a2aba454d0cc894ec4c60f4c1e749d84c",
         "command.hbs": "6650ba27e033d911b3ea2dd264c2a5ed1a7724630bc16a08e36d4423c3beb48f",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "bf776db19285c184c4054ad213b5424b61b532a4d77bad4b967fc7e6ccb28360"
-      },
-      "name": "Qoder CLI",
-      "url": "https://docs.qoder.com/cli/quick-start"
+      }
     },
     "qwen": {
       "path": "/v1/templates/qwen/provider.toml",
       "checksums": {
-        "provider.toml": "78893e1f4929ce92b908a3e2ff451da17c155b7a754d4a21b8b0f883d19847e5",
+        "provider.toml": "ff71c953d466b5f77a5e6586b96406a9f2aa7bdc04800f0ea979f982084e1829",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
         "mcp.hbs": "92979317e5d81bf95f30bd9119d4e030520d28673cdd9acf5a6885ed626c556f"
-      },
-      "name": "Qwen CLI",
-      "url": "https://qwenlm.github.io/qwen-code-docs/en/users/overview/"
+      }
+    },
+    "roo": {
+      "path": "/v1/templates/roo/provider.toml",
+      "checksums": {
+        "provider.toml": "7e2011330c5378a0f16af32ed719525b2a64fa978028d1634ac826b632aca274"
+      }
+    },
+    "rovo": {
+      "path": "/v1/templates/rovo/provider.toml",
+      "checksums": {
+        "provider.toml": "abdac8b35af5026c7defb00a4492a9f8013bd3de903e8160544c89c98b23cff7"
+      }
+    },
+    "tabnine": {
+      "path": "/v1/templates/tabnine/provider.toml",
+      "checksums": {
+        "provider.toml": "3f821d806e484cfe96c5d1fba2176485fec6ca9f6e7743a023af6edb6cf62953"
+      }
+    },
+    "trae": {
+      "path": "/v1/templates/trae/provider.toml",
+      "checksums": {
+        "provider.toml": "f713501e8140e8aff905a458f4aa0f95d6d8e6067efc9bf81ebc97d476a7d9c0"
+      }
+    },
+    "windsurf": {
+      "path": "/v1/templates/windsurf/provider.toml",
+      "checksums": {
+        "provider.toml": "9046285d28a638a88ccceba7acabf7b976e88619be737a668b362e33920c457f",
+        "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67"
+      }
+    },
+    "x-ai": {
+      "path": "/v1/templates/x-ai/provider.toml",
+      "checksums": {
+        "provider.toml": "d36b0a484912d94846a9ae9af8f8fbd623898ece38bec0c975ec5ac0d43c6a77"
+      }
+    },
+    "zencoder": {
+      "path": "/v1/templates/zencoder/provider.toml",
+      "checksums": {
+        "provider.toml": "0471b79b7c9e20bb1b007f19080700f020052697a3b21f34f3dd39416ce59eb7"
+      }
+    },
+    "zoo": {
+      "path": "/v1/templates/zoo/provider.toml",
+      "checksums": {
+        "provider.toml": "f91a3a9f2a50cb73cc6ff611aa0d79d9f0c760aa9ac1419c8d530064b81add90"
+      }
     }
   }
 }

@@ -1,0 +1,3 @@
+# Trae Skills
+[providers.trae.skills]
+target = "{{dir.workspace}}/.trae/skills/{{skill.name}}/SKILL.md"

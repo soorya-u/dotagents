@@ -1,0 +1,3 @@
+# Tabnine Skills
+[providers.tabnine.skills]
+target = "{{dir.workspace}}/.tabnine/agent/skills/{{skill.name}}/SKILL.md"

@@ -1,0 +1,16 @@
+# Mux Instructions
+[providers.mux.instructions]
+template = "https://dotagents.soorya-u.dev/v1/templates/mux/instruction.hbs"
+target = "{{dir.workspace}}/AGENTS.md"
+
+# Mux Skills
+[providers.mux.skills]
+target = "{{dir.workspace}}/.mux/skills/{{skill.name}}/SKILL.md"
+
+# Mux MCP
+[providers.mux.mcp]
+template = "https://dotagents.soorya-u.dev/v1/templates/mux/mcp.hbs"
+target = "{{dir.workspace}}/.mux/mcp.jsonc"
+
+[providers.mux.ignore]
+target = "{{dir.workspace}}/.muxignore"

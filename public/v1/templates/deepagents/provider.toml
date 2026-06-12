@@ -1,6 +1,3 @@
-name = "Deep Agents CLI"
-url = "https://docs.langchain.com/oss/python/deepagents/cli/overview"
-
 # Deep Agents Skills
 [providers.deepagents.skills]
 target = "{{dir.workspace}}/skills/{{skill.name}}/SKILL.md"
@@ -8,9 +5,9 @@ target = "{{dir.workspace}}/skills/{{skill.name}}/SKILL.md"
 # Deep Agents Instructions
 [providers.deepagents.instructions]
 template = "https://dotagents.soorya-u.dev/v1/templates/deepagents/instruction.hbs"
-target = "{{ dir.workspace }}/AGENTS.md"
+target = "{{dir.workspace}}/AGENTS.md"
 
 # Deep Agents MCP
 [providers.deepagents.mcp]
 template = "https://dotagents.soorya-u.dev/v1/templates/deepagents/mcp.hbs"
-target = "{{ dir.workspace }}/.mcp.json"
+target = "{{dir.workspace}}/.mcp.json"

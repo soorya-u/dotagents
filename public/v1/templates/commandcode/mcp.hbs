@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    {{#each mcp.servers}}
+    "{{@key}}": {
+      "transport": "{{this.type}}",
+      {{#if this.url}}"url": "{{this.url}}",{{/if}}
+      "enabled": true{{#if this.command}},
+      "command": "{{this.command}}"{{/if}}{{#if this.args}},
+      "args": {{json this.args}}{{/if}}{{#if this.env}},
+      "env": {{json this.env}}{{/if}}{{#if this.headers}},
+      "headers": {{json this.headers}}{{/if}}
+    }{{#unless @last}},{{/unless}}
+    {{/each}}
+  }
+}

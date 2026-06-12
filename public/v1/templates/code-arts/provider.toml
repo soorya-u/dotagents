@@ -1,0 +1,3 @@
+# CodeArts Skills
+[providers.code-arts.skills]
+target = "{{dir.workspace}}/.code-arts/skills/{{skill.name}}/SKILL.md"

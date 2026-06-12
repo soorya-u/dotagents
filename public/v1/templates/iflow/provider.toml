@@ -1,0 +1,13 @@
+# iFlow CLI Commands (TOML format)
+[providers.iflow.commands]
+template = "https://dotagents.soorya-u.dev/v1/templates/iflow/command.hbs"
+target = "{{dir.workspace}}/.iflow/commands/{{command.name}}.toml"
+
+# iFlow CLI Skills
+[providers.iflow.skills]
+target = "{{dir.workspace}}/.iflow/skills/{{skill.name}}/SKILL.md"
+
+# iFlow CLI Instructions
+[providers.iflow.instructions]
+template = "https://dotagents.soorya-u.dev/v1/templates/iflow/instruction.hbs"
+target = "{{dir.workspace}}/IFLOW.md"

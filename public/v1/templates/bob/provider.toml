@@ -1,0 +1,21 @@
+# IBM Bob Commands
+[providers.bob.commands]
+template = "https://dotagents.soorya-u.dev/v1/templates/bob/command.hbs"
+target = "{{dir.workspace}}/.bob/commands/{{command.name}}.md"
+
+# IBM Bob Skills
+[providers.bob.skills]
+target = "{{dir.workspace}}/.bob/skills/{{skill.name}}/SKILL.md"
+
+# IBM Bob Instructions (rules)
+[providers.bob.instructions]
+template = "https://dotagents.soorya-u.dev/v1/templates/bob/instruction.hbs"
+target = "{{dir.workspace}}/.bobrules"
+
+# IBM Bob MCP
+[providers.bob.mcp]
+template = "https://dotagents.soorya-u.dev/v1/templates/bob/mcp.hbs"
+target = "{{dir.workspace}}/.bob/mcp.json"
+
+[providers.bob.ignore]
+target = "{{dir.workspace}}/.bobignore"

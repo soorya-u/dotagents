@@ -1,0 +1,3 @@
+# Neovate Skills
+[providers.neovate.skills]
+target = "{{dir.workspace}}/.neovate/skills/{{skill.name}}/SKILL.md"

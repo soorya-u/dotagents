@@ -1,0 +1,8 @@
+# Devin CLI Skills
+[providers.devin.skills]
+target = "{{dir.workspace}}/.devin/skills/{{skill.name}}/SKILL.md"
+
+# Devin CLI Instructions
+[providers.devin.instructions]
+template = "https://dotagents.soorya-u.dev/v1/templates/devin/instruction.hbs"
+target = "{{dir.workspace}}/AGENTS.md"

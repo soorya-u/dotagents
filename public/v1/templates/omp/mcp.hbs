@@ -1,0 +1,19 @@
+{
+  "$schema": "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json",
+  "mcpServers": {
+    {{#each mcp.servers}}
+    "{{@key}}": {
+      "type": "{{this.type}}",
+      {{#ifEq this.type "stdio"}}
+      "command": "{{this.command}}"{{#if this.args}},
+      "args": {{json this.args}}{{/if}}{{#if this.env}},
+      "env": {{json this.env}}{{/if}}{{#if this.cwd}},
+      "cwd": "{{this.cwd}}"{{/if}}
+      {{else}}
+      "url": "{{this.url}}"{{#if this.headers}},
+      "headers": {{json this.headers}}{{/if}}
+      {{/ifEq}}
+    }{{#unless @last}},{{/unless}}
+    {{/each}}
+  }
+}

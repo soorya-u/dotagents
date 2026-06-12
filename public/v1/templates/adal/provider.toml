@@ -1,0 +1,3 @@
+# Adal Skills
+[providers.adal.skills]
+target = "{{dir.workspace}}/.adal/skills/{{skill.name}}/SKILL.md"
