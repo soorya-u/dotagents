@@ -1,6 +1,3 @@
-name = "Claude Code"
-url = "https://docs.anthropic.com/en/docs/claude-code"
-
 # Claude Commands
 [providers.claude.commands]
 template = "https://dotagents.soorya-u.dev/v1/templates/claude/command.hbs"
@@ -12,8 +9,8 @@ target = "{{dir.workspace}}/.claude/skills/{{skill.name}}/SKILL.md"
 
 [providers.claude.instructions]
 template = "https://dotagents.soorya-u.dev/v1/templates/claude/instruction.hbs"
-target = "{{ dir.workspace }}/CLAUDE.md"
+target = "{{dir.workspace}}/CLAUDE.md"
 
 [providers.claude.mcp]
 template = "https://dotagents.soorya-u.dev/v1/templates/claude/mcp.hbs"
-target = "{{ dir.workspace }}/.mcp.json"
+target = "{{dir.workspace}}/.mcp.json"

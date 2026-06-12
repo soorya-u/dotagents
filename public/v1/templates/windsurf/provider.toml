@@ -1,0 +1,8 @@
+# Windsurf Skills
+[providers.windsurf.skills]
+target = "{{dir.workspace}}/.windsurf/skills/{{skill.name}}/SKILL.md"
+
+# Windsurf Instructions
+[providers.windsurf.instructions]
+template = "https://dotagents.soorya-u.dev/v1/templates/windsurf/instruction.hbs"
+target = "{{dir.workspace}}/AGENTS.md"

@@ -1,6 +1,3 @@
-name = "Goose"
-url = "https://goose-docs.ai/docs/quickstart"
-
 # Goose Instructions
 [providers.goose.instructions]
 template = "https://dotagents.soorya-u.dev/v1/templates/goose/instruction.hbs"

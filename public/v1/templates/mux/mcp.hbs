@@ -1,0 +1,7 @@
+{
+  "servers": {
+    {{#each mcp.servers}}
+    "{{@key}}": "{{#ifEq this.type "stdio"}}{{this.command}}{{#each this.args}} {{this}}{{/each}}{{else}}{{this.url}}{{/ifEq}}"{{#unless @last}},{{/unless}}
+    {{/each}}
+  }
+}

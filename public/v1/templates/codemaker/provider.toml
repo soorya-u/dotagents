@@ -1,0 +1,3 @@
+# CodeMaker Skills
+[providers.codemaker.skills]
+target = "{{dir.workspace}}/.codemaker/skills/{{skill.name}}/SKILL.md"

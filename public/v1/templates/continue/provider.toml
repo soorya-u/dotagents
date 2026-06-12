@@ -1,0 +1,3 @@
+# Continue Skills
+[providers.continue.skills]
+target = "{{dir.workspace}}/.continue/skills/{{skill.name}}/SKILL.md"

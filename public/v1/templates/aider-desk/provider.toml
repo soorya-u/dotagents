@@ -1,0 +1,3 @@
+# Aider-Desk Skills
+[providers.aider-desk.skills]
+target = "{{dir.workspace}}/.aider-desk/skills/{{skill.name}}/SKILL.md"

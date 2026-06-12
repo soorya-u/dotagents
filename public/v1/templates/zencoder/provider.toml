@@ -1,0 +1,3 @@
+# Zencoder Skills
+[providers.zencoder.skills]
+target = "{{dir.workspace}}/.zencoder/skills/{{skill.name}}/SKILL.md"

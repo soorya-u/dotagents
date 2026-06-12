@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    {{#each mcp.servers}}
+    "{{@key}}": {
+      {{#ifEq this.type "stdio"}}
+      "command": "{{this.command}}"{{#if this.args}},
+      "args": {{json this.args}}{{/if}}{{#if this.env}},
+      "env": {{json this.env}}{{/if}}
+      {{else}}
+      "url": "{{this.url}}"
+      {{/ifEq}}
+    }{{#unless @last}},{{/unless}}
+    {{/each}}
+  }
+}

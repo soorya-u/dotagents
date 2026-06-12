@@ -1,0 +1,3 @@
+# MCPJam Skills
+[providers.mcpjam.skills]
+target = "{{dir.workspace}}/.mcpjam/skills/{{skill.name}}/SKILL.md"

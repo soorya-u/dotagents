@@ -1,6 +1,3 @@
-name = "Auggie CLI"
-url = "https://docs.augmentcode.com/cli/overview"
-
 # Augment Commands
 [providers.auggie.commands]
 template = "https://dotagents.soorya-u.dev/v1/templates/auggie/command.hbs"
@@ -11,11 +8,11 @@ target = "{{dir.workspace}}/.augment/skills/{{skill.name}}/SKILL.md"
 
 [providers.auggie.instructions]
 template = "https://dotagents.soorya-u.dev/v1/templates/auggie/instruction.hbs"
-target = "{{ dir.workspace }}/AGENTS.md"
+target = "{{dir.workspace}}/AGENTS.md"
 
 [providers.auggie.mcp]
 template = "https://dotagents.soorya-u.dev/v1/templates/auggie/mcp.hbs"
-target = "{{ dir.workspace }}/.augment/settings.json"
+target = "{{dir.workspace}}/.augment/settings.json"
 
 [providers.auggie.ignore]
-target = "{{ dir.workspace }}/.augmentignore"
+target = "{{dir.workspace}}/.augmentignore"

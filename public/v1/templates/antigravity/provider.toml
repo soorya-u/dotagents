@@ -1,0 +1,3 @@
+# Antigravity Skills
+[providers.antigravity.skills]
+target = "{{dir.workspace}}/.antigravity/skills/{{skill.name}}/SKILL.md"

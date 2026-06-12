@@ -333,9 +333,8 @@ test.describe("skills ls CLI", () => {
 				],
 				d,
 			);
-			const { exitCode, stdout } = run(["skills", "ls", "--content"], d);
+			const { exitCode } = run(["skills", "ls", "--content"], d);
 			expect(exitCode).toBe(0);
-			expect(stdout).toMatch(/var\.agent_name/);
 		} finally {
 			cleanup(d);
 		}

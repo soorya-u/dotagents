@@ -31,9 +31,9 @@ metadata:
   version: \"1.0.0\"
 ---
 
-# Hello Skill for {{ var.agent_name }}
+# Hello Skill
 
-This is a sample skill demonstrating the Agent Skills specification format using {{ env.app_name }}
+This is a sample skill demonstrating the Agent Skills specification format
 
 ## Instructions
 
@@ -155,7 +155,7 @@ pub(crate) fn default_config(features: &[&str], targets: &[&str]) -> String {
     };
 
     format!(
-        "schema = \"https://dotagents.soorya-u.dev/schemas/config.schema.json\"\nfeatures = {features_toml}\n\ntargets = {targets_toml}\nvariables = {{ \"agent_name\" = \"my agent\" }}\n"
+        "schema = \"https://dotagents.soorya-u.dev/v1/schemas/config.schema.json\"\nfeatures = {features_toml}\n\ntargets = {targets_toml}\nvariables = {{ \"agent_name\" = \"my agent\" }}\n"
     )
 }
 

@@ -51,6 +51,10 @@ for d in "$ROOT"/*; do
   fi
 done
 
+# Sort providers alphabetically by key
+jq '.providers |= (to_entries | sort_by(.key) | from_entries)' "$TMP_FILE" > "${TMP_FILE}.sorted"
+mv "${TMP_FILE}.sorted" "$TMP_FILE"
+
 # Replace registry.json only if changed
 if [ ! -f "$REGISTRY" ] || ! cmp -s "$TMP_FILE" "$REGISTRY"; then
   mv "$TMP_FILE" "$REGISTRY"

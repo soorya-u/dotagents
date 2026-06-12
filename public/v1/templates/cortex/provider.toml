@@ -1,0 +1,3 @@
+# Cortex Skills
+[providers.cortex.skills]
+target = "{{dir.workspace}}/.cortex/skills/{{skill.name}}/SKILL.md"

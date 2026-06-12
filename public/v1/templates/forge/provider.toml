@@ -1,0 +1,21 @@
+# ForgeCode Commands
+[providers.forge.commands]
+template = "https://dotagents.soorya-u.dev/v1/templates/forge/command.hbs"
+target = "{{dir.workspace}}/.forge/commands/{{command.name}}.md"
+
+# ForgeCode Skills
+[providers.forge.skills]
+target = "{{dir.workspace}}/.forge/skills/{{skill.name}}/SKILL.md"
+
+# ForgeCode Instructions
+[providers.forge.instructions]
+template = "https://dotagents.soorya-u.dev/v1/templates/forge/instruction.hbs"
+target = "{{dir.workspace}}/AGENTS.md"
+
+# ForgeCode MCP
+[providers.forge.mcp]
+template = "https://dotagents.soorya-u.dev/v1/templates/forge/mcp.hbs"
+target = "{{dir.workspace}}/.mcp.json"
+
+[providers.forge.ignore]
+target = "{{dir.workspace}}/.forgeignore"

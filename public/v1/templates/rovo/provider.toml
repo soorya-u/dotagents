@@ -1,0 +1,3 @@
+# Rovo Skills
+[providers.rovo.skills]
+target = "{{dir.workspace}}/.rovodev/skills/{{skill.name}}/SKILL.md"

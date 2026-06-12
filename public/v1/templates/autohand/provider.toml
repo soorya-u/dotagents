@@ -1,16 +1,13 @@
-name = "AutoHand Code"
-url = "https://autohand.ai/docs"
-
 [providers.autohand.skills]
 target = "{{dir.workspace}}/.autohand/skills/{{skill.name}}/SKILL.md"
 
 [providers.autohand.instructions]
 template = "https://dotagents.soorya-u.dev/v1/templates/autohand/instruction.hbs"
-target = "{{ dir.workspace }}/AGENTS.md"
+target = "{{dir.workspace}}/AGENTS.md"
 
 [providers.autohand.mcp]
 template = "https://dotagents.soorya-u.dev/v1/templates/autohand/mcp.hbs"
-target = "{{ dir.workspace }}/.autohand/config.json"
+target = "{{dir.workspace}}/.autohand/config.json"
 
 [providers.autohand.ignore]
-target = "{{ dir.workspace }}/.autohandignore"
+target = "{{dir.workspace}}/.autohandignore"

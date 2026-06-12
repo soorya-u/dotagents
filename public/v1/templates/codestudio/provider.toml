@@ -1,0 +1,3 @@
+# CodeStudio Skills
+[providers.codestudio.skills]
+target = "{{dir.workspace}}/.codestudio/skills/{{skill.name}}/SKILL.md"

@@ -1,0 +1,13 @@
+# Omp Instructions
+[providers.omp.instructions]
+template = "https://dotagents.soorya-u.dev/v1/templates/omp/instruction.hbs"
+target = "{{dir.workspace}}/AGENTS.md"
+
+# Omp Skills
+[providers.omp.skills]
+target = "{{dir.workspace}}/.omp/skills/{{skill.name}}/SKILL.md"
+
+# Omp MCP
+[providers.omp.mcp]
+template = "https://dotagents.soorya-u.dev/v1/templates/omp/mcp.hbs"
+target = "{{dir.workspace}}/.omp/mcp.json"

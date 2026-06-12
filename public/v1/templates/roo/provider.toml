@@ -1,0 +1,3 @@
+# Roo Skills
+[providers.roo.skills]
+target = "{{dir.workspace}}/.roo/skills/{{skill.name}}/SKILL.md"

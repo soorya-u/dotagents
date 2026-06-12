@@ -1,6 +1,3 @@
-name = "Gemini CLI"
-url = "https://geminicli.com/docs/"
-
 # Gemini Commands
 [providers.gemini.commands]
 template = "https://dotagents.soorya-u.dev/v1/templates/gemini/command.hbs"
@@ -13,12 +10,12 @@ target = "{{dir.workspace}}/.gemini/skills/{{skill.name}}/SKILL.md"
 # Gemini Instructions
 [providers.gemini.instructions]
 template = "https://dotagents.soorya-u.dev/v1/templates/gemini/instruction.hbs"
-target = "{{ dir.workspace }}/GEMINI.md"
+target = "{{dir.workspace}}/GEMINI.md"
 
 # Gemini MCP
 [providers.gemini.mcp]
 template = "https://dotagents.soorya-u.dev/v1/templates/gemini/mcp.hbs"
-target = "{{ dir.workspace }}/.gemini/settings.json"
+target = "{{dir.workspace}}/.gemini/settings.json"
 
 [providers.gemini.ignore]
-target = "{{ dir.workspace }}/.geminiignore"
+target = "{{dir.workspace}}/.geminiignore"

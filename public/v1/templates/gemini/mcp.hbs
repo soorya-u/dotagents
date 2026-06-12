@@ -6,8 +6,7 @@
       "command": "{{this.command}}",
       "args": {{json this.args}}{{#if this.env}},
       "env": {{json this.env}}{{/if}}{{#if this.cwd}},
-      "cwd": {{json this.cwd}}{{/if}}{{#if this.envFile}},
-      "envFile": {{json this.envFile}}{{/if}}
+      "cwd": {{json this.cwd}}{{/if}}
       {{else}}
       {{#ifEq this.type "sse"}}
       "url": "{{this.url}}"{{#if this.headers}},

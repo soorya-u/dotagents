@@ -1,0 +1,3 @@
+# CodeBuddy Skills
+[providers.codebuddy.skills]
+target = "{{dir.workspace}}/.codebuddy/skills/{{skill.name}}/SKILL.md"

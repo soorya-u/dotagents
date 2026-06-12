@@ -1,0 +1,10 @@
+{
+  "mcp": {
+    {{#each mcp.servers}}
+    "{{@key}}": {
+      "command": "{{this.command}}"{{#if this.args}},
+      "args": {{json this.args}}{{/if}}
+    }{{#unless @last}},{{/unless}}
+    {{/each}}
+  }
+}
