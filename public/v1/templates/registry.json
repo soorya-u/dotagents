@@ -425,7 +425,7 @@
       "checksums": {
         "provider.toml": "7e2011330c5378a0f16af32ed719525b2a64fa978028d1634ac826b632aca274"
       },
-      "name": "Roo",
+      "name": "Roo Code",
       "url": "https://roocode.com"
     },
     "rovo": {
@@ -482,7 +482,7 @@
       "checksums": {
         "provider.toml": "f91a3a9f2a50cb73cc6ff611aa0d79d9f0c760aa9ac1419c8d530064b81add90"
       },
-      "name": "Zoo",
+      "name": "Zoo Code",
       "url": "https://zoocode.dev"
     }
   }
