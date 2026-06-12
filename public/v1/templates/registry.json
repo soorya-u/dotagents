@@ -5,13 +5,17 @@
       "path": "/v1/templates/adal/provider.toml",
       "checksums": {
         "provider.toml": "f76f7d305935bf8754eabde17d9d1cd9a94f2cdbb31a622d39fe82bec9f731e6"
-      }
+      },
+      "name": "Adal",
+      "url": "https://adal.dev"
     },
     "aider-desk": {
       "path": "/v1/templates/aider-desk/provider.toml",
       "checksums": {
         "provider.toml": "0a78119a04d4fcce23d2fdda3a4111c575ed74d08b282d942e67d0963f258a03"
-      }
+      },
+      "name": "Aider Desk",
+      "url": "https://aider-desk.com"
     },
     "amp": {
       "path": "/v1/templates/amp/provider.toml",
@@ -20,13 +24,17 @@
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
         "mcp.hbs": "8067a59d594cb8bb0d960e9571ecae6d974579d2dfc5d1092dc923a415826230"
-      }
+      },
+      "name": "Amp Code",
+      "url": "https://ampcode.com"
     },
     "antigravity": {
       "path": "/v1/templates/antigravity/provider.toml",
       "checksums": {
         "provider.toml": "ccdfbf3cc514ae7ae7ea637be229e343b7c91aa2babdeeeb26a7e7b68b16f832"
-      }
+      },
+      "name": "Antigravity",
+      "url": "https://antigravity.google"
     },
     "auggie": {
       "path": "/v1/templates/auggie/provider.toml",
@@ -35,7 +43,9 @@
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
         "mcp.hbs": "0eb39fe6be1e07a6f1cee8b8f70b7e6ccdc2f4c7d026a18e464f3ac1682483e2"
-      }
+      },
+      "name": "Auggie CLI",
+      "url": "https:/augmentcode.com"
     },
     "autohand": {
       "path": "/v1/templates/autohand/provider.toml",
@@ -43,7 +53,9 @@
         "provider.toml": "1dab9b141f03bff60d97e864ef60631e6660159602ec5bbf0cd2a97bc0a4fd52",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
         "mcp.hbs": "80583db5c6814500111d486ea54bda34d97d78bd1b9f3569df36d8f4d22ae1de"
-      }
+      },
+      "name": "AutoHand Code",
+      "url": "https://autohand.ai"
     },
     "bob": {
       "path": "/v1/templates/bob/provider.toml",
@@ -52,7 +64,9 @@
         "command.hbs": "9a25fa1263338ee310d3452585a40b221776e8384ee6a181fe9521d76228870e",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "601fb0e84fabb9751f58126e3bb8d17cd2d0ea5122cbd7509b0f87c41f141921"
-      }
+      },
+      "name": "IBM Bob",
+      "url": "https://bob.ibm.com"
     },
     "claude": {
       "path": "/v1/templates/claude/provider.toml",
@@ -61,38 +75,50 @@
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
         "mcp.hbs": "3586dc4529835afac0441857e889f23fe92e9bb6893fd21bd541c609cd939d4f"
-      }
+      },
+      "name": "Claude Code",
+      "url": "https://claude.com/product/claude-code"
     },
     "cline": {
       "path": "/v1/templates/cline/provider.toml",
       "checksums": {
         "provider.toml": "41922e8079f72de7ed6fa6fc991fa53516dcf9768332ffdb7fbcb38fd3a0d909",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49"
-      }
+      },
+      "name": "Cline CLI",
+      "url": "https://cline.bot"
     },
     "code-arts": {
       "path": "/v1/templates/code-arts/provider.toml",
       "checksums": {
         "provider.toml": "e091bad2f091af088aa53d9466014ffc9a74cd6b5f5fc7c15313a5c85831378b"
-      }
+      },
+      "name": "CodeArts",
+      "url": "https://www.huaweicloud.com/intl/en-us/product/devcloud.html"
     },
     "codebuddy": {
       "path": "/v1/templates/codebuddy/provider.toml",
       "checksums": {
         "provider.toml": "d5a623253aa1a7d1eea8e230ac666b3e6f4ec0a3a8a6664390893228456407c1"
-      }
+      },
+      "name": "CodeBuddy Code",
+      "url": "https://codebuddy.ai"
     },
     "codemaker": {
       "path": "/v1/templates/codemaker/provider.toml",
       "checksums": {
         "provider.toml": "45fa56fc54374c6cbf1dcd34caeb8d75e68a4fec394ed6b328b7ec402785edee"
-      }
+      },
+      "name": "CodeMaker",
+      "url": "https://codemaker.ai"
     },
     "codestudio": {
       "path": "/v1/templates/codestudio/provider.toml",
       "checksums": {
         "provider.toml": "78e0054b8e6bd69705d509396902ee3da7179a038ab36c31f857118db3bb11ea"
-      }
+      },
+      "name": "CodeStudio",
+      "url": "https://syncfusion.com/code-studio"
     },
     "codex": {
       "path": "/v1/templates/codex/provider.toml",
@@ -101,7 +127,9 @@
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
         "mcp.hbs": "0e43e8979f90c41cf0bdaeb8af9c0d9201b975c6b5f27ee8794b69f6eb3d3fd5"
-      }
+      },
+      "name": "Codex CLI",
+      "url": "https://developers.openai.com/codex/cli"
     },
     "commandcode": {
       "path": "/v1/templates/commandcode/provider.toml",
@@ -110,13 +138,17 @@
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "fea48de66e6c5b25393e7fc169fe5aa47832d9d37dddee6ef3822b49eb44fc72"
-      }
+      },
+      "name": "Command Code",
+      "url": "https://commandcode.ai"
     },
     "continue": {
       "path": "/v1/templates/continue/provider.toml",
       "checksums": {
         "provider.toml": "0ee935682f6f9f225e8057dc40cf8161cbba38912bdb8c5615e7ccb09bc2a113"
-      }
+      },
+      "name": "Continue",
+      "url": "https://continue.dev"
     },
     "copilot": {
       "path": "/v1/templates/copilot/provider.toml",
@@ -125,20 +157,26 @@
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
         "mcp.hbs": "6b08add44e795f27e3e7fc48f4ef65930442da74cb8273718157a586289cc187"
-      }
+      },
+      "name": "Copilot CLI",
+      "url": "https://github.com/features/copilot/cli"
     },
     "cortex": {
       "path": "/v1/templates/cortex/provider.toml",
       "checksums": {
         "provider.toml": "b88d6fc15dd9f93fb5fc8108b048569cb4002da92662551640db8f085b1edc9e"
-      }
+      },
+      "name": "Cortex Coco",
+      "url": "https://www.snowflake.com/en/product/snowflake-coco/"
     },
     "crush": {
       "path": "/v1/templates/crush/provider.toml",
       "checksums": {
         "provider.toml": "36769b9e86a31790bc4e78d986931fdbcaf897de267c59e0ebbdf723902f71c0",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67"
-      }
+      },
+      "name": "Crush",
+      "url": "https://github.com/charmbracelet/crush"
     },
     "cursor": {
       "path": "/v1/templates/cursor/provider.toml",
@@ -147,7 +185,9 @@
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "0ead69a7a6b3fb273fd4d9fbfee6f2159353dc894d14153cf693a0a49b73f5c3"
-      }
+      },
+      "name": "Cursor CLI",
+      "url": "https://cursor.com"
     },
     "deepagents": {
       "path": "/v1/templates/deepagents/provider.toml",
@@ -155,14 +195,18 @@
         "provider.toml": "5b526dc1b69aeecbd0fcbc96e669f1455e8ebefc2585bac93af2bb43d312bd63",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "6ff01b6526e6a891a16a3735b9f1ab9072a7776973c5810b0aa1dd8ba912b57c"
-      }
+      },
+      "name": "Deep Agents CLI",
+      "url": "https://docs.langchain.com/oss/python/deepagents/overview"
     },
     "devin": {
       "path": "/v1/templates/devin/provider.toml",
       "checksums": {
         "provider.toml": "31159f6f70908e51462f68619ffc61b5d4fd380b6491f27b96b84208c1d6d95e",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67"
-      }
+      },
+      "name": "Devin",
+      "url": "https://devin.ai"
     },
     "factory-droid": {
       "path": "/v1/templates/factory-droid/provider.toml",
@@ -171,7 +215,9 @@
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "28c6aa2b4bfbe0ecf14292c399777d5850b1593d1f9af7c8c2e01483d0a78f5f"
-      }
+      },
+      "name": "Factory CLI",
+      "url": "https://factory.ai"
     },
     "forge": {
       "path": "/v1/templates/forge/provider.toml",
@@ -180,7 +226,9 @@
         "command.hbs": "b087022ef11eb4c3095a3f4294b1a4b96486981c3260492e6cee5167dde673d1",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "76283cfc6e931154b3f41a4c42f05a5614059c45faf791bd88eacda930881cb8"
-      }
+      },
+      "name": "ForgeCode",
+      "url": "https://forgecode.dev"
     },
     "gemini": {
       "path": "/v1/templates/gemini/provider.toml",
@@ -189,7 +237,9 @@
         "command.hbs": "009ad4a010c91f439c62ea47cd5fcc71d276d100bb9174b79d56bb4c3b7b6df3",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "16ce9ded2876d8b41b744344c180c9963c17a7e12220738babf206bf25a579ae"
-      }
+      },
+      "name": "Gemini CLI",
+      "url": "https://geminicli.com"
     },
     "goose": {
       "path": "/v1/templates/goose/provider.toml",
@@ -198,7 +248,9 @@
         "command.hbs": "27da9b4869cfb52fe8ac303b4e80b0146e094f123a92f670b96eb9614c403fd4",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "8140cc3175389301e9c6b5058340e693799e0b880826aa4653ed49fdd447d914"
-      }
+      },
+      "name": "Goose",
+      "url": "https://goose-docs.ai"
     },
     "iflow": {
       "path": "/v1/templates/iflow/provider.toml",
@@ -206,7 +258,9 @@
         "provider.toml": "d7853474be309aa31f7b145b33110167a6fba92bff21b2dd4c5b048e5a956ac8",
         "command.hbs": "4070f1c7bb5eaed9cd32406c1cbc918b8a1f4615f4ee4744890ec0c05c398fec",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67"
-      }
+      },
+      "name": "iFlow CLI",
+      "url": "https://cli.iflow.cn"
     },
     "junie": {
       "path": "/v1/templates/junie/provider.toml",
@@ -215,7 +269,9 @@
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "f3652009a56d2ae104947fc22124f191590d2c14bbbc9d76e4f761a8e5db5714"
-      }
+      },
+      "name": "Junie CLI",
+      "url": "https://junie.jetbrains.com"
     },
     "kilocode": {
       "path": "/v1/templates/kilocode/provider.toml",
@@ -224,7 +280,9 @@
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "82d6683b1f2771d7f8d696587638e819aaaa877596eac21ba63386dce39c9417"
-      }
+      },
+      "name": "Kilo Code",
+      "url": "https://kilo.ai"
     },
     "kimi": {
       "path": "/v1/templates/kimi/provider.toml",
@@ -232,20 +290,37 @@
         "provider.toml": "518228f5f8a4357104e4827e2eea339e2ee11670bf792930e776e3353af25e45",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "f3652009a56d2ae104947fc22124f191590d2c14bbbc9d76e4f761a8e5db5714"
-      }
+      },
+      "name": "Kimi Code",
+      "url": "https://www.kimi.com/code"
     },
     "kode": {
       "path": "/v1/templates/kode/provider.toml",
       "checksums": {
         "provider.toml": "6e2d5752ce5fe24ae29be1f1d44610d5d9c8bfeb2ebb2e4d3fd40f45a7f37179",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67"
-      }
+      },
+      "name": "Kode",
+      "url": "https://github.com/shareAI-lab/Kode-CLI"
     },
     "mcpjam": {
       "path": "/v1/templates/mcpjam/provider.toml",
       "checksums": {
         "provider.toml": "6633867f92d33587ab646e7a6a3f3e186fcf39bb4ccd54ceb95026984eadd009"
-      }
+      },
+      "name": "MCPJam",
+      "url": "https://mcpjam.com"
+    },
+    "mimo": {
+      "path": "/v1/templates/mimo/provider.toml",
+      "checksums": {
+        "provider.toml": "af5b22f57a08b1965312a6334d0c3f88b3e79183afe656536aa2e50bffbf2bc8",
+        "command.hbs": "ff37c61358e38755bc333c19a41f7ca4548728084c134ef5ae22e7068ab5a0ab",
+        "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
+        "mcp.hbs": "10fbc45c1f0f52a62aada326614a1587529cf1d4213d15ff6621f01deac6d711"
+      },
+      "name": "Mimo Code",
+      "url": "https://mimo.xiaomi.com/mimocode"
     },
     "mistral-vibe": {
       "path": "/v1/templates/mistral-vibe/provider.toml",
@@ -253,7 +328,9 @@
         "provider.toml": "288bfb729a4e7dd0de98261343fa52ee3cdb2a2755b9c8157941eccde0020cfb",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "0199a47e2f10298557ebd3ede53b3093f4c3abb19afc193fbdf45888622400bf"
-      }
+      },
+      "name": "Mistral Vibe",
+      "url": "https://docs.mistral.ai/mistral-vibe/terminal"
     },
     "mux": {
       "path": "/v1/templates/mux/provider.toml",
@@ -261,13 +338,17 @@
         "provider.toml": "912164ff4b673236ab3dd17fa87aa9aa8368ad6d9eef77b7e867a7f6a9298f62",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "e468a5b2090cc1afe67d29bd7cd182124010d72c4080a27faa8ef473998f9e32"
-      }
+      },
+      "name": "Mux",
+      "url": "https://mux.coder.com"
     },
     "neovate": {
       "path": "/v1/templates/neovate/provider.toml",
       "checksums": {
         "provider.toml": "642be718f37f56e8a62e6b2e98a31a741372462e924fc9355ac5db00ce753b7d"
-      }
+      },
+      "name": "Neovate",
+      "url": "https://neovateai.dev"
     },
     "omp": {
       "path": "/v1/templates/omp/provider.toml",
@@ -275,7 +356,9 @@
         "provider.toml": "5e6ef2f86d15b3371c3cc3841a70feaa39701f8cf7751ddb09a0040ded3a73b0",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "0eebc4108b8b10eb6429b06b8ee9c9cf9d9ba067dc724a37da7ddcc721162c8e"
-      }
+      },
+      "name": "Omp",
+      "url": "https://omp.sh"
     },
     "opencode": {
       "path": "/v1/templates/opencode/provider.toml",
@@ -284,21 +367,27 @@
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "a7c14e658bcff8f926c73a7ebf0ca0675a0a7db884fbd939928ea4aa97ed12f2"
-      }
+      },
+      "name": "OpenCode",
+      "url": "https://opencode.ai"
     },
     "openhands": {
       "path": "/v1/templates/openhands/provider.toml",
       "checksums": {
         "provider.toml": "1e0e96e30504735d43e68bff94b28bb2c7a96d7a1a55f6826024f6fd379d45f8",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67"
-      }
+      },
+      "name": "OpenHands",
+      "url": "https://openhands.dev"
     },
     "pi": {
       "path": "/v1/templates/pi/provider.toml",
       "checksums": {
         "provider.toml": "fa1406d75ceadb0d59d38a0ac5bd274982c1080cc3f7611265d42e03dd7bb7bc",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6"
-      }
+      },
+      "name": "Pi",
+      "url": "https://pi.dev"
     },
     "pochi": {
       "path": "/v1/templates/pochi/provider.toml",
@@ -306,7 +395,9 @@
         "provider.toml": "db1f3344b78cf952c6fde1921299ef9a0b2add9401c275eede914673617a1e50",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "e2021da04c0555620cb94aedefb5c6f593e3acd5852cb95c4d2ee382fabac094"
-      }
+      },
+      "name": "Pochi",
+      "url": "https://getpochi.com"
     },
     "qoder": {
       "path": "/v1/templates/qoder/provider.toml",
@@ -315,7 +406,9 @@
         "command.hbs": "6650ba27e033d911b3ea2dd264c2a5ed1a7724630bc16a08e36d4423c3beb48f",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "bf776db19285c184c4054ad213b5424b61b532a4d77bad4b967fc7e6ccb28360"
-      }
+      },
+      "name": "Qoder CLI",
+      "url": "https://qoder.com/en/cli"
     },
     "qwen": {
       "path": "/v1/templates/qwen/provider.toml",
@@ -323,56 +416,74 @@
         "provider.toml": "ff71c953d466b5f77a5e6586b96406a9f2aa7bdc04800f0ea979f982084e1829",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
         "mcp.hbs": "92979317e5d81bf95f30bd9119d4e030520d28673cdd9acf5a6885ed626c556f"
-      }
+      },
+      "name": "Qwen Code",
+      "url": "https://qwen.ai/qwencode"
     },
     "roo": {
       "path": "/v1/templates/roo/provider.toml",
       "checksums": {
         "provider.toml": "7e2011330c5378a0f16af32ed719525b2a64fa978028d1634ac826b632aca274"
-      }
+      },
+      "name": "Roo Code",
+      "url": "https://roocode.com"
     },
     "rovo": {
       "path": "/v1/templates/rovo/provider.toml",
       "checksums": {
         "provider.toml": "abdac8b35af5026c7defb00a4492a9f8013bd3de903e8160544c89c98b23cff7"
-      }
+      },
+      "name": "Rovo",
+      "url": "https://www.atlassian.com/software/rovo"
     },
     "tabnine": {
       "path": "/v1/templates/tabnine/provider.toml",
       "checksums": {
         "provider.toml": "3f821d806e484cfe96c5d1fba2176485fec6ca9f6e7743a023af6edb6cf62953"
-      }
+      },
+      "name": "Tabnine",
+      "url": "https://www.tabnine.com"
     },
     "trae": {
       "path": "/v1/templates/trae/provider.toml",
       "checksums": {
         "provider.toml": "f713501e8140e8aff905a458f4aa0f95d6d8e6067efc9bf81ebc97d476a7d9c0"
-      }
+      },
+      "name": "Trae",
+      "url": "https://trae.ai"
     },
     "windsurf": {
       "path": "/v1/templates/windsurf/provider.toml",
       "checksums": {
         "provider.toml": "9046285d28a638a88ccceba7acabf7b976e88619be737a668b362e33920c457f",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67"
-      }
+      },
+      "name": "Windsurf",
+      "url": "https://codeium.com/windsurf"
     },
     "x-ai": {
       "path": "/v1/templates/x-ai/provider.toml",
       "checksums": {
         "provider.toml": "d36b0a484912d94846a9ae9af8f8fbd623898ece38bec0c975ec5ac0d43c6a77"
-      }
+      },
+      "name": "xAI",
+      "url": "https://x.ai"
     },
     "zencoder": {
       "path": "/v1/templates/zencoder/provider.toml",
       "checksums": {
         "provider.toml": "0471b79b7c9e20bb1b007f19080700f020052697a3b21f34f3dd39416ce59eb7"
-      }
+      },
+      "name": "Zencoder",
+      "url": "https://zencoder.ai"
     },
     "zoo": {
       "path": "/v1/templates/zoo/provider.toml",
       "checksums": {
         "provider.toml": "f91a3a9f2a50cb73cc6ff611aa0d79d9f0c760aa9ac1419c8d530064b81add90"
-      }
+      },
+      "name": "Zoo Code",
+      "url": "https://zoocode.dev"
     }
   }
 }
