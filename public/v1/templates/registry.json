@@ -70,10 +70,10 @@
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49"
       }
     },
-    "codearts": {
-      "path": "/v1/templates/codearts/provider.toml",
+    "code-arts": {
+      "path": "/v1/templates/code-arts/provider.toml",
       "checksums": {
-        "provider.toml": "6ff88b7a8d18211b0597b580eef4cea912c70dcc0cbf859a89f519bba805a13b"
+        "provider.toml": "e091bad2f091af088aa53d9466014ffc9a74cd6b5f5fc7c15313a5c85831378b"
       }
     },
     "codebuddy": {
@@ -106,7 +106,7 @@
     "commandcode": {
       "path": "/v1/templates/commandcode/provider.toml",
       "checksums": {
-        "provider.toml": "9186676d5ecf3acf0548b9d0a627d03efa4f2b8db54d22b17e25561d424a09db",
+        "provider.toml": "fa8a72f27e832134319c65c0b1f556e44ff258f07d4fe88d7d12ecab2ef3a3ad",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "fea48de66e6c5b25393e7fc169fe5aa47832d9d37dddee6ef3822b49eb44fc72"
@@ -177,7 +177,7 @@
       "path": "/v1/templates/forge/provider.toml",
       "checksums": {
         "provider.toml": "c013c07f5bd7283e3de2df56e654fdd96ac523cf3f1fba8e442c071eb20b6ec9",
-        "command.hbs": "1247820364545834e2f2dbecfef3261a549db78176ee9e7f77acfd5d95d2933c",
+        "command.hbs": "b087022ef11eb4c3095a3f4294b1a4b96486981c3260492e6cee5167dde673d1",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "76283cfc6e931154b3f41a4c42f05a5614059c45faf791bd88eacda930881cb8"
       }
@@ -260,7 +260,7 @@
       "checksums": {
         "provider.toml": "912164ff4b673236ab3dd17fa87aa9aa8368ad6d9eef77b7e867a7f6a9298f62",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
-        "mcp.hbs": "2c21aff9a9b9d804cb76433f121dee2d5bed9d1b420b284369d8208f810d2cc8"
+        "mcp.hbs": "e468a5b2090cc1afe67d29bd7cd182124010d72c4080a27faa8ef473998f9e32"
       }
     },
     "neovate": {
@@ -305,7 +305,7 @@
       "checksums": {
         "provider.toml": "db1f3344b78cf952c6fde1921299ef9a0b2add9401c275eede914673617a1e50",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
-        "mcp.hbs": "d4dd0c077bdea26c8c457583e80f73b343a03a7d8a09bb2b108b3ef4c92a6311"
+        "mcp.hbs": "e2021da04c0555620cb94aedefb5c6f593e3acd5852cb95c4d2ee382fabac094"
       }
     },
     "qoder": {

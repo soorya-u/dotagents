@@ -333,8 +333,9 @@ test.describe("skills ls CLI", () => {
 				],
 				d,
 			);
-			const { exitCode } = run(["skills", "ls", "--content"], d);
+			const { exitCode, stdout } = run(["skills", "ls", "--content"], d);
 			expect(exitCode).toBe(0);
+			expect(stdout).toMatch(/Hello Skill/);
 		} finally {
 			cleanup(d);
 		}

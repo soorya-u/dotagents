@@ -1,3 +1,0 @@
-# CodeArts Skills
-[providers.codearts.skills]
-target = "{{dir.workspace}}/.codeartsdoer/skills/{{skill.name}}/SKILL.md"

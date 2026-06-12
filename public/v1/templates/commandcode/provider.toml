@@ -15,4 +15,4 @@ target = "{{dir.workspace}}/AGENTS.md"
 # Command Code MCP
 [providers.commandcode.mcp]
 template = "https://dotagents.soorya-u.dev/v1/templates/commandcode/mcp.hbs"
-target = "{{dir.workspace}}/.mcp.json"
+target = "{{dir.workspace}}/.commandcode/mcp.json"
