@@ -1,0 +1,13 @@
+# Grok Instructions
+[providers.grok.instructions]
+template = "https://dotagents.soorya-u.dev/v1/templates/grok/instruction.hbs"
+target = "{{dir.workspace}}/AGENTS.md"
+
+# Disabling this because grok does not document the shape of the MCP in config file
+# [providers.grok.mcp]
+# template = "https://dotagents.soorya-u.dev/v1/templates/grok/mcp.hbs"
+# target = "{{dir.workspace}}/.grok/config.toml"
+
+# Grok Skills
+[providers.grok.skills]
+target = "{{dir.workspace}}/.grok/skills/{{skill.name}}/SKILL.md"

@@ -1,3 +1,0 @@
-# X-AI Skills
-[providers.x-ai.skills]
-target = "{{dir.workspace}}/.x-ai/skills/{{skill.name}}/SKILL.md"

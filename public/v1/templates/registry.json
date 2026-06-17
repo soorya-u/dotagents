@@ -252,6 +252,14 @@
       "name": "Goose",
       "url": "https://goose-docs.ai"
     },
+    "grok": {
+      "path": "/v1/templates/grok/provider.toml",
+      "checksums": {
+        "provider.toml": "d36b0a484912d94846a9ae9af8f8fbd623898ece38bec0c975ec5ac0d43c6a77"
+      },
+      "name": "Grok Build",
+      "url": "https://x.ai/cli"
+    },
     "iflow": {
       "path": "/v1/templates/iflow/provider.toml",
       "checksums": {
@@ -460,14 +468,6 @@
       },
       "name": "Windsurf",
       "url": "https://codeium.com/windsurf"
-    },
-    "x-ai": {
-      "path": "/v1/templates/x-ai/provider.toml",
-      "checksums": {
-        "provider.toml": "d36b0a484912d94846a9ae9af8f8fbd623898ece38bec0c975ec5ac0d43c6a77"
-      },
-      "name": "xAI",
-      "url": "https://x.ai"
     },
     "zencoder": {
       "path": "/v1/templates/zencoder/provider.toml",
