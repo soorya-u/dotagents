@@ -255,7 +255,8 @@
     "grok": {
       "path": "/v1/templates/grok/provider.toml",
       "checksums": {
-        "provider.toml": "d36b0a484912d94846a9ae9af8f8fbd623898ece38bec0c975ec5ac0d43c6a77"
+        "provider.toml": "7a89035c106a470018c134c39ef6eea99eafbe048e166fced78fcb38cf0c77ba",
+        "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67"
       },
       "name": "Grok Build",
       "url": "https://x.ai/cli"
