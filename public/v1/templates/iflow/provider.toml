@@ -11,3 +11,6 @@ target = "{{dir.workspace}}/.iflow/skills/{{skill.name}}/SKILL.md"
 [providers.iflow.instructions]
 template = "https://dotagents.soorya-u.dev/v1/templates/iflow/instruction.hbs"
 target = "{{dir.workspace}}/IFLOW.md"
+
+[providers.iflow.ignore]
+target = "{{dir.workspace}}/.iflowignore"

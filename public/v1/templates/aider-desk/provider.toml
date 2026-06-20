@@ -1,3 +1,8 @@
+# Aider-Desk Instructions
+[providers.aider-desk.instructions]
+template = "https://dotagents.soorya-u.dev/v1/templates/aider-desk/instruction.hbs"
+target = "{{dir.workspace}}/AGENTS.md"
+
 # Aider-Desk Skills
 [providers.aider-desk.skills]
 target = "{{dir.workspace}}/.aider-desk/skills/{{skill.name}}/SKILL.md"

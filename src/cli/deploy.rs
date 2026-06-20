@@ -283,79 +283,51 @@ where
                 .app_config
                 .resolve_mode(feature_name, file_name.as_deref());
 
-            if provider_agnostic && work.item.is_symlinkable() && mode == FeatureMode::Link {
-                let source_path = T::resolve_source_path(file_name.as_deref())
-                    .context("unable to resolve source path for symlink")?;
+            let update =
+                if provider_agnostic && work.item.is_symlinkable() && mode == FeatureMode::Link {
+                    let source_path = T::resolve_source_path(file_name.as_deref())
+                        .context("unable to resolve source path for symlink")?;
 
-                let update = link_feature_with_settings(
-                    &work.provider_name,
-                    work.item,
-                    work.settings,
-                    ctx.templater,
-                    ctx.variables,
-                    ctx.dry_run,
-                    &source_path,
-                )?;
+                    link_feature_with_settings(
+                        &work.provider_name,
+                        work.item,
+                        work.settings,
+                        ctx.templater,
+                        ctx.variables,
+                        ctx.dry_run,
+                        &source_path,
+                    )?
+                } else {
+                    let cached_entry: Option<CacheEntry> = if ctx.no_cache {
+                        None
+                    } else {
+                        cache_ref
+                            .lock()
+                            .unwrap()
+                            .get(&work.provider_name, feature_name, item_key)
+                            .cloned()
+                    };
 
-                // Extract target path for extra file resolution
-                let main_target = match &update {
-                    CacheUpdate::Linked { target } => target.clone(),
-                    _ => unreachable!(),
+                    render_feature_with_settings(
+                        &work.provider_name,
+                        work.item,
+                        work.settings,
+                        mode,
+                        ctx.templater,
+                        ctx.variables,
+                        cached_entry.as_ref(),
+                        ctx.force,
+                        ctx.dry_run,
+                    )?
                 };
 
-                process_cache_update(
-                    work,
-                    feature_name,
-                    item_key,
-                    update,
-                    &cache_ref,
-                    ctx.dry_run,
-                    &mut stats,
-                )?;
-                if let Some(source_dir) = T::source_dir(file_name.as_deref()) {
-                    let target_dir = main_target
-                        .parent()
-                        .with_context(|| "symlink target path has no parent directory")?;
-                    let extra_targets =
-                        deploy_extra_files(&source_dir, target_dir, &source_path, ctx.dry_run)?;
-                    if !ctx.dry_run || !extra_targets.is_empty() {
-                        stats.written += extra_targets.len();
-                        stats.linked_targets.extend(extra_targets.clone());
-                        if ctx.dry_run {
-                            for target in extra_targets {
-                                stats.dry_run_entries.push(DryRunDeployEntry {
-                                    path: target,
-                                    status: DeployDryRunStatus::Linked,
-                                });
-                            }
-                        }
-                    }
-                }
-
-                return Ok(stats);
-            }
-
-            let cached_entry: Option<CacheEntry> = if ctx.no_cache {
-                None
-            } else {
-                cache_ref
-                    .lock()
-                    .unwrap()
-                    .get(&work.provider_name, feature_name, item_key)
-                    .cloned()
+            // Extract target path for extra file resolution (Type 1 features)
+            let main_target: Option<PathBuf> = match &update {
+                CacheUpdate::Linked { target } => Some(target.clone()),
+                CacheUpdate::Written { target, .. } => Some(PathBuf::from(target)),
+                CacheUpdate::DryRun { target, .. } => Some(target.clone()),
+                _ => None,
             };
-
-            let update = render_feature_with_settings(
-                &work.provider_name,
-                work.item,
-                work.settings,
-                mode,
-                ctx.templater,
-                ctx.variables,
-                cached_entry.as_ref(),
-                ctx.force,
-                ctx.dry_run,
-            )?;
 
             process_cache_update(
                 work,
@@ -366,6 +338,33 @@ where
                 ctx.dry_run,
                 &mut stats,
             )?;
+
+            // Deploy extra files for Type 1 features regardless of mode (spec: "regardless of the mode setting")
+            if provider_agnostic
+                && let Some(main_target) = main_target
+                && let Some(source_dir) = T::source_dir(file_name.as_deref())
+            {
+                let source_path = T::resolve_source_path(file_name.as_deref())
+                    .context("unable to resolve source path for extra files")?;
+                let target_dir = main_target
+                    .parent()
+                    .with_context(|| "target path has no parent directory")?;
+                let extra_targets =
+                    deploy_extra_files(&source_dir, target_dir, &source_path, ctx.dry_run)?;
+                if !ctx.dry_run || !extra_targets.is_empty() {
+                    stats.written += extra_targets.len();
+                    stats.linked_targets.extend(extra_targets.clone());
+                    if ctx.dry_run {
+                        for target in extra_targets {
+                            stats.dry_run_entries.push(DryRunDeployEntry {
+                                path: target,
+                                status: DeployDryRunStatus::Linked,
+                            });
+                        }
+                    }
+                }
+            }
+
             Ok(stats)
         })
         .try_reduce(DeployStats::default, |a, b| Ok(a.merge(b)))?;
@@ -493,6 +492,7 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cli::ui::dry_run::{DeployDryRunStatus, DryRunDeployEntry};
     use crate::core::config::FeatureSettings;
     use crate::core::features::instruction::InstructionFeature;
     use crate::utils::dedup::DeployWorkItem;
@@ -526,5 +526,277 @@ mod tests {
 
         assert_eq!(stats.user_edited, 1);
         assert_eq!(stats.skipped, 1);
+    }
+
+    // process_cache_update on Linked increments written, tracks target, and writes no cache entry
+    #[test]
+    fn process_cache_update_linked_skips_cache() {
+        let feature = InstructionFeature::from_string("test").unwrap();
+        let settings = FeatureSettings::default();
+        let work = DeployWorkItem {
+            provider_name: "test".to_string(),
+            settings: &settings,
+            item: &feature,
+            dedup: None,
+        };
+        let cache = Arc::new(Mutex::new(CacheConfig::default()));
+        let mut stats = DeployStats::default();
+
+        let target = PathBuf::from("/tmp/linked.md");
+        process_cache_update(
+            &work,
+            "skill",
+            "my-skill",
+            CacheUpdate::Linked {
+                target: target.clone(),
+            },
+            &cache,
+            false,
+            &mut stats,
+        )
+        .unwrap();
+
+        assert_eq!(stats.written, 1, "Linked should increment written");
+        assert_eq!(
+            stats.linked_targets,
+            vec![target.clone()],
+            "Linked should track target in linked_targets"
+        );
+        assert!(
+            cache
+                .lock()
+                .unwrap()
+                .get("test", "skill", "my-skill")
+                .is_none(),
+            "Linked variant must NOT write a cache entry"
+        );
+        assert_eq!(stats.skipped, 0, "Linked should not increment skipped");
+        assert!(
+            stats.dry_run_entries.is_empty(),
+            "non-dry-run should not add entries"
+        );
+    }
+
+    // process_cache_update on Linked in dry-run mode adds a Linked dry-run entry
+    #[test]
+    fn process_cache_update_linked_dry_run_adds_entry() {
+        let feature = InstructionFeature::from_string("test").unwrap();
+        let settings = FeatureSettings::default();
+        let work = DeployWorkItem {
+            provider_name: "test".to_string(),
+            settings: &settings,
+            item: &feature,
+            dedup: None,
+        };
+        let cache = Arc::new(Mutex::new(CacheConfig::default()));
+        let mut stats = DeployStats::default();
+
+        let target = PathBuf::from("/tmp/linked.md");
+        process_cache_update(
+            &work,
+            "skill",
+            "my-skill",
+            CacheUpdate::Linked {
+                target: target.clone(),
+            },
+            &cache,
+            true,
+            &mut stats,
+        )
+        .unwrap();
+
+        assert_eq!(stats.written, 1);
+        assert_eq!(stats.linked_targets, vec![target.clone()]);
+        assert_eq!(stats.dry_run_entries.len(), 1);
+        assert_eq!(stats.dry_run_entries[0].path, target);
+        assert_eq!(stats.dry_run_entries[0].status, DeployDryRunStatus::Linked);
+        assert!(
+            cache
+                .lock()
+                .unwrap()
+                .get("test", "skill", "my-skill")
+                .is_none(),
+            "dry-run Linked must NOT write a cache entry"
+        );
+    }
+
+    // process_cache_update on Written writes a cache entry (contrast with Linked)
+    #[test]
+    fn process_cache_update_written_writes_cache_entry() {
+        let feature = InstructionFeature::from_string("test").unwrap();
+        let settings = FeatureSettings::default();
+        let work = DeployWorkItem {
+            provider_name: "test".to_string(),
+            settings: &settings,
+            item: &feature,
+            dedup: None,
+        };
+        let cache = Arc::new(Mutex::new(CacheConfig::default()));
+        let mut stats = DeployStats::default();
+
+        process_cache_update(
+            &work,
+            "command",
+            "hello",
+            CacheUpdate::Written {
+                hash: "abc123".to_string(),
+                target: "/tmp/out.md".to_string(),
+            },
+            &cache,
+            false,
+            &mut stats,
+        )
+        .unwrap();
+
+        assert_eq!(stats.written, 1);
+        assert!(
+            cache
+                .lock()
+                .unwrap()
+                .get("test", "command", "hello")
+                .is_some(),
+            "Written variant should write a cache entry"
+        );
+        assert!(
+            stats.linked_targets.is_empty(),
+            "Written should not add to linked_targets"
+        );
+    }
+
+    // deploy_extra_files with only SKILL.md returns empty list and creates no symlinks
+    #[test]
+    fn deploy_extra_files_empty_dir_returns_empty() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let source_dir = tmp.path().join("my-skill");
+        fs::create_dir_all(&source_dir).unwrap();
+        let skill_md = source_dir.join("SKILL.md");
+        fs::write(&skill_md, "skill body").unwrap();
+
+        let target_dir = tmp.path().join("target").join("my-skill");
+        let linked = deploy_extra_files(&source_dir, &target_dir, &skill_md, false).unwrap();
+
+        assert!(linked.is_empty(), "no extra files should be linked");
+        assert!(
+            !target_dir.exists(),
+            "target dir should not be created when there are no extra files"
+        );
+    }
+
+    // deploy_extra_files mirrors nested directories and symlinks deep files
+    #[test]
+    fn deploy_extra_files_deep_nesting_mirrors_structure() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let source_dir = tmp.path().join("my-skill");
+        let deep_dir = source_dir.join("data").join("sub");
+        fs::create_dir_all(&deep_dir).unwrap();
+        let skill_md = source_dir.join("SKILL.md");
+        fs::write(&skill_md, "skill body").unwrap();
+        fs::write(source_dir.join("script.py"), "print('hi')").unwrap();
+        fs::write(deep_dir.join("config.json"), "{}").unwrap();
+        fs::write(deep_dir.join("nested.md"), "deep").unwrap();
+
+        let target_dir = tmp.path().join("target").join("my-skill");
+        let linked = deploy_extra_files(&source_dir, &target_dir, &skill_md, false).unwrap();
+
+        assert_eq!(
+            linked.len(),
+            3,
+            "should link script.py, config.json, nested.md"
+        );
+        let script_target = target_dir.join("script.py");
+        let config_target = target_dir.join("data").join("sub").join("config.json");
+        let nested_target = target_dir.join("data").join("sub").join("nested.md");
+        assert!(script_target.is_symlink(), "script.py should be symlinked");
+        assert!(
+            config_target.is_symlink(),
+            "deeply nested config.json should be symlinked"
+        );
+        assert!(
+            nested_target.is_symlink(),
+            "deeply nested nested.md should be symlinked"
+        );
+        assert_eq!(
+            fs::read_to_string(&config_target).unwrap(),
+            "{}",
+            "deeply nested symlink should resolve to source content"
+        );
+    }
+
+    // deploy_extra_files overwrites existing regular files at target with symlinks
+    #[test]
+    fn deploy_extra_files_overwrites_existing_target() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let source_dir = tmp.path().join("my-skill");
+        fs::create_dir_all(&source_dir).unwrap();
+        let skill_md = source_dir.join("SKILL.md");
+        fs::write(&skill_md, "skill body").unwrap();
+        fs::write(source_dir.join("helper.py"), "new content").unwrap();
+
+        let target_dir = tmp.path().join("target").join("my-skill");
+        fs::create_dir_all(&target_dir).unwrap();
+        let existing_target = target_dir.join("helper.py");
+        fs::write(&existing_target, "old regular content").unwrap();
+        assert!(
+            !existing_target.is_symlink(),
+            "precondition: target is regular file"
+        );
+
+        let linked = deploy_extra_files(&source_dir, &target_dir, &skill_md, false).unwrap();
+
+        assert_eq!(linked.len(), 1);
+        assert!(
+            existing_target.is_symlink(),
+            "existing regular file should be overwritten with symlink"
+        );
+        assert_eq!(
+            fs::read_to_string(&existing_target).unwrap(),
+            "new content",
+            "overwritten symlink should resolve to new source content"
+        );
+    }
+
+    // deploy_extra_files in dry-run mode tracks paths without creating symlinks
+    #[test]
+    fn deploy_extra_files_dry_run_tracks_without_creating() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let source_dir = tmp.path().join("my-skill");
+        fs::create_dir_all(&source_dir).unwrap();
+        let skill_md = source_dir.join("SKILL.md");
+        fs::write(&skill_md, "skill body").unwrap();
+        fs::write(source_dir.join("extra.txt"), "extra").unwrap();
+
+        let target_dir = tmp.path().join("target").join("my-skill");
+        let linked = deploy_extra_files(&source_dir, &target_dir, &skill_md, true).unwrap();
+
+        assert_eq!(linked.len(), 1, "dry-run should track the extra file path");
+        assert_eq!(linked[0], target_dir.join("extra.txt"));
+        assert!(
+            !target_dir.exists(),
+            "dry-run should not create target directory or symlinks"
+        );
+    }
+
+    // deploy_extra_files skips the SKILL.md path and links only extras
+    #[test]
+    fn deploy_extra_files_skips_skill_md() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let source_dir = tmp.path().join("my-skill");
+        fs::create_dir_all(&source_dir).unwrap();
+        let skill_md = source_dir.join("SKILL.md");
+        fs::write(&skill_md, "skill body").unwrap();
+        fs::write(source_dir.join("extra.txt"), "extra").unwrap();
+
+        let target_dir = tmp.path().join("target").join("my-skill");
+        let linked = deploy_extra_files(&source_dir, &target_dir, &skill_md, false).unwrap();
+
+        assert_eq!(linked.len(), 1, "only extra.txt should be linked");
+        assert!(
+            !target_dir.join("SKILL.md").exists(),
+            "SKILL.md should be skipped"
+        );
+        assert!(
+            target_dir.join("extra.txt").is_symlink(),
+            "extra.txt should be symlinked"
+        );
     }
 }

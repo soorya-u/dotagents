@@ -67,28 +67,28 @@
   - [x] Create symlink from source to target
   - [x] Track in deploy stats for `.gitignore` fence
 - [x] Handle nested directories (mirror structure)
-- [ ] Test with empty extra dirs, deep nesting, symlink overwrite
+- [x] Test with empty extra dirs, deep nesting, symlink overwrite
 
 ## 11. Provider Registry Updates
 - [x] Remove `template` field from `[providers.<p>.skills]` in all `provider.toml` files under `public/v1/templates/`
 - [x] Remove `template` field from `[providers.<p>.ignore]` in all `provider.toml` files that have it
 - [x] Verify `resolve_provider_defaults()` handles missing `template` gracefully for Type 1
-- [ ] Regenerate `registry.json`
+- [x] Regenerate `registry.json`
 
 ## 12. Testing
-- [ ] Test with tui-devtools: run `dotagents init` flow, verify no config changes
-- [ ] Test with tui-devtools: run `dotagents deploy` flow with skills in link mode, verify symlinks created
+- [x] Test with tui-devtools: run `dotagents init` flow, verify no config changes
+- [x] Test with tui-devtools: run `dotagents deploy` flow with skills in link mode, verify symlinks created
 - [x] Unit tests: `FeatureMode` serialization/deserialization
 - [x] Unit tests: mode resolution with all override combinations
-- [ ] Unit tests: `link_feature_with_settings()` happy path and error cases
-- [ ] Unit tests: `render_feature_with_settings()` with mode branching
-- [ ] Unit tests: cache skips `Linked` variant
-- [ ] E2E tests: deploy skills with mode=link creates symlinks
-- [ ] E2E tests: deploy skills with mode=template writes files
-- [ ] E2E tests: skills extra files symlinked
-- [ ] E2E tests: dedup works with symlink deploy
-- [ ] E2E tests: `--dry-run` reports symlink operations
-- [ ] E2E tests: `.gitignore` fence includes symlinked paths
+- [x] Unit tests: `link_feature_with_settings()` happy path and error cases
+- [x] Unit tests: `render_feature_with_settings()` with mode branching
+- [x] Unit tests: cache skips `Linked` variant
+- [x] E2E tests: deploy skills with mode=link creates symlinks
+- [x] E2E tests: deploy skills with mode=template writes files
+- [x] E2E tests: skills extra files symlinked
+- [x] E2E tests: dedup works with symlink deploy
+- [x] E2E tests: `--dry-run` reports symlink operations
+- [x] E2E tests: `.gitignore` fence includes symlinked paths
 
 ## Verification
 - [x] `mise check` passes (format + lint)
