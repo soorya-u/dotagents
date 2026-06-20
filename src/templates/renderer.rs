@@ -109,24 +109,35 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
 
     let user_vars = get_user_defined_variables(Some(merge_json(variables, local_vars.as_ref())))?;
 
-    // Phase 2: populate feature with variables (skip in link mode)
-    let content_to_render = if mode == FeatureMode::Link {
-        feature.to_value()
+    // Phase 2: populate feature with variables (skip var injection in link mode)
+    let populated_feature: Option<T> = if mode == FeatureMode::Template {
+        Some(
+            feature
+                .populate_with_values(templater, Some(&user_vars))
+                .context("unable to render feature variables")?,
+        )
     } else {
-        let populate_config = feature
-            .populate_with_values(templater, Some(&user_vars))
-            .context("unable to render feature variables")?;
-        populate_config.to_value()
+        None
     };
 
-    // Phase 3: template rendering (skip for provider-agnostic features in link mode)
+    let content_to_render = populated_feature
+        .as_ref()
+        .map(|f| f.to_value())
+        .unwrap_or_else(|| feature.to_value());
+
+    // Phase 3: template rendering (skip for provider-agnostic features; no .hbs template)
     let feature_as_variables = content_to_render;
     let provider_agnostic = T::is_provider_agnostic();
 
-    let content = if provider_agnostic && mode == FeatureMode::Link {
-        // Provider-agnostic features have no .hbs template; content is the source rendered with vars
-        feature.to_string()?
+    let content = if provider_agnostic {
+        // Type 1: no .hbs template; content is source (vars injected in template mode, raw in link mode)
+        if let Some(ref populated) = populated_feature {
+            populated.to_string()?
+        } else {
+            feature.to_string()?
+        }
     } else {
+        // Type 2: .hbs template required for both link and template modes
         let template_str = feature_settings.template.as_deref().ok_or_else(|| {
             anyhow!(
                 "Template config not found for provider {} (template mode requires a template)",
@@ -231,7 +242,9 @@ mod tests {
     use crate::constants::dir::ROOT_DIR;
     use crate::constants::file::{GLOBAL_CONFIG_FILE, LOCAL_CONFIG_FILE};
     use crate::constants::mocks::default_config;
+    use crate::core::features::ignore::IgnoreFeature;
     use crate::core::features::instruction::InstructionFeature;
+    use crate::core::features::skill::SkillFeature;
     use crate::utils::path::override_workspace_dir;
 
     fn setup_test_workspace() -> anyhow::Result<TempDir> {
@@ -344,5 +357,455 @@ mod tests {
         let path =
             resolve_target_path(&templater, "{{ dir.workspace }}/AGENTS.md", Some(&vars)).unwrap();
         assert!(path.to_string_lossy().ends_with("AGENTS.md"));
+    }
+
+    // link_feature_with_settings creates a symlink at target pointing to source
+    #[test]
+    fn link_feature_creates_symlink_at_target() {
+        let Ok(tmp) = setup_test_workspace() else {
+            return;
+        };
+        let templater = Templater::new().unwrap();
+
+        let source_path = tmp.path().join("source.txt");
+        fs::write(&source_path, "hello world").unwrap();
+
+        let feature = InstructionFeature::from_string("plain content").unwrap();
+        let settings = FeatureSettings {
+            target: Some(tmp.path().join("linked.md").to_string_lossy().to_string()),
+            ..Default::default()
+        };
+
+        let result = link_feature_with_settings(
+            "test-provider",
+            &feature,
+            &settings,
+            &templater,
+            None,
+            false,
+            &source_path,
+        );
+
+        assert!(result.is_ok(), "expected Ok, got {:?}", result);
+        let CacheUpdate::Linked { target } = result.unwrap() else {
+            panic!("expected CacheUpdate::Linked");
+        };
+        assert_eq!(target, tmp.path().join("linked.md"));
+        assert!(target.is_symlink(), "target should be a symlink");
+        assert_eq!(
+            fs::read_to_string(&target).unwrap(),
+            "hello world",
+            "symlink should resolve to source content"
+        );
+    }
+
+    // link_feature_with_settings creates parent directories for the target
+    #[test]
+    fn link_feature_creates_parent_directories() {
+        let Ok(tmp) = setup_test_workspace() else {
+            return;
+        };
+        let templater = Templater::new().unwrap();
+
+        let source_path = tmp.path().join("source.txt");
+        fs::write(&source_path, "content").unwrap();
+
+        let feature = InstructionFeature::from_string("plain content").unwrap();
+        let target = tmp.path().join("nested").join("dirs").join("linked.md");
+        let settings = FeatureSettings {
+            target: Some(target.to_string_lossy().to_string()),
+            ..Default::default()
+        };
+
+        let result = link_feature_with_settings(
+            "test-provider",
+            &feature,
+            &settings,
+            &templater,
+            None,
+            false,
+            &source_path,
+        );
+        assert!(result.is_ok());
+        assert!(target.is_symlink(), "target should be a symlink");
+    }
+
+    // link_feature_with_settings overwrites an existing target file as a symlink
+    #[test]
+    fn link_feature_overwrites_existing_target() {
+        let Ok(tmp) = setup_test_workspace() else {
+            return;
+        };
+        let templater = Templater::new().unwrap();
+
+        let source_path = tmp.path().join("source.txt");
+        fs::write(&source_path, "new content").unwrap();
+
+        let target = tmp.path().join("linked.md");
+        fs::write(&target, "old regular content").unwrap();
+        assert!(!target.is_symlink(), "precondition: target is regular file");
+
+        let feature = InstructionFeature::from_string("plain content").unwrap();
+        let settings = FeatureSettings {
+            target: Some(target.to_string_lossy().to_string()),
+            ..Default::default()
+        };
+
+        let result = link_feature_with_settings(
+            "test-provider",
+            &feature,
+            &settings,
+            &templater,
+            None,
+            false,
+            &source_path,
+        );
+        assert!(result.is_ok());
+        assert!(target.is_symlink(), "target should now be a symlink");
+        assert_eq!(
+            fs::read_to_string(&target).unwrap(),
+            "new content",
+            "symlink should resolve to new source content"
+        );
+    }
+
+    // link_feature_with_settings in dry-run mode returns Linked without creating the symlink
+    #[test]
+    fn link_feature_dry_run_does_not_create_symlink() {
+        let Ok(tmp) = setup_test_workspace() else {
+            return;
+        };
+        let templater = Templater::new().unwrap();
+
+        let source_path = tmp.path().join("source.txt");
+        fs::write(&source_path, "hello world").unwrap();
+
+        let target = tmp.path().join("linked.md");
+        let feature = InstructionFeature::from_string("plain content").unwrap();
+        let settings = FeatureSettings {
+            target: Some(target.to_string_lossy().to_string()),
+            ..Default::default()
+        };
+
+        let result = link_feature_with_settings(
+            "test-provider",
+            &feature,
+            &settings,
+            &templater,
+            None,
+            true,
+            &source_path,
+        );
+        assert!(result.is_ok());
+        let CacheUpdate::Linked { target: ret_target } = result.unwrap() else {
+            panic!("expected CacheUpdate::Linked");
+        };
+        assert_eq!(ret_target, target);
+        assert!(!target.exists(), "dry-run should not create the symlink");
+    }
+
+    // link_feature_with_settings errors when target config is missing
+    #[test]
+    fn link_feature_errors_when_target_missing() {
+        let Ok(tmp) = setup_test_workspace() else {
+            return;
+        };
+        let templater = Templater::new().unwrap();
+
+        let source_path = tmp.path().join("source.txt");
+        fs::write(&source_path, "content").unwrap();
+
+        let feature = InstructionFeature::from_string("plain content").unwrap();
+        let settings = FeatureSettings {
+            target: None,
+            ..Default::default()
+        };
+
+        let result = link_feature_with_settings(
+            "test-provider",
+            &feature,
+            &settings,
+            &templater,
+            None,
+            false,
+            &source_path,
+        );
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(
+            err.contains("Target config not found"),
+            "expected 'Target config not found' in error, got: {err}"
+        );
+    }
+
+    // link_feature_with_settings errors when target template cannot be rendered
+    #[test]
+    fn link_feature_errors_on_broken_target_template() {
+        let Ok(tmp) = setup_test_workspace() else {
+            return;
+        };
+        let templater = Templater::new().unwrap();
+
+        let source_path = tmp.path().join("source.txt");
+        fs::write(&source_path, "content").unwrap();
+
+        let feature = InstructionFeature::from_string("plain content").unwrap();
+        let settings = FeatureSettings {
+            target: Some("{{invalid".to_string()),
+            ..Default::default()
+        };
+
+        let result = link_feature_with_settings(
+            "test-provider",
+            &feature,
+            &settings,
+            &templater,
+            None,
+            false,
+            &source_path,
+        );
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(
+            err.contains("unable to render target path"),
+            "expected 'unable to render target path' in error, got: {err}"
+        );
+    }
+
+    // link_feature_with_settings renders skill name variable into the target path
+    #[test]
+    fn link_feature_renders_skill_name_into_target() {
+        let Ok(tmp) = setup_test_workspace() else {
+            return;
+        };
+        let templater = Templater::new().unwrap();
+
+        let skills_dir = tmp.path().join(ROOT_DIR).join("skills").join("my-skill");
+        fs::create_dir_all(&skills_dir).unwrap();
+        let source_path = skills_dir.join("SKILL.md");
+        fs::write(&source_path, "skill body").unwrap();
+
+        let skill =
+            SkillFeature::from_string("---\nname: my-skill\ndescription: test\n---\n\nskill body")
+                .unwrap();
+        let target = tmp
+            .path()
+            .join(".claude")
+            .join("skills")
+            .join("{{ skill.name }}")
+            .join("SKILL.md");
+        let settings = FeatureSettings {
+            target: Some(target.to_string_lossy().to_string()),
+            ..Default::default()
+        };
+
+        let result = link_feature_with_settings(
+            "claude",
+            &skill,
+            &settings,
+            &templater,
+            None,
+            false,
+            &source_path,
+        );
+        assert!(result.is_ok());
+        let CacheUpdate::Linked { target } = result.unwrap() else {
+            panic!("expected CacheUpdate::Linked");
+        };
+        let expected = tmp
+            .path()
+            .join(".claude")
+            .join("skills")
+            .join("my-skill")
+            .join("SKILL.md");
+        assert_eq!(target, expected);
+        assert!(target.is_symlink());
+    }
+
+    // render_feature Type 2 + template mode injects vars into content and renders template
+    #[test]
+    fn render_feature_type2_template_mode_injects_vars_and_renders_template() {
+        let Ok(tmp) = setup_test_workspace() else {
+            return;
+        };
+        let templater = Templater::new().unwrap();
+
+        let template_path = tmp.path().join("tmpl.hbs");
+        fs::write(&template_path, "{{ instruction.content }}").unwrap();
+
+        let feature = InstructionFeature::from_string("Hello {{ var.name }}").unwrap();
+        let target = tmp.path().join("out.md");
+        let settings = FeatureSettings {
+            template: Some(template_path.to_string_lossy().to_string()),
+            target: Some(target.to_string_lossy().to_string()),
+            ..Default::default()
+        };
+        let vars = serde_json::json!({ "name": "world" });
+
+        let result = render_feature_with_settings(
+            "test-provider",
+            &feature,
+            &settings,
+            FeatureMode::Template,
+            &templater,
+            Some(&vars),
+            None,
+            true,
+            false,
+        );
+        assert!(result.is_ok(), "expected Ok, got {:?}", result);
+        assert!(target.exists(), "target file should be written");
+        let content = fs::read_to_string(&target).unwrap();
+        assert_eq!(
+            content, "Hello world",
+            "template mode should inject vars into content before rendering"
+        );
+    }
+
+    // render_feature Type 2 + link mode renders template but skips var injection into content
+    #[test]
+    fn render_feature_type2_link_mode_skips_var_injection() {
+        let Ok(tmp) = setup_test_workspace() else {
+            return;
+        };
+        let templater = Templater::new().unwrap();
+
+        let template_path = tmp.path().join("tmpl.hbs");
+        fs::write(&template_path, "{{ instruction.content }}").unwrap();
+
+        let feature = InstructionFeature::from_string("Hello {{ var.name }}").unwrap();
+        let target = tmp.path().join("out.md");
+        let settings = FeatureSettings {
+            template: Some(template_path.to_string_lossy().to_string()),
+            target: Some(target.to_string_lossy().to_string()),
+            ..Default::default()
+        };
+        let vars = serde_json::json!({ "name": "world" });
+
+        let result = render_feature_with_settings(
+            "test-provider",
+            &feature,
+            &settings,
+            FeatureMode::Link,
+            &templater,
+            Some(&vars),
+            None,
+            true,
+            false,
+        );
+        assert!(result.is_ok());
+        let content = fs::read_to_string(&target).unwrap();
+        assert_eq!(
+            content, "Hello {{ var.name }}",
+            "link mode should NOT inject vars into feature content"
+        );
+    }
+
+    // render_feature Type 1 + template mode writes source with vars injected, no .hbs template
+    #[test]
+    fn render_feature_type1_template_mode_injects_vars_without_template() {
+        let Ok(tmp) = setup_test_workspace() else {
+            return;
+        };
+        let templater = Templater::new().unwrap();
+
+        let feature = IgnoreFeature::from_string("node_modules/\n{{ var.pattern }}\n").unwrap();
+        let target = tmp.path().join(".agentignore");
+        let settings = FeatureSettings {
+            template: None,
+            target: Some(target.to_string_lossy().to_string()),
+            ..Default::default()
+        };
+        let vars = serde_json::json!({ "pattern": "*.log" });
+
+        let result = render_feature_with_settings(
+            "test-provider",
+            &feature,
+            &settings,
+            FeatureMode::Template,
+            &templater,
+            Some(&vars),
+            None,
+            true,
+            false,
+        );
+        assert!(result.is_ok(), "expected Ok, got {:?}", result);
+        assert!(target.exists(), "target file should be written");
+        let content = fs::read_to_string(&target).unwrap();
+        assert_eq!(
+            content, "node_modules/\n*.log\n",
+            "Type 1 template mode should inject vars into content without a .hbs template"
+        );
+    }
+
+    // render_feature Type 1 + link mode writes raw source without var injection or template
+    #[test]
+    fn render_feature_type1_link_mode_writes_raw_source() {
+        let Ok(tmp) = setup_test_workspace() else {
+            return;
+        };
+        let templater = Templater::new().unwrap();
+
+        let feature = IgnoreFeature::from_string("node_modules/\n{{ var.pattern }}\n").unwrap();
+        let target = tmp.path().join(".agentignore");
+        let settings = FeatureSettings {
+            template: None,
+            target: Some(target.to_string_lossy().to_string()),
+            ..Default::default()
+        };
+        let vars = serde_json::json!({ "pattern": "*.log" });
+
+        let result = render_feature_with_settings(
+            "test-provider",
+            &feature,
+            &settings,
+            FeatureMode::Link,
+            &templater,
+            Some(&vars),
+            None,
+            true,
+            false,
+        );
+        assert!(result.is_ok());
+        let content = fs::read_to_string(&target).unwrap();
+        assert_eq!(
+            content, "node_modules/\n{{ var.pattern }}\n",
+            "Type 1 link mode should write raw source without var injection"
+        );
+    }
+
+    // render_feature Type 2 without template errors
+    #[test]
+    fn render_feature_type2_without_template_errors() {
+        let Ok(tmp) = setup_test_workspace() else {
+            return;
+        };
+        let templater = Templater::new().unwrap();
+
+        let feature = InstructionFeature::from_string("content").unwrap();
+        let target = tmp.path().join("out.md");
+        let settings = FeatureSettings {
+            template: None,
+            target: Some(target.to_string_lossy().to_string()),
+            ..Default::default()
+        };
+
+        let result = render_feature_with_settings(
+            "test-provider",
+            &feature,
+            &settings,
+            FeatureMode::Template,
+            &templater,
+            None,
+            None,
+            true,
+            false,
+        );
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(
+            err.contains("Template config not found"),
+            "expected 'Template config not found' in error, got: {err}"
+        );
     }
 }

@@ -1,3 +1,8 @@
+# CodeBuddy Instructions
+[providers.codebuddy.instructions]
+template = "https://dotagents.soorya-u.dev/v1/templates/codebuddy/instruction.hbs"
+target = "{{dir.workspace}}/CODEBUDDY.md"
+
 # CodeBuddy Skills
 [providers.codebuddy.skills]
 target = "{{dir.workspace}}/.codebuddy/skills/{{skill.name}}/SKILL.md"
