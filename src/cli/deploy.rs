@@ -34,6 +34,7 @@ use crate::utils::path::override_workspace_dir;
 pub(crate) struct DeployStats {
     pub written: usize,
     pub skipped: usize,
+    pub user_edited: usize,
     /// Populated only during `--dry-run`; empty in normal deploys.
     pub dry_run_entries: Vec<DryRunDeployEntry>,
     /// Target paths of symlinked items (for .gitignore fence).
@@ -45,6 +46,7 @@ impl DeployStats {
     fn merge(mut self, other: Self) -> Self {
         self.written += other.written;
         self.skipped += other.skipped;
+        self.user_edited += other.user_edited;
         self.dry_run_entries.extend(other.dry_run_entries);
         self.linked_targets.extend(other.linked_targets);
         self
@@ -153,6 +155,7 @@ fn process_cache_update<T: FeatureTrait>(
         CacheUpdate::UserEditedSkipped { path } => {
             debug!("user-edited skip: path={}", path.display());
             stats.skipped += 1;
+            stats.user_edited += 1;
         }
         CacheUpdate::MergeSkipped { path, reason } => {
             debug!("merge skipped: path={}, reason={}", path.display(), reason);
@@ -485,4 +488,43 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
         .context("unable to save cache")?;
 
     finalize_deploy(&opts, &stats, &cache)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::config::FeatureSettings;
+    use crate::core::features::instruction::InstructionFeature;
+    use crate::utils::dedup::DeployWorkItem;
+
+    // process_cache_update increments user_edited on UserEditedSkipped
+    #[test]
+    fn process_cache_update_user_edited_skipped() {
+        let feature = InstructionFeature::from_string("test").unwrap();
+        let settings = FeatureSettings::default();
+        let work = DeployWorkItem {
+            provider_name: "test".to_string(),
+            settings: &settings,
+            item: &feature,
+            dedup: None,
+        };
+        let cache = Arc::new(Mutex::new(CacheConfig::default()));
+        let mut stats = DeployStats::default();
+
+        process_cache_update(
+            &work,
+            "instruction",
+            "key",
+            CacheUpdate::UserEditedSkipped {
+                path: PathBuf::from("/tmp/test"),
+            },
+            &cache,
+            false,
+            &mut stats,
+        )
+        .unwrap();
+
+        assert_eq!(stats.user_edited, 1);
+        assert_eq!(stats.skipped, 1);
+    }
 }

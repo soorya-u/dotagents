@@ -720,9 +720,14 @@ test.describe("deploy CLI – user-edit protection", () => {
 				"User edited this file.",
 			);
 
-			// Redeploy without --force — file should be preserved
-			const { exitCode } = run(["deploy", "--offline", "--no-gitignore"], d);
-			expect(exitCode).toBe(0);
+			// Redeploy without --force — file should be preserved, exit 1 in non-TTY
+			const { exitCode, stderr } = run(
+				["deploy", "--offline", "--no-gitignore"],
+				d,
+			);
+			expect(exitCode).toBe(1);
+			expect(stderr).toContain("manually edited");
+			expect(stderr).toContain("--force");
 			const afterContent = readFileSync(
 				join(d, ".mycode/instructions.md"),
 				"utf8",

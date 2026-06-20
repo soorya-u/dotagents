@@ -28,10 +28,24 @@ fn write_summary<W: std::io::Write>(stats: &DeployStats, writer: &mut W, tty: bo
             writeln!(writer, "Nothing deployed")
         }
     } else if tty {
+        if stats.user_edited > 0 {
+            writeln!(
+                writer,
+                "✓ {} written, {} skipped, {} edited",
+                stats.written, stats.skipped, stats.user_edited
+            )
+        } else {
+            writeln!(
+                writer,
+                "✓ {} written, {} skipped",
+                stats.written, stats.skipped
+            )
+        }
+    } else if stats.user_edited > 0 {
         writeln!(
             writer,
-            "✓ {} written, {} skipped",
-            stats.written, stats.skipped
+            "{} written, {} skipped, {} edited",
+            stats.written, stats.skipped, stats.user_edited
         )
     } else {
         writeln!(
@@ -60,6 +74,11 @@ pub(crate) fn prompt_gitignore_update(new_path_count: usize) -> bool {
 pub(crate) fn deploy_outro(stats: &DeployStats) -> String {
     if stats.written == 0 && stats.skipped == 0 {
         "Nothing deployed".to_string()
+    } else if stats.user_edited > 0 {
+        format!(
+            "{} written, {} skipped, {} edited",
+            stats.written, stats.skipped, stats.user_edited
+        )
     } else {
         format!("{} written, {} skipped", stats.written, stats.skipped)
     }
@@ -117,7 +136,7 @@ pub(crate) fn finalize_deploy(
 ) -> Result<()> {
     if opts.no_gitignore {
         print_summary(stats);
-        return Ok(());
+        return check_user_edited(stats, opts.force);
     }
 
     let workspace_root = get_workspace_dir().context("unable to get workspace directory")?;
@@ -126,7 +145,7 @@ pub(crate) fn finalize_deploy(
 
     if cache_targets.is_empty() {
         print_summary(stats);
-        return Ok(());
+        return check_user_edited(stats, opts.force);
     }
 
     let relative_paths: Vec<String> = cache_targets
@@ -148,6 +167,16 @@ pub(crate) fn finalize_deploy(
     }
 
     print_summary(stats);
+    check_user_edited(stats, opts.force)
+}
+
+fn check_user_edited(stats: &DeployStats, force: bool) -> Result<()> {
+    if stats.user_edited > 0 && !is_tui_enabled() && !force {
+        return Err(anyhow::anyhow!(
+            "{} file(s) were manually edited. Use --force to override.",
+            stats.user_edited
+        ));
+    }
     Ok(())
 }
 
@@ -161,6 +190,7 @@ mod tests {
         let stats = DeployStats {
             written: 2,
             skipped: 1,
+            user_edited: 0,
             dry_run_entries: vec![],
             linked_targets: vec![],
         };
@@ -178,6 +208,7 @@ mod tests {
         let stats = DeployStats {
             written: 0,
             skipped: 0,
+            user_edited: 0,
             dry_run_entries: vec![],
             linked_targets: vec![],
         };
@@ -186,5 +217,43 @@ mod tests {
         let output = String::from_utf8(buf).unwrap();
         assert!(output.contains("Nothing deployed"));
         assert!(!output.contains("✓"));
+    }
+
+    // non-TTY summary includes edited count when user_edited > 0
+    #[test]
+    fn non_tty_summary_with_user_edited() {
+        let stats = DeployStats {
+            written: 3,
+            skipped: 2,
+            user_edited: 1,
+            dry_run_entries: vec![],
+            linked_targets: vec![],
+        };
+        let mut buf = Vec::new();
+        write_summary(&stats, &mut buf, false);
+        let output = String::from_utf8(buf).unwrap();
+        assert!(output.contains("3 written"));
+        assert!(output.contains("2 skipped"));
+        assert!(output.contains("1 edited"));
+        assert!(!output.contains("✓"));
+    }
+
+    // TTY summary includes edited count when user_edited > 0
+    #[test]
+    fn tty_summary_with_user_edited() {
+        let stats = DeployStats {
+            written: 2,
+            skipped: 1,
+            user_edited: 3,
+            dry_run_entries: vec![],
+            linked_targets: vec![],
+        };
+        let mut buf = Vec::new();
+        write_summary(&stats, &mut buf, true);
+        let output = String::from_utf8(buf).unwrap();
+        assert!(output.contains("✓"));
+        assert!(output.contains("2 written"));
+        assert!(output.contains("1 skipped"));
+        assert!(output.contains("3 edited"));
     }
 }

@@ -196,7 +196,7 @@ pub fn render_feature_with_settings<T: FeatureTrait>(
                 return Ok(CacheUpdate::Skipped);
             }
             Some(_) if !is_mergeable => {
-                warn!(
+                debug!(
                     "Target file {} was manually edited; skipping",
                     target_path.display()
                 );
