@@ -12,7 +12,8 @@
     "aider-desk": {
       "path": "/v1/templates/aider-desk/provider.toml",
       "checksums": {
-        "provider.toml": "0a78119a04d4fcce23d2fdda3a4111c575ed74d08b282d942e67d0963f258a03"
+        "provider.toml": "ce448dabe5fdd88efc2826ff67f3e616fe927ba99ea6ef404faed807803838f4",
+        "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49"
       },
       "name": "Aider Desk",
       "url": "https://aider-desk.com"
@@ -99,7 +100,8 @@
     "codebuddy": {
       "path": "/v1/templates/codebuddy/provider.toml",
       "checksums": {
-        "provider.toml": "d5a623253aa1a7d1eea8e230ac666b3e6f4ec0a3a8a6664390893228456407c1"
+        "provider.toml": "9ae36c15c891d2e6475f5c9b7f3c4c97542e2e4dc8b5655d9d09370f587026f1",
+        "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49"
       },
       "name": "CodeBuddy Code",
       "url": "https://codebuddy.ai"
@@ -264,7 +266,7 @@
     "iflow": {
       "path": "/v1/templates/iflow/provider.toml",
       "checksums": {
-        "provider.toml": "d7853474be309aa31f7b145b33110167a6fba92bff21b2dd4c5b048e5a956ac8",
+        "provider.toml": "9f9b4214b32d4a0f8fab173adc67626375aa120b03b25c213e12e2a1703ddd08",
         "command.hbs": "4070f1c7bb5eaed9cd32406c1cbc918b8a1f4615f4ee4744890ec0c05c398fec",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67"
       },
