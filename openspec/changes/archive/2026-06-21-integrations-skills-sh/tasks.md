@@ -69,6 +69,6 @@
 
 ## 11. Verification
 
-- [x] 11.1 Run `mise check` (cargo fmt + cargo clippy) and fix any issues
-- [x] 11.2 Run `mise tests` (unit + integration + e2e) and fix any failures
+- [x] 11.1 Run `mise check` (cargo fmt + cargo clippy) and resolve any issues
+- [x] 11.2 Run `mise tests` (unit + integration + e2e) and resolve any failures
 - [x] 11.3 Both commands exit 0

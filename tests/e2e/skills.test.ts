@@ -1166,6 +1166,7 @@ test.describe("skills new TUI – T08 interactive prompts", () => {
 		d,
 	);
 	test.use({ program: shellProgram(d, ["skills", "new", "my-skill"]) });
+	test.afterAll(() => cleanup(d));
 
 	test("prompts for description, license, compatibility", async ({
 		terminal,
@@ -1209,6 +1210,7 @@ test.describe("skills rm TUI – T12 confirm Yes", () => {
 		d,
 	);
 	test.use({ program: shellProgram(d, ["skills", "rm", "hello-skill"]) });
+	test.afterAll(() => cleanup(d));
 
 	test("confirm Yes removes the skill", async ({ terminal }) => {
 		await expect(
@@ -1271,7 +1273,7 @@ test.describe("skills add CLI", () => {
 				["skills", "add", "test-skill", "--runner", "yarn"],
 				d,
 				{
-					PATH: "/usr/bin:/bin",
+					PATH: "/nonexistent",
 				},
 			);
 			expect(exitCode).not.toBe(0);
@@ -1296,6 +1298,7 @@ test.describe("skills rm TUI – T13 confirm No", () => {
 		d,
 	);
 	test.use({ program: shellProgram(d, ["skills", "rm", "hello-skill"]) });
+	test.afterAll(() => cleanup(d));
 
 	test("confirm No leaves the skill directory intact", async ({ terminal }) => {
 		await expect(
@@ -1465,7 +1468,7 @@ test.describe("skills add integrations", () => {
 					"vercel-labs/skills@find-skills",
 					"--ci",
 					"--runner",
-					"npx",
+					"npm",
 				],
 				d,
 			);

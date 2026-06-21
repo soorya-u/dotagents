@@ -7,11 +7,13 @@ use crate::cli::deploy::deploy;
 use crate::cli::options::SkillsAddOptions;
 use crate::cli::options::{AddSkillOptions, DeployOptions, RmSkillOptions, SubLsOptions};
 use crate::cli::ui::ls::render_skills;
+use crate::core::config::AppConfig;
 use crate::core::config::CacheConfig;
 use crate::core::features::Feature;
 use crate::core::features::skill::SkillFeature;
 use crate::prelude::*;
 use crate::schema::list_item::ListItem;
+use crate::templates::get_templater;
 use crate::utils::fs::write_file;
 use crate::utils::path::{
     get_application_dir, get_skills_dir, get_workspace_dir, resolve_and_override_workspace,
@@ -165,10 +167,27 @@ pub(crate) fn rm_skill(opts: RmSkillOptions) -> Result<bool> {
     // Provenance check: external skills (in skills-lock.json) delegate to the skills CLI.
     let is_external = crate::integrations::skills_sh::is_external_skill(&opts.name, &app_dir);
 
+    let mut remove_succeeded = true;
     if is_external {
-        crate::integrations::skills_sh::remove(&opts.name, &app_dir)
+        // Resolve runner for remove delegation from config (same resolution as add, but rm has no --runner flag yet)
+        let templater = get_templater()?;
+        let app_config = AppConfig::from_application(templater)?;
+        let explicit_runner = app_config
+            .integrations
+            .as_ref()
+            .and_then(|i| i.skills_sh.as_ref())
+            .and_then(|s| s.package_runner.clone());
+        let runner = explicit_runner
+            .as_ref()
+            .unwrap_or(&crate::integrations::skills_sh::PackageRunner::Npm);
+
+        let removed = crate::integrations::skills_sh::remove(&opts.name, &app_dir, runner)
             .context("failed to remove skill via skills CLI")?;
-        success!("Removed {} (via skills CLI)", skill_dir.display());
+        if !removed {
+            remove_succeeded = false;
+        } else {
+            success!("Removed {} (via skills CLI)", skill_dir.display());
+        }
     } else {
         fs::remove_dir_all(&skill_dir)
             .with_context(|| format!("failed to remove {}", skill_dir.display()))?;
@@ -200,6 +219,9 @@ pub(crate) fn rm_skill(opts: RmSkillOptions) -> Result<bool> {
     maybe_prompt_deploy(opts.deploy, opts.no_deploy)?;
 
     outro("").ok();
+    if !remove_succeeded {
+        bail!("skills CLI reported failure removing {}", opts.name);
+    }
     Ok(true)
 }
 

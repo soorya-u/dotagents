@@ -204,9 +204,12 @@ pub(crate) fn add(opts: SkillsAddOptions) -> Result<bool> {
 }
 
 /// Remove an externally-installed skill by wrapping the `skills` CLI.
-pub(crate) fn remove(skill_name: &str, application_dir: &Path) -> Result<bool> {
-    let runner = PackageRunner::Npm;
-    let args = remove_args(&runner, skill_name);
+pub(crate) fn remove(
+    skill_name: &str,
+    application_dir: &Path,
+    runner: &PackageRunner,
+) -> Result<bool> {
+    let args = remove_args(runner, skill_name);
     let (program, rest) = args
         .split_first()
         .ok_or_else(|| anyhow::anyhow!("runner produced empty args list"))?;
