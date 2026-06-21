@@ -5,22 +5,29 @@
     "{{eventName}}": [
       {{#each eventHooks as |h|}}
       {
-        "type": "{{h.type}}",
-        {{#if h.command}}
-        "bash": "{{h.command}}",
-        {{#if h.commandWindows}}
-        "powershell": "{{h.commandWindows}}",
+        "type": "{{h.type}}"
+        {{#if h.command}},
+        "bash": "{{h.command}}"
+        {{#if h.commandWindows}},
+        "powershell": "{{h.commandWindows}}"
         {{/if}}
         {{/if}}
-        {{#if h.prompt}}
-        "prompt": "{{h.prompt}}",
+        {{#if h.prompt}},
+        "prompt": "{{h.prompt}}"
         {{/if}}
-        {{#if h.cwd}}"cwd": "{{h.cwd}}",{{/if}}
-        {{#if h.env}}"env": {{json h.env}},{{/if}}
-        {{#if h.timeout}}"timeoutSec": {{timeout_to_seconds h.timeout}}{{/if}}
+        {{#if h.cwd}},
+        "cwd": "{{h.cwd}}"
+        {{/if}}
+        {{#if h.env}},
+        "env": {{json h.env}}
+        {{/if}}
+        {{#if h.timeout}},
+        "timeoutSec": {{timeout_to_seconds h.timeout}}
+        {{/if}}
       }{{#unless @last}},{{/unless}}
       {{/each}}
     ]{{#unless @last}},{{/unless}}
     {{/each}}
   }
+}
 }

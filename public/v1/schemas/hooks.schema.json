@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://dotagents.soorya-u.dev/schemas/hooks.schema.json",
+  "$id": "https://dotagents.soorya-u.dev/v1/schemas/hooks.schema.json",
   "title": "DotAgents Lifecycle Hooks Configuration",
   "description": "Schema for .dotagents/hooks.jsonc — single source of truth for AI agent lifecycle hooks (PreToolUse, Stop, etc.). Deployed to 18 providers via per-provider Handlebars templates.",
   "type": "object",

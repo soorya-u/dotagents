@@ -1,19 +1,23 @@
 {
-  "<hookName>": {
-    {{#if this.enabled}} "enabled": {{this.enabled}}, {{/if}}
-    "{{event}}": [
-      {{#each this as |h|}}
-      {
-        {{#if h.matcher}}"matcher": "{{h.matcher}}",{{/if}}
-        "hooks": [
-          {
-            "type": "{{h.type}}",
-            {{#if h.command}}"command": "{{h.command}}",{{/if}}
-            {{#if h.timeout}}"timeout": {{timeout_to_seconds h.timeout}}{{/if}}
-          }
-        ]
-      }
-      {{/each}}
-    ]
-  }
+{{#each this as |eventHooks eventName|}}
+{{#each eventHooks as |h|}}
+{{#if h.name}}
+"{{h.name}}": {
+  {{#if h.enabled}}"enabled": {{h.enabled}},{{/if}}
+  "{{eventName}}": [
+    {
+      {{#if h.matcher}}"matcher": "{{h.matcher}}",{{/if}}
+      "hooks": [
+        {
+          "type": "{{h.type}}"
+          {{#if h.command}}, "command": "{{h.command}}"{{/if}}
+          {{#if h.timeout}}, "timeout": {{timeout_to_seconds h.timeout}}{{/if}}
+        }
+      ]
+    }
+  ]
+}{{#unless @last}},{{/unless}}
+{{/if}}
+{{/each}}
+{{/each}}
 }

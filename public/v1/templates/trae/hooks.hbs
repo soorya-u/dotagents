@@ -5,22 +5,22 @@
       {{#each eventHooks as |h|}}
       {
         {{#if h.matcher}}
-        "matcher": "{{h.matcher}}",
+        "matcher": {{json h.matcher}},
         {{/if}}
         "hooks": [
           {
-            "type": "{{h.type}}"
+            "type": {{json h.type}}
             {{#if h.command}},
-            "command": "{{h.command}}"
+            "command": {{json h.command}}
             {{/if}}
             {{#if h.commandWindows}},
-            "command": "{{h.commandWindows}}"
+            "commandWindows": {{json h.commandWindows}}
             {{/if}}
             {{#if h.prompt}},
-            "prompt": "{{h.prompt}}"
+            "prompt": {{json h.prompt}}
             {{/if}}
             {{#if h.url}},
-            "url": "{{h.url}}"
+            "url": {{json h.url}}
             {{/if}}
             {{#if h.headers}},
             "headers": {{json h.headers}}

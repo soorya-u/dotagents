@@ -23,7 +23,8 @@ event = "{{eventName}}"
 {{#if h.env}}env = {{json h.env}}
 {{/if}}
 {{#if h.extra}}
-{{#each h.extra as |v k|}}{{k}} = {{json v}}
+{{#each h.extra as |v k|}}
+{{k}} = {{json v}}
 {{/each}}
 {{/if}}
 {{/each}}

@@ -6,12 +6,12 @@
       "description": "prevent rm -rf in workspace",
       "event": "PreToolUse",
       "matcher": "Bash",
-      "enabled": true,
+      "enabled": false,
       "type": "command",
       "command": "./scripts/guard.sh",
       "commandWindows": ".\\scripts\\guard.ps1",
       "timeout": 5000,
-      "onFailure": "fail-closed"
+      "onFailure": "fail-open"
     }
   ]
 }

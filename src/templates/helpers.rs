@@ -746,4 +746,49 @@ mod tests {
         let result = handlebars.render("test", &data).unwrap();
         assert_eq!(result, "0");
     }
+
+    #[test]
+    fn test_timeout_to_seconds_missing_param_errors() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("timeout_to_seconds", Box::new(TimeoutToSecondsHelper));
+
+        let template = "{{timeout_to_seconds}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({});
+        let result = handlebars.render("test", &data);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_timeout_to_seconds_non_number_errors() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("timeout_to_seconds", Box::new(TimeoutToSecondsHelper));
+
+        let template = "{{timeout_to_seconds t}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"t": "not-a-number"});
+        let result = handlebars.render("test", &data);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_timeout_to_seconds_negative_normalizes_to_zero() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("timeout_to_seconds", Box::new(TimeoutToSecondsHelper));
+
+        let template = "{{timeout_to_seconds t}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"t": -123});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, "0");
+    }
 }

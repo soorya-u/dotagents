@@ -92,6 +92,7 @@ pub(crate) fn resolve_provider_defaults(
         Feature::Mcp,
         Feature::Skill,
         Feature::AgentIgnore,
+        Feature::Hook,
     ];
 
     for provider_name in app_config.targets.clone() {

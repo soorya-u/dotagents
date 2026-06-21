@@ -895,7 +895,19 @@ test.describe("deploy CLI – hooks cursor standalone", () => {
 				: ".dotagents";
 			writeFileSync(
 				join(d, root, "hooks.jsonc"),
-				readFileSync("/tmp/hooks-deploy-cursor.json", "utf8"),
+				JSON.stringify({
+					$schema:
+						"https://dotagents.soorya-u.dev/v1/schemas/hooks.schema.json",
+					hooks: [
+						{
+							event: "PreToolUse",
+							type: "command",
+							command: "./x.sh",
+							timeout: 5500,
+							matcher: "Bash",
+						},
+					],
+				}),
 			);
 			const cfg = join(d, root, "local.config.toml");
 			let c = readFileSync(cfg, "utf8");
@@ -928,7 +940,19 @@ test.describe("deploy CLI – hooks gemini embedded merge", () => {
 				: ".dotagents";
 			writeFileSync(
 				join(d, root, "hooks.jsonc"),
-				readFileSync("/tmp/hooks-deploy-gemini.json", "utf8"),
+				JSON.stringify({
+					$schema:
+						"https://dotagents.soorya-u.dev/v1/schemas/hooks.schema.json",
+					hooks: [
+						{
+							event: "PreToolUse",
+							type: "command",
+							command: "./x.sh",
+							timeout: 5500,
+							matcher: "Bash",
+						},
+					],
+				}),
 			);
 			mkdirSync(join(d, ".gemini"), { recursive: true });
 			writeFileSync(join(d, ".gemini/settings.json"), '{"model":"gemini-2.5"}');
@@ -963,7 +987,18 @@ test.describe("deploy CLI – hooks kimi toml", () => {
 				: ".dotagents";
 			writeFileSync(
 				join(d, root, "hooks.jsonc"),
-				readFileSync("/tmp/hooks-deploy-kimi.json", "utf8"),
+				JSON.stringify({
+					$schema:
+						"https://dotagents.soorya-u.dev/v1/schemas/hooks.schema.json",
+					hooks: [
+						{
+							event: "PreToolUse",
+							type: "command",
+							command: "./x.sh",
+							timeout: 5000,
+						},
+					],
+				}),
 			);
 			const cfg = join(d, root, "local.config.toml");
 			let c = readFileSync(cfg, "utf8");
@@ -995,7 +1030,19 @@ test.describe("deploy CLI – enabled false omitted", () => {
 				: ".dotagents";
 			writeFileSync(
 				join(d, root, "hooks.jsonc"),
-				readFileSync("/tmp/hooks-disabled.json", "utf8"),
+				JSON.stringify({
+					$schema:
+						"https://dotagents.soorya-u.dev/v1/schemas/hooks.schema.json",
+					hooks: [
+						{
+							event: "PreToolUse",
+							type: "command",
+							command: "guard",
+							matcher: "Bash",
+							timeout: 2000,
+						},
+					],
+				}),
 			);
 			const cfg = join(d, root, "local.config.toml");
 			let c = readFileSync(cfg, "utf8");
@@ -1025,7 +1072,11 @@ test.describe("deploy CLI – extension event silent drop", () => {
 				: ".dotagents";
 			writeFileSync(
 				join(d, root, "hooks.jsonc"),
-				readFileSync("/tmp/hooks-interrupt.json", "utf8"),
+				JSON.stringify({
+					$schema:
+						"https://dotagents.soorya-u.dev/v1/schemas/hooks.schema.json",
+					hooks: [{ event: "Interrupt", type: "command", command: "x" }],
+				}),
 			);
 			const cfg = join(d, root, "local.config.toml");
 			let c = readFileSync(cfg, "utf8");
@@ -1064,7 +1115,18 @@ test.describe("deploy CLI – mcp_tool type filter", () => {
 				: ".dotagents";
 			writeFileSync(
 				join(d, root, "hooks.jsonc"),
-				readFileSync("/tmp/hooks-mcp-tool.json", "utf8"),
+				JSON.stringify({
+					$schema:
+						"https://dotagents.soorya-u.dev/v1/schemas/hooks.schema.json",
+					hooks: [
+						{
+							event: "PreToolUse",
+							type: "mcp_tool",
+							server: "fs",
+							tool: "read",
+						},
+					],
+				}),
 			);
 			const cfg = join(d, root, "local.config.toml");
 			let c = readFileSync(cfg, "utf8");
@@ -1104,7 +1166,19 @@ test.describe("deploy CLI – codex trust-hash warning", () => {
 				: ".dotagents";
 			writeFileSync(
 				join(d, root, "hooks.jsonc"),
-				readFileSync("/tmp/hooks-deploy-cursor.json", "utf8"),
+				JSON.stringify({
+					$schema:
+						"https://dotagents.soorya-u.dev/v1/schemas/hooks.schema.json",
+					hooks: [
+						{
+							event: "PreToolUse",
+							type: "command",
+							command: "./x.sh",
+							timeout: 5500,
+							matcher: "Bash",
+						},
+					],
+				}),
 			);
 			const cfg = join(d, root, "local.config.toml");
 			let c = readFileSync(cfg, "utf8");

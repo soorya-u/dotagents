@@ -4,19 +4,19 @@
     "{{eventName}}": [
       {{#each eventHooks as |h|}}
       {
-        "matcher": "{{h.matcher}}",
+        {{#if h.matcher}}"matcher": "{{h.matcher}}",{{/if}}
         "hooks": [
           {
             "type": "{{h.type}}"
             {{#if h.command}}, "command": "{{h.command}}"{{/if}}
-            {{#if h.commandWindows}}, "command": "{{h.commandWindows}}"{{/if}}
+            {{#if h.commandWindows}}, "commandWindows": "{{h.commandWindows}}"{{/if}}
             {{#if h.prompt}}, "prompt": "{{h.prompt}}"{{/if}}
             {{#if h.url}}, "url": "{{h.url}}"{{/if}}
             {{#if h.headers}}, "headers": {{json h.headers}}{{/if}}
             {{#if h.server}}, "server": "{{h.server}}"{{/if}}
             {{#if h.tool}}, "tool": "{{h.tool}}"{{/if}}
             {{#if h.arguments}}, "arguments": {{json h.arguments}}{{/if}}
-            {{#if h.timeout}}, "timeout": {{h.timeout}}{{/if}}
+            {{#if h.timeout}}, "timeout": {{timeout_to_seconds h.timeout}}{{/if}}
             {{#if h.onFailure}}, "onFailure": "{{h.onFailure}}"{{/if}}
             {{#if h.env}}, "env": {{json h.env}}{{/if}}
             {{#if h.loopLimit}}, "loopLimit": {{h.loopLimit}}{{/if}}
