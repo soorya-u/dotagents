@@ -79,6 +79,8 @@ pub(crate) enum Feature {
     Skill,
     /// Enable Agent Ignore Files.
     AgentIgnore,
+    /// Enable lifecycle hooks (PreToolUse, Stop, etc.).
+    Hook,
 }
 
 /// Subcommands for `dotagents skills`.
@@ -223,6 +225,10 @@ pub(crate) struct InitOptions {
     /// Provider targets to deploy to.
     #[clap(long, value_delimiter = ',')]
     pub targets: Option<Vec<String>>,
+
+    /// Skip scaffolding hooks (hooks.jsonc and the hooks feature).
+    #[clap(long)]
+    pub no_hooks: bool,
 }
 
 impl InitOptions {
@@ -416,8 +422,8 @@ mod tests {
             force: false,
             template: None,
             targets: None,
+            no_hooks: false,
         };
-
         assert!(init_options.features.is_none());
         assert!(init_options.template.is_none());
         assert!(init_options.targets.is_none());
@@ -450,12 +456,14 @@ mod tests {
             force: false,
             template: None,
             targets: None,
+            no_hooks: false,
         };
         assert!(!opts.has_feature(Feature::Command));
         assert!(!opts.has_feature(Feature::Instruction));
         assert!(!opts.has_feature(Feature::Mcp));
         assert!(!opts.has_feature(Feature::Skill));
         assert!(!opts.has_feature(Feature::AgentIgnore));
+        assert!(!opts.has_feature(Feature::Hook));
     }
 
     #[test]
@@ -466,12 +474,14 @@ mod tests {
             force: false,
             template: None,
             targets: None,
+            no_hooks: false,
         };
         assert!(opts.has_feature(Feature::Command));
         assert!(!opts.has_feature(Feature::Mcp));
         assert!(!opts.has_feature(Feature::Instruction));
         assert!(!opts.has_feature(Feature::Skill));
         assert!(!opts.has_feature(Feature::AgentIgnore));
+        assert!(!opts.has_feature(Feature::Hook));
     }
 
     #[test]
@@ -484,16 +494,19 @@ mod tests {
                 Feature::Mcp,
                 Feature::Skill,
                 Feature::AgentIgnore,
+                Feature::Hook,
             ]),
             force: false,
             template: None,
             targets: None,
+            no_hooks: false,
         };
         assert!(opts.has_feature(Feature::Command));
         assert!(opts.has_feature(Feature::Instruction));
         assert!(opts.has_feature(Feature::Mcp));
         assert!(opts.has_feature(Feature::Skill));
         assert!(opts.has_feature(Feature::AgentIgnore));
+        assert!(opts.has_feature(Feature::Hook));
     }
 
     #[test]

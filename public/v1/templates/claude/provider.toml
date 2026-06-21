@@ -14,3 +14,7 @@ target = "{{dir.workspace}}/CLAUDE.md"
 [providers.claude.mcp]
 template = "https://dotagents.soorya-u.dev/v1/templates/claude/mcp.hbs"
 target = "{{dir.workspace}}/.mcp.json"
+
+[providers.claude.hooks]
+template = "https://dotagents.soorya-u.dev/v1/templates/claude/hooks.hbs"
+target = "{{dir.workspace}}/.claude/hooks.json"

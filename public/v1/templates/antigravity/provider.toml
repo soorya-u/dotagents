@@ -1,3 +1,6 @@
 # Antigravity Skills
 [providers.antigravity.skills]
 target = "{{dir.workspace}}/.antigravity/skills/{{skill.name}}/SKILL.md"
+[providers.antigravity.hooks]
+template = "https://dotagents.soorya-u.dev/v1/templates/antigravity/hooks.hbs"
+target = "{{dir.workspace}}/.antigravity/hooks.json"

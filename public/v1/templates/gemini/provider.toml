@@ -17,5 +17,9 @@ target = "{{dir.workspace}}/GEMINI.md"
 template = "https://dotagents.soorya-u.dev/v1/templates/gemini/mcp.hbs"
 target = "{{dir.workspace}}/.gemini/settings.json"
 
+[providers.gemini.hooks]
+template = "https://dotagents.soorya-u.dev/v1/templates/gemini/hooks.hbs"
+target = "{{dir.workspace}}/.gemini/settings.json"
+
 [providers.gemini.ignore]
 target = "{{dir.workspace}}/.geminiignore"

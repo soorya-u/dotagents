@@ -16,3 +16,6 @@ target = "{{dir.workspace}}/.qoder/commands/{{command.name}}.md"
 [providers.qoder.mcp]
 template = "https://dotagents.soorya-u.dev/v1/templates/qoder/mcp.hbs"
 target = "{{dir.workspace}}/.mcp.json"
+[providers.qoder.hooks]
+template = "https://dotagents.soorya-u.dev/v1/templates/qoder/hooks.hbs"
+target = "{{dir.workspace}}/.qoder/hooks.json"

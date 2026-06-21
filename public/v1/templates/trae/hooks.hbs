@@ -1,0 +1,67 @@
+{
+  "hooks": {
+    {{#each this as |eventHooks eventName|}}
+    "{{eventName}}": [
+      {{#each eventHooks as |h|}}
+      {
+        {{#if h.matcher}}
+        "matcher": {{json h.matcher}},
+        {{/if}}
+        "hooks": [
+          {
+            "type": {{json h.type}}
+            {{#if h.command}},
+            "command": {{json h.command}}
+            {{/if}}
+            {{#if h.commandWindows}},
+            "commandWindows": {{json h.commandWindows}}
+            {{/if}}
+            {{#if h.prompt}},
+            "prompt": {{json h.prompt}}
+            {{/if}}
+            {{#if h.url}},
+            "url": {{json h.url}}
+            {{/if}}
+            {{#if h.headers}},
+            "headers": {{json h.headers}}
+            {{/if}}
+            {{#if h.server}},
+            "server": "{{h.server}}"
+            {{/if}}
+            {{#if h.tool}},
+            "tool": "{{h.tool}}"
+            {{/if}}
+            {{#if h.arguments}},
+            "arguments": {{json h.arguments}}
+            {{/if}}
+            {{#if h.timeout}},
+            "timeout": {{timeout_to_seconds h.timeout}}
+            {{/if}}
+            {{#if h.onFailure}},
+            "onFailure": "{{h.onFailure}}"
+            {{/if}}
+            {{#if h.env}},
+            "env": {{json h.env}}
+            {{/if}}
+            {{#if h.loopLimit}},
+            "loopLimit": {{h.loopLimit}}
+            {{/if}}
+            {{#if h.statusMessage}},
+            "statusMessage": "{{h.statusMessage}}"
+            {{/if}}
+            {{#if h.async}},
+            "async": {{h.async}}
+            {{/if}}
+            {{#if h.extra}}
+            {{#each h.extra as |v k|}},
+            "{{k}}": {{json v}}
+            {{/each}}
+            {{/if}}
+          }
+        ]
+      }{{#unless @last}},{{/unless}}
+      {{/each}}
+    ]{{#unless @last}},{{/unless}}
+    {{/each}}
+  }
+}

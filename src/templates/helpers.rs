@@ -246,6 +246,45 @@ fn to_snake_case(value: &str) -> String {
     result.trim_matches('_').to_string()
 }
 
+#[derive(Clone, Copy)]
+pub struct TimeoutToSecondsHelper;
+
+impl HelperDef for TimeoutToSecondsHelper {
+    fn call<'reg: 'rc, 'rc>(
+        &self,
+        h: &Helper<'rc>,
+        _: &'reg Handlebars<'reg>,
+        _: &'rc Context,
+        _: &mut RenderContext<'reg, 'rc>,
+        out: &mut dyn Output,
+    ) -> HelperResult {
+        let param = h.param(0).ok_or_else(|| {
+            RenderError::from(RenderErrorReason::ParamNotFoundForIndex(
+                "timeout_to_seconds",
+                0,
+            ))
+        })?;
+        let val = param.value();
+        let ms = if let Some(n) = val.as_u64() {
+            n
+        } else if let Some(n) = val.as_i64() {
+            if n < 0 { 0 } else { n as u64 }
+        } else if let Some(f) = val.as_f64() {
+            if f <= 0.0 { 0 } else { f.ceil() as u64 }
+        } else {
+            return Err(RenderError::from(RenderErrorReason::NestedError(Box::new(
+                std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    "{{timeout_to_seconds}} helper only supports numbers",
+                ),
+            ))));
+        };
+        let seconds = if ms == 0 { 0 } else { ms.div_ceil(1000) };
+        out.write(&seconds.to_string())?;
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -646,5 +685,110 @@ mod tests {
         let data = json!({"value": 42});
         let result = handlebars.render("test", &data);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_timeout_to_seconds_exact() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("timeout_to_seconds", Box::new(TimeoutToSecondsHelper));
+
+        let template = "{{timeout_to_seconds t}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"t": 5000});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, "5");
+    }
+
+    #[test]
+    fn test_timeout_to_seconds_ceiling() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("timeout_to_seconds", Box::new(TimeoutToSecondsHelper));
+
+        let template = "{{timeout_to_seconds t}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"t": 5500});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, "6");
+    }
+
+    #[test]
+    fn test_timeout_to_seconds_subsecond() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("timeout_to_seconds", Box::new(TimeoutToSecondsHelper));
+
+        let template = "{{timeout_to_seconds t}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"t": 999});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, "1");
+    }
+
+    #[test]
+    fn test_timeout_to_seconds_zero() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("timeout_to_seconds", Box::new(TimeoutToSecondsHelper));
+
+        let template = "{{timeout_to_seconds t}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"t": 0});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, "0");
+    }
+
+    #[test]
+    fn test_timeout_to_seconds_missing_param_errors() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("timeout_to_seconds", Box::new(TimeoutToSecondsHelper));
+
+        let template = "{{timeout_to_seconds}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({});
+        let result = handlebars.render("test", &data);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_timeout_to_seconds_non_number_errors() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("timeout_to_seconds", Box::new(TimeoutToSecondsHelper));
+
+        let template = "{{timeout_to_seconds t}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"t": "not-a-number"});
+        let result = handlebars.render("test", &data);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_timeout_to_seconds_negative_normalizes_to_zero() {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_helper("timeout_to_seconds", Box::new(TimeoutToSecondsHelper));
+
+        let template = "{{timeout_to_seconds t}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({"t": -123});
+        let result = handlebars.render("test", &data).unwrap();
+        assert_eq!(result, "0");
     }
 }

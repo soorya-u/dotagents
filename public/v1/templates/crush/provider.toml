@@ -6,3 +6,6 @@ target = "{{dir.workspace}}/.agents/skills/{{skill.name}}/SKILL.md"
 [providers.crush.instructions]
 template = "https://dotagents.soorya-u.dev/v1/templates/crush/instruction.hbs"
 target = "{{dir.workspace}}/AGENTS.md"
+[providers.crush.hooks]
+template = "https://dotagents.soorya-u.dev/v1/templates/crush/hooks.hbs"
+target = "{{dir.workspace}}/.crush/hooks.json"

@@ -72,6 +72,9 @@ pub(crate) const MCP_MOCK: &str = r#"{
 
 pub(crate) const AGENTIGNORE_MOCK: &str = ".env.prod";
 
+/// Starter hooks.jsonc mock content used during `init`.
+pub(crate) const HOOKS_MOCK: &str = include_str!("../mocks/hooks.jsonc");
+
 /// Default .env.example content.
 pub(crate) const ENV_EXAMPLE: &str = "APP_NAME=dotagents\n";
 

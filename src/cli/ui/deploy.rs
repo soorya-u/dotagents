@@ -193,6 +193,7 @@ mod tests {
             user_edited: 0,
             dry_run_entries: vec![],
             linked_targets: vec![],
+            hooks_written: 0,
         };
         let mut buf = Vec::new();
         write_summary(&stats, &mut buf, false);
@@ -211,6 +212,7 @@ mod tests {
             user_edited: 0,
             dry_run_entries: vec![],
             linked_targets: vec![],
+            hooks_written: 0,
         };
         let mut buf = Vec::new();
         write_summary(&stats, &mut buf, false);
@@ -228,6 +230,7 @@ mod tests {
             user_edited: 1,
             dry_run_entries: vec![],
             linked_targets: vec![],
+            hooks_written: 0,
         };
         let mut buf = Vec::new();
         write_summary(&stats, &mut buf, false);
@@ -247,6 +250,7 @@ mod tests {
             user_edited: 3,
             dry_run_entries: vec![],
             linked_targets: vec![],
+            hooks_written: 0,
         };
         let mut buf = Vec::new();
         write_summary(&stats, &mut buf, true);

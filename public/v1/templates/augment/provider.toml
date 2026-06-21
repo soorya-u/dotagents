@@ -1,0 +1,3 @@
+[providers.augment.hooks]
+template = "https://dotagents.soorya-u.dev/v1/templates/augment/hooks.hbs"
+target = "{{dir.workspace}}/.augment/hooks.json"

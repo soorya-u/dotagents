@@ -19,3 +19,6 @@ target = "{{dir.workspace}}/.junie/mcp/mcp.json"
 
 [providers.junie.ignore]
 target = "{{dir.workspace}}/.aiignore"
+[providers.junie.hooks]
+template = "https://dotagents.soorya-u.dev/v1/templates/junie/hooks.hbs"
+target = "{{dir.workspace}}/.junie/hooks.json"

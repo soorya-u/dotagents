@@ -15,8 +15,8 @@ use crate::core::config::{
     AppConfig, CACHE_SINGLETON_KEY, CacheConfig, CacheEntry, CacheUpdate, FeatureMode,
 };
 use crate::core::features::{
-    Feature, command::CommandFeature, ignore::IgnoreFeature, instruction::InstructionFeature,
-    mcp::McpFeature, skill::SkillFeature, traits::FeatureTrait,
+    Feature, command::CommandFeature, hook::HookFeature, ignore::IgnoreFeature,
+    instruction::InstructionFeature, mcp::McpFeature, skill::SkillFeature, traits::FeatureTrait,
 };
 use crate::templates::variables::set_env_paths;
 use crate::templates::{
@@ -39,6 +39,8 @@ pub(crate) struct DeployStats {
     pub dry_run_entries: Vec<DryRunDeployEntry>,
     /// Target paths of symlinked items (for .gitignore fence).
     pub linked_targets: Vec<PathBuf>,
+    /// Number of hook files written this run (for trust-hash warnings).
+    pub hooks_written: usize,
 }
 
 impl DeployStats {
@@ -47,6 +49,7 @@ impl DeployStats {
         self.written += other.written;
         self.skipped += other.skipped;
         self.user_edited += other.user_edited;
+        self.hooks_written += other.hooks_written;
         self.dry_run_entries.extend(other.dry_run_entries);
         self.linked_targets.extend(other.linked_targets);
         self
@@ -392,6 +395,14 @@ fn deploy_all_features(ctx: &DeployContext<'_>) -> Result<DeployStats> {
         McpFeature::from_application().map(|mcp| vec![mcp])
     })?);
 
+    let hook_stats = deploy_feature::<HookFeature>(ctx, &Feature::Hook, || {
+        HookFeature::from_application().map(|h| vec![h])
+    })?;
+    // Capture hook-specific write count for trust-hash warnings (do not rely on global stats.written).
+    let mut hook_stats = hook_stats;
+    hook_stats.hooks_written = hook_stats.written;
+    stats = stats.merge(hook_stats);
+
     stats = stats.merge(deploy_feature::<InstructionFeature>(
         ctx,
         &Feature::Instruction,
@@ -486,7 +497,25 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
         .save()
         .context("unable to save cache")?;
 
-    finalize_deploy(&opts, &stats, &cache)
+    finalize_deploy(&opts, &stats, &cache)?;
+
+    // Trust-hash warning for hooks (codex, claude, trae) — only when hook files were written for configured providers.
+    const TRUST_HASH_PROVIDERS: &[&str] = &["codex", "claude", "trae"];
+    if stats.hooks_written > 0 {
+        for p in TRUST_HASH_PROVIDERS {
+            if app_config
+                .get_provider_feature_settings(&Feature::Hook)
+                .contains_key(*p)
+            {
+                warn!(
+                    "{}: re-trust required — run /hooks in {} to review changed hooks",
+                    p, p
+                );
+            }
+        }
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]

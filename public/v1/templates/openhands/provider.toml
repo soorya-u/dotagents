@@ -6,3 +6,6 @@ target = "{{dir.workspace}}/.openhands/skills/{{skill.name}}/SKILL.md"
 [providers.openhands.instructions]
 template = "https://dotagents.soorya-u.dev/v1/templates/openhands/instruction.hbs"
 target = "{{dir.workspace}}/AGENTS.md"
+[providers.openhands.hooks]
+template = "https://dotagents.soorya-u.dev/v1/templates/openhands/hooks.hbs"
+target = "{{dir.workspace}}/.openhands/hooks.json"

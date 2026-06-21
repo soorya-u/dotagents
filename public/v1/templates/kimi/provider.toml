@@ -11,3 +11,7 @@ target = "{{dir.workspace}}/.kimi/skills/{{skill.name}}/SKILL.md"
 # [providers.kimi.mcp]
 # template = "https://dotagents.soorya-u.dev/v1/templates/kimi/mcp.hbs"
 # target = "{{dir.home}}/.kimi/mcp.json"
+
+[providers.kimi.hooks]
+template = "https://dotagents.soorya-u.dev/v1/templates/kimi/hooks.hbs"
+target = "{{dir.workspace}}/.kimi-code/config.toml"

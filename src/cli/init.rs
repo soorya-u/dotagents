@@ -12,13 +12,13 @@ use crate::{
         dir::{COMMANDS_DIR, ROOT_DIR, SKILLS_DIR},
         file::{
             AGENTIGNORE_FILE, ENV_EXAMPLE_FILE, ENV_FILE, GITIGNORE_FILE, GLOBAL_CONFIG_FILE,
-            INSTRUCTIONS_FILE, LOCAL_CONFIG_FILE, MCP_FILE, SKILL_FILE,
+            HOOKS_FILE, INSTRUCTIONS_FILE, LOCAL_CONFIG_FILE, MCP_FILE, SKILL_FILE,
         },
         mocks,
     },
     core::features::{
-        command::CommandFeature, ignore::IgnoreFeature, instruction::InstructionFeature,
-        mcp::McpFeature, skill::SkillFeature,
+        command::CommandFeature, hook::HookFeature, ignore::IgnoreFeature,
+        instruction::InstructionFeature, mcp::McpFeature, skill::SkillFeature,
     },
     utils::{fs::write_file, tui::is_tui_enabled},
 };
@@ -96,6 +96,13 @@ pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
         }
     }
 
+    // --no-hooks: strip hook from features (CLI-provided list or wizard result) so hooks.jsonc and feature are excluded
+    if opts.no_hooks
+        && let Some(ref mut feats) = opts.features
+    {
+        feats.retain(|f| *f != Feature::Hook);
+    }
+
     // Ensure the workspace root exists before creating .dotagents inside it.
     fs::create_dir_all(&workspace).context("failed to create workspace directory")?;
 
@@ -149,6 +156,8 @@ pub(super) fn initialize_agents_dir(mut opts: InitOptions) -> Result<()> {
         .with_skip_if(|opts| !opts.has_feature(Feature::Skill)),
         InitFile::new(AGENTIGNORE_FILE, IgnoreFeature::mock())
             .with_skip_if(|opts| !opts.has_feature(Feature::AgentIgnore)),
+        InitFile::new(HOOKS_FILE, HookFeature::mock())
+            .with_skip_if(|opts| !opts.has_feature(Feature::Hook) || opts.no_hooks),
         // Template files — only written for the Advanced template.
         InitFile::new(
             Path::new("templates").join("mycode").join("command.hbs"),
@@ -195,6 +204,7 @@ mod tests {
             force: false,
             template: None,
             targets: None,
+            no_hooks: false,
         }
     }
 
@@ -305,6 +315,7 @@ mod tests {
                 Feature::Instruction,
                 Feature::Mcp,
                 Feature::Skill,
+                Feature::Hook,
             ]),
             ..default_opts()
         };
@@ -329,6 +340,7 @@ mod tests {
                 Feature::Instruction,
                 Feature::Mcp,
                 Feature::Skill,
+                Feature::Hook,
             ]),
             ..default_opts()
         };

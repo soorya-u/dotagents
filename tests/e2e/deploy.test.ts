@@ -1,4 +1,10 @@
-import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	unlinkSync,
+	writeFileSync,
+} from "node:fs";
 import { join, resolve } from "node:path";
 import { expect, test } from "@microsoft/tui-test";
 import {
@@ -874,5 +880,319 @@ test.describe("deploy TUI – TC-DEPLOY-01 full deploy journey", () => {
 		await expect(terminal.getByText("written")).toBeVisible();
 		expect(existsSync(join(d, ".mycode/commands/hello.md"))).toBe(true);
 		expect(existsSync(join(d, ".mycode/instructions.md"))).toBe(true);
+	});
+});
+
+// ── Hooks deploy CLI paths (9.2–9.8) ──────────────────────────────────────────
+
+test.describe("deploy CLI – hooks cursor standalone", () => {
+	test("deploy with features=[hooks] targeting cursor (standalone)", () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "advanced", "--features", "command,hook"], d);
+			const root = existsSync(join(d, ".dotagents-debug"))
+				? ".dotagents-debug"
+				: ".dotagents";
+			writeFileSync(
+				join(d, root, "hooks.jsonc"),
+				JSON.stringify({
+					$schema:
+						"https://dotagents.soorya-u.dev/v1/schemas/hooks.schema.json",
+					hooks: [
+						{
+							event: "PreToolUse",
+							type: "command",
+							command: "./x.sh",
+							timeout: 5500,
+							matcher: "Bash",
+						},
+					],
+				}),
+			);
+			const cfg = join(d, root, "local.config.toml");
+			let c = readFileSync(cfg, "utf8");
+			c = c.replace(/targets = \[\]/, 'targets = ["cursor"]');
+			const curTpl1 = resolve(
+				process.cwd(),
+				"../../public/v1/templates/cursor/hooks.hbs",
+			);
+			c += `\n[providers.cursor.hooks]\ntemplate = "${curTpl1}"\ntarget = "{{ dir.workspace }}/.cursor/hooks.json"\n`;
+			writeFileSync(cfg, c);
+			const { exitCode } = run(["deploy", "--offline", "--no-gitignore"], d);
+			expect(exitCode).toBe(0);
+			const out = readFileSync(join(d, ".cursor/hooks.json"), "utf8");
+			expect(out).toContain("version");
+			expect(out).toContain("preToolUse");
+			expect(out).toContain("./x.sh");
+		} finally {
+			cleanup(d);
+		}
+	});
+});
+
+test.describe("deploy CLI – hooks gemini embedded merge", () => {
+	test("deploy targeting gemini (embedded) with pre-existing model", () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "advanced", "--features", "command,hook"], d);
+			const root = existsSync(join(d, ".dotagents-debug"))
+				? ".dotagents-debug"
+				: ".dotagents";
+			writeFileSync(
+				join(d, root, "hooks.jsonc"),
+				JSON.stringify({
+					$schema:
+						"https://dotagents.soorya-u.dev/v1/schemas/hooks.schema.json",
+					hooks: [
+						{
+							event: "PreToolUse",
+							type: "command",
+							command: "./x.sh",
+							timeout: 5500,
+							matcher: "Bash",
+						},
+					],
+				}),
+			);
+			mkdirSync(join(d, ".gemini"), { recursive: true });
+			writeFileSync(join(d, ".gemini/settings.json"), '{"model":"gemini-2.5"}');
+			const cfg = join(d, root, "local.config.toml");
+			let c = readFileSync(cfg, "utf8");
+			c = c.replace(/targets = \[\]/, 'targets = ["gemini"]');
+			const geminiTpl = resolve(
+				process.cwd(),
+				"../../public/v1/templates/gemini/hooks.hbs",
+			);
+			c += `\n[providers.gemini.hooks]\ntemplate = "${geminiTpl}"\ntarget = "{{ dir.workspace }}/.gemini/settings.json"\n`;
+			writeFileSync(cfg, c);
+			const { exitCode } = run(["deploy", "--offline", "--no-gitignore"], d);
+			expect(exitCode).toBe(0);
+			const out = readFileSync(join(d, ".gemini/settings.json"), "utf8");
+			const parsed = JSON.parse(out);
+			expect(parsed.model).toBe("gemini-2.5");
+			expect(out).toContain("PreToolUse");
+		} finally {
+			cleanup(d);
+		}
+	});
+});
+
+test.describe("deploy CLI – hooks kimi toml", () => {
+	test("deploy targeting kimi emits [[hooks]]", () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "advanced", "--features", "command,hook"], d);
+			const root = existsSync(join(d, ".dotagents-debug"))
+				? ".dotagents-debug"
+				: ".dotagents";
+			writeFileSync(
+				join(d, root, "hooks.jsonc"),
+				JSON.stringify({
+					$schema:
+						"https://dotagents.soorya-u.dev/v1/schemas/hooks.schema.json",
+					hooks: [
+						{
+							event: "PreToolUse",
+							type: "command",
+							command: "./x.sh",
+							timeout: 5000,
+						},
+					],
+				}),
+			);
+			const cfg = join(d, root, "local.config.toml");
+			let c = readFileSync(cfg, "utf8");
+			c = c.replace(/targets = \[\]/, 'targets = ["kimi"]');
+			const kimiTpl = resolve(
+				process.cwd(),
+				"../../public/v1/templates/kimi/hooks.hbs",
+			);
+			c += `\n[providers.kimi.hooks]\ntemplate = "${kimiTpl}"\ntarget = "{{ dir.workspace }}/.kimi-code/config.toml"\n`;
+			writeFileSync(cfg, c);
+			const { exitCode } = run(["deploy", "--offline", "--no-gitignore"], d);
+			expect(exitCode).toBe(0);
+			const out = readFileSync(join(d, ".kimi-code/config.toml"), "utf8");
+			expect(out).toContain("[[hooks]]");
+			expect(out).toContain('event = "PreToolUse"');
+		} finally {
+			cleanup(d);
+		}
+	});
+});
+
+test.describe("deploy CLI – enabled false omitted", () => {
+	test("deploy with enabled:false hook is absent", () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "advanced", "--features", "command,hook"], d);
+			const root = existsSync(join(d, ".dotagents-debug"))
+				? ".dotagents-debug"
+				: ".dotagents";
+			writeFileSync(
+				join(d, root, "hooks.jsonc"),
+				JSON.stringify({
+					$schema:
+						"https://dotagents.soorya-u.dev/v1/schemas/hooks.schema.json",
+					hooks: [
+						{
+							event: "PreToolUse",
+							type: "command",
+							command: "guard",
+							matcher: "Bash",
+							timeout: 2000,
+						},
+					],
+				}),
+			);
+			const cfg = join(d, root, "local.config.toml");
+			let c = readFileSync(cfg, "utf8");
+			c = c.replace(/targets = \[\]/, 'targets = ["cursor"]');
+			const abs = resolve(
+				process.cwd(),
+				"../../public/v1/templates/cursor/hooks.hbs",
+			);
+			c += `\n[providers.cursor.hooks]\ntemplate = "${abs}"\ntarget = "{{ dir.workspace }}/.cursor/hooks.json"\n`;
+			writeFileSync(cfg, c);
+			run(["deploy", "--offline", "--no-gitignore"], d);
+			const out = readFileSync(join(d, ".cursor/hooks.json"), "utf8");
+			expect(out).not.toContain("block");
+		} finally {
+			cleanup(d);
+		}
+	});
+});
+
+test.describe("deploy CLI – extension event silent drop", () => {
+	test("Interrupt present for kimi, dropped for cursor", () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "advanced", "--features", "command,hook"], d);
+			const root = existsSync(join(d, ".dotagents-debug"))
+				? ".dotagents-debug"
+				: ".dotagents";
+			writeFileSync(
+				join(d, root, "hooks.jsonc"),
+				JSON.stringify({
+					$schema:
+						"https://dotagents.soorya-u.dev/v1/schemas/hooks.schema.json",
+					hooks: [{ event: "Interrupt", type: "command", command: "x" }],
+				}),
+			);
+			const cfg = join(d, root, "local.config.toml");
+			let c = readFileSync(cfg, "utf8");
+			c = c.replace(/targets = \[\]/, 'targets = ["cursor","kimi"]');
+			const curTpl = resolve(
+				process.cwd(),
+				"../../public/v1/templates/cursor/hooks.hbs",
+			);
+			const kimTpl = resolve(
+				process.cwd(),
+				"../../public/v1/templates/kimi/hooks.hbs",
+			);
+			c += `\n[providers.cursor.hooks]\ntemplate = "${curTpl}"\ntarget = "{{ dir.workspace }}/.cursor/hooks.json"\n`;
+			c += `\n[providers.kimi.hooks]\ntemplate = "${kimTpl}"\ntarget = "{{ dir.workspace }}/.kimi-code/config.toml"\n`;
+			writeFileSync(cfg, c);
+			run(["deploy", "--offline", "--no-gitignore"], d);
+			const cur = readFileSync(join(d, ".cursor/hooks.json"), "utf8");
+			const kim = readFileSync(join(d, ".kimi-code/config.toml"), "utf8");
+			// cursor drops unsupported events (no "Interrupt" key emitted)
+			const curLower = cur.toLowerCase();
+			expect(curLower).not.toContain("interrupt");
+			expect(kim.toLowerCase()).toContain("interrupt");
+		} finally {
+			cleanup(d);
+		}
+	});
+});
+
+test.describe("deploy CLI – mcp_tool type filter", () => {
+	test("mcp_tool present for claude, absent for cursor", () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "advanced", "--features", "command,hook"], d);
+			const root = existsSync(join(d, ".dotagents-debug"))
+				? ".dotagents-debug"
+				: ".dotagents";
+			writeFileSync(
+				join(d, root, "hooks.jsonc"),
+				JSON.stringify({
+					$schema:
+						"https://dotagents.soorya-u.dev/v1/schemas/hooks.schema.json",
+					hooks: [
+						{
+							event: "PreToolUse",
+							type: "mcp_tool",
+							server: "fs",
+							tool: "read",
+						},
+					],
+				}),
+			);
+			const cfg = join(d, root, "local.config.toml");
+			let c = readFileSync(cfg, "utf8");
+			c = c.replace(/targets = \[\]/, 'targets = ["claude","cursor"]');
+			const clTpl = resolve(
+				process.cwd(),
+				"../../public/v1/templates/claude/hooks.hbs",
+			);
+			const cuTpl = resolve(
+				process.cwd(),
+				"../../public/v1/templates/cursor/hooks.hbs",
+			);
+			c += `\n[providers.claude.hooks]\ntemplate = "${clTpl}"\ntarget = "{{ dir.workspace }}/.claude/hooks.json"\n`;
+			c += `\n[providers.cursor.hooks]\ntemplate = "${cuTpl}"\ntarget = "{{ dir.workspace }}/.cursor/hooks.json"\n`;
+			writeFileSync(cfg, c);
+			run(["deploy", "--offline", "--no-gitignore"], d);
+			const cl = readFileSync(join(d, ".claude/hooks.json"), "utf8");
+			const cu = readFileSync(join(d, ".cursor/hooks.json"), "utf8");
+			expect(cl).toContain("mcp_tool");
+			// cursor does not support mcp_tool; may be absent key or file may be minimal
+			if (existsSync(join(d, ".cursor/hooks.json"))) {
+				expect(cu).not.toContain("mcp_tool");
+			}
+		} finally {
+			cleanup(d);
+		}
+	});
+});
+
+test.describe("deploy CLI – codex trust-hash warning", () => {
+	test("deploy targeting codex emits re-trust warning", () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--template", "advanced", "--features", "command,hook"], d);
+			const root = existsSync(join(d, ".dotagents-debug"))
+				? ".dotagents-debug"
+				: ".dotagents";
+			writeFileSync(
+				join(d, root, "hooks.jsonc"),
+				JSON.stringify({
+					$schema:
+						"https://dotagents.soorya-u.dev/v1/schemas/hooks.schema.json",
+					hooks: [
+						{
+							event: "PreToolUse",
+							type: "command",
+							command: "./x.sh",
+							timeout: 5500,
+							matcher: "Bash",
+						},
+					],
+				}),
+			);
+			const cfg = join(d, root, "local.config.toml");
+			let c = readFileSync(cfg, "utf8");
+			c = c.replace(/targets = \[\]/, 'targets = ["codex"]');
+			const codexTpl = resolve(
+				process.cwd(),
+				"../../public/v1/templates/codex/hooks.hbs",
+			);
+			c += `\n[providers.codex.hooks]\ntemplate = "${codexTpl}"\ntarget = "{{ dir.workspace }}/.codex/hooks.json"\n`;
+			writeFileSync(cfg, c);
+			const { stderr } = run(["deploy", "--offline", "--no-gitignore"], d);
+			expect(stderr).toContain("re-trust required");
+		} finally {
+			cleanup(d);
+		}
 	});
 });

@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dotagents.soorya-u.dev/v1/schemas/hooks.schema.json",
+  "title": "DotAgents Lifecycle Hooks Configuration",
+  "description": "Schema for .dotagents/hooks.jsonc — single source of truth for AI agent lifecycle hooks (PreToolUse, Stop, etc.). Deployed to 18 providers via per-provider Handlebars templates.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema URI for editor tooling (VSCode, Zed, etc.).",
+      "format": "uri"
+    },
+    "hooks": {
+      "type": "array",
+      "description": "Array of hook definitions. A single hooks.jsonc deploys to all targeted providers; each provider's hooks.hbs template silently drops events/types it does not support.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Stable identifier for the hook (used by some providers for dedup or display)."
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable purpose (comments in source are preferred for security hooks)."
+          },
+          "event": {
+            "type": "string",
+            "description": "Lifecycle event name. Canonical events (~30 known + open string for provider extensions): PreToolUse, PostToolUse, Stop, SessionStart, SessionEnd, UserPromptSubmit, Notification, SubagentStart, SubagentStop, PreCompact, PostCompact, PermissionRequest, PostToolUseFailure, StopFailure, BeforeModel, AfterModel, BeforeAgent, AfterAgent, BeforeToolSelection, BeforeTool, AfterTool, PreCompress, BeforeShellExecution, AfterShellExecution, BeforeMCPExecution, AfterMCPExecution, BeforeReadFile, AfterFileEdit, BeforeSubmitPrompt, AfterAgentResponse, AfterAgentThought, PreInvocation, PostInvocation, workspaceOpen, beforeTabFileRead, afterTabFileEdit, Interrupt, PermissionResult, PermissionDenied, SetUpEnvironment, and others. Templates filter which events they emit."
+          },
+          "matcher": {
+            "type": "string",
+            "description": "Tool name glob or prefix (e.g. 'Bash', 'mcp__*'). Provider-specific semantics."
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "When false the entire hook entry is omitted from all deployed output (no per-provider override)."
+          },
+          "type": {
+            "type": "string",
+            "enum": ["command", "prompt", "http", "mcp_tool", "agent"],
+            "description": "Handler kind. Templates drop types they do not support (e.g. cursor drops mcp_tool)."
+          },
+          "command": {
+            "type": "string",
+            "description": "Shell command for type=command (POSIX). Use commandWindows for Windows override."
+          },
+          "commandWindows": {
+            "type": "string",
+            "description": "Windows-specific command (type=command only)."
+          },
+          "timeout": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Timeout in milliseconds. Use {{timeout_to_seconds timeout}} in sec-based templates (ceiling div)."
+          },
+          "onFailure": {
+            "type": "string",
+            "enum": ["fail-open", "fail-closed"],
+            "default": "fail-open",
+            "description": "Policy when the hook itself errors."
+          },
+          "env": {
+            "type": "object",
+            "description": "Environment variables injected for this hook execution.",
+            "additionalProperties": { "type": "string" }
+          },
+          "loopLimit": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Max iterations for loop-style hooks (cursor, crush, qwencode)."
+          },
+          "statusMessage": {
+            "type": "string",
+            "description": "Progress UI text shown while hook runs (some providers)."
+          },
+          "async": {
+            "type": "boolean",
+            "default": false,
+            "description": "Fire-and-forget. Dropped (treated sync) by providers that do not support async."
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Prompt text for type=prompt."
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Endpoint for type=http."
+          },
+          "headers": {
+            "type": "object",
+            "description": "HTTP headers for type=http.",
+            "additionalProperties": { "type": "string" }
+          },
+          "server": {
+            "type": "string",
+            "description": "MCP server name for type=mcp_tool."
+          },
+          "tool": {
+            "type": "string",
+            "description": "Tool name to invoke for type=mcp_tool."
+          },
+          "arguments": {
+            "type": "object",
+            "description": "Arguments object for type=mcp_tool."
+          }
+        },
+        "required": ["event", "type"],
+        "additionalProperties": true,
+        "allOf": [
+          {
+            "if": { "properties": { "type": { "const": "command" } }, "required": ["type"] },
+            "then": { "required": ["command"] }
+          },
+          {
+            "if": { "properties": { "type": { "const": "prompt" } }, "required": ["type"] },
+            "then": { "required": ["prompt"] }
+          },
+          {
+            "if": { "properties": { "type": { "const": "http" } }, "required": ["type"] },
+            "then": { "required": ["url"] }
+          },
+          {
+            "if": { "properties": { "type": { "const": "mcp_tool" } }, "required": ["type"] },
+            "then": { "required": ["server", "tool"] }
+          }
+        ]
+      }
+    }
+  },
+  "required": ["hooks"],
+  "additionalProperties": false
+}

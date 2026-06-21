@@ -1,0 +1,3 @@
+[providers.qwencode.hooks]
+template = "https://dotagents.soorya-u.dev/v1/templates/qwencode/hooks.hbs"
+target = "{{dir.workspace}}/.qwencode/hooks.json"

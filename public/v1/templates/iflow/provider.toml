@@ -14,3 +14,6 @@ target = "{{dir.workspace}}/IFLOW.md"
 
 [providers.iflow.ignore]
 target = "{{dir.workspace}}/.iflowignore"
+[providers.iflow.hooks]
+template = "https://dotagents.soorya-u.dev/v1/templates/iflow/hooks.hbs"
+target = "{{dir.workspace}}/.iflow/hooks.json"

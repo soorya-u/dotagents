@@ -1,0 +1,17 @@
+{
+  "$schema": "https://dotagents.soorya-u.dev/v1/schemas/hooks.schema.json",
+  "hooks": [
+    {
+      "name": "block-rm-rf",
+      "description": "prevent rm -rf in workspace",
+      "event": "PreToolUse",
+      "matcher": "Bash",
+      "enabled": false,
+      "type": "command",
+      "command": "./scripts/guard.sh",
+      "commandWindows": ".\\scripts\\guard.ps1",
+      "timeout": 5000,
+      "onFailure": "fail-open"
+    }
+  ]
+}
