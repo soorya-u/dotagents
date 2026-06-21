@@ -5,3 +5,4 @@ pub(crate) const TOML_HELPER: &str = "toml";
 pub(crate) const TOML_INLINE_HELPER: &str = "toml-inline";
 pub(crate) const YAML_HELPER: &str = "yaml";
 pub(crate) const SNAKE_CASE_HELPER: &str = "snake-case";
+pub(crate) const TIMEOUT_TO_SECONDS_HELPER: &str = "timeout_to_seconds";

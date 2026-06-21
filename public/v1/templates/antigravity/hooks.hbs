@@ -1,0 +1,19 @@
+{
+  "<hookName>": {
+    {{#if this.enabled}} "enabled": {{this.enabled}}, {{/if}}
+    "{{event}}": [
+      {{#each this as |h|}}
+      {
+        {{#if h.matcher}}"matcher": "{{h.matcher}}",{{/if}}
+        "hooks": [
+          {
+            "type": "{{h.type}}",
+            {{#if h.command}}"command": "{{h.command}}",{{/if}}
+            {{#if h.timeout}}"timeout": {{timeout_to_seconds h.timeout}}{{/if}}
+          }
+        ]
+      }
+      {{/each}}
+    ]
+  }
+}

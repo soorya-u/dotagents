@@ -16,3 +16,6 @@ target = "{{dir.workspace}}/.github/skills/{{skill.name}}/SKILL.md"
 [providers.copilot.mcp]
 template = "https://dotagents.soorya-u.dev/v1/templates/copilot/mcp.hbs"
 target = "{{dir.workspace}}/.github/copilot-mcp.json"
+[providers.copilot.hooks]
+template = "https://dotagents.soorya-u.dev/v1/templates/copilot/hooks.hbs"
+target = "{{dir.workspace}}/.copilot/hooks.json"

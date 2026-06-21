@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    {{#each this as |eventHooks eventName|}}
+    "{{eventName}}": [
+      {{#each eventHooks as |h|}}
+      {
+        {{#if h.name}}"name": "{{h.name}}",{{/if}}
+        {{#if h.matcher}}"matcher": "{{h.matcher}}",{{/if}}
+        {{#if h.command}}"command": "{{h.command}}",{{/if}}
+        {{#if h.timeout}}"timeout": {{timeout_to_seconds h.timeout}}{{/if}}
+      }{{#unless @last}},{{/unless}}
+      {{/each}}
+    ]{{#unless @last}},{{/unless}}
+    {{/each}}
+  }
+}

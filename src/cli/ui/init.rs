@@ -46,12 +46,18 @@ pub(crate) fn run_init_wizard(opts: &mut InitOptions, dir_exists: bool) -> Resul
                 ".agentignore",
                 "Sync ignore patterns to AI tools",
             )
+            .item(
+                Feature::Hook.as_ref(),
+                "Hooks",
+                "Sync lifecycle hooks (PreToolUse, Stop, etc.)",
+            )
             .initial_values(vec![
                 Feature::Command.as_ref(),
                 Feature::Instruction.as_ref(),
                 Feature::Mcp.as_ref(),
                 Feature::Skill.as_ref(),
                 Feature::AgentIgnore.as_ref(),
+                Feature::Hook.as_ref(),
             ])
             .required(false);
         let features = ms.interact().context("unable to get feature selection")?;

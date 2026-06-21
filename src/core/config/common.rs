@@ -56,6 +56,9 @@ pub struct Features {
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ignore: Option<FeatureSettings>,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hooks: Option<FeatureSettings>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
@@ -118,6 +121,7 @@ impl Features {
             || self.commands.is_some()
             || self.skills.is_some()
             || self.ignore.is_some()
+            || self.hooks.is_some()
     }
 
     pub fn merge(&self, other: &Features) -> Features {
@@ -130,6 +134,7 @@ impl Features {
             commands: Self::merge_settings(self.commands.as_ref(), other.commands.as_ref()),
             skills: Self::merge_settings(self.skills.as_ref(), other.skills.as_ref()),
             ignore: Self::merge_settings(self.ignore.as_ref(), other.ignore.as_ref()),
+            hooks: Self::merge_settings(self.hooks.as_ref(), other.hooks.as_ref()),
         }
     }
 
@@ -140,6 +145,7 @@ impl Features {
             Feature::Command => self.commands.clone(),
             Feature::Skill => self.skills.clone(),
             Feature::AgentIgnore => self.ignore.clone(),
+            Feature::Hook => self.hooks.clone(),
         }
     }
 
@@ -219,6 +225,7 @@ mod tests {
             commands: None,
             skills: None,
             ignore: None,
+            hooks: None,
         };
 
         let mcp_config = settings.get_config(&Feature::Mcp);

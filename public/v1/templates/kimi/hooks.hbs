@@ -1,0 +1,30 @@
+{{#each this as |eventHooks eventName|}}
+{{#each eventHooks as |h|}}
+[[hooks]]
+event = "{{eventName}}"
+{{#if h.matcher}}matcher = "{{h.matcher}}"
+{{/if}}
+{{#if h.command}}command = "{{h.command}}"
+{{/if}}
+{{#if h.commandWindows}}commandWindows = "{{h.commandWindows}}"
+{{/if}}
+{{#if h.prompt}}prompt = "{{h.prompt}}"
+{{/if}}
+{{#if h.timeout}}timeout = {{timeout_to_seconds h.timeout}}
+{{/if}}
+{{#if h.onFailure}}onFailure = "{{h.onFailure}}"
+{{/if}}
+{{#if h.statusMessage}}statusMessage = "{{h.statusMessage}}"
+{{/if}}
+{{#if h.loopLimit}}loopLimit = {{h.loopLimit}}
+{{/if}}
+{{#if h.async}}async = {{h.async}}
+{{/if}}
+{{#if h.env}}env = {{json h.env}}
+{{/if}}
+{{#if h.extra}}
+{{#each h.extra as |v k|}}{{k}} = {{json v}}
+{{/each}}
+{{/if}}
+{{/each}}
+{{/each}}

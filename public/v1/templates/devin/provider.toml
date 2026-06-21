@@ -6,3 +6,6 @@ target = "{{dir.workspace}}/.devin/skills/{{skill.name}}/SKILL.md"
 [providers.devin.instructions]
 template = "https://dotagents.soorya-u.dev/v1/templates/devin/instruction.hbs"
 target = "{{dir.workspace}}/AGENTS.md"
+[providers.devin.hooks]
+template = "https://dotagents.soorya-u.dev/v1/templates/devin/hooks.hbs"
+target = "{{dir.workspace}}/.devin/hooks.json"

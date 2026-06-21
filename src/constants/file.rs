@@ -10,6 +10,7 @@ pub(crate) const ENV_FILE: &str = ".env";
 pub(crate) const ENV_EXAMPLE_FILE: &str = ".env.example";
 
 pub(crate) const SKILL_FILE: &str = "SKILL.md";
+pub(crate) const HOOKS_FILE: &str = "hooks.jsonc";
 
 /// Opening fence marker for the dotagents-managed section in .gitignore.
 pub(crate) const FENCE_START: &str = "#region dotagents";

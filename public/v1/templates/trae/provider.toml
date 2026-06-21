@@ -1,3 +1,6 @@
 # Trae Skills
 [providers.trae.skills]
 target = "{{dir.workspace}}/.trae/skills/{{skill.name}}/SKILL.md"
+[providers.trae.hooks]
+template = "https://dotagents.soorya-u.dev/v1/templates/trae/hooks.hbs"
+target = "{{dir.workspace}}/.trae/hooks.json"

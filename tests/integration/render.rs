@@ -221,3 +221,128 @@ fn deployed_skill_output_retains_frontmatter_from_template() {
         "deployed skill output should contain the skill name in frontmatter; got:\n{content}"
     );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HookFeature integration (embedded merge + standalone write + TOML)
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[test]
+fn hook_embedded_merge_gemini() {
+    // Pre-create .gemini/settings.json with model; hooks merge into it.
+    let ws = TestWorkspace::new();
+    init_with_mycode_provider(&ws);
+    let d = ws.root_dir_name();
+    ws.write_file(
+        format!("{d}/hooks.jsonc"),
+        r#"{
+          "$schema": "https://dotagents.soorya-u.dev/v1/schemas/hooks.schema.json",
+          "hooks": [{"event":"PreToolUse","type":"command","command":"./x.sh","timeout":5000,"matcher":"Bash"}]
+        }"#,
+    );
+    let config_path = ws.active_root_dir().join("local.config.toml");
+    let mut cfg = fs::read_to_string(&config_path).unwrap();
+    // Enable hook feature + target gemini (init_with_mycode_provider clears targets to [] for offline mycode)
+    // Use canonical feature name "hook".
+    let root = env!("CARGO_MANIFEST_DIR");
+    cfg = cfg
+        .replace(r#"targets = []"#, r#"targets = ["gemini"]"#)
+        .replace("features = [", "features = [\"hook\", ");
+    cfg.push_str(&format!(
+        r#"
+
+[providers.gemini.hooks]
+template = "{root}/public/v1/templates/gemini/hooks.hbs"
+target = "{{{{ dir.workspace }}}}/.gemini/settings.json"
+"#
+    ));
+    fs::write(&config_path, cfg).unwrap();
+    ws.write_file(".gemini/settings.json", r#"{"model":"gemini-2.5"}"#);
+
+    ws.run_command(&["deploy", "--offline", "--no-gitignore"])
+        .assert_success();
+
+    let out = ws.read_file(".gemini/settings.json");
+    let parsed: serde_json::Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(
+        parsed["model"], "gemini-2.5",
+        "model preserved; full content:\n{out}"
+    );
+    if !out.contains("PreToolUse") {
+        eprintln!("DEBUG gemini hooks output:\n{out}");
+        panic!("expected PreToolUse in gemini hooks merge output");
+    }
+    assert!(out.contains("./x.sh"));
+}
+
+#[test]
+fn hook_standalone_write_cursor() {
+    // Cursor hooks deploy to standalone .cursor/hooks.json (flattened).
+    let ws = TestWorkspace::new();
+    init_with_mycode_provider(&ws);
+    let d = ws.root_dir_name();
+    ws.write_file(
+        format!("{d}/hooks.jsonc"),
+        r#"{"hooks":[{"event":"Stop","type":"command","command":"echo hi","timeout":1000}]}"#,
+    );
+    let config_path = ws.active_root_dir().join("local.config.toml");
+    let mut cfg = fs::read_to_string(&config_path).unwrap();
+    let root = env!("CARGO_MANIFEST_DIR");
+    cfg = cfg
+        .replace(r#"targets = []"#, r#"targets = ["cursor"]"#)
+        .replace("features = [", "features = [\"hook\", ");
+    cfg.push_str(&format!(
+        r#"
+
+[providers.cursor.hooks]
+template = "{root}/public/v1/templates/cursor/hooks.hbs"
+target = "{{{{ dir.workspace }}}}/.cursor/hooks.json"
+"#
+    ));
+    fs::write(&config_path, cfg).unwrap();
+
+    ws.run_command(&["deploy", "--offline", "--no-gitignore"])
+        .assert_success();
+
+    let out = ws.read_file(".cursor/hooks.json");
+    if !out.contains("stop") {
+        eprintln!("DEBUG cursor hooks output:\n{out}");
+        panic!("expected lowercase-first 'stop' in cursor hooks output");
+    }
+    assert!(out.contains("version"));
+    assert!(out.contains("echo hi"));
+}
+
+#[test]
+fn hook_toml_output_kimi() {
+    // Kimi emits [[hooks]] TOML table.
+    let ws = TestWorkspace::new();
+    init_with_mycode_provider(&ws);
+    let d = ws.root_dir_name();
+    ws.write_file(
+        format!("{d}/hooks.jsonc"),
+        r#"{"hooks":[{"event":"PreToolUse","type":"command","command":"guard","matcher":"Bash","timeout":2000}]}"#,
+    );
+    let config_path = ws.active_root_dir().join("local.config.toml");
+    let mut cfg = fs::read_to_string(&config_path).unwrap();
+    let root = env!("CARGO_MANIFEST_DIR");
+    cfg = cfg
+        .replace(r#"targets = []"#, r#"targets = ["kimi"]"#)
+        .replace("features = [", "features = [\"hook\", ");
+    cfg.push_str(&format!(
+        r#"
+
+[providers.kimi.hooks]
+template = "{root}/public/v1/templates/kimi/hooks.hbs"
+target = "{{{{ dir.workspace }}}}/.kimi-code/config.toml"
+"#
+    ));
+    fs::write(&config_path, cfg).unwrap();
+
+    ws.run_command(&["deploy", "--offline", "--no-gitignore"])
+        .assert_success();
+
+    let out = ws.read_file(".kimi-code/config.toml");
+    assert!(out.contains("[[hooks]]"));
+    assert!(out.contains("event = \"PreToolUse\""));
+    assert!(out.contains("command = \"guard\""));
+}

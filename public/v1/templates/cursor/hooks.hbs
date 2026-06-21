@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "hooks": {
+    {{#each this as |eventHooks eventName|}}
+    {{#ifEq eventName "PreToolUse"}}
+    "preToolUse": [
+      {{#each eventHooks as |h|}}
+      { {{#if h.command}}"command": "{{h.command}}"{{/if}} {{#if h.timeout}}, "timeout": {{timeout_to_seconds h.timeout}}{{/if}} {{#if h.matcher}}, "matcher": "{{h.matcher}}"{{/if}} {{#if h.loopLimit}}, "loopLimit": {{h.loopLimit}}{{/if}} {{#if h.onFailure}}, "failClosed": {{#ifEq h.onFailure "fail-closed"}}true{{else}}false{{/ifEq}}{{/if}} }{{#unless @last}},{{/unless}}
+      {{/each}}
+    ]
+    {{else ifEq eventName "Stop"}}
+    "stop": [
+      {{#each eventHooks as |h|}}
+      { {{#if h.command}}"command": "{{h.command}}"{{/if}} {{#if h.timeout}}, "timeout": {{timeout_to_seconds h.timeout}}{{/if}} }{{#unless @last}},{{/unless}}
+      {{/each}}
+    ]
+    {{else ifEq eventName "SessionStart"}}
+    "sessionStart": [ {{#each eventHooks as |h|}}{ {{#if h.command}}"command": "{{h.command}}"{{/if}} }{{#unless @last}},{{/unless}}{{/each}} ]
+    {{else ifEq eventName "SessionEnd"}}
+    "sessionEnd": [ {{#each eventHooks as |h|}}{ {{#if h.command}}"command": "{{h.command}}"{{/if}} }{{#unless @last}},{{/unless}}{{/each}} ]
+    {{else ifEq eventName "UserPromptSubmit"}}
+    "userPromptSubmit": [ {{#each eventHooks as |h|}}{ {{#if h.command}}"command": "{{h.command}}"{{/if}} }{{#unless @last}},{{/unless}}{{/each}} ]
+    {{/ifEq}}
+    {{/each}}
+  }
+}

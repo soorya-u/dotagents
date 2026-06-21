@@ -10,6 +10,7 @@ pub(crate) enum Feature {
     Mcp,
     Skill,
     AgentIgnore,
+    Hook,
 }
 
 impl Feature {

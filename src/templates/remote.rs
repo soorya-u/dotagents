@@ -358,6 +358,7 @@ fn set_feature_settings(
         Feature::Mcp => features.mcp = Some(settings),
         Feature::Skill => features.skills = Some(settings),
         Feature::AgentIgnore => features.ignore = Some(settings),
+        Feature::Hook => features.hooks = Some(settings),
     }
 }
 

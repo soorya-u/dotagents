@@ -14,3 +14,7 @@ target = "{{dir.workspace}}/AGENTS.md"
 [providers.codex.mcp]
 template = "https://dotagents.soorya-u.dev/v1/templates/codex/mcp.hbs"
 target = "{{dir.workspace}}/.codex/config.toml"
+
+[providers.codex.hooks]
+template = "https://dotagents.soorya-u.dev/v1/templates/codex/hooks.hbs"
+target = "{{dir.workspace}}/.codex/hooks.json"

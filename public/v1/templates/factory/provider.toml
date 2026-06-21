@@ -1,0 +1,3 @@
+[providers.factory.hooks]
+template = "https://dotagents.soorya-u.dev/v1/templates/factory/hooks.hbs"
+target = "{{dir.workspace}}/.factory/hooks.json"
