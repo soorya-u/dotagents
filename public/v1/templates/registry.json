@@ -32,7 +32,8 @@
     "antigravity": {
       "path": "/v1/templates/antigravity/provider.toml",
       "checksums": {
-        "provider.toml": "ccdfbf3cc514ae7ae7ea637be229e343b7c91aa2babdeeeb26a7e7b68b16f832"
+        "provider.toml": "209572264d6e57a6407b3ddfd5fc0926721a3391e827362284054f3589ef3ab1",
+        "hooks.hbs": "cc175e046f3e4259ac1e7fe667ad8aea78acff8add4cfce86d80edb10fd90894"
       },
       "name": "Antigravity",
       "url": "https://antigravity.google"
@@ -47,6 +48,13 @@
       },
       "name": "Auggie CLI",
       "url": "https:/augmentcode.com"
+    },
+    "augment": {
+      "path": "/v1/templates/augment/provider.toml",
+      "checksums": {
+        "provider.toml": "998498aee86d4aa4da8b370690ba8b06be25dd1a0d20611b67582158e273c730",
+        "hooks.hbs": "58ecb0182ea52ba75e8494328804f2f3b523aa584499ac4fe21e77262578c0eb"
+      }
     },
     "autohand": {
       "path": "/v1/templates/autohand/provider.toml",
@@ -72,8 +80,9 @@
     "claude": {
       "path": "/v1/templates/claude/provider.toml",
       "checksums": {
-        "provider.toml": "6ed31ed2dc500306d342a1e48e554f6071d233cb81236b503a8d1f6de49e5870",
+        "provider.toml": "3b14116806eb6b66274d37ade7b9d16809cba93dd2ac154f51282e1793b3960c",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
+        "hooks.hbs": "58ecb0182ea52ba75e8494328804f2f3b523aa584499ac4fe21e77262578c0eb",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
         "mcp.hbs": "3586dc4529835afac0441857e889f23fe92e9bb6893fd21bd541c609cd939d4f"
       },
@@ -125,8 +134,9 @@
     "codex": {
       "path": "/v1/templates/codex/provider.toml",
       "checksums": {
-        "provider.toml": "b66bc4ff7cb8e93c2d56919ad628cd235300670bd06fa712a9c0eac9b60af03d",
+        "provider.toml": "59b40f4039b1e2f949a005589579e3b29b863b35dba48278b8cecb501e12e0d1",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
+        "hooks.hbs": "58ecb0182ea52ba75e8494328804f2f3b523aa584499ac4fe21e77262578c0eb",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
         "mcp.hbs": "0e43e8979f90c41cf0bdaeb8af9c0d9201b975c6b5f27ee8794b69f6eb3d3fd5"
       },
@@ -136,8 +146,9 @@
     "commandcode": {
       "path": "/v1/templates/commandcode/provider.toml",
       "checksums": {
-        "provider.toml": "fa8a72f27e832134319c65c0b1f556e44ff258f07d4fe88d7d12ecab2ef3a3ad",
+        "provider.toml": "46940b9cf542a4c3b89d4fec4dfc9b3fd4a107b22a8d27c32b04a0ce0a9b258e",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
+        "hooks.hbs": "58ecb0182ea52ba75e8494328804f2f3b523aa584499ac4fe21e77262578c0eb",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "fea48de66e6c5b25393e7fc169fe5aa47832d9d37dddee6ef3822b49eb44fc72"
       },
@@ -155,8 +166,9 @@
     "copilot": {
       "path": "/v1/templates/copilot/provider.toml",
       "checksums": {
-        "provider.toml": "bfdf8eef835af9bf797a5ac7bc942160c324c05890fd3be1d4dfc0cfc04cdc43",
+        "provider.toml": "5c1bd250cd82a092c0b47af5e01c49683f4464503e7d994862184c01ce284e9e",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
+        "hooks.hbs": "779595001546559cb50dc1614c4f90b5436c99909d0ddff9bd39f61770de4bfb",
         "instruction.hbs": "9bb2522682a74a16bbd7d290c7eaa0804b2b53642bb39a49e22d849c5b81ec49",
         "mcp.hbs": "6b08add44e795f27e3e7fc48f4ef65930442da74cb8273718157a586289cc187"
       },
@@ -174,7 +186,8 @@
     "crush": {
       "path": "/v1/templates/crush/provider.toml",
       "checksums": {
-        "provider.toml": "36769b9e86a31790bc4e78d986931fdbcaf897de267c59e0ebbdf723902f71c0",
+        "provider.toml": "3a020bafd2e5ea0488d818fd9c758391a2cab918c90d0ed924aa6201180e5822",
+        "hooks.hbs": "cee5077c70abdcfa81937aef829da93afd91d14b7654b5e73b48f7b7b057db92",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67"
       },
       "name": "Crush",
@@ -183,8 +196,9 @@
     "cursor": {
       "path": "/v1/templates/cursor/provider.toml",
       "checksums": {
-        "provider.toml": "d701086192a292bf1871b6b12cae1f1f98bf5a43fa57f260c90af4a793b3d179",
+        "provider.toml": "2a6e7dccc6384e96923bb5e90db71880014b561bbd62f3f4da8b2c78e53af465",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
+        "hooks.hbs": "c7e1bef0a806be8ab10147eb0af092f8df8bfc7085b13a30c13d85c2e47c2b42",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "0ead69a7a6b3fb273fd4d9fbfee6f2159353dc894d14153cf693a0a49b73f5c3"
       },
@@ -204,11 +218,19 @@
     "devin": {
       "path": "/v1/templates/devin/provider.toml",
       "checksums": {
-        "provider.toml": "31159f6f70908e51462f68619ffc61b5d4fd380b6491f27b96b84208c1d6d95e",
+        "provider.toml": "ce803c27302dbd13393566f7b7b69d2bcf89a81fdc7b7003e587f8cfee5c28ef",
+        "hooks.hbs": "5d817b552c9438608d87be3fb1b64cd4395b46f2cfe4e6a1f8a6d10687d2ec6c",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67"
       },
       "name": "Devin",
       "url": "https://devin.ai"
+    },
+    "factory": {
+      "path": "/v1/templates/factory/provider.toml",
+      "checksums": {
+        "provider.toml": "1df51bcd0e97351fd3f672845a9e26da4ac929a79b72db8034e5acef119bf23b",
+        "hooks.hbs": "58ecb0182ea52ba75e8494328804f2f3b523aa584499ac4fe21e77262578c0eb"
+      }
     },
     "factory-droid": {
       "path": "/v1/templates/factory-droid/provider.toml",
@@ -235,8 +257,9 @@
     "gemini": {
       "path": "/v1/templates/gemini/provider.toml",
       "checksums": {
-        "provider.toml": "9776afa29f46a09181ee150fe811662b105c15706efa196a63b95f48bf3c4770",
+        "provider.toml": "400e7d76d3218b12331fcc0d0c20f115230f135dbc214c35c43fa3dcc2197872",
         "command.hbs": "009ad4a010c91f439c62ea47cd5fcc71d276d100bb9174b79d56bb4c3b7b6df3",
+        "hooks.hbs": "ef74b06f258cf00cbd7b3ff13fcccf2e5d45707c20430cc7c06d5f96c6c98909",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "16ce9ded2876d8b41b744344c180c9963c17a7e12220738babf206bf25a579ae"
       },
@@ -266,8 +289,9 @@
     "iflow": {
       "path": "/v1/templates/iflow/provider.toml",
       "checksums": {
-        "provider.toml": "9f9b4214b32d4a0f8fab173adc67626375aa120b03b25c213e12e2a1703ddd08",
+        "provider.toml": "9ba3c19ca16ec2a06d25bd5cc753a7a720c7342a9df297dfdedcb3e01f2d2cee",
         "command.hbs": "4070f1c7bb5eaed9cd32406c1cbc918b8a1f4615f4ee4744890ec0c05c398fec",
+        "hooks.hbs": "58ecb0182ea52ba75e8494328804f2f3b523aa584499ac4fe21e77262578c0eb",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67"
       },
       "name": "iFlow CLI",
@@ -276,8 +300,9 @@
     "junie": {
       "path": "/v1/templates/junie/provider.toml",
       "checksums": {
-        "provider.toml": "adbfd5d70d13e94c00dd8e12ca4de17d015fcbd1ad7b48ea34a60b1a8bb4d3da",
+        "provider.toml": "e6169678cbd23085eaeb5ff5ce8c72a4aa06db512505fba625e1762aeb178a28",
         "command.hbs": "3f95b9b1855ef17ac91feeaccb3d33d989aa81126a7b5804bbe4b074ef0f5dd6",
+        "hooks.hbs": "58ecb0182ea52ba75e8494328804f2f3b523aa584499ac4fe21e77262578c0eb",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "f3652009a56d2ae104947fc22124f191590d2c14bbbc9d76e4f761a8e5db5714"
       },
@@ -298,7 +323,8 @@
     "kimi": {
       "path": "/v1/templates/kimi/provider.toml",
       "checksums": {
-        "provider.toml": "518228f5f8a4357104e4827e2eea339e2ee11670bf792930e776e3353af25e45",
+        "provider.toml": "628c7dd5c8b2c8957b87a8074ad8bc68f8bc90a34954d0d37b3f98951ccab6d4",
+        "hooks.hbs": "2eedb487c8a101a4b68951a47b10d8b125a352cfa10b9738ac9c623b0651bd2c",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "f3652009a56d2ae104947fc22124f191590d2c14bbbc9d76e4f761a8e5db5714"
       },
@@ -385,7 +411,8 @@
     "openhands": {
       "path": "/v1/templates/openhands/provider.toml",
       "checksums": {
-        "provider.toml": "1e0e96e30504735d43e68bff94b28bb2c7a96d7a1a55f6826024f6fd379d45f8",
+        "provider.toml": "3e45da254d321ff7b91abbbf61e3d01303d063d396a3b7eb278f189a2149ac22",
+        "hooks.hbs": "fc4629d18999e83cb8606e01419f903a379c74afdf97f60394a750a444722beb",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67"
       },
       "name": "OpenHands",
@@ -413,8 +440,9 @@
     "qoder": {
       "path": "/v1/templates/qoder/provider.toml",
       "checksums": {
-        "provider.toml": "058d7dac2a70c73a7190beb1efd4fc4a2aba454d0cc894ec4c60f4c1e749d84c",
+        "provider.toml": "14d045209229dd42fdbf62129cdcdfa962cb857ecbdd43df91fb3c32f0b06054",
         "command.hbs": "6650ba27e033d911b3ea2dd264c2a5ed1a7724630bc16a08e36d4423c3beb48f",
+        "hooks.hbs": "5d817b552c9438608d87be3fb1b64cd4395b46f2cfe4e6a1f8a6d10687d2ec6c",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
         "mcp.hbs": "bf776db19285c184c4054ad213b5424b61b532a4d77bad4b967fc7e6ccb28360"
       },
@@ -430,6 +458,13 @@
       },
       "name": "Qwen Code",
       "url": "https://qwen.ai/qwencode"
+    },
+    "qwencode": {
+      "path": "/v1/templates/qwencode/provider.toml",
+      "checksums": {
+        "provider.toml": "fdafba62ef72019e2705edc64effbef2c1c588340e54c77374e05ca14bb88a95",
+        "hooks.hbs": "0d810385a89d1870cf8cce00ddb838e6691ad29c4f899ebf9d80070c21c37bc2"
+      }
     },
     "roo": {
       "path": "/v1/templates/roo/provider.toml",
@@ -450,7 +485,8 @@
     "tabnine": {
       "path": "/v1/templates/tabnine/provider.toml",
       "checksums": {
-        "provider.toml": "3f821d806e484cfe96c5d1fba2176485fec6ca9f6e7743a023af6edb6cf62953"
+        "provider.toml": "27eb8da0bc18114102bae931f97de20c50dca21863a68960a60b43e15422debb",
+        "hooks.hbs": "df48cc33d5eb32ac4f0e0c2b86bc07acdadf6184f58d26a04ef1a5b27f6300d0"
       },
       "name": "Tabnine",
       "url": "https://www.tabnine.com"
@@ -458,7 +494,8 @@
     "trae": {
       "path": "/v1/templates/trae/provider.toml",
       "checksums": {
-        "provider.toml": "f713501e8140e8aff905a458f4aa0f95d6d8e6067efc9bf81ebc97d476a7d9c0"
+        "provider.toml": "8b5302f599855bb28a6d1eac1d33e5bd0c69ac78ae3a7edf1916d1d6dea28b51",
+        "hooks.hbs": "df48cc33d5eb32ac4f0e0c2b86bc07acdadf6184f58d26a04ef1a5b27f6300d0"
       },
       "name": "Trae",
       "url": "https://trae.ai"
