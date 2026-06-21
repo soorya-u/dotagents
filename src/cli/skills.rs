@@ -1,26 +1,17 @@
 use anyhow::{Context, Result, bail};
 use cliclack::{confirm, input, outro};
 use std::fs;
-#[cfg(feature = "skills-add")]
-use std::io::ErrorKind;
 use std::io::Write;
 
 use crate::cli::deploy::deploy;
-#[cfg(feature = "skills-add")]
 use crate::cli::options::SkillsAddOptions;
 use crate::cli::options::{AddSkillOptions, DeployOptions, RmSkillOptions, SubLsOptions};
 use crate::cli::ui::ls::render_skills;
 use crate::core::config::CacheConfig;
-#[cfg(feature = "skills-add")]
-use crate::core::config::app::AppConfig;
-#[cfg(feature = "skills-add")]
-use crate::core::config::common::PackageRunner;
 use crate::core::features::Feature;
 use crate::core::features::skill::SkillFeature;
 use crate::prelude::*;
 use crate::schema::list_item::ListItem;
-#[cfg(feature = "skills-add")]
-use crate::templates::get_templater;
 use crate::utils::fs::write_file;
 use crate::utils::path::{
     get_application_dir, get_skills_dir, get_workspace_dir, resolve_and_override_workspace,
@@ -62,64 +53,9 @@ fn maybe_prompt_deploy(force_deploy: bool, no_deploy: bool) -> Result<()> {
     Ok(())
 }
 
-/// Install a skill into `.dotagents/skills/` by wrapping the `skills` CLI.
-#[cfg(feature = "skills-add")]
+/// Install a skill into `.dotagents/skills/` by delegating to the integrations module.
 pub(crate) fn add(opts: SkillsAddOptions) -> Result<bool> {
-    resolve_and_override_workspace(opts.workspace.cwd)
-        .context("unable to resolve workspace directory")?;
-
-    let templater = get_templater()?;
-    let app_config = AppConfig::from_application(templater)?;
-
-    // Resolve runner: CLI flag > config > silent default (npm)
-    let explicit_runner = opts.runner.or(app_config.package_runner);
-
-    let runner = match &explicit_runner {
-        Some(r) => {
-            // Explicitly configured — validate binary is on PATH
-            let binary = r.binary();
-            let probe = std::process::Command::new(binary)
-                .arg("--version")
-                .stdout(std::process::Stdio::null())
-                .stderr(std::process::Stdio::null())
-                .output();
-
-            match probe {
-                Err(e) if e.kind() == ErrorKind::NotFound => {
-                    bail!(
-                        "`{}` was not found on PATH.\n\
-                         Check the `package-runner` setting in your config.toml.",
-                        binary
-                    );
-                }
-                Err(e) => {
-                    bail!("Failed to probe `{}`: {}", binary, e);
-                }
-                Ok(_) => r,
-            }
-        }
-        None => {
-            // No runner configured — use npm silently, let OS surface any error
-            &PackageRunner::Npm
-        }
-    };
-
-    let application_dir = get_application_dir()?;
-    let claude_config_dir = application_dir
-        .to_str()
-        .ok_or_else(|| anyhow::anyhow!("application dir path is not valid UTF-8"))?;
-
-    let args = runner.args(&opts.name, !is_tui_enabled());
-    let (program, rest) = args
-        .split_first()
-        .ok_or_else(|| anyhow::anyhow!("runner produced empty args list"))?;
-
-    let status = std::process::Command::new(program)
-        .args(rest)
-        .env("CLAUDE_CONFIG_DIR", claude_config_dir)
-        .status()?;
-
-    Ok(status.success())
+    crate::integrations::skills_sh::add(opts).context("complete 'skills add' command")
 }
 
 /// Handle `dotagents skills new`.
@@ -197,7 +133,7 @@ pub(crate) fn rm_skill(opts: RmSkillOptions) -> Result<bool> {
         );
     }
 
-    // Confirm in TTY unless --force.
+    // Confirm in TTY unless --force (applies to both external and local paths).
     if is_tui_enabled() && !opts.force {
         let confirmed = confirm(format!(
             "Remove skill '{}'? This cannot be undone.",
@@ -226,12 +162,20 @@ pub(crate) fn rm_skill(opts: RmSkillOptions) -> Result<bool> {
         }
     };
 
-    fs::remove_dir_all(&skill_dir)
-        .with_context(|| format!("failed to remove {}", skill_dir.display()))?;
+    // Provenance check: external skills (in skills-lock.json) delegate to the skills CLI.
+    let is_external = crate::integrations::skills_sh::is_external_skill(&opts.name, &app_dir);
 
-    success!("Removed {}", skill_dir.display());
+    if is_external {
+        crate::integrations::skills_sh::remove(&opts.name, &app_dir)
+            .context("failed to remove skill via skills CLI")?;
+        success!("Removed {} (via skills CLI)", skill_dir.display());
+    } else {
+        fs::remove_dir_all(&skill_dir)
+            .with_context(|| format!("failed to remove {}", skill_dir.display()))?;
+        success!("Removed {}", skill_dir.display());
+    }
 
-    // Clean up deployed output across all providers.
+    // Clean up deployed output across all providers (runs for both paths).
     if let Some(mut cache) = cache_opt {
         match get_workspace_dir() {
             Ok(workspace_dir) => {

@@ -3,8 +3,7 @@ use std::{
     str::FromStr,
 };
 
-#[cfg(feature = "skills-add")]
-use super::common::PackageRunner;
+use super::common::IntegrationsConfig;
 use super::common::Providers;
 use super::mode::FeatureModeConfig;
 use super::traits::TomlConfig;
@@ -26,9 +25,8 @@ pub struct LocalConfig {
     pub providers: Option<Providers>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub variables: Option<HashMap<String, String>>,
-    #[cfg(feature = "skills-add")]
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub package_runner: Option<PackageRunner>,
+    pub integrations: Option<IntegrationsConfig>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub feature_maps: Option<HashMap<String, FeatureModeConfig>>,
 }
@@ -41,8 +39,7 @@ impl LocalConfig {
             targets: None,
             providers: None,
             variables: None,
-            #[cfg(feature = "skills-add")]
-            package_runner: None,
+            integrations: None,
             feature_maps: None,
         }
     }
@@ -55,8 +52,7 @@ impl LocalConfig {
             targets: None,
             providers: None,
             variables: None,
-            #[cfg(feature = "skills-add")]
-            package_runner: None,
+            integrations: None,
             feature_maps: None,
         }
     }
@@ -69,8 +65,7 @@ impl LocalConfig {
             targets: None,
             providers: Some(providers),
             variables: None,
-            #[cfg(feature = "skills-add")]
-            package_runner: None,
+            integrations: None,
             feature_maps: None,
         }
     }
@@ -100,28 +95,36 @@ impl Default for LocalConfig {
 
 impl TomlConfig for LocalConfig {}
 
-#[cfg(feature = "skills-add")]
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::integrations::skills_sh::PackageRunner;
 
     #[test]
-    fn package_runner_field_deserialises_in_local_config() {
+    fn integrations_skills_sh_package_runner_deserialises_in_local_config() {
+        // [integrations.skills-sh] package-runner deserialises in local config
         for (toml_val, expected) in [
             ("npm", PackageRunner::Npm),
             ("pnpm", PackageRunner::Pnpm),
             ("yarn", PackageRunner::Yarn),
             ("bun", PackageRunner::Bun),
         ] {
-            let toml = format!("package-runner = \"{toml_val}\"\n");
+            let toml = format!("[integrations.skills-sh]\npackage-runner = \"{toml_val}\"\n");
             let config: LocalConfig = toml::from_str(&toml).unwrap();
-            assert_eq!(config.package_runner, Some(expected));
+            assert_eq!(
+                config
+                    .integrations
+                    .and_then(|i| i.skills_sh)
+                    .and_then(|s| s.package_runner),
+                Some(expected)
+            );
         }
     }
 
     #[test]
-    fn package_runner_absent_yields_none_in_local_config() {
+    fn integrations_absent_yields_none_in_local_config() {
+        // no [integrations] table yields None
         let config: LocalConfig = toml::from_str("").unwrap();
-        assert_eq!(config.package_runner, None);
+        assert_eq!(config.integrations, None);
     }
 }

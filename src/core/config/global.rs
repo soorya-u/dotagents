@@ -4,8 +4,7 @@ use std::{
 };
 use strum::VariantNames;
 
-#[cfg(feature = "skills-add")]
-use super::common::PackageRunner;
+use super::common::IntegrationsConfig;
 use super::common::Providers;
 use super::mode::FeatureModeConfig;
 use super::traits::TomlConfig;
@@ -26,9 +25,8 @@ pub struct GlobalConfig {
     pub providers: Option<Providers>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub variables: Option<HashMap<String, String>>,
-    #[cfg(feature = "skills-add")]
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub package_runner: Option<PackageRunner>,
+    pub integrations: Option<IntegrationsConfig>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub feature_maps: Option<HashMap<String, FeatureModeConfig>>,
 }
@@ -41,8 +39,7 @@ impl GlobalConfig {
             targets: None,
             providers: None,
             variables: None,
-            #[cfg(feature = "skills-add")]
-            package_runner: None,
+            integrations: None,
             feature_maps: None,
         }
     }
@@ -55,8 +52,7 @@ impl GlobalConfig {
             targets: Some(targets),
             providers: None,
             variables: None,
-            #[cfg(feature = "skills-add")]
-            package_runner: None,
+            integrations: None,
             feature_maps: None,
         }
     }
@@ -84,34 +80,51 @@ impl Default for GlobalConfig {
 
 impl TomlConfig for GlobalConfig {}
 
-#[cfg(feature = "skills-add")]
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::integrations::skills_sh::PackageRunner;
 
     #[test]
-    fn package_runner_field_deserialises_in_global_config() {
+    fn integrations_skills_sh_package_runner_deserialises_in_global_config() {
+        // [integrations.skills-sh] package-runner deserialises correctly
         for (toml_val, expected) in [
             ("npm", PackageRunner::Npm),
             ("pnpm", PackageRunner::Pnpm),
             ("yarn", PackageRunner::Yarn),
             ("bun", PackageRunner::Bun),
         ] {
-            let toml = format!("package-runner = \"{toml_val}\"\n");
+            let toml = format!("[integrations.skills-sh]\npackage-runner = \"{toml_val}\"\n");
             let config: GlobalConfig = toml::from_str(&toml).unwrap();
-            assert_eq!(config.package_runner, Some(expected));
+            assert_eq!(
+                config
+                    .integrations
+                    .and_then(|i| i.skills_sh)
+                    .and_then(|s| s.package_runner),
+                Some(expected)
+            );
         }
     }
 
     #[test]
-    fn package_runner_absent_yields_none_in_global_config() {
+    fn integrations_absent_yields_none_in_global_config() {
+        // no [integrations] table yields None
         let config: GlobalConfig = toml::from_str("features = []\n").unwrap();
-        assert_eq!(config.package_runner, None);
+        assert_eq!(config.integrations, None);
     }
 
     #[test]
     fn invalid_package_runner_value_fails_deserialisation() {
-        let result: Result<GlobalConfig, _> = toml::from_str("package-runner = \"cargo\"\n");
+        // invalid package-runner value under [integrations.skills-sh] fails
+        let result: Result<GlobalConfig, _> =
+            toml::from_str("[integrations.skills-sh]\npackage-runner = \"cargo\"\n");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn top_level_package_runner_is_ignored() {
+        // top-level package-runner is no longer read — serde ignores unknown fields
+        let config: GlobalConfig = toml::from_str("package-runner = \"bun\"\n").unwrap();
+        assert_eq!(config.integrations, None);
     }
 }

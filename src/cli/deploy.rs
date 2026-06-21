@@ -492,7 +492,7 @@ pub(super) fn deploy(mut opts: DeployOptions) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::cli::ui::dry_run::{DeployDryRunStatus, DryRunDeployEntry};
+    use crate::cli::ui::dry_run::DeployDryRunStatus;
     use crate::core::config::FeatureSettings;
     use crate::core::features::instruction::InstructionFeature;
     use crate::utils::dedup::DeployWorkItem;

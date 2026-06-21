@@ -660,20 +660,16 @@ test.describe("deploy TUI – T-GP01 gitignore prompt No", () => {
 	test("pressing Enter on default No skips gitignore update", async ({
 		terminal,
 	}) => {
-		try {
-			await expect(
-				terminal.getByText("deployed path(s) to .gitignore?"),
-			).toBeVisible();
-			terminal.keyPress("Enter"); // accept default No
-			await expect(terminal.getByText("written")).toBeVisible();
-			// .gitignore should NOT contain the dotagents fence
-			const giPath = join(d, ".gitignore");
-			if (existsSync(giPath)) {
-				const content = readFileSync(giPath, "utf8");
-				expect(content).not.toContain("region dotagents");
-			}
-		} finally {
-			cleanup(d);
+		await expect(
+			terminal.getByText("deployed path(s) to .gitignore?"),
+		).toBeVisible();
+		terminal.keyPress("Enter"); // accept default No
+		await expect(terminal.getByText("written")).toBeVisible();
+		// .gitignore should NOT contain the dotagents fence
+		const giPath = join(d, ".gitignore");
+		if (existsSync(giPath)) {
+			const content = readFileSync(giPath, "utf8");
+			expect(content).not.toContain("region dotagents");
 		}
 	});
 });
@@ -685,18 +681,14 @@ test.describe("deploy TUI – T-GP02 gitignore prompt Yes", () => {
 	test.use({ program: shellProgram(d, ["deploy", "--offline"]) });
 
 	test("selecting Yes adds paths to .gitignore fence", async ({ terminal }) => {
-		try {
-			await expect(
-				terminal.getByText("deployed path(s) to .gitignore?"),
-			).toBeVisible();
-			terminal.keyDown(); // navigate to Yes
-			terminal.keyPress("Enter");
-			await expect(terminal.getByText("written")).toBeVisible();
-			const gi = readFileSync(join(d, ".gitignore"), "utf8");
-			expect(gi).toContain("region dotagents");
-		} finally {
-			cleanup(d);
-		}
+		await expect(
+			terminal.getByText("deployed path(s) to .gitignore?"),
+		).toBeVisible();
+		terminal.keyDown(); // navigate to Yes
+		terminal.keyPress("Enter");
+		await expect(terminal.getByText("written")).toBeVisible();
+		const gi = readFileSync(join(d, ".gitignore"), "utf8");
+		expect(gi).toContain("region dotagents");
 	});
 });
 
@@ -874,17 +866,13 @@ test.describe("deploy TUI – TC-DEPLOY-01 full deploy journey", () => {
 	test("full interactive deploy: gitignore No → summary → Done", async ({
 		terminal,
 	}) => {
-		try {
-			await expect(
-				terminal.getByText("deployed path(s) to .gitignore?"),
-			).toBeVisible();
-			terminal.keyPress("Enter");
+		await expect(
+			terminal.getByText("deployed path(s) to .gitignore?"),
+		).toBeVisible();
+		terminal.keyPress("Enter");
 
-			await expect(terminal.getByText("written")).toBeVisible();
-			expect(existsSync(join(d, ".mycode/commands/hello.md"))).toBe(true);
-			expect(existsSync(join(d, ".mycode/instructions.md"))).toBe(true);
-		} finally {
-			cleanup(d);
-		}
+		await expect(terminal.getByText("written")).toBeVisible();
+		expect(existsSync(join(d, ".mycode/commands/hello.md"))).toBe(true);
+		expect(existsSync(join(d, ".mycode/instructions.md"))).toBe(true);
 	});
 });

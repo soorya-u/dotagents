@@ -205,12 +205,8 @@ test.describe("deploy TUI – T-D1 outro summary", () => {
 	});
 
 	test("deploy prints written/skipped summary to TTY", async ({ terminal }) => {
-		try {
-			// --offline skips the interactive prompt; outro appears after deploy
-			await expect(terminal.getByText("written")).toBeVisible();
-		} finally {
-			cleanup(d);
-		}
+		// --offline skips the interactive prompt; outro appears after deploy
+		await expect(terminal.getByText("written")).toBeVisible();
 	});
 });
 
@@ -224,17 +220,13 @@ test.describe("undeploy TUI – T-U1 confirm Yes removes files", () => {
 	test("selecting Yes on confirmation prompt removes deployed files", async ({
 		terminal,
 	}) => {
-		try {
-			// Confirmation prompt appears
-			await expect(terminal.getByText("deployed file")).toBeVisible();
-			// Default selection is "No" — move down to "Yes" and confirm
-			terminal.keyDown();
-			terminal.keyPress("Enter");
-			// Summary is printed after successful removal
-			await expect(terminal.getByText("removed")).toBeVisible();
-		} finally {
-			cleanup(d);
-		}
+		// Confirmation prompt appears
+		await expect(terminal.getByText("deployed file")).toBeVisible();
+		// Default selection is "No" — move down to "Yes" and confirm
+		terminal.keyDown();
+		terminal.keyPress("Enter");
+		// Summary is printed after successful removal
+		await expect(terminal.getByText("removed")).toBeVisible();
 	});
 });
 
@@ -246,17 +238,13 @@ test.describe("undeploy TUI – T-U2 confirm No aborts", () => {
 	test.use({ program: shellProgram(d, ["undeploy"]) });
 
 	test("pressing Enter on default No aborts undeploy", async ({ terminal }) => {
-		try {
-			// Confirmation prompt appears
-			await expect(terminal.getByText("deployed file")).toBeVisible();
-			// Accept the default "No" selection
-			terminal.keyPress("Enter");
-			// Process exits silently; no summary should be printed
-		} finally {
-			// Files should still exist since undeploy was aborted
-			expect(existsSync(join(d, ".mycode/instructions.md"))).toBe(true);
-			cleanup(d);
-		}
+		// Confirmation prompt appears
+		await expect(terminal.getByText("deployed file")).toBeVisible();
+		// Accept the default "No" selection
+		terminal.keyPress("Enter");
+		// Process exits silently; no summary should be printed
+		// Files should still exist since undeploy was aborted
+		expect(existsSync(join(d, ".mycode/instructions.md"))).toBe(true);
 	});
 });
 
@@ -451,23 +439,19 @@ test.describe("undeploy TUI – T-U3 edited file No", () => {
 	test("default No on edited-file prompt keeps the file", async ({
 		terminal,
 	}) => {
-		try {
-			// First prompt: confirm undeploy — navigate to Yes
-			await expect(
-				terminal.getByText("Remove 3 deployed file(s)?"),
-			).toBeVisible();
-			terminal.keyDown(); // navigate from No to Yes
-			terminal.keyPress("Enter");
-			// Second prompt: edited file warning — "No, keep it" is default
-			await expect(terminal.getByText("was manually edited")).toBeVisible();
-			terminal.keyPress("Enter"); // accept default No, keep it
-			// Wait for summary to appear before checking filesystem
-			await expect(terminal.getByText("removed")).toBeVisible();
-			// File was skipped and not deleted
-			expect(existsSync(join(d, ".mycode/instructions.md"))).toBe(true);
-		} finally {
-			cleanup(d);
-		}
+		// First prompt: confirm undeploy — navigate to Yes
+		await expect(
+			terminal.getByText("Remove 3 deployed file(s)?"),
+		).toBeVisible();
+		terminal.keyDown(); // navigate from No to Yes
+		terminal.keyPress("Enter");
+		// Second prompt: edited file warning — "No, keep it" is default
+		await expect(terminal.getByText("was manually edited")).toBeVisible();
+		terminal.keyPress("Enter"); // accept default No, keep it
+		// Wait for summary to appear before checking filesystem
+		await expect(terminal.getByText("removed")).toBeVisible();
+		// File was skipped and not deleted
+		expect(existsSync(join(d, ".mycode/instructions.md"))).toBe(true);
 	});
 });
 
@@ -482,22 +466,18 @@ test.describe("undeploy TUI – T-U4 edited file Yes", () => {
 	test("selecting Yes on edited-file prompt deletes the file", async ({
 		terminal,
 	}) => {
-		try {
-			await expect(
-				terminal.getByText("Remove 3 deployed file(s)?"),
-			).toBeVisible();
-			terminal.keyDown(); // Yes for undeploy
-			terminal.keyPress("Enter");
-			await expect(terminal.getByText("was manually edited")).toBeVisible();
-			terminal.keyDown(); // navigate to "Yes, delete it"
-			terminal.keyPress("Enter");
-			// Wait for summary text before checking filesystem
-			await expect(terminal.getByText("removed")).toBeVisible();
-			// File should now be deleted
-			expect(existsSync(join(d, ".mycode/instructions.md"))).toBe(false);
-		} finally {
-			cleanup(d);
-		}
+		await expect(
+			terminal.getByText("Remove 3 deployed file(s)?"),
+		).toBeVisible();
+		terminal.keyDown(); // Yes for undeploy
+		terminal.keyPress("Enter");
+		await expect(terminal.getByText("was manually edited")).toBeVisible();
+		terminal.keyDown(); // navigate to "Yes, delete it"
+		terminal.keyPress("Enter");
+		// Wait for summary text before checking filesystem
+		await expect(terminal.getByText("removed")).toBeVisible();
+		// File should now be deleted
+		expect(existsSync(join(d, ".mycode/instructions.md"))).toBe(false);
 	});
 });
 

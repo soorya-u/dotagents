@@ -285,8 +285,10 @@ fn print_app_config(config: &AppConfig) {
         }
     }
 
-    #[cfg(feature = "skills-add")]
-    if let Some(runner) = &config.package_runner {
+    if let Some(integrations) = &config.integrations
+        && let Some(skills_sh) = &integrations.skills_sh
+        && let Some(runner) = &skills_sh.package_runner
+    {
         println!(
             "\nPackage runner: {}",
             serde_json::to_string(runner).unwrap_or_default()

@@ -88,18 +88,14 @@ test.describe("providers TUI – TC-PROV-01 select widget", () => {
 	test("select widget renders, Enter selects, shows outro", async ({
 		terminal,
 	}) => {
-		try {
-			await expect(terminal.getByText("Providers")).toBeVisible();
-			// "amp" is the first provider alphabetically by slug
-			await expect(terminal.getByText("amp")).toBeVisible();
+		await expect(terminal.getByText("Providers")).toBeVisible();
+		// First item after alpha sort by slug is "adal"
+		await expect(terminal.getByText("adal")).toBeVisible();
 
-			// Press Enter to select the highlighted provider
-			terminal.keyPress("Enter");
+		// Press Enter to select the highlighted (first) provider
+		terminal.keyPress("Enter");
 
-			// Outro should show with provider name
-			await expect(terminal.getByText("Amp Code")).toBeVisible();
-		} finally {
-			cleanup(d);
-		}
+		// Outro should show with provider name (from registry)
+		await expect(terminal.getByText("Adal (https://adal.dev)")).toBeVisible();
 	});
 });
