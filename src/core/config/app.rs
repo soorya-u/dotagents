@@ -2,8 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use anyhow::{Context, Result};
 
-#[cfg(feature = "skills-add")]
-use super::common::PackageRunner;
+use super::common::IntegrationsConfig;
 use super::common::Providers;
 use super::global::GlobalConfig;
 use super::local::LocalConfig;
@@ -26,9 +25,8 @@ pub struct AppConfig {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub providers: Option<Providers>,
     pub variables: Option<HashMap<String, String>>,
-    #[cfg(feature = "skills-add")]
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub package_runner: Option<PackageRunner>,
+    pub integrations: Option<IntegrationsConfig>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub feature_maps: Option<HashMap<String, FeatureModeConfig>>,
 }
@@ -41,8 +39,7 @@ impl AppConfig {
             targets: HashSet::new(),
             providers: None,
             variables: None,
-            #[cfg(feature = "skills-add")]
-            package_runner: None,
+            integrations: None,
             feature_maps: None,
         }
     }
@@ -164,11 +161,11 @@ impl From<(&GlobalConfig, &LocalConfig)> for AppConfig {
             },
         );
 
-        #[cfg(feature = "skills-add")]
-        let package_runner = local
-            .package_runner
-            .clone()
-            .or_else(|| global.package_runner.clone());
+        let integrations = merge_optional(
+            global.integrations.as_ref(),
+            local.integrations.as_ref(),
+            |g, l| g.merge(l),
+        );
 
         let feature_maps = merge_optional(
             global.feature_maps.as_ref(),
@@ -191,8 +188,7 @@ impl From<(&GlobalConfig, &LocalConfig)> for AppConfig {
             targets,
             providers,
             variables,
-            #[cfg(feature = "skills-add")]
-            package_runner,
+            integrations,
             feature_maps,
         }
     }
@@ -305,10 +301,11 @@ mod mode_tests {
     }
 }
 
-#[cfg(all(test, feature = "skills-add"))]
+#[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::config::common::PackageRunner;
+    use crate::core::config::common::{IntegrationsConfig, SkillsShConfig};
+    use crate::integrations::skills_sh::PackageRunner;
 
     fn make_global(runner: Option<PackageRunner>) -> GlobalConfig {
         GlobalConfig {
@@ -317,7 +314,11 @@ mod tests {
             targets: None,
             providers: None,
             variables: None,
-            package_runner: runner,
+            integrations: runner.map(|r| IntegrationsConfig {
+                skills_sh: Some(SkillsShConfig {
+                    package_runner: Some(r),
+                }),
+            }),
             feature_maps: None,
         }
     }
@@ -329,9 +330,20 @@ mod tests {
             targets: None,
             providers: None,
             variables: None,
-            package_runner: runner,
+            integrations: runner.map(|r| IntegrationsConfig {
+                skills_sh: Some(SkillsShConfig {
+                    package_runner: Some(r),
+                }),
+            }),
             feature_maps: None,
         }
+    }
+
+    fn app_runner(app: &AppConfig) -> Option<PackageRunner> {
+        app.integrations
+            .as_ref()
+            .and_then(|i| i.skills_sh.as_ref())
+            .and_then(|s| s.package_runner.clone())
     }
 
     #[test]
@@ -339,7 +351,7 @@ mod tests {
         let global = make_global(Some(PackageRunner::Npm));
         let local = make_local(Some(PackageRunner::Pnpm));
         let app = AppConfig::from((&global, &local));
-        assert_eq!(app.package_runner, Some(PackageRunner::Pnpm));
+        assert_eq!(app_runner(&app), Some(PackageRunner::Pnpm));
     }
 
     #[test]
@@ -347,7 +359,7 @@ mod tests {
         let global = make_global(Some(PackageRunner::Yarn));
         let local = make_local(None);
         let app = AppConfig::from((&global, &local));
-        assert_eq!(app.package_runner, Some(PackageRunner::Yarn));
+        assert_eq!(app_runner(&app), Some(PackageRunner::Yarn));
     }
 
     #[test]
@@ -355,7 +367,7 @@ mod tests {
         let global = make_global(None);
         let local = make_local(None);
         let app = AppConfig::from((&global, &local));
-        assert_eq!(app.package_runner, None);
+        assert_eq!(app_runner(&app), None);
     }
 
     fn make_global_with_targets(targets: Option<HashSet<String>>) -> GlobalConfig {
@@ -365,7 +377,7 @@ mod tests {
             targets,
             providers: None,
             variables: None,
-            package_runner: None,
+            integrations: None,
             feature_maps: None,
         }
     }
@@ -377,7 +389,7 @@ mod tests {
             targets,
             providers: None,
             variables: None,
-            package_runner: None,
+            integrations: None,
             feature_maps: None,
         }
     }

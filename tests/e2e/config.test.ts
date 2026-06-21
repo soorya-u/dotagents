@@ -356,19 +356,15 @@ test.describe("config TUI – T-CG01 global --edit", () => {
 	test.use({ program: shellProgram(d, ["config", "global", "--edit"]) });
 
 	test("selects features and completes edit flow", async ({ terminal }) => {
-		try {
-			await expect(terminal.getByText("Select active features")).toBeVisible();
-			// All features are pre-selected from the existing config; confirm as-is.
-			terminal.keyPress("Enter");
-			// Provider selection is a registry-backed multiselect; skip with Enter.
-			await expect(
-				terminal.getByText("Which providers would you like to target?"),
-			).toBeVisible();
-			terminal.keyPress("Enter");
-			await expect(terminal.getByText("Done.")).toBeVisible();
-		} finally {
-			cleanup(d);
-		}
+		await expect(terminal.getByText("Select active features")).toBeVisible();
+		// All features are pre-selected from the existing config; confirm as-is.
+		terminal.keyPress("Enter");
+		// Provider selection is a registry-backed multiselect; skip with Enter.
+		await expect(
+			terminal.getByText("Which providers would you like to target?"),
+		).toBeVisible();
+		terminal.keyPress("Enter");
+		await expect(terminal.getByText("Done.")).toBeVisible();
 	});
 });
 
@@ -379,24 +375,18 @@ test.describe("config TUI – T-CL01 local --edit", () => {
 	test.use({ program: shellProgram(d, ["config", "local", "--edit"]) });
 
 	test("selects a feature and completes edit flow", async ({ terminal }) => {
-		try {
-			await expect(
-				terminal.getByText("Select override features"),
-			).toBeVisible();
-			// Select first item then confirm.
-			terminal.keyPress("Space");
-			terminal.keyPress("Enter");
-			// Provider selection is a registry-backed multiselect; skip with Enter.
-			await expect(
-				terminal.getByText("Which providers would you like to target?"),
-			).toBeVisible();
-			terminal.keyPress("Enter");
-			await expect(terminal.getByText("Done.")).toBeVisible();
-			// local config should still exist
-			expect(existsSync(join(d, ".dotagents/local.config.toml"))).toBe(true);
-		} finally {
-			cleanup(d);
-		}
+		await expect(terminal.getByText("Select override features")).toBeVisible();
+		// Select first item then confirm.
+		terminal.keyPress("Space");
+		terminal.keyPress("Enter");
+		// Provider selection is a registry-backed multiselect; skip with Enter.
+		await expect(
+			terminal.getByText("Which providers would you like to target?"),
+		).toBeVisible();
+		terminal.keyPress("Enter");
+		await expect(terminal.getByText("Done.")).toBeVisible();
+		// local config should still exist
+		expect(existsSync(join(d, ".dotagents/local.config.toml"))).toBe(true);
 	});
 });
 
@@ -409,20 +399,16 @@ test.describe("config TUI – T-CA01 app display", () => {
 	test.use({ program: shellProgram(d, ["config"]) });
 
 	test("shows Active Features then Providers selects", async ({ terminal }) => {
-		try {
-			await expect(terminal.getByText("Effective Configuration")).toBeVisible();
-			await expect(terminal.getByText("Active Features")).toBeVisible();
-			terminal.keyPress("Enter");
-			await expect(terminal.getByText("Targets")).toBeVisible();
-			terminal.keyPress("Enter");
-			await expect(terminal.getByText("Providers")).toBeVisible();
-			terminal.keyPress("Enter");
-			await expect(terminal.getByText("Variables")).toBeVisible();
-			terminal.keyPress("Enter");
-			await expect(terminal.getByText("Done.")).toBeVisible();
-		} finally {
-			cleanup(d);
-		}
+		await expect(terminal.getByText("Effective Configuration")).toBeVisible();
+		await expect(terminal.getByText("Active Features")).toBeVisible();
+		terminal.keyPress("Enter");
+		await expect(terminal.getByText("Targets")).toBeVisible();
+		terminal.keyPress("Enter");
+		await expect(terminal.getByText("Providers")).toBeVisible();
+		terminal.keyPress("Enter");
+		await expect(terminal.getByText("Variables")).toBeVisible();
+		terminal.keyPress("Enter");
+		await expect(terminal.getByText("Done.")).toBeVisible();
 	});
 });
 
@@ -435,18 +421,14 @@ test.describe("config TUI – T-CG02 global display", () => {
 	test("shows Features then Targets selects and completes", async ({
 		terminal,
 	}) => {
-		try {
-			await expect(terminal.getByText("Global Configuration")).toBeVisible();
-			await expect(terminal.getByText("Features")).toBeVisible();
-			terminal.keyPress("Enter");
-			await expect(terminal.getByText("Targets")).toBeVisible();
-			terminal.keyPress("Enter");
-			await expect(terminal.getByText("Variables")).toBeVisible();
-			terminal.keyPress("Enter");
-			await expect(terminal.getByText("Done.")).toBeVisible();
-		} finally {
-			cleanup(d);
-		}
+		await expect(terminal.getByText("Global Configuration")).toBeVisible();
+		await expect(terminal.getByText("Features")).toBeVisible();
+		terminal.keyPress("Enter");
+		await expect(terminal.getByText("Targets")).toBeVisible();
+		terminal.keyPress("Enter");
+		await expect(terminal.getByText("Variables")).toBeVisible();
+		terminal.keyPress("Enter");
+		await expect(terminal.getByText("Done.")).toBeVisible();
 	});
 });
 
@@ -459,19 +441,15 @@ test.describe("config TUI – T-CL02 local display", () => {
 	test("shows Override Features then Override Providers selects", async ({
 		terminal,
 	}) => {
-		try {
-			await expect(terminal.getByText("Local Configuration")).toBeVisible();
-			await expect(terminal.getByText("Override Features")).toBeVisible();
-			terminal.keyPress("Enter");
-			await expect(terminal.getByText("Override Targets")).toBeVisible();
-			terminal.keyPress("Enter");
-			await expect(terminal.getByText("Override Providers")).toBeVisible();
-			terminal.keyPress("Enter");
-			await expect(terminal.getByText("Override Variables")).toBeVisible();
-			terminal.keyPress("Enter");
-			await expect(terminal.getByText("Done.")).toBeVisible();
-		} finally {
-			cleanup(d);
-		}
+		await expect(terminal.getByText("Local Configuration")).toBeVisible();
+		await expect(terminal.getByText("Override Features")).toBeVisible();
+		terminal.keyPress("Enter");
+		await expect(terminal.getByText("Override Targets")).toBeVisible();
+		terminal.keyPress("Enter");
+		await expect(terminal.getByText("Override Providers")).toBeVisible();
+		terminal.keyPress("Enter");
+		await expect(terminal.getByText("Override Variables")).toBeVisible();
+		terminal.keyPress("Enter");
+		await expect(terminal.getByText("Done.")).toBeVisible();
 	});
 });

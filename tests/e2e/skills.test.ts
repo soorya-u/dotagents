@@ -1166,34 +1166,31 @@ test.describe("skills new TUI – T08 interactive prompts", () => {
 		d,
 	);
 	test.use({ program: shellProgram(d, ["skills", "new", "my-skill"]) });
+	test.afterAll(() => cleanup(d));
 
 	test("prompts for description, license, compatibility", async ({
 		terminal,
 	}) => {
-		try {
-			await expect(terminal.getByText("Description")).toBeVisible();
+		await expect(terminal.getByText("Description")).toBeVisible();
 
-			terminal.write("A skill description");
-			terminal.keyPress("Enter");
+		terminal.write("A skill description");
+		terminal.keyPress("Enter");
 
-			await expect(terminal.getByText("License")).toBeVisible();
-			terminal.write("MIT");
-			terminal.keyPress("Enter");
+		await expect(terminal.getByText("License")).toBeVisible();
+		terminal.write("MIT");
+		terminal.keyPress("Enter");
 
-			await expect(terminal.getByText("Compatibility")).toBeVisible();
-			terminal.write("Requires node");
-			terminal.keyPress("Enter");
+		await expect(terminal.getByText("Compatibility")).toBeVisible();
+		terminal.write("Requires node");
+		terminal.keyPress("Enter");
 
-			// wait for deploy prompt — it appears after the file is written
-			await expect(terminal.getByText("Deploy now?")).toBeVisible();
-			terminal.keyPress("Enter"); // accept default No
+		// wait for deploy prompt — it appears after the file is written
+		await expect(terminal.getByText("Deploy now?")).toBeVisible();
+		terminal.keyPress("Enter"); // accept default No
 
-			expect(existsSync(join(d, ".dotagents/skills/my-skill/SKILL.md"))).toBe(
-				true,
-			);
-		} finally {
-			cleanup(d);
-		}
+		expect(existsSync(join(d, ".dotagents/skills/my-skill/SKILL.md"))).toBe(
+			true,
+		);
 	});
 });
 
@@ -1213,34 +1210,30 @@ test.describe("skills rm TUI – T12 confirm Yes", () => {
 		d,
 	);
 	test.use({ program: shellProgram(d, ["skills", "rm", "hello-skill"]) });
+	test.afterAll(() => cleanup(d));
 
 	test("confirm Yes removes the skill", async ({ terminal }) => {
-		try {
-			await expect(
-				terminal.getByText("Remove skill 'hello-skill'?"),
-			).toBeVisible();
-			terminal.keyUp(); // navigate to Yes
-			terminal.keyPress("Enter");
+		await expect(
+			terminal.getByText("Remove skill 'hello-skill'?"),
+		).toBeVisible();
+		terminal.keyUp(); // navigate to Yes
+		terminal.keyPress("Enter");
 
-			await expect(terminal.getByText("Removed")).toBeVisible();
+		await expect(terminal.getByText("Removed")).toBeVisible();
 
-			expect(existsSync(join(d, ".dotagents/skills/hello-skill"))).toBe(false);
-		} finally {
-			cleanup(d);
-		}
+		expect(existsSync(join(d, ".dotagents/skills/hello-skill"))).toBe(false);
 	});
 });
 
-// ── skills add – CI ────────────────────────────────────────────────────────────
-// Gated behind the `skills-add` Cargo feature; skipped until v0.2.0 ships it.
-test.describe("skills add CI", () => {
+// ── skills add – CLI ────────────────────────────────────────────────────────────
+// `skills add` is always available (no longer feature-gated).
+// Tests that require network access to the skills.sh registry are skipped.
+test.describe("skills add CLI", () => {
+	// skills add requires network; skip in CI
 	test.skip("exits promptly in CI mode (does not hang)", async () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
-			// Use DOTAGENTS_CI env + --ci flag. The command will likely
-			// fail because no real package runner is available, but it
-			// must NOT hang. A non-zero exit code is acceptable.
 			const { exitCode, stderr } = run(
 				["skills", "add", "some-skill", "--ci"],
 				d,
@@ -1248,9 +1241,7 @@ test.describe("skills add CI", () => {
 					DOTAGENTS_CI: "true",
 				},
 			);
-			// Must exit (non-zero OK — hangs would timeout)
 			expect(typeof exitCode).toBe("number");
-			// Passing --yes means no interactive prompt
 			expect(stderr).not.toMatch(/confirm/i);
 		} finally {
 			cleanup(d);
@@ -1258,7 +1249,7 @@ test.describe("skills add CI", () => {
 	});
 
 	// TC-SKILL-ADD-05: invalid --runner value exits with Clap error
-	test.skip("--runner maven exits 2 with invalid value error", async () => {
+	test("--runner maven exits 2 with invalid value error", async () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
@@ -1274,16 +1265,15 @@ test.describe("skills add CI", () => {
 	});
 
 	// TC-SKILL-ADD-04: --runner yarn not on PATH exits non-zero with helpful error
-	test.skip("--runner yarn not on PATH exits non-zero", async () => {
+	test("--runner yarn not on PATH exits non-zero", async () => {
 		const d = makeTmpDir();
 		try {
 			run(["init", "--template", "starter"], d);
-			// Run with a PATH that excludes yarn
 			const { exitCode, stderr } = run(
 				["skills", "add", "test-skill", "--runner", "yarn"],
 				d,
 				{
-					PATH: "/usr/bin:/bin",
+					PATH: "/nonexistent",
 				},
 			);
 			expect(exitCode).not.toBe(0);
@@ -1308,16 +1298,194 @@ test.describe("skills rm TUI – T13 confirm No", () => {
 		d,
 	);
 	test.use({ program: shellProgram(d, ["skills", "rm", "hello-skill"]) });
+	test.afterAll(() => cleanup(d));
 
 	test("confirm No leaves the skill directory intact", async ({ terminal }) => {
-		try {
-			await expect(
-				terminal.getByText("Remove skill 'hello-skill'?"),
-			).toBeVisible();
-			terminal.keyPress("Enter"); // accept default No
-			await expect(terminal.getByText("Cancelled")).toBeVisible();
+		await expect(
+			terminal.getByText("Remove skill 'hello-skill'?"),
+		).toBeVisible();
+		terminal.keyPress("Enter"); // accept default No
+		await expect(terminal.getByText("Cancelled")).toBeVisible();
 
-			expect(existsSync(join(d, ".dotagents/skills/hello-skill"))).toBe(true);
+		expect(existsSync(join(d, ".dotagents/skills/hello-skill"))).toBe(true);
+	});
+});
+
+// ── integrations-skills-sh – config & rm provenance ─────────────────────────────
+
+test.describe("integrations config", () => {
+	// top-level package-runner (old format) is silently ignored, config still parses
+	test("top-level package-runner in config is silently ignored", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--ci"], d);
+			const rootDir = existsSync(join(d, ".dotagents-debug"))
+				? ".dotagents-debug"
+				: ".dotagents";
+			const configPath = join(d, rootDir, "config.toml");
+			const configContent = readFileSync(configPath, "utf8");
+			writeFileSync(configPath, `${configContent}\npackage-runner = "bun"\n`);
+			const { exitCode, stdout } = run(["config"], d);
+			expect(exitCode).toBe(0);
+			// top-level field is ignored; no "Package runner" line appears
+			expect(stdout).not.toMatch(/Package runner/);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// [integrations.skills-sh] table in config is parsed and displayed
+	test("integrations skills-sh table is parsed and displayed", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--ci"], d);
+			const rootDir = existsSync(join(d, ".dotagents-debug"))
+				? ".dotagents-debug"
+				: ".dotagents";
+			const configPath = join(d, rootDir, "config.toml");
+			const configContent = readFileSync(configPath, "utf8");
+			writeFileSync(
+				configPath,
+				`${configContent}\n[integrations.skills-sh]\npackage-runner = "bun"\n`,
+			);
+			const { exitCode, stdout } = run(["config"], d);
+			expect(exitCode).toBe(0);
+			expect(stdout).toMatch(/Package runner/);
+			expect(stdout).toMatch(/bun/);
+		} finally {
+			cleanup(d);
+		}
+	});
+});
+
+test.describe("skills rm provenance", () => {
+	// skills rm on a locally-created skill (no lockfile) takes the local path
+	test("locally-created skill is removed via local path", async () => {
+		const d = makeTmpDir();
+		try {
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"command,instruction,mcp,skill",
+				],
+				d,
+			);
+			run(["skills", "new", "local-skill", "--description", "test"], d);
+			// Verify no skills-lock.json exists (local skill, not installed via skills add)
+			const rootDir = existsSync(join(d, ".dotagents-debug"))
+				? ".dotagents-debug"
+				: ".dotagents";
+			expect(existsSync(join(d, rootDir, "skills-lock.json"))).toBe(false);
+
+			const { exitCode } = run(["skills", "rm", "local-skill", "--force"], d);
+			expect(exitCode).toBe(0);
+			expect(existsSync(join(d, rootDir, "skills/local-skill"))).toBe(false);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// skills rm with a lockfile entry triggers external delegation (requires npx)
+	test.skip("skills rm with lockfile present delegates to skills CLI", async () => {
+		const d = makeTmpDir();
+		try {
+			run(
+				[
+					"init",
+					"--template",
+					"starter",
+					"--features",
+					"command,instruction,mcp,skill",
+				],
+				d,
+			);
+			const rootDir = existsSync(join(d, ".dotagents-debug"))
+				? ".dotagents-debug"
+				: ".dotagents";
+			// Create a fake lockfile to simulate an externally-installed skill
+			writeFileSync(
+				join(d, rootDir, "skills-lock.json"),
+				JSON.stringify({
+					version: 1,
+					skills: {
+						"hello-skill": {
+							source: "vercel-labs/skills",
+							sourceType: "github",
+							skillPath: "skills/hello-skill/SKILL.md",
+							computedHash: "abc123",
+						},
+					},
+				}),
+			);
+			// is_external returns true → delegates to `npx skills remove`
+			const { exitCode } = run(["skills", "rm", "hello-skill", "--force"], d);
+			expect(exitCode).toBe(0);
+		} finally {
+			cleanup(d);
+		}
+	});
+});
+
+// ── skills add – integrations (network-dependent) ─────────────────────────────
+// These tests require network access to run `npx skills add`. They are skipped.
+
+test.describe("skills add integrations", () => {
+	// 10.1: skills add lands files in .dotagents-debug/skills/<name>/SKILL.md
+	test.skip("skills add installs into .dotagents/skills/ with openclaw+copy", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--ci"], d);
+			const { exitCode } = run(
+				["skills", "add", "vercel-labs/skills@find-skills", "--ci"],
+				d,
+			);
+			expect(exitCode).toBe(0);
+			const rootDir = existsSync(join(d, ".dotagents-debug"))
+				? ".dotagents-debug"
+				: ".dotagents";
+			expect(existsSync(join(d, rootDir, "skills/find-skills/SKILL.md"))).toBe(
+				true,
+			);
+			expect(existsSync(join(d, ".claude/skills"))).toBe(false);
+			expect(existsSync(join(d, rootDir, "skills-lock.json"))).toBe(true);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// 10.2: skills add with --runner flag
+	test.skip("skills add --runner uses specified runner", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--ci"], d);
+			const { exitCode } = run(
+				[
+					"skills",
+					"add",
+					"vercel-labs/skills@find-skills",
+					"--ci",
+					"--runner",
+					"npm",
+				],
+				d,
+			);
+			expect(exitCode).toBe(0);
+		} finally {
+			cleanup(d);
+		}
+	});
+
+	// 10.3: skills rm external path delegates to skills CLI
+	test.skip("skills rm external skill delegates to skills CLI", async () => {
+		const d = makeTmpDir();
+		try {
+			run(["init", "--ci"], d);
+			run(["skills", "add", "vercel-labs/skills@find-skills", "--ci"], d);
+			const { exitCode } = run(["skills", "rm", "find-skills", "--force"], d);
+			expect(exitCode).toBe(0);
 		} finally {
 			cleanup(d);
 		}

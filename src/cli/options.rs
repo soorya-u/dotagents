@@ -3,8 +3,7 @@ use clap_complete::Shell;
 use std::path::PathBuf;
 use strum_macros::{AsRefStr, EnumString};
 
-#[cfg(feature = "skills-add")]
-use crate::core::config::common::PackageRunner;
+use crate::integrations::skills_sh::PackageRunner;
 
 #[derive(Parser, Default)]
 #[clap(author, version, about, long_about=None)]
@@ -86,7 +85,6 @@ pub(crate) enum Feature {
 #[derive(Subcommand)]
 pub(crate) enum SkillsAction {
     /// Install a skill from skills.sh or a GitHub owner/repo into .dotagents/skills/
-    #[cfg(feature = "skills-add")]
     Add(SkillsAddOptions),
     /// Create a new skill scaffold
     New(AddSkillOptions),
@@ -145,7 +143,6 @@ pub(crate) struct SubLsOptions {
     pub skill: Option<String>,
 }
 
-#[cfg(feature = "skills-add")]
 #[derive(Args)]
 pub(crate) struct SkillsAddOptions {
     #[clap(flatten)]
@@ -154,7 +151,7 @@ pub(crate) struct SkillsAddOptions {
     /// Skill name or owner/repo to install (e.g. vercel-labs/agent-skills)
     pub name: String,
 
-    /// Package runner to use for this invocation [npm, pnpm, yarn, bun]
+    /// Package runner to use for this invocation [npm, pnpm, yarn, bun] (overrides [integrations.skills-sh].package-runner in config)
     #[clap(long, short)]
     pub runner: Option<PackageRunner>,
 }

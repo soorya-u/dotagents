@@ -31,7 +31,6 @@ pub(crate) fn run(opts: Options) -> Result<bool> {
             true
         }
         Action::Skills { action } => match action {
-            #[cfg(feature = "skills-add")]
             SkillsAction::Add(opts) => {
                 skills::add(opts).context("complete 'skills add' command")?
             }

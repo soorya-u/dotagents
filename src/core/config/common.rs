@@ -1,74 +1,37 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+use crate::integrations::skills_sh::PackageRunner;
 use crate::{core::features::Feature, utils::merge::merge_optional};
 
-/// Package runner used to invoke the `skills` CLI.
-#[cfg(feature = "skills-add")]
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, clap::ValueEnum)]
-#[serde(rename_all = "lowercase")]
-pub enum PackageRunner {
-    Npm,
-    Pnpm,
-    Yarn,
-    Bun,
+/// Configuration for external integrations.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(rename_all = "kebab-case")]
+pub struct IntegrationsConfig {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub skills_sh: Option<SkillsShConfig>,
 }
 
-#[cfg(feature = "skills-add")]
-impl PackageRunner {
-    /// Returns the executable name to check on PATH and use as the first argv element.
-    pub(crate) fn binary(&self) -> &str {
-        match self {
-            PackageRunner::Npm => "npx",
-            PackageRunner::Pnpm => "pnpm",
-            PackageRunner::Yarn => "yarn",
-            PackageRunner::Bun => "bunx",
-        }
-    }
+/// Configuration for the skills.sh integration.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(rename_all = "kebab-case")]
+pub struct SkillsShConfig {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub package_runner: Option<PackageRunner>,
+}
 
-    /// Returns the full argument list for `skills add <skill_name>`.
-    /// When `ci` is true, appends `--yes` to skip interactive confirmation prompts.
-    pub(crate) fn args(&self, skill_name: &str, ci: bool) -> Vec<String> {
-        let mut v = match self {
-            PackageRunner::Npm => vec![
-                "npx".into(),
-                "skills".into(),
-                "add".into(),
-                skill_name.into(),
-                "--agent".into(),
-                "claude-code".into(),
-            ],
-            PackageRunner::Pnpm => vec![
-                "pnpm".into(),
-                "dlx".into(),
-                "skills".into(),
-                "add".into(),
-                skill_name.into(),
-                "--agent".into(),
-                "claude-code".into(),
-            ],
-            PackageRunner::Yarn => vec![
-                "yarn".into(),
-                "dlx".into(),
-                "skills".into(),
-                "add".into(),
-                skill_name.into(),
-                "--agent".into(),
-                "claude-code".into(),
-            ],
-            PackageRunner::Bun => vec![
-                "bunx".into(),
-                "skills".into(),
-                "add".into(),
-                skill_name.into(),
-                "--agent".into(),
-                "claude-code".into(),
-            ],
-        };
-        if ci {
-            v.push("--yes".into());
+impl IntegrationsConfig {
+    pub fn merge(&self, other: &IntegrationsConfig) -> IntegrationsConfig {
+        IntegrationsConfig {
+            skills_sh: merge_optional(self.skills_sh.as_ref(), other.skills_sh.as_ref(), |g, l| {
+                SkillsShConfig {
+                    package_runner: l
+                        .package_runner
+                        .clone()
+                        .or_else(|| g.package_runner.clone()),
+                }
+            }),
         }
-        v
     }
 }
 
@@ -283,188 +246,5 @@ mod tests {
             ..Default::default()
         };
         assert!(features.has_configured_overrides());
-    }
-
-    #[cfg(feature = "skills-add")]
-    #[test]
-    fn package_runner_serialises_to_lowercase() {
-        #[derive(Serialize, Deserialize)]
-        struct W {
-            r: PackageRunner,
-        }
-        for (variant, expected) in [
-            (PackageRunner::Npm, "npm"),
-            (PackageRunner::Pnpm, "pnpm"),
-            (PackageRunner::Yarn, "yarn"),
-            (PackageRunner::Bun, "bun"),
-        ] {
-            let s = toml::to_string(&W { r: variant }).unwrap();
-            assert!(
-                s.contains(&format!("\"{expected}\"")),
-                "expected \"{expected}\" in: {s}"
-            );
-        }
-    }
-
-    #[cfg(feature = "skills-add")]
-    #[test]
-    fn package_runner_deserialises_from_lowercase() {
-        #[derive(Serialize, Deserialize)]
-        struct W {
-            r: PackageRunner,
-        }
-        for (toml_val, expected) in [
-            ("npm", PackageRunner::Npm),
-            ("pnpm", PackageRunner::Pnpm),
-            ("yarn", PackageRunner::Yarn),
-            ("bun", PackageRunner::Bun),
-        ] {
-            let w: W = toml::from_str(&format!("r = \"{toml_val}\"\n")).unwrap();
-            assert_eq!(w.r, expected);
-        }
-    }
-
-    #[cfg(feature = "skills-add")]
-    #[test]
-    fn package_runner_args_npm() {
-        let args = PackageRunner::Npm.args("vercel-labs/agent-skills", false);
-        assert_eq!(
-            args,
-            vec![
-                "npx",
-                "skills",
-                "add",
-                "vercel-labs/agent-skills",
-                "--agent",
-                "claude-code"
-            ]
-        );
-    }
-
-    #[cfg(feature = "skills-add")]
-    #[test]
-    fn package_runner_args_npm_ci() {
-        let args = PackageRunner::Npm.args("vercel-labs/agent-skills", true);
-        assert_eq!(
-            args,
-            vec![
-                "npx",
-                "skills",
-                "add",
-                "vercel-labs/agent-skills",
-                "--agent",
-                "claude-code",
-                "--yes"
-            ]
-        );
-    }
-
-    #[cfg(feature = "skills-add")]
-    #[test]
-    fn package_runner_args_pnpm() {
-        let args = PackageRunner::Pnpm.args("my-skill", false);
-        assert_eq!(
-            args,
-            vec![
-                "pnpm",
-                "dlx",
-                "skills",
-                "add",
-                "my-skill",
-                "--agent",
-                "claude-code"
-            ]
-        );
-    }
-
-    #[cfg(feature = "skills-add")]
-    #[test]
-    fn package_runner_args_pnpm_ci() {
-        let args = PackageRunner::Pnpm.args("my-skill", true);
-        assert_eq!(
-            args,
-            vec![
-                "pnpm",
-                "dlx",
-                "skills",
-                "add",
-                "my-skill",
-                "--agent",
-                "claude-code",
-                "--yes"
-            ]
-        );
-    }
-
-    #[cfg(feature = "skills-add")]
-    #[test]
-    fn package_runner_args_yarn() {
-        let args = PackageRunner::Yarn.args("my-skill", false);
-        assert_eq!(
-            args,
-            vec![
-                "yarn",
-                "dlx",
-                "skills",
-                "add",
-                "my-skill",
-                "--agent",
-                "claude-code"
-            ]
-        );
-    }
-
-    #[cfg(feature = "skills-add")]
-    #[test]
-    fn package_runner_args_yarn_ci() {
-        let args = PackageRunner::Yarn.args("my-skill", true);
-        assert_eq!(
-            args,
-            vec![
-                "yarn",
-                "dlx",
-                "skills",
-                "add",
-                "my-skill",
-                "--agent",
-                "claude-code",
-                "--yes"
-            ]
-        );
-    }
-
-    #[cfg(feature = "skills-add")]
-    #[test]
-    fn package_runner_args_bun() {
-        let args = PackageRunner::Bun.args("my-skill", false);
-        assert_eq!(
-            args,
-            vec![
-                "bunx",
-                "skills",
-                "add",
-                "my-skill",
-                "--agent",
-                "claude-code"
-            ]
-        );
-    }
-
-    #[cfg(feature = "skills-add")]
-    #[test]
-    fn package_runner_args_bun_ci() {
-        let args = PackageRunner::Bun.args("my-skill", true);
-        assert_eq!(
-            args,
-            vec![
-                "bunx",
-                "skills",
-                "add",
-                "my-skill",
-                "--agent",
-                "claude-code",
-                "--yes"
-            ]
-        );
     }
 }

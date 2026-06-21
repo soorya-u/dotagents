@@ -380,8 +380,7 @@ mod tests {
             targets: targets.iter().map(|s| s.to_string()).collect(),
             providers: None,
             variables: None,
-            #[cfg(feature = "skills-add")]
-            package_runner: None,
+            integrations: None,
             feature_maps: None,
         }
     }

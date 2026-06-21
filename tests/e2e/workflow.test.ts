@@ -172,38 +172,32 @@ test.describe("J07: full interactive journey", () => {
 	test.use({ program: shellProgram(d, ["init"]) });
 
 	test("wizard init → deploy produces output", async ({ terminal }) => {
-		try {
-			await expect(
-				terminal.getByText("Which features do you want to enable?"),
-			).toBeVisible();
-			terminal.keyPress("Enter"); // accept all features
-			await expect(
-				terminal.getByText("Which starting template?"),
-			).toBeVisible();
-			// move down twice to Advanced
-			terminal.keyDown(2);
-			terminal.keyPress("Enter");
-			terminal.keyPress("Enter"); // skip providers
-			await expect(terminal.getByText("Done! Run")).toBeVisible();
-			terminal.kill();
+		await expect(
+			terminal.getByText("Which features do you want to enable?"),
+		).toBeVisible();
+		terminal.keyPress("Enter"); // accept all features
+		await expect(terminal.getByText("Which starting template?")).toBeVisible();
+		// move down twice to Advanced
+		terminal.keyDown(2);
+		terminal.keyPress("Enter");
+		terminal.keyPress("Enter"); // skip providers
+		await expect(terminal.getByText("Done! Run")).toBeVisible();
+		terminal.kill();
 
-			// patch out gemini target
-			const lcPath = join(d, ".dotagents/local.config.toml");
-			writeFileSync(
-				lcPath,
-				readFileSync(lcPath, "utf8").replace(
-					/targets\s*=\s*\["gemini"\]/,
-					"targets = []",
-				),
-			);
+		// patch out gemini target
+		const lcPath = join(d, ".dotagents/local.config.toml");
+		writeFileSync(
+			lcPath,
+			readFileSync(lcPath, "utf8").replace(
+				/targets\s*=\s*\["gemini"\]/,
+				"targets = []",
+			),
+		);
 
-			// deploy via CLI
-			const { exitCode } = run(["deploy", "--offline", "--no-gitignore"], d);
-			expect(exitCode).toBe(0);
-			expect(existsSync(join(d, ".mycode/commands/hello.md"))).toBe(true);
-		} finally {
-			cleanup(d);
-		}
+		// deploy via CLI
+		const { exitCode } = run(["deploy", "--offline", "--no-gitignore"], d);
+		expect(exitCode).toBe(0);
+		expect(existsSync(join(d, ".mycode/commands/hello.md"))).toBe(true);
 	});
 });
 

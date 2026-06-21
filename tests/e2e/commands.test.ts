@@ -841,37 +841,33 @@ test.describe("commands new TUI – T06 interactive prompts", () => {
 	test("prompts for description, category, tags then deploy", async ({
 		terminal,
 	}) => {
-		try {
-			await expect(terminal.getByText("Description")).toBeVisible();
-			await expect(
-				terminal.getByText("What does this command do?"),
-			).toBeVisible();
+		await expect(terminal.getByText("Description")).toBeVisible();
+		await expect(
+			terminal.getByText("What does this command do?"),
+		).toBeVisible();
 
-			terminal.write("A greeting command");
-			terminal.keyPress("Enter");
+		terminal.write("A greeting command");
+		terminal.keyPress("Enter");
 
-			await expect(terminal.getByText("Category")).toBeVisible();
-			terminal.write("Greetings");
-			terminal.keyPress("Enter");
+		await expect(terminal.getByText("Category")).toBeVisible();
+		terminal.write("Greetings");
+		terminal.keyPress("Enter");
 
-			await expect(terminal.getByText("Tags (comma-separated)")).toBeVisible();
-			terminal.write("greet,demo");
-			terminal.keyPress("Enter");
+		await expect(terminal.getByText("Tags (comma-separated)")).toBeVisible();
+		terminal.write("greet,demo");
+		terminal.keyPress("Enter");
 
-			// wait for deploy prompt — it appears after the file is written
-			await expect(terminal.getByText("Deploy now?")).toBeVisible();
-			terminal.keyPress("Enter"); // accept default No
+		// wait for deploy prompt — it appears after the file is written
+		await expect(terminal.getByText("Deploy now?")).toBeVisible();
+		terminal.keyPress("Enter"); // accept default No
 
-			expect(existsSync(join(d, ".dotagents/commands/greet.md"))).toBe(true);
-			const content = readFileSync(
-				join(d, ".dotagents/commands/greet.md"),
-				"utf8",
-			);
-			expect(content).toContain("A greeting command");
-			expect(content).toContain("Greetings");
-		} finally {
-			cleanup(d);
-		}
+		expect(existsSync(join(d, ".dotagents/commands/greet.md"))).toBe(true);
+		const content = readFileSync(
+			join(d, ".dotagents/commands/greet.md"),
+			"utf8",
+		);
+		expect(content).toContain("A greeting command");
+		expect(content).toContain("Greetings");
 	});
 });
 
@@ -903,26 +899,22 @@ test.describe("commands new TUI – T07 deploy on Yes", () => {
 	test("answering Yes to deploy prompt runs deploy (deploy prompt is nested inside add)", async ({
 		terminal,
 	}) => {
-		try {
-			await expect(terminal.getByText("Description")).toBeVisible();
-			terminal.write("Deploy test");
-			terminal.keyPress("Enter");
-			terminal.keyPress("Enter"); // category (empty)
-			terminal.keyPress("Enter"); // tags (empty)
-			await expect(terminal.getByText("Deploy now?")).toBeVisible();
-			terminal.keyUp();
-			terminal.keyPress("Enter"); // Yes to deploy
-			await expect(
-				terminal.getByText("deployed path(s) to .gitignore?"),
-			).toBeVisible();
-			terminal.keyPress("Enter"); // accept default No
-			await expect(terminal.getByText("written")).toBeVisible();
-			expect(existsSync(join(d, ".mycode/commands/deploy-test-cmd.md"))).toBe(
-				true,
-			);
-		} finally {
-			cleanup(d);
-		}
+		await expect(terminal.getByText("Description")).toBeVisible();
+		terminal.write("Deploy test");
+		terminal.keyPress("Enter");
+		terminal.keyPress("Enter"); // category (empty)
+		terminal.keyPress("Enter"); // tags (empty)
+		await expect(terminal.getByText("Deploy now?")).toBeVisible();
+		terminal.keyUp();
+		terminal.keyPress("Enter"); // Yes to deploy
+		await expect(
+			terminal.getByText("deployed path(s) to .gitignore?"),
+		).toBeVisible();
+		terminal.keyPress("Enter"); // accept default No
+		await expect(terminal.getByText("written")).toBeVisible();
+		expect(existsSync(join(d, ".mycode/commands/deploy-test-cmd.md"))).toBe(
+			true,
+		);
 	});
 });
 
@@ -944,19 +936,15 @@ test.describe("commands rm TUI – T10 confirm Yes", () => {
 	test.use({ program: shellProgram(d, ["commands", "rm", "hello"]) });
 
 	test("confirm Yes removes the command", async ({ terminal }) => {
-		try {
-			await expect(terminal.getByText("Remove command 'hello'?")).toBeVisible();
-			await expect(terminal.getByText("This cannot be undone.")).toBeVisible();
-			// default is No; navigate up to Yes
-			terminal.keyUp();
-			terminal.keyPress("Enter");
+		await expect(terminal.getByText("Remove command 'hello'?")).toBeVisible();
+		await expect(terminal.getByText("This cannot be undone.")).toBeVisible();
+		// default is No; navigate up to Yes
+		terminal.keyUp();
+		terminal.keyPress("Enter");
 
-			await expect(terminal.getByText("Removed")).toBeVisible();
+		await expect(terminal.getByText("Removed")).toBeVisible();
 
-			expect(existsSync(join(d, ".dotagents/commands/hello.md"))).toBe(false);
-		} finally {
-			cleanup(d);
-		}
+		expect(existsSync(join(d, ".dotagents/commands/hello.md"))).toBe(false);
 	});
 });
 
@@ -976,14 +964,10 @@ test.describe("commands rm TUI – T11 confirm No", () => {
 	test.use({ program: shellProgram(d, ["commands", "rm", "hello"]) });
 
 	test("confirm No leaves the command file intact", async ({ terminal }) => {
-		try {
-			await expect(terminal.getByText("Remove command 'hello'?")).toBeVisible();
-			terminal.keyPress("Enter"); // accept default No
-			await expect(terminal.getByText("Cancelled")).toBeVisible();
+		await expect(terminal.getByText("Remove command 'hello'?")).toBeVisible();
+		terminal.keyPress("Enter"); // accept default No
+		await expect(terminal.getByText("Cancelled")).toBeVisible();
 
-			expect(existsSync(join(d, ".dotagents/commands/hello.md"))).toBe(true);
-		} finally {
-			cleanup(d);
-		}
+		expect(existsSync(join(d, ".dotagents/commands/hello.md"))).toBe(true);
 	});
 });
