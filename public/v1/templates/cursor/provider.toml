@@ -5,7 +5,7 @@ target = "{{dir.workspace}}/.cursor/commands/{{command.name}}.md"
 
 # Cursor Skills
 [providers.cursor.skills]
-target = "{{dir.workspace}}/.agents/skills/{{skill.name}}/SKILL.md"
+target = "{{dir.workspace}}/.cursor/skills/{{skill.name}}/SKILL.md"
 
 [providers.cursor.instructions]
 template = "https://dotagents.soorya-u.dev/v1/templates/cursor/instruction.hbs"
