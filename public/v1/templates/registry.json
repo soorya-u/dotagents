@@ -196,7 +196,7 @@
     "cursor": {
       "path": "/v1/templates/cursor/provider.toml",
       "checksums": {
-        "provider.toml": "2a6e7dccc6384e96923bb5e90db71880014b561bbd62f3f4da8b2c78e53af465",
+        "provider.toml": "64dbae109f73b6ae3e192bcc65193b98b72dc65dd86eae69c4a15c960a3af752",
         "command.hbs": "a57a93257b0307d8c97fa5b41739a2922fe908e8556b050567cf52332c1019aa",
         "hooks.hbs": "c7e1bef0a806be8ab10147eb0af092f8df8bfc7085b13a30c13d85c2e47c2b42",
         "instruction.hbs": "2e5f4276873f08ba55892221e2618667b28da8bb216452b82628fd56315f0d67",
